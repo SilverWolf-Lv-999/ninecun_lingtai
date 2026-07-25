@@ -63,31 +63,6 @@ public final class AptitudeRenderUtility {
         poseStack.popPose();
     }
 
-    public static void drawFiveElementConnections(
-            GuiGraphics guiGraphics,
-            List<ScreenPoint> elementPositions,
-            float alpha
-    ) {
-        if (alpha <= 0.0F || elementPositions.size() != 5) {
-            return;
-        }
-        guiGraphics.flush();
-        int generationColor = ColorUtility.withAlpha(0xE8DFC8, alpha * 0.55F);
-        int restraintColor = ColorUtility.withAlpha(0x9CA5B5, alpha * 0.32F);
-        PoseStack poseStack = guiGraphics.pose();
-        for (int index = 0; index < elementPositions.size(); index++) {
-            ScreenPoint start = elementPositions.get(index);
-            ScreenPoint end = elementPositions.get((index + 1) % elementPositions.size());
-            drawLine(poseStack, start.x, start.y, end.x, end.y, 1.1F, generationColor);
-        }
-        int[] restraintOrder = {0, 2, 4, 1, 3, 0};
-        for (int index = 0; index < restraintOrder.length - 1; index++) {
-            ScreenPoint start = elementPositions.get(restraintOrder[index]);
-            ScreenPoint end = elementPositions.get(restraintOrder[index + 1]);
-            drawLine(poseStack, start.x, start.y, end.x, end.y, 0.8F, restraintColor);
-        }
-    }
-
     public static void drawLine(
             GuiGraphics guiGraphics,
             ScreenPoint start,
@@ -120,6 +95,48 @@ public final class AptitudeRenderUtility {
         }
         guiGraphics.flush();
         drawPolyline(guiGraphics.pose(), ringPoints, thickness, color);
+    }
+
+    public static void drawArc(
+            GuiGraphics guiGraphics,
+            float centerX,
+            float centerY,
+            float radius,
+            float startDegrees,
+            float endDegrees,
+            float thickness,
+            int color
+    ) {
+        if ((color >>> 24) == 0 || radius <= 0.0F || thickness <= 0.0F) {
+            return;
+        }
+        float arcLength = Math.abs(endDegrees - startDegrees) / 360.0F;
+        int segmentCount = Math.max(4, Math.round(CIRCLE_SEGMENTS * arcLength));
+        List<ScreenPoint> arcPoints = new ArrayList<>(segmentCount + 1);
+        for (int segment = 0; segment <= segmentCount; segment++) {
+            float progress = (float) segment / segmentCount;
+            float angle = (float) Math.toRadians(Mth.lerp(progress, startDegrees, endDegrees));
+            arcPoints.add(new ScreenPoint(
+                    centerX + Mth.cos(angle) * radius,
+                    centerY + Mth.sin(angle) * radius
+            ));
+        }
+        guiGraphics.flush();
+        drawPolyline(guiGraphics.pose(), arcPoints, thickness, color);
+    }
+
+    public static void drawDisc(
+            GuiGraphics guiGraphics,
+            float centerX,
+            float centerY,
+            float radius,
+            int color
+    ) {
+        if ((color >>> 24) == 0 || radius <= 0.0F) {
+            return;
+        }
+        guiGraphics.flush();
+        drawCircle(guiGraphics.pose(), centerX, centerY, radius, color);
     }
 
     public static void drawTaiji(

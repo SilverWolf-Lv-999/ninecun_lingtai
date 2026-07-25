@@ -38,6 +38,18 @@
       "values": [0.0]
     },
     {
+      "name": "FlowMode",
+      "type": "float",
+      "count": 1,
+      "values": [0.0]
+    },
+    {
+      "name": "FlowSeed",
+      "type": "float",
+      "count": 1,
+      "values": [0.0]
+    },
+    {
       "name": "FlowCutoff",
       "type": "float",
       "count": 1,

@@ -5,6 +5,7 @@ import com.seraphina.ninecun_lingtai.api.aptitude.SpiritualRoot;
 import com.seraphina.ninecun_lingtai.api.element.ElementRelation;
 import com.seraphina.ninecun_lingtai.api.element.ElementType;
 import com.seraphina.ninecun_lingtai.client.utility.AnimationUtility;
+import com.seraphina.ninecun_lingtai.client.utility.AptitudeFormationRenderUtility;
 import com.seraphina.ninecun_lingtai.client.utility.AptitudeRenderUtility;
 import com.seraphina.ninecun_lingtai.client.utility.AptitudeRenderUtility.ScreenPoint;
 import com.seraphina.ninecun_lingtai.client.utility.ElementRelationRenderUtility;
@@ -198,11 +199,33 @@ public final class AptitudeSelectionScreen extends Screen {
         float connectionProgress = this.phase == AptitudePhase.INTRO
                 ? AnimationUtility.easeOutCubic(AnimationUtility.progress(phaseElapsed - 320L, 1500L))
                 : 1.0F;
-        AptitudeRenderUtility.drawFiveElementConnections(
+        float formationAlpha = selectionAlpha * connectionProgress;
+        AptitudeFormationRenderUtility.drawFormation(
                 guiGraphics,
-                elementPositions,
-                selectionAlpha * connectionProgress * 0.62F
+                this.width * 0.5F,
+                getDiagramCenterY(),
+                getFormationRadius(),
+                currentTime,
+                formationAlpha
         );
+        float nodeRadius = getElementNodeRadius();
+        for (int index = 0; index < SpiritualRootUtility.FIVE_ELEMENT_DIAGRAM_ORDER.size(); index++) {
+            ElementType element = SpiritualRootUtility.FIVE_ELEMENT_DIAGRAM_ORDER.get(index);
+            float introProgress = getElementIntroProgress(index, phaseElapsed);
+            if (introProgress <= 0.0F) {
+                continue;
+            }
+            AptitudeFormationRenderUtility.drawNodeSeal(
+                    guiGraphics,
+                    elementPositions.get(index),
+                    nodeRadius,
+                    element,
+                    SpiritualRootUtility.getElementColor(element),
+                    this.selectedElements.contains(element),
+                    currentTime,
+                    formationAlpha * introProgress
+            );
+        }
         renderElementRelationEffects(
                 guiGraphics,
                 elementPositions,
@@ -220,15 +243,18 @@ public final class AptitudeSelectionScreen extends Screen {
                 continue;
             }
             boolean selected = this.selectedElements.contains(element);
+            boolean balanceFocus = yinYangBalanceStrength > 0.01F && isYinYangBalanceFocus(element);
             int baseColor = SpiritualRootUtility.getElementColor(element);
             int displayColor = selected
                     ? ColorUtility.brighten(baseColor, 0.28F)
                     : ColorUtility.darken(baseColor, 0.42F);
-            displayColor = ColorUtility.blend(
-                    displayColor,
-                    ColorUtility.brighten(baseColor, 0.24F),
-                    yinYangBalanceStrength * (selected ? 0.16F : 0.44F) * balancePulse
-            );
+            if (balanceFocus) {
+                displayColor = ColorUtility.blend(
+                        displayColor,
+                        selected ? 0xD8DCE3 : 0xF1DFC0,
+                        yinYangBalanceStrength * (selected ? 0.34F : 0.48F) * balancePulse
+                );
+            }
             float alpha = selectionAlpha * introProgress * (selected ? 1.0F : 0.82F);
             float scale = elementScale
                     * this.selectionScales.get(element)
@@ -297,27 +323,30 @@ public final class AptitudeSelectionScreen extends Screen {
             return;
         }
         float nodeRadius = getElementNodeRadius();
-        float yinYangStrength = getElementEffectStrength(ElementType.YIN_YANG);
-        if (yinYangStrength > 0.01F) {
-            ElementRelationRenderUtility.drawYinYangBalance(
-                    guiGraphics,
-                    new ScreenPoint(this.width * 0.5F, getDiagramCenterY()),
-                    getTaijiRadius(),
-                    elementPositions,
-                    this.selectedElements,
-                    nodeRadius,
-                    currentTime,
-                    alpha * yinYangStrength
-            );
-        }
-
+        float formationRadius = getFormationRadius();
         int selectedFiveElementCount = 0;
         for (ElementType element : SpiritualRootUtility.FIVE_ELEMENT_DIAGRAM_ORDER) {
             if (this.selectedElements.contains(element)) {
                 selectedFiveElementCount++;
             }
         }
-        float crowdAlpha = Mth.clamp(1.08F - selectedFiveElementCount * 0.12F, 0.54F, 1.0F);
+        float crowdAlpha = Mth.clamp(1.06F - selectedFiveElementCount * 0.1F, 0.58F, 1.0F);
+        for (int sourceIndex = 0; sourceIndex < SpiritualRootUtility.FIVE_ELEMENT_DIAGRAM_ORDER.size(); sourceIndex++) {
+            ElementType sourceElement = SpiritualRootUtility.FIVE_ELEMENT_DIAGRAM_ORDER.get(sourceIndex);
+            float sourceStrength = getElementEffectStrength(sourceElement);
+            if (sourceStrength <= 0.01F) {
+                continue;
+            }
+            ElementRelationRenderUtility.drawSourceAura(
+                    guiGraphics,
+                    sourceElement,
+                    elementPositions.get(sourceIndex),
+                    formationRadius,
+                    nodeRadius,
+                    currentTime,
+                    alpha * sourceStrength * crowdAlpha
+            );
+        }
         for (int sourceIndex = 0; sourceIndex < SpiritualRootUtility.FIVE_ELEMENT_DIAGRAM_ORDER.size(); sourceIndex++) {
             ElementType sourceElement = SpiritualRootUtility.FIVE_ELEMENT_DIAGRAM_ORDER.get(sourceIndex);
             float sourceStrength = getElementEffectStrength(sourceElement);
@@ -330,9 +359,7 @@ public final class AptitudeSelectionScreen extends Screen {
                 }
                 ElementType targetElement = SpiritualRootUtility.FIVE_ELEMENT_DIAGRAM_ORDER.get(targetIndex);
                 ElementRelation relation = sourceElement.getRelationTo(targetElement);
-                if (this.selectedElements.contains(targetElement)
-                        && relation != ElementRelation.GENERATES
-                        && relation != ElementRelation.OVERCOMES) {
+                if (relation != ElementRelation.GENERATES && relation != ElementRelation.OVERCOMES) {
                     continue;
                 }
                 ElementRelationRenderUtility.drawRelation(
@@ -341,11 +368,25 @@ public final class AptitudeSelectionScreen extends Screen {
                         targetElement,
                         elementPositions.get(sourceIndex),
                         elementPositions.get(targetIndex),
+                        formationRadius,
                         nodeRadius,
                         currentTime,
                         alpha * sourceStrength * crowdAlpha
                 );
             }
+        }
+        float yinYangStrength = getElementEffectStrength(ElementType.YIN_YANG);
+        if (yinYangStrength > 0.01F) {
+            ElementRelationRenderUtility.drawYinYangBalance(
+                    guiGraphics,
+                    new ScreenPoint(this.width * 0.5F, getDiagramCenterY()),
+                    getTaijiRadius(),
+                    elementPositions,
+                    this.selectedElements,
+                    nodeRadius,
+                    currentTime,
+                    alpha * yinYangStrength
+            );
         }
     }
 
@@ -622,6 +663,10 @@ public final class AptitudeSelectionScreen extends Screen {
         return Mth.clamp(Math.min(this.width, this.height) * 0.31F, 56.0F, 172.0F);
     }
 
+    private float getFormationRadius() {
+        return getDiagramRadius() + getElementNodeRadius() * 2.05F;
+    }
+
     private float getTaijiRadius() {
         return Mth.clamp(Math.min(this.width, this.height) * 0.072F, 13.0F, 36.0F);
     }
@@ -643,6 +688,22 @@ public final class AptitudeSelectionScreen extends Screen {
                 0.0F,
                 1.0F
         );
+    }
+
+    private boolean isYinYangBalanceFocus(ElementType targetElement) {
+        if (this.selectedElements.contains(targetElement)) {
+            return true;
+        }
+        for (ElementType selectedElement : this.selectedElements) {
+            if (!selectedElement.isFiveElement()) {
+                continue;
+            }
+            ElementRelation relation = selectedElement.getRelationTo(targetElement);
+            if (relation == ElementRelation.GENERATES || relation == ElementRelation.GENERATED_BY) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private float getElementTextScale() {

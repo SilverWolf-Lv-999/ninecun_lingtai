@@ -35,9 +35,9 @@ public final class SpiritualRootUtility {
     private static final Map<ElementType, Integer> ELEMENT_COLORS = Map.of(
             ElementType.WATER, 0x328CFF,
             ElementType.FIRE, 0xFF413A,
-            ElementType.EARTH, 0xE58A2B,
-            ElementType.WOOD, 0x8B5A2B,
-            ElementType.METAL, 0xFFD24A,
+            ElementType.EARTH, 0xC98A4A,
+            ElementType.WOOD, 0x67B85F,
+            ElementType.METAL, 0xE6C45C,
             ElementType.YIN_YANG, 0xC8C8D0
     );
 
