@@ -22,6 +22,7 @@ import java.util.List;
 
 public final class AptitudeRenderUtility {
     private static final int CIRCLE_SEGMENTS = 72;
+    private static final int SPIRITUAL_ROOT_SEGMENTS = 32;
 
     private AptitudeRenderUtility() {
     }
@@ -175,42 +176,312 @@ public final class AptitudeRenderUtility {
         poseStack.popPose();
     }
 
-    public static void drawSprout(
+    public static void drawLivingSpiritualRoot(
             GuiGraphics guiGraphics,
             float centerX,
             float bottomY,
             float topY,
             int color,
-            float alpha
+            long currentTime,
+            float alpha,
+            boolean focused
     ) {
-        if (alpha <= 0.0F || bottomY <= topY) {
+        if (alpha <= 0.0F) {
             return;
         }
         guiGraphics.flush();
-        float stemHeight = bottomY - topY;
-        float sway = Math.min(8.0F, stemHeight * 0.035F);
-        List<ScreenPoint> stemPoints = new ArrayList<>();
-        int segmentCount = 18;
-        for (int segment = 0; segment <= segmentCount; segment++) {
-            float progress = (float) segment / segmentCount;
-            float pointY = Mth.lerp(progress, bottomY, topY);
-            float pointX = centerX
-                    + Mth.sin(progress * Mth.PI) * sway
-                    - Mth.sin(progress * Mth.PI * 2.0F) * sway * 0.22F;
-            stemPoints.add(new ScreenPoint(pointX, pointY));
-        }
-        int glowColor = color == 0x000000 ? 0xF0EDE4 : ColorUtility.brighten(color, 0.48F);
+        int rootColor = color == 0x000000 ? 0xD7E3DF : color;
+        int glowColor = ColorUtility.brighten(rootColor, 0.5F);
         PoseStack poseStack = guiGraphics.pose();
-        drawPolyline(poseStack, stemPoints, 6.5F, ColorUtility.withAlpha(glowColor, alpha * 0.24F));
-        drawPolyline(poseStack, stemPoints, 2.8F, ColorUtility.withAlpha(color, alpha));
+        drawDantianFormation(poseStack, centerX, bottomY, rootColor, currentTime, alpha);
+        if (bottomY <= topY) {
+            return;
+        }
+
+        float stemHeight = bottomY - topY;
+        List<ScreenPoint> mainMeridian = createMainMeridian(centerX, bottomY, topY, currentTime);
+        List<List<ScreenPoint>> branchMeridians = createBranchMeridians(
+                mainMeridian,
+                centerX,
+                stemHeight,
+                currentTime
+        );
+
+        drawPolyline(
+                poseStack,
+                mainMeridian,
+                11.0F,
+                ColorUtility.withAlpha(glowColor, alpha * 0.13F)
+        );
+        for (List<ScreenPoint> branchMeridian : branchMeridians) {
+            drawPolyline(
+                    poseStack,
+                    branchMeridian,
+                    6.5F,
+                    ColorUtility.withAlpha(glowColor, alpha * 0.1F)
+            );
+        }
+
+        int rootBaseColor = ColorUtility.darken(rootColor, 0.48F);
+        int rootTipColor = ColorUtility.brighten(rootColor, 0.36F);
+        drawGradientPolyline(poseStack, mainMeridian, 4.4F, rootBaseColor, rootTipColor, alpha);
+        drawGradientPolyline(poseStack, mainMeridian, 1.25F, rootColor, glowColor, alpha * 0.92F);
+        for (int index = 0; index < branchMeridians.size(); index++) {
+            List<ScreenPoint> branchMeridian = branchMeridians.get(index);
+            float branchAlpha = alpha * (0.72F - index * 0.035F);
+            drawGradientPolyline(
+                    poseStack,
+                    branchMeridian,
+                    2.35F,
+                    ColorUtility.darken(rootColor, 0.36F),
+                    rootTipColor,
+                    branchAlpha
+            );
+        }
+
+        drawMeridianFlow(poseStack, mainMeridian, glowColor, currentTime, alpha);
+        drawSpiritBud(
+                poseStack,
+                centerX,
+                topY,
+                rootColor,
+                glowColor,
+                stemHeight,
+                currentTime,
+                alpha,
+                focused
+        );
+    }
+
+    private static void drawDantianFormation(
+            PoseStack poseStack,
+            float centerX,
+            float bottomY,
+            int rootColor,
+            long currentTime,
+            float alpha
+    ) {
+        float centerY = bottomY + 5.0F;
+        float pulse = 0.5F + 0.5F * Mth.sin(currentTime * 0.0022F);
+        int formationColor = ColorUtility.blend(ColorUtility.darken(rootColor, 0.62F), 0x282632, 0.58F);
+        drawEllipse(poseStack, centerX, centerY + 3.0F, 48.0F, 16.0F, ColorUtility.withAlpha(0x05070A, alpha * 0.7F));
+        drawEllipse(poseStack, centerX, centerY, 36.0F, 11.0F, ColorUtility.withAlpha(formationColor, alpha * 0.66F));
+        drawPolyline(
+                poseStack,
+                createEllipsePoints(centerX, centerY, 42.0F, 13.5F, 0.0F, 360.0F, CIRCLE_SEGMENTS),
+                1.8F,
+                ColorUtility.withAlpha(ColorUtility.brighten(rootColor, 0.22F), alpha * (0.22F + pulse * 0.09F))
+        );
+        drawPolyline(
+                poseStack,
+                createEllipsePoints(centerX, centerY, 29.0F, 8.5F, 0.0F, 360.0F, CIRCLE_SEGMENTS),
+                1.1F,
+                ColorUtility.withAlpha(ColorUtility.brighten(rootColor, 0.38F), alpha * 0.34F)
+        );
+        float rotation = currentTime * 0.018F;
+        for (int ray = 0; ray < 8; ray++) {
+            float angle = (float) Math.toRadians(rotation + ray * 45.0F);
+            float innerX = centerX + Mth.cos(angle) * 12.0F;
+            float innerY = centerY + Mth.sin(angle) * 3.8F;
+            float outerX = centerX + Mth.cos(angle) * 34.0F;
+            float outerY = centerY + Mth.sin(angle) * 10.5F;
+            drawLine(
+                    poseStack,
+                    innerX,
+                    innerY,
+                    outerX,
+                    outerY,
+                    0.8F,
+                    ColorUtility.withAlpha(rootColor, alpha * 0.24F)
+            );
+        }
         drawEllipse(
                 poseStack,
                 centerX,
-                bottomY + 1.5F,
-                7.5F,
-                3.2F,
-                ColorUtility.withAlpha(ColorUtility.darken(color, 0.18F), alpha)
+                centerY,
+                7.5F + pulse * 1.1F,
+                3.1F + pulse * 0.45F,
+                ColorUtility.withAlpha(ColorUtility.brighten(rootColor, 0.42F), alpha * 0.72F)
         );
+    }
+
+    private static List<ScreenPoint> createMainMeridian(
+            float centerX,
+            float bottomY,
+            float topY,
+            long currentTime
+    ) {
+        float stemHeight = bottomY - topY;
+        float horizontalReach = Mth.clamp(stemHeight * 0.075F, 7.0F, 31.0F);
+        float breathing = Math.min(1.6F, stemHeight * 0.006F);
+        List<ScreenPoint> points = new ArrayList<>(SPIRITUAL_ROOT_SEGMENTS + 1);
+        for (int segment = 0; segment <= SPIRITUAL_ROOT_SEGMENTS; segment++) {
+            float progress = (float) segment / SPIRITUAL_ROOT_SEGMENTS;
+            float rootEnvelope = Mth.sin(progress * Mth.PI);
+            float organicCurve = Mth.sin(progress * Mth.PI * 2.25F + 0.35F) * 0.58F
+                    + Mth.sin(progress * Mth.PI * 5.4F - 0.7F) * 0.23F
+                    + Mth.sin(progress * Mth.PI * 9.0F) * 0.08F;
+            float livingSway = Mth.sin(currentTime * 0.00135F + progress * 5.0F)
+                    * breathing
+                    * rootEnvelope;
+            points.add(new ScreenPoint(
+                    centerX + organicCurve * horizontalReach * rootEnvelope + livingSway,
+                    Mth.lerp(progress, bottomY, topY)
+            ));
+        }
+        return points;
+    }
+
+    private static List<List<ScreenPoint>> createBranchMeridians(
+            List<ScreenPoint> mainMeridian,
+            float centerX,
+            float stemHeight,
+            long currentTime
+    ) {
+        float[] branchProgresses = {0.13F, 0.22F, 0.34F, 0.47F, 0.61F, 0.74F};
+        List<List<ScreenPoint>> branches = new ArrayList<>(branchProgresses.length);
+        float horizontalReach = Mth.clamp(stemHeight * 0.11F, 12.0F, 43.0F);
+        for (int branchIndex = 0; branchIndex < branchProgresses.length; branchIndex++) {
+            float branchProgress = branchProgresses[branchIndex];
+            ScreenPoint attachment = interpolatePolyline(mainMeridian, branchProgress);
+            float direction = branchIndex % 2 == 0 ? -1.0F : 1.0F;
+            float branchLength = horizontalReach * (1.0F - branchProgress * 0.34F);
+            float curl = Mth.sin(currentTime * 0.0011F + branchIndex * 1.7F) * 1.2F;
+            List<ScreenPoint> branch = new ArrayList<>(9);
+            for (int segment = 0; segment <= 8; segment++) {
+                float progress = (float) segment / 8.0F;
+                float easedProgress = 1.0F - (1.0F - progress) * (1.0F - progress);
+                float curlWave = Mth.sin(progress * Mth.PI * (1.45F + branchIndex * 0.08F));
+                branch.add(new ScreenPoint(
+                        Mth.lerp(easedProgress, attachment.x, centerX + direction * branchLength)
+                                + direction * curlWave * branchLength * 0.18F
+                                + curl * progress,
+                        attachment.y
+                                + stemHeight * (0.025F + branchProgress * 0.025F) * progress
+                                - curlWave * stemHeight * 0.028F
+                ));
+            }
+            branches.add(branch);
+        }
+        return branches;
+    }
+
+    private static void drawMeridianFlow(
+            PoseStack poseStack,
+            List<ScreenPoint> mainMeridian,
+            int glowColor,
+            long currentTime,
+            float alpha
+    ) {
+        float timeProgress = currentTime % 2800L / 2800.0F;
+        for (int mote = 0; mote < 4; mote++) {
+            float progress = (timeProgress + mote * 0.24F) % 1.0F;
+            ScreenPoint point = interpolatePolyline(mainMeridian, progress);
+            float pulse = 0.65F + 0.35F * Mth.sin(currentTime * 0.005F + mote * 1.8F);
+            drawCircle(poseStack, point.x, point.y, 3.8F * pulse, ColorUtility.withAlpha(glowColor, alpha * 0.12F));
+            drawCircle(poseStack, point.x, point.y, 1.35F * pulse, ColorUtility.withAlpha(glowColor, alpha * 0.88F));
+        }
+    }
+
+    private static void drawSpiritBud(
+            PoseStack poseStack,
+            float centerX,
+            float topY,
+            int rootColor,
+            int glowColor,
+            float stemHeight,
+            long currentTime,
+            float alpha,
+            boolean focused
+    ) {
+        float pulse = 0.5F + 0.5F * Mth.sin(currentTime * (focused ? 0.006F : 0.004F));
+        float budScale = Mth.clamp(stemHeight / 95.0F, 0.62F, 1.0F) * (0.94F + pulse * 0.09F);
+        drawCircle(
+                poseStack,
+                centerX,
+                topY,
+                (focused ? 15.0F : 12.0F) * budScale,
+                ColorUtility.withAlpha(glowColor, alpha * (0.08F + pulse * 0.08F))
+        );
+        for (int petal = 0; petal < 5; petal++) {
+            poseStack.pushPose();
+            poseStack.translate(centerX, topY, 0.0F);
+            poseStack.mulPose(Axis.ZP.rotationDegrees(petal * 72.0F + currentTime * 0.008F));
+            drawEllipse(
+                    poseStack,
+                    0.0F,
+                    -5.0F * budScale,
+                    2.5F * budScale,
+                    5.2F * budScale,
+                    ColorUtility.withAlpha(ColorUtility.brighten(rootColor, 0.28F), alpha * 0.68F)
+            );
+            poseStack.popPose();
+        }
+        drawCircle(poseStack, centerX, topY, 4.0F * budScale, ColorUtility.withAlpha(glowColor, alpha * 0.28F));
+        drawCircle(
+                poseStack,
+                centerX,
+                topY,
+                1.75F * budScale,
+                ColorUtility.withAlpha(ColorUtility.brighten(glowColor, 0.35F), alpha)
+        );
+    }
+
+    private static List<ScreenPoint> createEllipsePoints(
+            float centerX,
+            float centerY,
+            float radiusX,
+            float radiusY,
+            float startDegrees,
+            float endDegrees,
+            int segmentCount
+    ) {
+        List<ScreenPoint> points = new ArrayList<>(segmentCount + 1);
+        for (int segment = 0; segment <= segmentCount; segment++) {
+            float progress = (float) segment / segmentCount;
+            float angle = (float) Math.toRadians(Mth.lerp(progress, startDegrees, endDegrees));
+            points.add(new ScreenPoint(
+                    centerX + Mth.cos(angle) * radiusX,
+                    centerY + Mth.sin(angle) * radiusY
+            ));
+        }
+        return points;
+    }
+
+    private static ScreenPoint interpolatePolyline(List<ScreenPoint> points, float progress) {
+        float scaledIndex = Mth.clamp(progress, 0.0F, 1.0F) * (points.size() - 1);
+        int startIndex = Math.min((int) scaledIndex, points.size() - 2);
+        float segmentProgress = scaledIndex - startIndex;
+        ScreenPoint start = points.get(startIndex);
+        ScreenPoint end = points.get(startIndex + 1);
+        return new ScreenPoint(
+                Mth.lerp(segmentProgress, start.x, end.x),
+                Mth.lerp(segmentProgress, start.y, end.y)
+        );
+    }
+
+    private static void drawGradientPolyline(
+            PoseStack poseStack,
+            List<ScreenPoint> points,
+            float thickness,
+            int startColor,
+            int endColor,
+            float alpha
+    ) {
+        if (alpha <= 0.0F || points.size() < 2) {
+            return;
+        }
+        beginPositionColorRender();
+        Matrix4f matrix = poseStack.last().pose();
+        BufferBuilder bufferBuilder = Tesselator.getInstance().getBuilder();
+        bufferBuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+        for (int index = 0; index < points.size() - 1; index++) {
+            float progress = (float) index / (points.size() - 2);
+            int color = ColorUtility.withAlpha(ColorUtility.blend(startColor, endColor, progress), alpha);
+            appendLineQuad(bufferBuilder, matrix, points.get(index), points.get(index + 1), thickness, color);
+        }
+        BufferUploader.drawWithShader(bufferBuilder.end());
+        endPositionColorRender();
     }
 
     private static void drawPolyline(PoseStack poseStack, List<ScreenPoint> points, float thickness, int color) {

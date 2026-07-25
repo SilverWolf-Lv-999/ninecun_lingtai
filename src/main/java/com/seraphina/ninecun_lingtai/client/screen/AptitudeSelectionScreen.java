@@ -12,6 +12,7 @@ import com.seraphina.ninecun_lingtai.client.utility.ElementRelationRenderUtility
 import com.seraphina.ninecun_lingtai.common.font.CustomFontConstants;
 import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import com.seraphina.ninecun_lingtai.common.network.packet.SubmitAptitudePacket;
+import com.seraphina.ninecun_lingtai.utility.ChineseNumberUtility;
 import com.seraphina.ninecun_lingtai.utility.ColorUtility;
 import com.seraphina.ninecun_lingtai.utility.SpiritualRootUtility;
 import net.minecraft.Util;
@@ -29,7 +30,6 @@ import javax.annotation.Nullable;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 
 public final class AptitudeSelectionScreen extends Screen {
@@ -446,13 +446,15 @@ public final class AptitudeSelectionScreen extends Screen {
             topY = getSproutTopY(this.spiritualRootLength);
             hintAlpha = 1.0F;
         }
-        AptitudeRenderUtility.drawSprout(
+        AptitudeRenderUtility.drawLivingSpiritualRoot(
                 guiGraphics,
                 this.width * 0.5F,
                 bottomY,
                 topY,
                 this.spiritualRootColor,
-                stageAlpha
+                currentTime,
+                stageAlpha,
+                this.phase == AptitudePhase.LENGTH_SELECTION
         );
 
         float hintScale = getHintScale();
@@ -548,9 +550,11 @@ public final class AptitudeSelectionScreen extends Screen {
 
     private boolean isMouseOverSprout(double mouseX, double mouseY) {
         float topY = getSproutTopY(this.spiritualRootLength);
-        return Math.abs(mouseX - this.width * 0.5F) <= 22.0F
+        float rootHeight = getSproutBottomY() - topY;
+        float horizontalReach = Mth.clamp(rootHeight * 0.13F, 24.0F, 52.0F);
+        return Math.abs(mouseX - this.width * 0.5F) <= horizontalReach
                 && mouseY >= topY - 13.0F
-                && mouseY <= getSproutBottomY() + 7.0F;
+                && mouseY <= getSproutBottomY() + 18.0F;
     }
 
     private void updateSpiritualRootLength(double mouseY) {
@@ -732,23 +736,27 @@ public final class AptitudeSelectionScreen extends Screen {
     }
 
     private float getSproutBottomY() {
-        return this.height - Math.max(14.0F, this.height * 0.065F);
+        return this.height - Math.max(24.0F, this.height * 0.08F);
     }
 
     private float getMinimumStemHeight() {
-        return Math.max(24.0F, this.height * 0.13F);
+        float fullStemHeight = getSproutBottomY() - getMaximumStemTopY();
+        return fullStemHeight * SpiritualRoot.MINIMUM_LENGTH_INCHES
+                / SpiritualRoot.MAXIMUM_LENGTH_INCHES;
     }
 
     private float getMaximumStemTopY() {
-        return Math.max(20.0F, this.height * 0.14F);
+        return Math.max(24.0F, this.height * 0.13F);
     }
 
     private float getSproutTopY(float lengthInches) {
-        float qualityProgress = (lengthInches - SpiritualRoot.MINIMUM_LENGTH_INCHES)
-                / (SpiritualRoot.MAXIMUM_LENGTH_INCHES - SpiritualRoot.MINIMUM_LENGTH_INCHES);
-        float minimumHeight = getMinimumStemHeight();
-        float maximumHeight = getSproutBottomY() - getMaximumStemTopY();
-        return getSproutBottomY() - Mth.lerp(qualityProgress, minimumHeight, maximumHeight);
+        float lengthProgress = Mth.clamp(
+                lengthInches / SpiritualRoot.MAXIMUM_LENGTH_INCHES,
+                0.0F,
+                1.0F
+        );
+        float fullStemHeight = getSproutBottomY() - getMaximumStemTopY();
+        return getSproutBottomY() - fullStemHeight * lengthProgress;
     }
 
     private void playUiSound(float pitch) {
@@ -807,10 +815,7 @@ public final class AptitudeSelectionScreen extends Screen {
     }
 
     private static String formatLength(float lengthInches) {
-        if (Math.abs(lengthInches - Math.round(lengthInches)) < 0.001F) {
-            return Math.round(lengthInches) + "寸";
-        }
-        return String.format(Locale.ROOT, "%.1f寸", lengthInches);
+        return ChineseNumberUtility.formatTenths(lengthInches, "寸", "分");
     }
 
     private static Component customFontText(String text) {
