@@ -1,6 +1,7 @@
 package com.seraphina.ninecun_lingtai;
 
 import com.seraphina.ninecun_lingtai.common.config.CommonConfig;
+import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
@@ -11,5 +12,6 @@ public final class ModMain {
 
     public ModMain() {
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, CommonConfig.SPEC);
+        ModNetwork.register();
     }
 }
