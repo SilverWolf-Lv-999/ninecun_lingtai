@@ -5,29 +5,34 @@ uniform sampler2D DiffuseSampler;
 in vec2 texCoord;
 in vec2 oneTexel;
 
-uniform vec2 BlurDirection;
-uniform float BlurScale;
+uniform float BlurRadius;
+uniform float Sigma;
 
 out vec4 fragColor;
 
+const int MAX_BLUR_RADIUS = 12;
+
 void main() {
-    vec2 offset = oneTexel * BlurDirection * BlurScale;
-    vec4 blurredColor = texture(DiffuseSampler, texCoord) * 0.087546;
-    blurredColor += texture(DiffuseSampler, texCoord + offset * 1.0) * 0.085813;
-    blurredColor += texture(DiffuseSampler, texCoord - offset * 1.0) * 0.085813;
-    blurredColor += texture(DiffuseSampler, texCoord + offset * 2.0) * 0.080813;
-    blurredColor += texture(DiffuseSampler, texCoord - offset * 2.0) * 0.080813;
-    blurredColor += texture(DiffuseSampler, texCoord + offset * 3.0) * 0.073128;
-    blurredColor += texture(DiffuseSampler, texCoord - offset * 3.0) * 0.073128;
-    blurredColor += texture(DiffuseSampler, texCoord + offset * 4.0) * 0.063566;
-    blurredColor += texture(DiffuseSampler, texCoord - offset * 4.0) * 0.063566;
-    blurredColor += texture(DiffuseSampler, texCoord + offset * 5.0) * 0.053098;
-    blurredColor += texture(DiffuseSampler, texCoord - offset * 5.0) * 0.053098;
-    blurredColor += texture(DiffuseSampler, texCoord + offset * 6.0) * 0.042616;
-    blurredColor += texture(DiffuseSampler, texCoord - offset * 6.0) * 0.042616;
-    blurredColor += texture(DiffuseSampler, texCoord + offset * 7.0) * 0.032855;
-    blurredColor += texture(DiffuseSampler, texCoord - offset * 7.0) * 0.032855;
-    blurredColor += texture(DiffuseSampler, texCoord + offset * 8.0) * 0.024338;
-    blurredColor += texture(DiffuseSampler, texCoord - offset * 8.0) * 0.024338;
-    fragColor = blurredColor;
+    vec2 baseUv = clamp(texCoord, 0.003, 0.997);
+    float blurRadius = clamp(BlurRadius, 0.0, float(MAX_BLUR_RADIUS));
+    float sigma = max(Sigma, 0.001);
+    float twoSigmaSquared = 2.0 * sigma * sigma;
+    vec4 blurredColor = vec4(0.0);
+    float totalWeight = 0.0;
+
+    for (int offsetX = -MAX_BLUR_RADIUS; offsetX <= MAX_BLUR_RADIUS; offsetX++) {
+        for (int offsetY = -MAX_BLUR_RADIUS; offsetY <= MAX_BLUR_RADIUS; offsetY++) {
+            vec2 offset = vec2(float(offsetX), float(offsetY));
+            if (abs(offset.x) > blurRadius || abs(offset.y) > blurRadius) {
+                continue;
+            }
+
+            float weight = exp(-dot(offset, offset) / twoSigmaSquared);
+            vec2 sampleUv = clamp(baseUv + offset * oneTexel, 0.003, 0.997);
+            blurredColor += texture(DiffuseSampler, sampleUv) * weight;
+            totalWeight += weight;
+        }
+    }
+
+    fragColor = vec4(blurredColor.rgb / max(totalWeight, 0.0001), 1.0);
 }

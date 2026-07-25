@@ -107,14 +107,6 @@ public final class AptitudeSelectionScreen extends Screen {
         }
         ensureBlurEffect();
         updateSelectionScales(currentTime);
-        float screenAlpha = getScreenAlpha(currentTime);
-        guiGraphics.fill(
-                0,
-                0,
-                this.width,
-                this.height,
-                ColorUtility.withAlpha(0x10131A, 0.56F * screenAlpha)
-        );
 
         switch (this.phase) {
             case INTRO, SELECTING, SELECTION_FADE -> renderElementSelection(guiGraphics, currentTime);
@@ -321,21 +313,15 @@ public final class AptitudeSelectionScreen extends Screen {
                 : 1.0F;
         float bottomY = getSproutBottomY();
         float topY;
-        float leafProgress;
         float hintAlpha;
         if (this.phase == AptitudePhase.SPROUT_GROW) {
             float growthProgress = AnimationUtility.easeOutCubic(
                     AnimationUtility.progress(elapsed, SPROUT_GROW_DURATION)
             );
             topY = bottomY - getMinimumStemHeight() * growthProgress;
-            leafProgress = AnimationUtility.progress(
-                    elapsed - Math.round(SPROUT_GROW_DURATION * 0.55F),
-                    Math.round(SPROUT_GROW_DURATION * 0.45F)
-            );
             hintAlpha = AnimationUtility.progress(elapsed - 620L, 300L);
         } else {
             topY = getSproutTopY(this.spiritualRootLength);
-            leafProgress = 1.0F;
             hintAlpha = 1.0F;
         }
         AptitudeRenderUtility.drawSprout(
@@ -344,8 +330,7 @@ public final class AptitudeSelectionScreen extends Screen {
                 bottomY,
                 topY,
                 this.spiritualRootColor,
-                stageAlpha,
-                leafProgress
+                stageAlpha
         );
 
         float hintScale = getHintScale();
@@ -547,16 +532,6 @@ public final class AptitudeSelectionScreen extends Screen {
         return AnimationUtility.easeOutCubic(
                 AnimationUtility.progress(elementElapsed, ELEMENT_APPEAR_DURATION)
         );
-    }
-
-    private float getScreenAlpha(long currentTime) {
-        if (this.phase != AptitudePhase.COMPLETE_FADE) {
-            return 1.0F;
-        }
-        return 1.0F - AnimationUtility.easeInOutCubic(AnimationUtility.progress(
-                currentTime - this.phaseStartedAt,
-                COMPLETE_FADE_DURATION
-        ));
     }
 
     private float getDiagramCenterY() {

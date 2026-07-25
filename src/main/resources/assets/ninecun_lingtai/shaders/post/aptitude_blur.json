@@ -9,29 +9,19 @@
       "outtarget": "swap",
       "uniforms": [
         {
-          "name": "BlurDirection",
-          "values": [1.0, 0.0]
+          "name": "BlurRadius",
+          "values": [12.0]
         },
         {
-          "name": "BlurScale",
-          "values": [2.0]
+          "name": "Sigma",
+          "values": [6.0]
         }
       ]
     },
     {
-      "name": "ninecun_lingtai:aptitude_blur",
+      "name": "blit",
       "intarget": "swap",
-      "outtarget": "minecraft:main",
-      "uniforms": [
-        {
-          "name": "BlurDirection",
-          "values": [0.0, 1.0]
-        },
-        {
-          "name": "BlurScale",
-          "values": [2.0]
-        }
-      ]
+      "outtarget": "minecraft:main"
     }
   ]
 }

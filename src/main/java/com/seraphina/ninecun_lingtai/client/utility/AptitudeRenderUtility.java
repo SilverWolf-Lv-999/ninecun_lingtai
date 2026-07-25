@@ -128,8 +128,7 @@ public final class AptitudeRenderUtility {
             float bottomY,
             float topY,
             int color,
-            float alpha,
-            float leafProgress
+            float alpha
     ) {
         if (alpha <= 0.0F || bottomY <= topY) {
             return;
@@ -159,59 +158,6 @@ public final class AptitudeRenderUtility {
                 3.2F,
                 ColorUtility.withAlpha(ColorUtility.darken(color, 0.18F), alpha)
         );
-        float clampedLeafProgress = Mth.clamp(leafProgress, 0.0F, 1.0F);
-        if (clampedLeafProgress > 0.0F) {
-            ScreenPoint stemTop = stemPoints.get(stemPoints.size() - 1);
-            float leafScale = AnimationUtility.easeOutBack(clampedLeafProgress);
-            drawLeaf(
-                    poseStack,
-                    stemTop.x - 6.2F,
-                    stemTop.y + 5.0F,
-                    10.5F * leafScale,
-                    4.5F * leafScale,
-                    -32.0F,
-                    color,
-                    glowColor,
-                    alpha
-            );
-            drawLeaf(
-                    poseStack,
-                    stemTop.x + 6.2F,
-                    stemTop.y + 3.5F,
-                    10.5F * leafScale,
-                    4.5F * leafScale,
-                    32.0F,
-                    color,
-                    glowColor,
-                    alpha
-            );
-        }
-    }
-
-    private static void drawLeaf(
-            PoseStack poseStack,
-            float centerX,
-            float centerY,
-            float radiusX,
-            float radiusY,
-            float rotationDegrees,
-            int color,
-            int glowColor,
-            float alpha
-    ) {
-        poseStack.pushPose();
-        poseStack.translate(centerX, centerY, 0.0F);
-        poseStack.mulPose(Axis.ZP.rotationDegrees(rotationDegrees));
-        drawEllipse(
-                poseStack,
-                0.0F,
-                0.0F,
-                radiusX + 2.0F,
-                radiusY + 1.5F,
-                ColorUtility.withAlpha(glowColor, alpha * 0.2F)
-        );
-        drawEllipse(poseStack, 0.0F, 0.0F, radiusX, radiusY, ColorUtility.withAlpha(color, alpha));
-        poseStack.popPose();
     }
 
     private static void drawPolyline(PoseStack poseStack, List<ScreenPoint> points, float thickness, int color) {
