@@ -24,7 +24,7 @@ public final class PlayerMeditationManager {
             return false;
         }
         MEDITATING_PLAYERS.add(player.getUUID());
-        preparePlayer(player);
+        stopMovement(player);
         ModNetwork.sendMeditationStateToTrackingAndSelf(player, true);
         return true;
     }
@@ -46,7 +46,7 @@ public final class PlayerMeditationManager {
             stopMeditating(player);
             return;
         }
-        preparePlayer(player);
+        stopMovement(player);
     }
 
     public static void syncState(ServerPlayer recipient, ServerPlayer trackedPlayer) {
@@ -72,11 +72,7 @@ public final class PlayerMeditationManager {
                 && !player.isSleeping();
     }
 
-    private static void preparePlayer(ServerPlayer player) {
+    private static void stopMovement(ServerPlayer player) {
         player.setDeltaMovement(Vec3.ZERO);
-        player.fallDistance = 0.0F;
-        player.setSprinting(false);
-        player.setShiftKeyDown(false);
-        player.stopUsingItem();
     }
 }

@@ -8,9 +8,6 @@
     "common.ChatFormattingMixin",
     "common.StyleMixin"
   ],
-  "client": [
-    "client.EntityTurnMixin"
-  ],
   "injectors": {
     "defaultRequire": 1
   },

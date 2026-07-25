@@ -30,14 +30,6 @@ public final class ClientMeditationManager {
             return;
         }
         player.setDeltaMovement(Vec3.ZERO);
-        player.setSprinting(false);
-        player.stopUsingItem();
-        minecraft.options.keyAttack.setDown(false);
-        minecraft.options.keyUse.setDown(false);
-        minecraft.options.keyPickItem.setDown(false);
-        if (minecraft.gameMode != null) {
-            minecraft.gameMode.stopDestroyBlock();
-        }
     }
 
     public static void requestStop() {

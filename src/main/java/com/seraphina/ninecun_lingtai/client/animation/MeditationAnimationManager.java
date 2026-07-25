@@ -77,11 +77,34 @@ public final class MeditationAnimationManager {
         if (meditationAnimation == null) {
             return;
         }
-        meditationLayer.setAnim(
-                new KeyframeAnimationPlayer(meditationAnimation).setFirstPersonMode(FirstPersonMode.DISABLED)
-        );
+        HoldOnLastFrameAnimationPlayer animationPlayer = new HoldOnLastFrameAnimationPlayer(meditationAnimation);
+        animationPlayer.setFirstPersonMode(FirstPersonMode.DISABLED);
+        meditationLayer.setAnim(animationPlayer);
     }
 
     private static final class MeditationAnimationLayer extends AnimationContainer<IAnimation> {
+    }
+
+    private static final class HoldOnLastFrameAnimationPlayer extends KeyframeAnimationPlayer {
+        private HoldOnLastFrameAnimationPlayer(KeyframeAnimation animation) {
+            super(animation);
+        }
+
+        @Override
+        public void tick() {
+            if (getCurrentTick() < getData().endTick) {
+                super.tick();
+            }
+        }
+
+        @Override
+        public void setupAnim(float tickDelta) {
+            super.setupAnim(getCurrentTick() >= getData().endTick ? 0.0F : tickDelta);
+        }
+
+        @Override
+        public boolean isActive() {
+            return true;
+        }
     }
 }
