@@ -88,6 +88,40 @@ public final class AptitudeRenderUtility {
         }
     }
 
+    public static void drawLine(
+            GuiGraphics guiGraphics,
+            ScreenPoint start,
+            ScreenPoint end,
+            float thickness,
+            int color
+    ) {
+        guiGraphics.flush();
+        drawLine(guiGraphics.pose(), start.x, start.y, end.x, end.y, thickness, color);
+    }
+
+    public static void drawRing(
+            GuiGraphics guiGraphics,
+            float centerX,
+            float centerY,
+            float radius,
+            float thickness,
+            int color
+    ) {
+        if ((color >>> 24) == 0 || radius <= 0.0F || thickness <= 0.0F) {
+            return;
+        }
+        List<ScreenPoint> ringPoints = new ArrayList<>(CIRCLE_SEGMENTS + 1);
+        for (int segment = 0; segment <= CIRCLE_SEGMENTS; segment++) {
+            float angle = (float) (Math.PI * 2.0D * segment / CIRCLE_SEGMENTS);
+            ringPoints.add(new ScreenPoint(
+                    centerX + Mth.cos(angle) * radius,
+                    centerY + Mth.sin(angle) * radius
+            ));
+        }
+        guiGraphics.flush();
+        drawPolyline(guiGraphics.pose(), ringPoints, thickness, color);
+    }
+
     public static void drawTaiji(
             GuiGraphics guiGraphics,
             float centerX,

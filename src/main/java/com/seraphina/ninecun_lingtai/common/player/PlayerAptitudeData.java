@@ -39,6 +39,10 @@ public final class PlayerAptitudeData {
         player.getPersistentData().put(SPIRITUAL_ROOT_KEY, spiritualRootData);
     }
 
+    public static void clearSpiritualRoot(Player player) {
+        player.getPersistentData().remove(SPIRITUAL_ROOT_KEY);
+    }
+
     public static void copySpiritualRoot(Player sourcePlayer, Player targetPlayer) {
         CompoundTag sourceData = sourcePlayer.getPersistentData();
         if (sourceData.contains(SPIRITUAL_ROOT_KEY, Tag.TAG_COMPOUND)) {

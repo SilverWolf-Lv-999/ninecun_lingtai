@@ -2,10 +2,12 @@ package com.seraphina.ninecun_lingtai.client.screen;
 
 import com.seraphina.ninecun_lingtai.ModMain;
 import com.seraphina.ninecun_lingtai.api.aptitude.SpiritualRoot;
+import com.seraphina.ninecun_lingtai.api.element.ElementRelation;
 import com.seraphina.ninecun_lingtai.api.element.ElementType;
 import com.seraphina.ninecun_lingtai.client.utility.AnimationUtility;
 import com.seraphina.ninecun_lingtai.client.utility.AptitudeRenderUtility;
 import com.seraphina.ninecun_lingtai.client.utility.AptitudeRenderUtility.ScreenPoint;
+import com.seraphina.ninecun_lingtai.client.utility.ElementRelationRenderUtility;
 import com.seraphina.ninecun_lingtai.common.font.CustomFontConstants;
 import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import com.seraphina.ninecun_lingtai.common.network.packet.SubmitAptitudePacket;
@@ -55,8 +57,8 @@ public final class AptitudeSelectionScreen extends Screen {
     private final EnumSet<ElementType> selectedElements = EnumSet.noneOf(ElementType.class);
     private final EnumMap<ElementType, Float> selectionScales = new EnumMap<>(ElementType.class);
     private final EnumMap<ElementType, Component> elementComponents = new EnumMap<>(ElementType.class);
-    private final Component selectionHint = customFontText("点击五行与阴阳，按 Enter 确定");
-    private final Component lengthHint = customFontText("拖动灵苗决定长度，松开确定");
+    private final Component selectionHint = customFontText("灵根属性");
+    private final Component lengthHint = customFontText("灵根长度");
 
     private AptitudePhase phase = AptitudePhase.INTRO;
     private long phaseStartedAt;
@@ -201,8 +203,16 @@ public final class AptitudeSelectionScreen extends Screen {
                 elementPositions,
                 selectionAlpha * connectionProgress * 0.62F
         );
+        renderElementRelationEffects(
+                guiGraphics,
+                elementPositions,
+                currentTime,
+                selectionAlpha * connectionProgress
+        );
 
         float elementScale = getElementTextScale();
+        float yinYangBalanceStrength = getElementEffectStrength(ElementType.YIN_YANG);
+        float balancePulse = 0.5F + 0.5F * Mth.sin(currentTime * 0.003F);
         for (int index = 0; index < SpiritualRootUtility.FIVE_ELEMENT_DIAGRAM_ORDER.size(); index++) {
             ElementType element = SpiritualRootUtility.FIVE_ELEMENT_DIAGRAM_ORDER.get(index);
             float introProgress = getElementIntroProgress(index, phaseElapsed);
@@ -214,10 +224,16 @@ public final class AptitudeSelectionScreen extends Screen {
             int displayColor = selected
                     ? ColorUtility.brighten(baseColor, 0.28F)
                     : ColorUtility.darken(baseColor, 0.42F);
+            displayColor = ColorUtility.blend(
+                    displayColor,
+                    ColorUtility.brighten(baseColor, 0.24F),
+                    yinYangBalanceStrength * (selected ? 0.16F : 0.44F) * balancePulse
+            );
             float alpha = selectionAlpha * introProgress * (selected ? 1.0F : 0.82F);
             float scale = elementScale
                     * this.selectionScales.get(element)
-                    * (0.82F + 0.18F * AnimationUtility.easeOutBack(introProgress));
+                    * (0.82F + 0.18F * AnimationUtility.easeOutBack(introProgress))
+                    * (1.0F + yinYangBalanceStrength * 0.025F * balancePulse);
             ScreenPoint position = elementPositions.get(index);
             AptitudeRenderUtility.drawCenteredText(
                     guiGraphics,
@@ -241,14 +257,16 @@ public final class AptitudeSelectionScreen extends Screen {
         if (taijiProgress > 0.0F) {
             float centerX = this.width * 0.5F;
             float centerY = getDiagramCenterY();
-            float rotation = (currentTime % 45000L) * 360.0F / 45000.0F;
+            float rotationDuration = Mth.lerp(yinYangBalanceStrength, 45000.0F, 10500.0F);
+            float rotation = (currentTime % (long) rotationDuration) * 360.0F / rotationDuration;
+            float balanceScale = 1.0F + yinYangBalanceStrength * 0.045F * balancePulse;
             AptitudeRenderUtility.drawTaiji(
                     guiGraphics,
                     centerX,
                     centerY,
                     getTaijiRadius(),
                     rotation,
-                    this.taijiScale * (0.78F + 0.22F * taijiProgress),
+                    this.taijiScale * balanceScale * (0.78F + 0.22F * taijiProgress),
                     selectionAlpha * Mth.clamp(taijiProgress, 0.0F, 1.0F)
             );
         }
@@ -266,6 +284,68 @@ public final class AptitudeSelectionScreen extends Screen {
                     0x111318,
                     selectionAlpha * 0.45F
             );
+        }
+    }
+
+    private void renderElementRelationEffects(
+            GuiGraphics guiGraphics,
+            List<ScreenPoint> elementPositions,
+            long currentTime,
+            float alpha
+    ) {
+        if (alpha <= 0.0F || SpiritualRootUtility.isChaos(this.selectedElements)) {
+            return;
+        }
+        float nodeRadius = getElementNodeRadius();
+        float yinYangStrength = getElementEffectStrength(ElementType.YIN_YANG);
+        if (yinYangStrength > 0.01F) {
+            ElementRelationRenderUtility.drawYinYangBalance(
+                    guiGraphics,
+                    new ScreenPoint(this.width * 0.5F, getDiagramCenterY()),
+                    getTaijiRadius(),
+                    elementPositions,
+                    this.selectedElements,
+                    nodeRadius,
+                    currentTime,
+                    alpha * yinYangStrength
+            );
+        }
+
+        int selectedFiveElementCount = 0;
+        for (ElementType element : SpiritualRootUtility.FIVE_ELEMENT_DIAGRAM_ORDER) {
+            if (this.selectedElements.contains(element)) {
+                selectedFiveElementCount++;
+            }
+        }
+        float crowdAlpha = Mth.clamp(1.08F - selectedFiveElementCount * 0.12F, 0.54F, 1.0F);
+        for (int sourceIndex = 0; sourceIndex < SpiritualRootUtility.FIVE_ELEMENT_DIAGRAM_ORDER.size(); sourceIndex++) {
+            ElementType sourceElement = SpiritualRootUtility.FIVE_ELEMENT_DIAGRAM_ORDER.get(sourceIndex);
+            float sourceStrength = getElementEffectStrength(sourceElement);
+            if (sourceStrength <= 0.01F) {
+                continue;
+            }
+            for (int targetIndex = 0; targetIndex < SpiritualRootUtility.FIVE_ELEMENT_DIAGRAM_ORDER.size(); targetIndex++) {
+                if (sourceIndex == targetIndex) {
+                    continue;
+                }
+                ElementType targetElement = SpiritualRootUtility.FIVE_ELEMENT_DIAGRAM_ORDER.get(targetIndex);
+                ElementRelation relation = sourceElement.getRelationTo(targetElement);
+                if (this.selectedElements.contains(targetElement)
+                        && relation != ElementRelation.GENERATES
+                        && relation != ElementRelation.OVERCOMES) {
+                    continue;
+                }
+                ElementRelationRenderUtility.drawRelation(
+                        guiGraphics,
+                        sourceElement,
+                        targetElement,
+                        elementPositions.get(sourceIndex),
+                        elementPositions.get(targetIndex),
+                        nodeRadius,
+                        currentTime,
+                        alpha * sourceStrength * crowdAlpha
+                );
+            }
         }
     }
 
@@ -544,6 +624,25 @@ public final class AptitudeSelectionScreen extends Screen {
 
     private float getTaijiRadius() {
         return Mth.clamp(Math.min(this.width, this.height) * 0.072F, 13.0F, 36.0F);
+    }
+
+    private float getElementNodeRadius() {
+        return this.font.lineHeight * getElementTextScale() * 0.68F + 7.0F;
+    }
+
+    private float getElementEffectStrength(ElementType element) {
+        if (element == ElementType.YIN_YANG) {
+            return Mth.clamp((this.taijiScale - 1.0F) / (SELECTED_TAIJI_SCALE - 1.0F), 0.0F, 1.0F);
+        }
+        Float selectionScale = this.selectionScales.get(element);
+        if (selectionScale == null) {
+            return 0.0F;
+        }
+        return Mth.clamp(
+                (selectionScale - 1.0F) / (SELECTED_ELEMENT_SCALE - 1.0F),
+                0.0F,
+                1.0F
+        );
     }
 
     private float getElementTextScale() {
