@@ -1,0 +1,51 @@
+{
+  "rules": [
+    {
+      "biomes": [
+        "minecraft:the_end"
+      ],
+      "multipliers": {
+        "metal": 1.0,
+        "wood": 1.0,
+        "water": 1.0,
+        "fire": 1.0,
+        "earth": 1.1,
+        "yin_yang": 1.25,
+        "thunder": 1.1,
+        "chaos": 1.15
+      }
+    },
+    {
+      "biomes": [
+        "minecraft:end_highlands",
+        "minecraft:end_midlands"
+      ],
+      "multipliers": {
+        "metal": 1.1,
+        "wood": 1.0,
+        "water": 1.0,
+        "fire": 1.0,
+        "earth": 1.3,
+        "yin_yang": 1.2,
+        "thunder": 1.0,
+        "chaos": 1.1
+      }
+    },
+    {
+      "biomes": [
+        "minecraft:small_end_islands",
+        "minecraft:end_barrens"
+      ],
+      "multipliers": {
+        "metal": 0.9,
+        "wood": 0.9,
+        "water": 0.9,
+        "fire": 0.9,
+        "earth": 0.9,
+        "yin_yang": 1.2,
+        "thunder": 1.15,
+        "chaos": 1.3
+      }
+    }
+  ]
+}

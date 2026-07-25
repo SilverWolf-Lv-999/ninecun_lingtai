@@ -1,0 +1,9 @@
+{
+  "damage_types": [
+    "minecraft:in_fire",
+    "minecraft:on_fire",
+    "minecraft:hot_floor"
+  ],
+  "element": "fire",
+  "strength": 1.0
+}

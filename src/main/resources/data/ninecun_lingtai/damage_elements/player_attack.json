@@ -1,0 +1,9 @@
+{
+  "damage_types": [
+    "minecraft:player_attack"
+  ],
+  "element": "attacker_spiritual_root",
+  "strength": 1.0,
+  "fallback_element": "metal",
+  "fallback_strength": 1.0
+}

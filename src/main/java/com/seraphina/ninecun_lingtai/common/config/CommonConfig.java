@@ -1,0 +1,42 @@
+package com.seraphina.ninecun_lingtai.common.config;
+
+import net.minecraftforge.common.ForgeConfigSpec;
+
+public final class CommonConfig {
+    private static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
+
+    public static final ForgeConfigSpec.DoubleValue GENERATION_WEAKENING_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue RESTRAINT_ENHANCEMENT_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue SUPPRESSED_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue NATURAL_RESTRAINT_ADVANTAGE;
+    public static final ForgeConfigSpec.DoubleValue CHAOS_ENHANCEMENT_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue CHAOS_SUPPRESSED_MULTIPLIER;
+    public static final ForgeConfigSpec SPEC;
+
+    static {
+        BUILDER.push("elementDamage");
+        GENERATION_WEAKENING_MULTIPLIER = BUILDER
+                .comment("Damage multiplier when the attack element generates the target element")
+                .defineInRange("generationWeakeningMultiplier", 0.5D, 0.0D, 100.0D);
+        RESTRAINT_ENHANCEMENT_MULTIPLIER = BUILDER
+                .comment("Damage multiplier when an element successfully suppresses another element")
+                .defineInRange("restraintEnhancementMultiplier", 1.5D, 0.0D, 100.0D);
+        SUPPRESSED_MULTIPLIER = BUILDER
+                .comment("Damage multiplier when the attack element is suppressed by the target element")
+                .defineInRange("suppressedMultiplier", 0.5D, 0.0D, 100.0D);
+        NATURAL_RESTRAINT_ADVANTAGE = BUILDER
+                .comment("Strength advantage granted by the natural five-element restraint direction")
+                .defineInRange("naturalRestraintAdvantage", 1.25D, 1.0D, 100.0D);
+        CHAOS_ENHANCEMENT_MULTIPLIER = BUILDER
+                .comment("Damage multiplier when chaos suppresses another element")
+                .defineInRange("chaosEnhancementMultiplier", 2.0D, 0.0D, 100.0D);
+        CHAOS_SUPPRESSED_MULTIPLIER = BUILDER
+                .comment("Damage multiplier when another element attacks a chaos target")
+                .defineInRange("chaosSuppressedMultiplier", 0.25D, 0.0D, 100.0D);
+        BUILDER.pop();
+        SPEC = BUILDER.build();
+    }
+
+    private CommonConfig() {
+    }
+}

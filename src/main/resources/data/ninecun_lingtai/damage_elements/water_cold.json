@@ -1,0 +1,7 @@
+{
+  "damage_types": [
+    "minecraft:freeze"
+  ],
+  "element": "water",
+  "strength": 1.25
+}

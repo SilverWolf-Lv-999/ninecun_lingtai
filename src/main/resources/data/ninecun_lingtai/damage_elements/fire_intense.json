@@ -1,0 +1,13 @@
+{
+  "damage_types": [
+    "minecraft:lava",
+    "minecraft:fireball",
+    "minecraft:unattributed_fireball",
+    "minecraft:fireworks",
+    "minecraft:explosion",
+    "minecraft:player_explosion",
+    "minecraft:bad_respawn_point"
+  ],
+  "element": "fire",
+  "strength": 1.5
+}

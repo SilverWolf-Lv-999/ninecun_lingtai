@@ -1,0 +1,8 @@
+{
+  "damage_types": [
+    "minecraft:falling_anvil",
+    "minecraft:generic"
+  ],
+  "element": "metal",
+  "strength": 1.75
+}

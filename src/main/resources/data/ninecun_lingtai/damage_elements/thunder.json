@@ -1,0 +1,8 @@
+{
+  "damage_types": [
+    "minecraft:lightning_bolt",
+    "minecraft:sonic_boom"
+  ],
+  "element": "thunder",
+  "strength": 1.75
+}

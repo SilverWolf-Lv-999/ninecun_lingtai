@@ -1,0 +1,8 @@
+{
+  "damage_types": [
+    "minecraft:wither",
+    "minecraft:wither_skull"
+  ],
+  "element": "yin_yang",
+  "strength": 1.5
+}

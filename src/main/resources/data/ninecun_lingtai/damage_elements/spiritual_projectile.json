@@ -1,0 +1,9 @@
+{
+  "damage_types": [
+    "minecraft:arrow",
+    "minecraft:trident",
+    "minecraft:thrown"
+  ],
+  "element": "attacker_spiritual_root",
+  "strength": 0.9
+}

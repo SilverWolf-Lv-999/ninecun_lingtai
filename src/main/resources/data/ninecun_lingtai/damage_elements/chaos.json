@@ -1,0 +1,9 @@
+{
+  "damage_types": [
+    "minecraft:fell_out_of_world",
+    "minecraft:outside_border",
+    "minecraft:generic_kill"
+  ],
+  "element": "chaos",
+  "strength": 3.0
+}

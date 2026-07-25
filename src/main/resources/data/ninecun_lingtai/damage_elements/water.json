@@ -1,0 +1,8 @@
+{
+  "damage_types": [
+    "minecraft:drown",
+    "minecraft:dry_out"
+  ],
+  "element": "water",
+  "strength": 1.0
+}

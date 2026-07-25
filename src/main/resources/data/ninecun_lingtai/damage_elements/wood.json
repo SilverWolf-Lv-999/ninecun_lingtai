@@ -1,0 +1,11 @@
+{
+  "damage_types": [
+    "minecraft:cactus",
+    "minecraft:starve",
+    "minecraft:sweet_berry_bush",
+    "minecraft:sting",
+    "minecraft:thorns"
+  ],
+  "element": "wood",
+  "strength": 1.0
+}

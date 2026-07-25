@@ -1,0 +1,9 @@
+{
+  "damage_types": [
+    "minecraft:magic",
+    "minecraft:indirect_magic",
+    "minecraft:dragon_breath"
+  ],
+  "element": "yin_yang",
+  "strength": 1.0
+}
