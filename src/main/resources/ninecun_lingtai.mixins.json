@@ -8,9 +8,6 @@
     "common.ChatFormattingMixin",
     "common.StyleMixin"
   ],
-  "client": [
-    "client.FontMixin"
-  ],
   "injectors": {
     "defaultRequire": 1
   },

@@ -39,15 +39,17 @@ public final class AptitudeRenderUtility {
     ) {
         FormattedCharSequence visualText = text.getVisualOrderText();
         float textWidth = font.width(visualText);
+        float textLeft = Math.round(centerX - textWidth * scale * 0.5F);
+        float textTop = Math.round(centerY - font.lineHeight * scale * 0.5F);
         PoseStack poseStack = guiGraphics.pose();
         poseStack.pushPose();
-        poseStack.translate(centerX, centerY, 200.0F);
+        poseStack.translate(textLeft, textTop, 200.0F);
         poseStack.scale(scale, scale, 1.0F);
-        float textX = -textWidth * 0.5F;
-        float textY = -font.lineHeight * 0.5F;
+        float textX = 0.0F;
+        float textY = 0.0F;
         int outline = ColorUtility.withAlpha(outlineColor, outlineAlpha);
         if ((outline >>> 24) > 3) {
-            float outlineOffset = 1.75F / Math.max(1.0F, scale);
+            float outlineOffset = 1.0F / Math.max(1.0F, scale);
             guiGraphics.drawString(font, visualText, textX - outlineOffset, textY, outline, false);
             guiGraphics.drawString(font, visualText, textX + outlineOffset, textY, outline, false);
             guiGraphics.drawString(font, visualText, textX, textY - outlineOffset, outline, false);

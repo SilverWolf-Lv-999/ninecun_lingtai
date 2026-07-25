@@ -77,7 +77,7 @@ public final class AptitudeSelectionScreen extends Screen {
         super(Component.literal("资质选择"));
         for (ElementType element : SpiritualRoot.SELECTABLE_ELEMENTS) {
             this.selectionScales.put(element, 1.0F);
-            this.elementComponents.put(element, customFontText(SpiritualRootUtility.getElementName(element)));
+            this.elementComponents.put(element, displayFontText(SpiritualRootUtility.getElementName(element)));
         }
     }
 
@@ -369,7 +369,7 @@ public final class AptitudeSelectionScreen extends Screen {
 
     private void confirmElementSelection() {
         this.confirmedElements = Set.copyOf(this.selectedElements);
-        this.spiritualRootName = customFontText(
+        this.spiritualRootName = displayFontText(
                 SpiritualRootUtility.getSpiritualRootName(this.confirmedElements)
         );
         this.spiritualRootColor = SpiritualRootUtility.getSpiritualRootColor(this.confirmedElements);
@@ -643,6 +643,12 @@ public final class AptitudeSelectionScreen extends Screen {
 
     private static Component customFontText(String text) {
         return Component.literal(text).withStyle(style -> style.withFont(CustomFontConstants.SHAN_BEI_FONT_ID));
+    }
+
+    private static Component displayFontText(String text) {
+        return Component.literal(text).withStyle(
+                style -> style.withFont(CustomFontConstants.SHAN_BEI_DISPLAY_FONT_ID)
+        );
     }
 
     private enum AptitudePhase {
