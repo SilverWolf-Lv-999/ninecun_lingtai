@@ -27,12 +27,12 @@ import java.util.Map;
 import java.util.Optional;
 
 public final class DamageElementManager extends SimpleJsonResourceReloadListener {
-    public static final DamageElementManager INSTANCE = new DamageElementManager();
-
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final Gson GSON = new GsonBuilder().disableHtmlEscaping().create();
     private static final String DIRECTORY = "damage_elements";
     private static final String ATTACKER_SPIRITUAL_ROOT = "attacker_spiritual_root";
+
+    public static final DamageElementManager INSTANCE = new DamageElementManager();
 
     private volatile Map<ResourceLocation, DamageElementDefinition> damageElements = Map.of();
 

@@ -30,11 +30,11 @@ import java.util.Map;
 import java.util.Set;
 
 public final class ElementEnvironmentManager extends SimpleJsonResourceReloadListener {
-    public static final ElementEnvironmentManager INSTANCE = new ElementEnvironmentManager();
-
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final Gson GSON = new GsonBuilder().disableHtmlEscaping().create();
     private static final String DIRECTORY = "element_environments";
+
+    public static final ElementEnvironmentManager INSTANCE = new ElementEnvironmentManager();
 
     private volatile List<ElementEnvironmentRule> environmentRules = List.of();
 
