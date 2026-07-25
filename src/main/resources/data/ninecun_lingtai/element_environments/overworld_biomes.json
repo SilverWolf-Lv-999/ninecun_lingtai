@@ -38,11 +38,11 @@
         "minecraft:cherry_grove"
       ],
       "multipliers": {
-        "metal": 1.0,
-        "wood": 1.4,
-        "water": 1.0,
-        "fire": 0.9,
-        "earth": 1.0,
+        "metal": 0.85,
+        "wood": 1.6,
+        "water": 1.1,
+        "fire": 0.75,
+        "earth": 0.7,
         "yin_yang": 1.15,
         "thunder": 1.0,
         "chaos": 1.0
@@ -56,11 +56,11 @@
         "minecraft:old_growth_birch_forest"
       ],
       "multipliers": {
-        "metal": 1.0,
-        "wood": 1.45,
-        "water": 1.0,
-        "fire": 0.8,
-        "earth": 1.1,
+        "metal": 0.75,
+        "wood": 1.75,
+        "water": 1.1,
+        "fire": 0.6,
+        "earth": 0.55,
         "yin_yang": 1.0,
         "thunder": 0.9,
         "chaos": 1.0
@@ -73,11 +73,11 @@
         "minecraft:old_growth_spruce_taiga"
       ],
       "multipliers": {
-        "metal": 1.0,
-        "wood": 1.35,
-        "water": 1.15,
-        "fire": 0.75,
-        "earth": 1.0,
+        "metal": 0.85,
+        "wood": 1.6,
+        "water": 1.3,
+        "fire": 0.5,
+        "earth": 0.65,
         "yin_yang": 1.0,
         "thunder": 1.0,
         "chaos": 1.0
@@ -89,11 +89,11 @@
         "minecraft:grove"
       ],
       "multipliers": {
-        "metal": 1.0,
-        "wood": 1.2,
-        "water": 1.35,
-        "fire": 0.65,
-        "earth": 1.0,
+        "metal": 0.9,
+        "wood": 1.35,
+        "water": 1.65,
+        "fire": 0.35,
+        "earth": 0.75,
         "yin_yang": 1.0,
         "thunder": 1.0,
         "chaos": 1.0
@@ -107,9 +107,9 @@
       ],
       "multipliers": {
         "metal": 1.0,
-        "wood": 0.8,
-        "water": 1.55,
-        "fire": 0.55,
+        "wood": 0.65,
+        "water": 1.8,
+        "fire": 0.25,
         "earth": 1.1,
         "yin_yang": 1.0,
         "thunder": 1.0,
@@ -152,11 +152,11 @@
         "minecraft:desert"
       ],
       "multipliers": {
-        "metal": 1.1,
-        "wood": 0.6,
-        "water": 0.5,
-        "fire": 1.5,
-        "earth": 1.3,
+        "metal": 0.65,
+        "wood": 0.3,
+        "water": 0.15,
+        "fire": 1.85,
+        "earth": 1.55,
         "yin_yang": 1.0,
         "thunder": 1.0,
         "chaos": 1.0
@@ -168,11 +168,11 @@
         "minecraft:mangrove_swamp"
       ],
       "multipliers": {
-        "metal": 1.0,
-        "wood": 1.35,
-        "water": 1.5,
-        "fire": 0.6,
-        "earth": 0.9,
+        "metal": 0.85,
+        "wood": 1.55,
+        "water": 1.8,
+        "fire": 0.2,
+        "earth": 0.6,
         "yin_yang": 1.15,
         "thunder": 1.0,
         "chaos": 1.0
@@ -185,11 +185,11 @@
         "minecraft:windswept_savanna"
       ],
       "multipliers": {
-        "metal": 1.0,
-        "wood": 0.9,
-        "water": 0.75,
-        "fire": 1.25,
-        "earth": 1.2,
+        "metal": 0.75,
+        "wood": 0.7,
+        "water": 0.45,
+        "fire": 1.55,
+        "earth": 1.35,
         "yin_yang": 1.0,
         "thunder": 1.1,
         "chaos": 1.0
@@ -219,11 +219,11 @@
         "minecraft:bamboo_jungle"
       ],
       "multipliers": {
-        "metal": 1.0,
-        "wood": 1.6,
-        "water": 1.25,
-        "fire": 0.7,
-        "earth": 1.0,
+        "metal": 0.7,
+        "wood": 1.9,
+        "water": 1.45,
+        "fire": 0.25,
+        "earth": 0.5,
         "yin_yang": 1.1,
         "thunder": 1.0,
         "chaos": 1.0
@@ -236,11 +236,11 @@
         "minecraft:wooded_badlands"
       ],
       "multipliers": {
-        "metal": 1.2,
-        "wood": 0.65,
-        "water": 0.6,
-        "fire": 1.3,
-        "earth": 1.6,
+        "metal": 1.35,
+        "wood": 0.3,
+        "water": 0.15,
+        "fire": 1.55,
+        "earth": 1.9,
         "yin_yang": 1.0,
         "thunder": 1.0,
         "chaos": 1.0
@@ -252,10 +252,10 @@
       ],
       "multipliers": {
         "metal": 1.0,
-        "wood": 1.1,
-        "water": 1.45,
-        "fire": 0.7,
-        "earth": 1.0,
+        "wood": 1.25,
+        "water": 1.7,
+        "fire": 0.25,
+        "earth": 0.8,
         "yin_yang": 1.0,
         "thunder": 1.1,
         "chaos": 1.0
@@ -267,10 +267,10 @@
       ],
       "multipliers": {
         "metal": 1.0,
-        "wood": 1.0,
-        "water": 1.55,
-        "fire": 0.55,
-        "earth": 1.0,
+        "wood": 0.9,
+        "water": 1.85,
+        "fire": 0.15,
+        "earth": 0.85,
         "yin_yang": 1.0,
         "thunder": 1.1,
         "chaos": 1.0
@@ -314,11 +314,11 @@
         "minecraft:deep_lukewarm_ocean"
       ],
       "multipliers": {
-        "metal": 1.0,
-        "wood": 1.05,
-        "water": 1.65,
-        "fire": 0.55,
-        "earth": 0.8,
+        "metal": 0.85,
+        "wood": 1.25,
+        "water": 2.0,
+        "fire": 0.0,
+        "earth": 0.55,
         "yin_yang": 1.0,
         "thunder": 1.15,
         "chaos": 1.0
@@ -330,11 +330,11 @@
         "minecraft:deep_ocean"
       ],
       "multipliers": {
-        "metal": 1.0,
-        "wood": 1.0,
-        "water": 1.75,
-        "fire": 0.5,
-        "earth": 0.8,
+        "metal": 0.9,
+        "wood": 1.2,
+        "water": 2.15,
+        "fire": 0.0,
+        "earth": 0.55,
         "yin_yang": 1.0,
         "thunder": 1.2,
         "chaos": 1.0
@@ -347,10 +347,10 @@
       ],
       "multipliers": {
         "metal": 1.0,
-        "wood": 0.85,
-        "water": 1.85,
-        "fire": 0.45,
-        "earth": 1.0,
+        "wood": 1.0,
+        "water": 2.3,
+        "fire": 0.0,
+        "earth": 0.65,
         "yin_yang": 1.0,
         "thunder": 1.15,
         "chaos": 1.0
@@ -362,11 +362,11 @@
         "minecraft:deep_frozen_ocean"
       ],
       "multipliers": {
-        "metal": 1.0,
-        "wood": 0.75,
-        "water": 2.0,
-        "fire": 0.35,
-        "earth": 1.0,
+        "metal": 1.05,
+        "wood": 0.8,
+        "water": 2.5,
+        "fire": 0.0,
+        "earth": 0.75,
         "yin_yang": 1.0,
         "thunder": 1.1,
         "chaos": 1.0
@@ -407,11 +407,11 @@
         "minecraft:lush_caves"
       ],
       "multipliers": {
-        "metal": 1.0,
-        "wood": 1.55,
-        "water": 1.4,
-        "fire": 0.65,
-        "earth": 1.15,
+        "metal": 0.75,
+        "wood": 1.8,
+        "water": 1.6,
+        "fire": 0.2,
+        "earth": 0.65,
         "yin_yang": 1.0,
         "thunder": 1.0,
         "chaos": 1.0

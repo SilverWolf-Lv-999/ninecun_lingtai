@@ -20,14 +20,14 @@
         "minecraft:the_nether"
       ],
       "multipliers": {
-        "metal": 1.1,
-        "wood": 0.7,
-        "water": 0.45,
-        "fire": 1.75,
-        "earth": 1.2,
-        "yin_yang": 1.1,
-        "thunder": 0.9,
-        "chaos": 1.0
+        "metal": 0.65,
+        "wood": 0.6,
+        "water": 0.0,
+        "fire": 2.0,
+        "earth": 1.4,
+        "yin_yang": 1.15,
+        "thunder": 0.75,
+        "chaos": 1.1
       }
     },
     {
@@ -35,14 +35,14 @@
         "minecraft:the_end"
       ],
       "multipliers": {
-        "metal": 0.85,
-        "wood": 0.85,
-        "water": 0.85,
-        "fire": 0.85,
-        "earth": 0.85,
-        "yin_yang": 1.45,
-        "thunder": 1.15,
-        "chaos": 1.2
+        "metal": 0.6,
+        "wood": 0.6,
+        "water": 0.6,
+        "fire": 0.6,
+        "earth": 0.7,
+        "yin_yang": 1.8,
+        "thunder": 1.2,
+        "chaos": 1.5
       }
     }
   ]

@@ -57,9 +57,10 @@ public final class ElementEnvironmentManager extends SimpleJsonResourceReloadLis
     public double getEnvironmentMultiplier(Level level, BlockPos position, ElementType element) {
         ResourceLocation dimension = level.dimension().location();
         Holder<Biome> biome = level.getBiome(position);
+        WeatherType weather = WeatherType.getCurrentWeather(level, position);
         double multiplier = 1.0D;
         for (ElementEnvironmentRule environmentRule : this.environmentRules) {
-            if (environmentRule.matches(dimension, biome)) {
+            if (environmentRule.matches(dimension, biome, weather)) {
                 multiplier *= environmentRule.getMultiplier(element);
             }
         }
@@ -120,8 +121,9 @@ public final class ElementEnvironmentManager extends SimpleJsonResourceReloadLis
         Set<ResourceLocation> dimensions = parseResourceLocations(jsonObject, "dimensions");
         Set<ResourceKey<Biome>> biomes = parseBiomeKeys(jsonObject);
         Set<TagKey<Biome>> biomeTags = parseBiomeTags(jsonObject);
-        if (dimensions.isEmpty() && biomes.isEmpty() && biomeTags.isEmpty()) {
-            throw new JsonParseException(ruleId + " must define dimensions, biomes, or biome_tags");
+        Set<WeatherType> weatherTypes = parseWeatherTypes(jsonObject, ruleId);
+        if (dimensions.isEmpty() && biomes.isEmpty() && biomeTags.isEmpty() && weatherTypes.isEmpty()) {
+            throw new JsonParseException(ruleId + " must define dimensions, biomes, biome_tags, or weather");
         }
 
         JsonObject multipliersJson = GsonHelper.getAsJsonObject(jsonObject, "multipliers");
@@ -133,13 +135,13 @@ public final class ElementEnvironmentManager extends SimpleJsonResourceReloadLis
             ElementType element = ElementType.fromSerializedName(entry.getKey())
                     .orElseThrow(() -> new JsonParseException("Unknown element in " + ruleId + ": " + entry.getKey()));
             double multiplier = GsonHelper.convertToDouble(entry.getValue(), "multiplier for " + entry.getKey());
-            if (!Double.isFinite(multiplier) || multiplier <= 0.0D) {
+            if (!Double.isFinite(multiplier) || multiplier < 0.0D) {
                 throw new JsonParseException("Multiplier for " + entry.getKey() + " in " + ruleId
-                        + " must be finite and greater than zero");
+                        + " must be finite and non-negative");
             }
             multipliers.put(element, multiplier);
         }
-        return new ElementEnvironmentRule(dimensions, biomes, biomeTags, multipliers);
+        return new ElementEnvironmentRule(dimensions, biomes, biomeTags, weatherTypes, multipliers);
     }
 
     private static Set<ResourceLocation> parseResourceLocations(JsonObject jsonObject, String fieldName) {
@@ -175,29 +177,94 @@ public final class ElementEnvironmentManager extends SimpleJsonResourceReloadLis
         return Set.copyOf(biomeTags);
     }
 
+    private static Set<WeatherType> parseWeatherTypes(JsonObject jsonObject, String ruleId) {
+        if (!jsonObject.has("weather")) {
+            return Set.of();
+        }
+        JsonArray weatherJson = GsonHelper.getAsJsonArray(jsonObject, "weather");
+        Set<WeatherType> weatherTypes = new HashSet<>();
+        for (JsonElement weatherEntryJson : weatherJson) {
+            String weatherName = GsonHelper.convertToString(weatherEntryJson, "weather entry");
+            WeatherType weatherType = WeatherType.fromSerializedName(weatherName);
+            if (weatherType == null) {
+                throw new JsonParseException("Unknown weather in " + ruleId + ": " + weatherName);
+            }
+            weatherTypes.add(weatherType);
+        }
+        return Set.copyOf(weatherTypes);
+    }
+
     private record ElementEnvironmentRule(
             Set<ResourceLocation> dimensions,
             Set<ResourceKey<Biome>> biomes,
             Set<TagKey<Biome>> biomeTags,
+            Set<WeatherType> weatherTypes,
             Map<ElementType, Double> multipliers
     ) {
         private ElementEnvironmentRule {
             dimensions = Set.copyOf(dimensions);
             biomes = Set.copyOf(biomes);
             biomeTags = Set.copyOf(biomeTags);
+            weatherTypes = Set.copyOf(weatherTypes);
             multipliers = Map.copyOf(multipliers);
         }
 
-        private boolean matches(ResourceLocation dimension, Holder<Biome> biome) {
+        private boolean matches(ResourceLocation dimension, Holder<Biome> biome, WeatherType weatherType) {
             boolean matchesDimension = this.dimensions.isEmpty() || this.dimensions.contains(dimension);
             boolean matchesBiome = this.biomes.isEmpty() && this.biomeTags.isEmpty()
                     || this.biomes.stream().anyMatch(biome::is)
                     || this.biomeTags.stream().anyMatch(biome::is);
-            return matchesDimension && matchesBiome;
+            boolean matchesWeather = this.weatherTypes.isEmpty() || this.weatherTypes.contains(weatherType);
+            return matchesDimension && matchesBiome && matchesWeather;
         }
 
         private double getMultiplier(ElementType element) {
             return this.multipliers.getOrDefault(element, 1.0D);
+        }
+    }
+
+    private enum WeatherType {
+        CLEAR("clear"),
+        RAIN("rain"),
+        SNOW("snow"),
+        THUNDER("thunder"),
+        SHELTERED("sheltered");
+
+        private final String serializedName;
+
+        WeatherType(String serializedName) {
+            this.serializedName = serializedName;
+        }
+
+        private static WeatherType getCurrentWeather(Level level, BlockPos position) {
+            if (!level.isRaining()) {
+                return CLEAR;
+            }
+
+            BlockPos precipitationPosition = position.above();
+            if (!level.canSeeSky(precipitationPosition)) {
+                return SHELTERED;
+            }
+
+            Biome.Precipitation precipitation = level.getBiome(precipitationPosition)
+                    .value()
+                    .getPrecipitationAt(precipitationPosition);
+            if (precipitation == Biome.Precipitation.NONE) {
+                return SHELTERED;
+            }
+            if (level.isThundering()) {
+                return THUNDER;
+            }
+            return precipitation == Biome.Precipitation.SNOW ? SNOW : RAIN;
+        }
+
+        private static WeatherType fromSerializedName(String serializedName) {
+            for (WeatherType weatherType : values()) {
+                if (weatherType.serializedName.equals(serializedName)) {
+                    return weatherType;
+                }
+            }
+            return null;
         }
     }
 }

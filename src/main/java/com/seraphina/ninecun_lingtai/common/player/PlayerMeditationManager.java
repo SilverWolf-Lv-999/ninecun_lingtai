@@ -68,6 +68,7 @@ public final class PlayerMeditationManager {
         lockRotation(player);
         if (player.tickCount % ABSORPTION_INTERVAL_TICKS == 0) {
             absorbSpiritualEnergy(player);
+            syncStateToTrackingAndSelf(player, true);
         }
     }
 
