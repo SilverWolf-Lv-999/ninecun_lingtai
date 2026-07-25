@@ -261,11 +261,12 @@ public final class AptitudeSelectionScreen extends Screen {
                     * (0.82F + 0.18F * AnimationUtility.easeOutBack(introProgress))
                     * (1.0F + yinYangBalanceStrength * 0.025F * balancePulse);
             ScreenPoint position = elementPositions.get(index);
+            float textCenterX = position.x() - getElementTextOpticalOffsetX(element) * scale;
             AptitudeRenderUtility.drawCenteredText(
                     guiGraphics,
                     this.font,
                     this.elementComponents.get(element),
-                    position.x(),
+                    textCenterX,
                     position.y(),
                     scale,
                     ColorUtility.withAlpha(displayColor, alpha),
@@ -708,6 +709,17 @@ public final class AptitudeSelectionScreen extends Screen {
 
     private float getElementTextScale() {
         return Mth.clamp(Math.min(this.width, this.height) * 0.014F, 2.35F, 4.2F);
+    }
+
+    private static float getElementTextOpticalOffsetX(ElementType element) {
+        return switch (element) {
+            case WOOD -> 1.2F;
+            case WATER -> 1.45F;
+            case FIRE -> 0.85F;
+            case EARTH -> 0.65F;
+            case METAL -> 0.25F;
+            default -> 0.0F;
+        };
     }
 
     private float getHintScale() {
