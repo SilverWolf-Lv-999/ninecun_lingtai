@@ -61,3 +61,9 @@ mandatory = true
 versionRange = "${minecraft_version_range}"
 ordering = "NONE"
 side = "BOTH"
+[[dependencies."${mod_id}"]]
+modId = "playeranimator"
+mandatory = true
+versionRange = "[1.0.2-rc1,2)"
+ordering = "AFTER"
+side = "BOTH"

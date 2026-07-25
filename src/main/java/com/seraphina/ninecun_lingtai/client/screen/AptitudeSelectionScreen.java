@@ -65,10 +65,10 @@ public final class AptitudeSelectionScreen extends Screen {
     private final EnumMap<ElementType, Component> elementComponents = new EnumMap<>(ElementType.class);
     private final Component selectionHint = customFontText("灵根属性");
     private final Component lengthHint = customFontText("灵根长度");
-    private final Component lengthSelectionHint = customFontText("拖动灵根，按下回车确认");
+    private final Component lengthSelectionHint = customFontText("拖动灵根");
     private final Component maximumLengthHint = customFontText("九寸");
-    private final Component soulStrengthHint = customFontText("魂魄强度");
-    private final Component soulSelectionHint = customFontText("点亮北斗，按下回车确认");
+    private final Component soulStrengthHint = customFontText("魂魄");
+    private final Component soulSelectionHint = customFontText("点亮北斗");
 
     private AptitudePhase phase = AptitudePhase.INTRO;
     private long phaseStartedAt;
@@ -87,7 +87,7 @@ public final class AptitudeSelectionScreen extends Screen {
     private String previousPostEffectName;
 
     public AptitudeSelectionScreen() {
-        super(Component.literal("资质选择"));
+        super(Component.literal("资质"));
         for (ElementType element : SpiritualRoot.SELECTABLE_ELEMENTS) {
             this.selectionScales.put(element, 1.0F);
             this.elementComponents.put(element, displayFontText(SpiritualRootUtility.getElementName(element)));

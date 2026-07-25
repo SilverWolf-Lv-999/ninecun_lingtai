@@ -1,12 +1,22 @@
 package com.seraphina.ninecun_lingtai.client.event;
 
 import com.seraphina.ninecun_lingtai.ModMain;
+import com.seraphina.ninecun_lingtai.client.player.ClientMeditationManager;
 import com.seraphina.ninecun_lingtai.client.screen.ClientAptitudeScreenManager;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.Input;
+import net.minecraft.world.InteractionResult;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
+import net.minecraftforge.client.event.InputEvent;
+import net.minecraftforge.client.event.MovementInputUpdateEvent;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
+import net.minecraftforge.event.entity.player.AttackEntityEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import org.lwjgl.glfw.GLFW;
 
 @Mod.EventBusSubscriber(modid = ModMain.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class ClientForgeEventHandler {
@@ -17,11 +27,67 @@ public final class ClientForgeEventHandler {
     public static void onClientTick(TickEvent.ClientTickEvent event) {
         if (event.phase == TickEvent.Phase.END) {
             ClientAptitudeScreenManager.tick();
+            ClientMeditationManager.tick();
+        }
+    }
+
+    @SubscribeEvent
+    public static void onKeyInput(InputEvent.Key event) {
+        if (event.getAction() == GLFW.GLFW_PRESS
+                && (event.getKey() == GLFW.GLFW_KEY_LEFT_SHIFT || event.getKey() == GLFW.GLFW_KEY_RIGHT_SHIFT)
+                && ClientMeditationManager.isLocalPlayerMeditating()) {
+            ClientMeditationManager.requestStop();
+        }
+    }
+
+    @SubscribeEvent
+    public static void onMovementInput(MovementInputUpdateEvent event) {
+        if (!ClientMeditationManager.isLocalPlayerMeditating()) {
+            return;
+        }
+        Input input = event.getInput();
+        input.leftImpulse = 0.0F;
+        input.forwardImpulse = 0.0F;
+        input.jumping = false;
+        input.shiftKeyDown = false;
+    }
+
+    @SubscribeEvent
+    public static void onInteractionKeyMapping(InputEvent.InteractionKeyMappingTriggered event) {
+        if (ClientMeditationManager.isLocalPlayerMeditating()) {
+            event.setSwingHand(false);
+            event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onAttackEntity(AttackEntityEvent event) {
+        if (event.getEntity() == Minecraft.getInstance().player
+                && ClientMeditationManager.isLocalPlayerMeditating()) {
+            event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerInteract(PlayerInteractEvent event) {
+        if (event.getEntity() == Minecraft.getInstance().player
+                && ClientMeditationManager.isLocalPlayerMeditating()
+                && event.isCancelable()) {
+            event.setCancellationResult(InteractionResult.FAIL);
+            event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onEntityLeaveLevel(EntityLeaveLevelEvent event) {
+        if (event.getLevel().isClientSide && event.getEntity() instanceof net.minecraft.world.entity.player.Player player) {
+            ClientMeditationManager.removePlayer(player.getUUID());
         }
     }
 
     @SubscribeEvent
     public static void onLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
         ClientAptitudeScreenManager.reset();
+        ClientMeditationManager.reset();
     }
 }
