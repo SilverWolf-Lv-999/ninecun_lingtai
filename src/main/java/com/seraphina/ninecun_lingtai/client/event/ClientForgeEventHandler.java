@@ -3,11 +3,13 @@ package com.seraphina.ninecun_lingtai.client.event;
 import com.seraphina.ninecun_lingtai.ModMain;
 import com.seraphina.ninecun_lingtai.client.player.ClientMeditationManager;
 import com.seraphina.ninecun_lingtai.client.screen.ClientAptitudeScreenManager;
+import com.seraphina.ninecun_lingtai.client.utility.SpiritualEnergyRenderUtility;
 import net.minecraft.client.player.Input;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.client.event.MovementInputUpdateEvent;
+import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -37,6 +39,14 @@ public final class ClientForgeEventHandler {
     }
 
     @SubscribeEvent
+    public static void onInteractionInput(InputEvent.InteractionKeyMappingTriggered event) {
+        if (ClientMeditationManager.isLocalPlayerMeditating()) {
+            event.setSwingHand(false);
+            event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent
     public static void onMovementInput(MovementInputUpdateEvent event) {
         if (!ClientMeditationManager.isLocalPlayerMeditating()) {
             return;
@@ -46,6 +56,11 @@ public final class ClientForgeEventHandler {
         input.forwardImpulse = 0.0F;
         input.jumping = false;
         input.shiftKeyDown = false;
+    }
+
+    @SubscribeEvent
+    public static void onRenderLevelStage(RenderLevelStageEvent event) {
+        SpiritualEnergyRenderUtility.render(event);
     }
 
     @SubscribeEvent

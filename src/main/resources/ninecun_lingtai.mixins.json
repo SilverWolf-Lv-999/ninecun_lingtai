@@ -8,6 +8,11 @@
     "common.ChatFormattingMixin",
     "common.StyleMixin"
   ],
+  "client": [
+    "client.CameraMixin",
+    "client.GameRendererMixin",
+    "client.MouseHandlerMixin"
+  ],
   "injectors": {
     "defaultRequire": 1
   },

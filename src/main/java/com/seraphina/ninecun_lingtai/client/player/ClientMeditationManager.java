@@ -1,5 +1,6 @@
 package com.seraphina.ninecun_lingtai.client.player;
 
+import com.seraphina.ninecun_lingtai.api.element.FiveElementValues;
 import com.seraphina.ninecun_lingtai.client.animation.MeditationAnimationManager;
 import com.seraphina.ninecun_lingtai.client.input.ModKeyMappings;
 import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
@@ -8,12 +9,13 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 public final class ClientMeditationManager {
-    private static final Set<UUID> MEDITATING_PLAYERS = new HashSet<>();
+    private static final Map<UUID, MeditationVisualState> MEDITATING_PLAYERS = new HashMap<>();
 
     private ClientMeditationManager() {
     }
@@ -29,7 +31,9 @@ public final class ClientMeditationManager {
         if (player == null || !isMeditating(player.getUUID())) {
             return;
         }
+        player.stopUsingItem();
         player.setDeltaMovement(Vec3.ZERO);
+        ClientMeditationCameraManager.lockPlayerRotation(player);
     }
 
     public static void requestStop() {
@@ -39,17 +43,38 @@ public final class ClientMeditationManager {
         }
     }
 
-    public static void setMeditating(UUID playerId, boolean meditating) {
+    public static void setMeditating(
+            UUID playerId,
+            boolean meditating,
+            FiveElementValues environmentValues,
+            FiveElementValues absorptionEfficiencies
+    ) {
+        boolean wasMeditating = isMeditating(playerId);
         if (meditating) {
-            MEDITATING_PLAYERS.add(playerId);
+            MEDITATING_PLAYERS.put(
+                    playerId,
+                    new MeditationVisualState(environmentValues, absorptionEfficiencies)
+            );
         } else {
             MEDITATING_PLAYERS.remove(playerId);
+        }
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player != null && player.getUUID().equals(playerId)) {
+            if (meditating && !wasMeditating) {
+                ClientMeditationCameraManager.start(player);
+            } else if (!meditating && wasMeditating) {
+                ClientMeditationCameraManager.stop(player);
+            }
         }
         MeditationAnimationManager.setMeditating(playerId, meditating);
     }
 
     public static boolean isMeditating(UUID playerId) {
-        return MEDITATING_PLAYERS.contains(playerId);
+        return MEDITATING_PLAYERS.containsKey(playerId);
+    }
+
+    public static Map<UUID, MeditationVisualState> getVisualStates() {
+        return Collections.unmodifiableMap(MEDITATING_PLAYERS);
     }
 
     public static boolean isLocalPlayerMeditating() {
@@ -58,16 +83,27 @@ public final class ClientMeditationManager {
     }
 
     public static void removePlayer(UUID playerId) {
-        setMeditating(playerId, false);
+        setMeditating(playerId, false, FiveElementValues.EMPTY, FiveElementValues.EMPTY);
     }
 
     public static void reset() {
-        Set.copyOf(MEDITATING_PLAYERS).forEach(playerId -> setMeditating(playerId, false));
+        ClientMeditationCameraManager.reset();
+        Map.copyOf(MEDITATING_PLAYERS).keySet().forEach(playerId -> setMeditating(
+                playerId,
+                false,
+                FiveElementValues.EMPTY,
+                FiveElementValues.EMPTY
+        ));
         MEDITATING_PLAYERS.clear();
     }
 
     private static void requestState(LocalPlayer player, boolean meditating) {
-        setMeditating(player.getUUID(), meditating);
+        setMeditating(
+                player.getUUID(),
+                meditating,
+                meditating ? FiveElementValues.NEUTRAL : FiveElementValues.EMPTY,
+                FiveElementValues.EMPTY
+        );
         ModNetwork.sendToServer(new SetMeditationStatePacket(meditating));
     }
 }

@@ -3,6 +3,7 @@ package com.seraphina.ninecun_lingtai.common.event;
 import com.seraphina.ninecun_lingtai.ModMain;
 import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import com.seraphina.ninecun_lingtai.common.player.PlayerAptitudeData;
+import com.seraphina.ninecun_lingtai.common.player.PlayerSpiritualEnergyData;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -21,6 +22,7 @@ public final class PlayerAptitudeEventHandler {
     @SubscribeEvent
     public static void onPlayerClone(PlayerEvent.Clone event) {
         PlayerAptitudeData.copyAptitude(event.getOriginal(), event.getEntity());
+        PlayerSpiritualEnergyData.copy(event.getOriginal(), event.getEntity());
     }
 
     @SubscribeEvent

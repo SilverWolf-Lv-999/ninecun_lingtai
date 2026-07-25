@@ -1,6 +1,7 @@
 package com.seraphina.ninecun_lingtai.common.network;
 
 import com.seraphina.ninecun_lingtai.ModMain;
+import com.seraphina.ninecun_lingtai.api.element.FiveElementValues;
 import com.seraphina.ninecun_lingtai.common.network.packet.OpenAptitudeScreenPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SetMeditationStatePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SubmitAptitudePacket;
@@ -15,7 +16,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
 import java.util.UUID;
 
 public final class ModNetwork {
-    private static final String PROTOCOL_VERSION = "3";
+    private static final String PROTOCOL_VERSION = "4";
     private static final SimpleChannel CHANNEL = NetworkRegistry.ChannelBuilder
             .named(ResourceLocation.fromNamespaceAndPath(ModMain.MOD_ID, "main"))
             .networkProtocolVersion(() -> PROTOCOL_VERSION)
@@ -71,17 +72,38 @@ public final class ModNetwork {
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), OpenAptitudeScreenPacket.INSTANCE);
     }
 
-    public static void sendMeditationState(ServerPlayer recipient, UUID playerId, boolean meditating) {
+    public static void sendMeditationState(
+            ServerPlayer recipient,
+            UUID playerId,
+            boolean meditating,
+            FiveElementValues environmentValues,
+            FiveElementValues absorptionEfficiencies
+    ) {
         CHANNEL.send(
                 PacketDistributor.PLAYER.with(() -> recipient),
-                new SyncMeditationStatePacket(playerId, meditating)
+                new SyncMeditationStatePacket(
+                        playerId,
+                        meditating,
+                        environmentValues,
+                        absorptionEfficiencies
+                )
         );
     }
 
-    public static void sendMeditationStateToTrackingAndSelf(ServerPlayer player, boolean meditating) {
+    public static void sendMeditationStateToTrackingAndSelf(
+            ServerPlayer player,
+            boolean meditating,
+            FiveElementValues environmentValues,
+            FiveElementValues absorptionEfficiencies
+    ) {
         CHANNEL.send(
                 PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> player),
-                new SyncMeditationStatePacket(player.getUUID(), meditating)
+                new SyncMeditationStatePacket(
+                        player.getUUID(),
+                        meditating,
+                        environmentValues,
+                        absorptionEfficiencies
+                )
         );
     }
 

@@ -35,6 +35,10 @@ public record SpiritualRoot(Set<ElementType> elements, float lengthInches) {
                 && this.elements.containsAll(SELECTABLE_ELEMENTS);
     }
 
+    public float quality() {
+        return this.lengthInches / MAXIMUM_LENGTH_INCHES;
+    }
+
     public int getElementMask() {
         return createElementMask(this.elements);
     }

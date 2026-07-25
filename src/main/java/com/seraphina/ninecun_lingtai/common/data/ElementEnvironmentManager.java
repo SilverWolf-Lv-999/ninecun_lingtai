@@ -8,6 +8,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.mojang.logging.LogUtils;
 import com.seraphina.ninecun_lingtai.api.element.ElementType;
+import com.seraphina.ninecun_lingtai.api.element.FiveElementValues;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
@@ -18,6 +20,7 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import org.slf4j.Logger;
 
@@ -43,15 +46,34 @@ public final class ElementEnvironmentManager extends SimpleJsonResourceReloadLis
     }
 
     public double getDamageMultiplier(LivingEntity target, ElementType element) {
-        ResourceLocation dimension = target.level().dimension().location();
-        Holder<Biome> biome = target.level().getBiome(target.blockPosition());
+        double multiplier = getEnvironmentMultiplier(target.level(), target.blockPosition(), element);
+        return element == ElementType.CHAOS ? Math.max(1.0D, multiplier) : multiplier;
+    }
+
+    public double getEnvironmentMultiplier(LivingEntity entity, ElementType element) {
+        return getEnvironmentMultiplier(entity.level(), entity.blockPosition(), element);
+    }
+
+    public double getEnvironmentMultiplier(Level level, BlockPos position, ElementType element) {
+        ResourceLocation dimension = level.dimension().location();
+        Holder<Biome> biome = level.getBiome(position);
         double multiplier = 1.0D;
         for (ElementEnvironmentRule environmentRule : this.environmentRules) {
             if (environmentRule.matches(dimension, biome)) {
                 multiplier *= environmentRule.getMultiplier(element);
             }
         }
-        return element == ElementType.CHAOS ? Math.max(1.0D, multiplier) : multiplier;
+        return multiplier;
+    }
+
+    public FiveElementValues getFiveElementValues(LivingEntity entity) {
+        return new FiveElementValues(
+                (float) getEnvironmentMultiplier(entity, ElementType.METAL),
+                (float) getEnvironmentMultiplier(entity, ElementType.WOOD),
+                (float) getEnvironmentMultiplier(entity, ElementType.WATER),
+                (float) getEnvironmentMultiplier(entity, ElementType.FIRE),
+                (float) getEnvironmentMultiplier(entity, ElementType.EARTH)
+        );
     }
 
     @Override

@@ -1,6 +1,7 @@
 package com.seraphina.ninecun_lingtai.api.element;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
@@ -15,6 +16,8 @@ public enum ElementType {
     YIN_YANG("yin_yang"),
     THUNDER("thunder"),
     CHAOS("chaos");
+
+    public static final List<ElementType> FIVE_ELEMENTS = List.of(METAL, WOOD, WATER, FIRE, EARTH);
 
     private static final Map<String, ElementType> BY_NAME = Arrays.stream(values())
             .collect(Collectors.toUnmodifiableMap(ElementType::getSerializedName, Function.identity()));

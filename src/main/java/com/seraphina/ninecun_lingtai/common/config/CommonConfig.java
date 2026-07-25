@@ -11,6 +11,11 @@ public final class CommonConfig {
     public static final ForgeConfigSpec.DoubleValue NATURAL_RESTRAINT_ADVANTAGE;
     public static final ForgeConfigSpec.DoubleValue CHAOS_ENHANCEMENT_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue CHAOS_SUPPRESSED_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue MEDITATION_BASE_ABSORPTION_PER_SECOND;
+    public static final ForgeConfigSpec.DoubleValue MEDITATION_GENERATES_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue MEDITATION_GENERATED_BY_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue MEDITATION_OVERCOMES_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue MEDITATION_OVERCOME_BY_MULTIPLIER;
     public static final ForgeConfigSpec SPEC;
 
     static {
@@ -33,6 +38,24 @@ public final class CommonConfig {
         CHAOS_SUPPRESSED_MULTIPLIER = BUILDER
                 .comment("Damage multiplier when another element attacks a chaos target")
                 .defineInRange("chaosSuppressedMultiplier", 0.25D, 0.0D, 100.0D);
+        BUILDER.pop();
+
+        BUILDER.push("meditation");
+        MEDITATION_BASE_ABSORPTION_PER_SECOND = BUILDER
+                .comment("Base spiritual energy absorbed per second before root quality, environment, and element relations")
+                .defineInRange("baseAbsorptionPerSecond", 1.0D, 0.0D, 1000000.0D);
+        MEDITATION_GENERATES_MULTIPLIER = BUILDER
+                .comment("Absorption multiplier when the incoming element generates another element in a multi-element root")
+                .defineInRange("generatesMultiplier", 1.1D, 0.0D, 100.0D);
+        MEDITATION_GENERATED_BY_MULTIPLIER = BUILDER
+                .comment("Absorption multiplier when another element in a multi-element root generates the incoming element")
+                .defineInRange("generatedByMultiplier", 1.25D, 0.0D, 100.0D);
+        MEDITATION_OVERCOMES_MULTIPLIER = BUILDER
+                .comment("Absorption multiplier when the incoming element overcomes another element in a multi-element root")
+                .defineInRange("overcomesMultiplier", 0.85D, 0.0D, 100.0D);
+        MEDITATION_OVERCOME_BY_MULTIPLIER = BUILDER
+                .comment("Absorption multiplier when another element in a multi-element root overcomes the incoming element")
+                .defineInRange("overcomeByMultiplier", 0.65D, 0.0D, 100.0D);
         BUILDER.pop();
         SPEC = BUILDER.build();
     }

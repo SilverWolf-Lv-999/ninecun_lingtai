@@ -5,7 +5,9 @@ import com.seraphina.ninecun_lingtai.common.player.PlayerMeditationManager;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -18,7 +20,7 @@ public final class PlayerMeditationEventHandler {
     @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
         if (event.phase == TickEvent.Phase.END && event.player instanceof ServerPlayer player) {
-            PlayerMeditationManager.restrictMovement(player);
+            PlayerMeditationManager.tickMeditation(player);
         }
     }
 
@@ -27,6 +29,22 @@ public final class PlayerMeditationEventHandler {
         if (event.getEntity() instanceof ServerPlayer recipient
                 && event.getTarget() instanceof ServerPlayer trackedPlayer) {
             PlayerMeditationManager.syncState(recipient, trackedPlayer);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onAttackEntity(AttackEntityEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player && PlayerMeditationManager.isMeditating(player)) {
+            event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerInteract(PlayerInteractEvent event) {
+        if (event.isCancelable()
+                && event.getEntity() instanceof ServerPlayer player
+                && PlayerMeditationManager.isMeditating(player)) {
+            event.setCanceled(true);
         }
     }
 
