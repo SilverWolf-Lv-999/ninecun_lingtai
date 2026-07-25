@@ -1,0 +1,6 @@
+.gradle/
+.idea/
+build/
+info/
+run/
+run-data/
