@@ -60,6 +60,7 @@ public final class AptitudeSelectionScreen extends Screen {
     private final EnumMap<ElementType, Component> elementComponents = new EnumMap<>(ElementType.class);
     private final Component selectionHint = customFontText("灵根属性");
     private final Component lengthHint = customFontText("灵根长度");
+    private final Component maximumLengthHint = customFontText("九寸");
 
     private AptitudePhase phase = AptitudePhase.INTRO;
     private long phaseStartedAt;
@@ -446,11 +447,12 @@ public final class AptitudeSelectionScreen extends Screen {
             topY = getSproutTopY(this.spiritualRootLength);
             hintAlpha = 1.0F;
         }
-        AptitudeRenderUtility.drawLivingSpiritualRoot(
+        ScreenPoint rootMarker = AptitudeRenderUtility.drawLivingSpiritualRoot(
                 guiGraphics,
                 this.width * 0.5F,
                 bottomY,
                 topY,
+                getMaximumStemTopY(),
                 this.spiritualRootColor,
                 currentTime,
                 stageAlpha,
@@ -474,15 +476,30 @@ public final class AptitudeSelectionScreen extends Screen {
                     outlineColor,
                     stageAlpha * hintAlpha * 0.5F
             );
+            AptitudeRenderUtility.drawCenteredText(
+                    guiGraphics,
+                    this.font,
+                    this.maximumLengthHint,
+                    this.width * 0.5F + 38.0F,
+                    getMaximumStemTopY() + 4.0F,
+                    hintScale * 0.62F,
+                    ColorUtility.withAlpha(0xE7C87A, stageAlpha * hintAlpha * 0.7F),
+                    0x111318,
+                    stageAlpha * hintAlpha * 0.42F
+            );
         }
         if (this.phase == AptitudePhase.LENGTH_SELECTION || this.phase == AptitudePhase.COMPLETE_FADE) {
             Component lengthText = customFontText(formatLength(this.spiritualRootLength));
+            float lengthLabelY = rootMarker.y() - 18.0F;
+            if (lengthLabelY < this.height * 0.145F) {
+                lengthLabelY = rootMarker.y() + 19.0F;
+            }
             AptitudeRenderUtility.drawCenteredText(
                     guiGraphics,
                     this.font,
                     lengthText,
-                    this.width * 0.5F,
-                    Math.max(this.height * 0.16F, topY - 18.0F),
+                    rootMarker.x(),
+                    lengthLabelY,
                     hintScale * 1.14F,
                     ColorUtility.withAlpha(readableColor, stageAlpha),
                     outlineColor,
