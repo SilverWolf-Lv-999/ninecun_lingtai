@@ -84,7 +84,7 @@ public final class PlayerMeditationManager {
                 meditating
                         ? ElementEnvironmentManager.INSTANCE.getFiveElementValues(trackedPlayer)
                         : FiveElementValues.EMPTY,
-                absorptionProfile.visibleEfficiencies()
+                absorptionProfile.movementAffinities()
         );
     }
 
@@ -146,19 +146,25 @@ public final class PlayerMeditationManager {
 
         SpiritualRoot spiritualRoot = spiritualRootOptional.get();
         EnumMap<ElementType, Double> efficiencies = new EnumMap<>(ElementType.class);
-        if (spiritualRoot.isChaos()) {
-            double chaosEfficiency = spiritualRoot.quality() * getChaosEnvironmentMultiplier(player);
-            efficiencies.put(ElementType.CHAOS, chaosEfficiency);
+        if (spiritualRoot.isChaos() || spiritualRoot.elements().contains(ElementType.YIN_YANG)) {
+            for (ElementType element : ElementType.values()) {
+                efficiencies.put(
+                        element,
+                        spiritualRoot.quality()
+                                * ElementEnvironmentManager.INSTANCE.getEnvironmentMultiplier(player, element)
+                );
+            }
             return new MeditationAbsorptionProfile(
                     efficiencies,
-                    createChaosVisibleEfficiencies(player, spiritualRoot.quality())
+                    SpiritualEnergyUtility.createMovementAffinities(spiritualRoot)
             );
         }
 
         for (ElementType element : spiritualRoot.elements()) {
-            double environmentMultiplier = element == ElementType.YIN_YANG
-                    ? getYinYangAdjustedEnvironmentMultiplier(player)
-                    : ElementEnvironmentManager.INSTANCE.getEnvironmentMultiplier(player, element);
+            double environmentMultiplier = ElementEnvironmentManager.INSTANCE.getEnvironmentMultiplier(
+                    player,
+                    element
+            );
             double interactionMultiplier = SpiritualEnergyUtility.getMultiElementInteractionMultiplier(
                     element,
                     spiritualRoot.elements()
@@ -168,82 +174,9 @@ public final class PlayerMeditationManager {
                     spiritualRoot.quality() * environmentMultiplier * interactionMultiplier
             );
         }
-        FiveElementValues visibleEfficiencies = spiritualRoot.elements().contains(ElementType.YIN_YANG)
-                ? createYinYangVisibleEfficiencies(player, spiritualRoot.quality(), efficiencies)
-                : createVisibleEfficiencies(efficiencies);
-        return new MeditationAbsorptionProfile(efficiencies, visibleEfficiencies);
-    }
-
-    private static double getYinYangAdjustedEnvironmentMultiplier(ServerPlayer player) {
-        double strongestMultiplier = ElementEnvironmentManager.INSTANCE.getEnvironmentMultiplier(
-                player,
-                ElementType.YIN_YANG
-        );
-        for (ElementType element : ElementType.FIVE_ELEMENTS) {
-            strongestMultiplier = Math.max(
-                    strongestMultiplier,
-                    ElementEnvironmentManager.INSTANCE.getEnvironmentMultiplier(player, element)
-            );
-        }
-        return strongestMultiplier;
-    }
-
-    private static double getChaosEnvironmentMultiplier(ServerPlayer player) {
-        double multiplierSum = 0.0D;
-        for (ElementType element : ElementType.values()) {
-            multiplierSum += ElementEnvironmentManager.INSTANCE.getEnvironmentMultiplier(player, element);
-        }
-        return multiplierSum / ElementType.values().length;
-    }
-
-    private static FiveElementValues createChaosVisibleEfficiencies(ServerPlayer player, float rootQuality) {
-        FiveElementValues environmentValues = ElementEnvironmentManager.INSTANCE.getFiveElementValues(player);
-        return new FiveElementValues(
-                environmentValues.metal() * rootQuality,
-                environmentValues.wood() * rootQuality,
-                environmentValues.water() * rootQuality,
-                environmentValues.fire() * rootQuality,
-                environmentValues.earth() * rootQuality
-        );
-    }
-
-    private static FiveElementValues createVisibleEfficiencies(Map<ElementType, Double> efficiencies) {
-        return new FiveElementValues(
-                efficiencies.getOrDefault(ElementType.METAL, 0.0D).floatValue(),
-                efficiencies.getOrDefault(ElementType.WOOD, 0.0D).floatValue(),
-                efficiencies.getOrDefault(ElementType.WATER, 0.0D).floatValue(),
-                efficiencies.getOrDefault(ElementType.FIRE, 0.0D).floatValue(),
-                efficiencies.getOrDefault(ElementType.EARTH, 0.0D).floatValue()
-        );
-    }
-
-    private static FiveElementValues createYinYangVisibleEfficiencies(
-            ServerPlayer player,
-            float rootQuality,
-            Map<ElementType, Double> efficiencies
-    ) {
-        FiveElementValues environmentValues = ElementEnvironmentManager.INSTANCE.getFiveElementValues(player);
-        return new FiveElementValues(
-                Math.max(
-                        efficiencies.getOrDefault(ElementType.METAL, 0.0D).floatValue(),
-                        environmentValues.metal() * rootQuality
-                ),
-                Math.max(
-                        efficiencies.getOrDefault(ElementType.WOOD, 0.0D).floatValue(),
-                        environmentValues.wood() * rootQuality
-                ),
-                Math.max(
-                        efficiencies.getOrDefault(ElementType.WATER, 0.0D).floatValue(),
-                        environmentValues.water() * rootQuality
-                ),
-                Math.max(
-                        efficiencies.getOrDefault(ElementType.FIRE, 0.0D).floatValue(),
-                        environmentValues.fire() * rootQuality
-                ),
-                Math.max(
-                        efficiencies.getOrDefault(ElementType.EARTH, 0.0D).floatValue(),
-                        environmentValues.earth() * rootQuality
-                )
+        return new MeditationAbsorptionProfile(
+                efficiencies,
+                SpiritualEnergyUtility.createMovementAffinities(spiritualRoot)
         );
     }
 
@@ -257,7 +190,7 @@ public final class PlayerMeditationManager {
                 meditating
                         ? ElementEnvironmentManager.INSTANCE.getFiveElementValues(player)
                         : FiveElementValues.EMPTY,
-                absorptionProfile.visibleEfficiencies()
+                absorptionProfile.movementAffinities()
         );
     }
 
@@ -269,7 +202,7 @@ public final class PlayerMeditationManager {
 
     private record MeditationAbsorptionProfile(
             Map<ElementType, Double> efficiencies,
-            FiveElementValues visibleEfficiencies
+            FiveElementValues movementAffinities
     ) {
         private static final MeditationAbsorptionProfile EMPTY = new MeditationAbsorptionProfile(
                 Map.of(),

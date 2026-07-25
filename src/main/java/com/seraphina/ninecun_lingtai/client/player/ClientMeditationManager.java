@@ -15,12 +15,15 @@ import java.util.Map;
 import java.util.UUID;
 
 public final class ClientMeditationManager {
-    private static final Map<UUID, MeditationVisualState> MEDITATING_PLAYERS = new HashMap<>();
+    private static final Map<UUID, MeditationVisualState> MEDITATION_VISUAL_STATES = new HashMap<>();
 
     private ClientMeditationManager() {
     }
 
     public static void tick() {
+        MEDITATION_VISUAL_STATES.values().forEach(MeditationVisualState::tick);
+        MEDITATION_VISUAL_STATES.entrySet().removeIf(entry -> entry.getValue().hasFinishedExiting());
+
         Minecraft minecraft = Minecraft.getInstance();
         LocalPlayer player = minecraft.player;
         while (ModKeyMappings.MEDITATION.consumeClick()) {
@@ -47,16 +50,21 @@ public final class ClientMeditationManager {
             UUID playerId,
             boolean meditating,
             FiveElementValues environmentValues,
-            FiveElementValues absorptionEfficiencies
+            FiveElementValues movementAffinities
     ) {
-        boolean wasMeditating = isMeditating(playerId);
+        MeditationVisualState visualState = MEDITATION_VISUAL_STATES.get(playerId);
+        boolean wasMeditating = visualState != null && visualState.isMeditating();
         if (meditating) {
-            MEDITATING_PLAYERS.put(
-                    playerId,
-                    new MeditationVisualState(environmentValues, absorptionEfficiencies)
-            );
-        } else {
-            MEDITATING_PLAYERS.remove(playerId);
+            if (visualState == null) {
+                MEDITATION_VISUAL_STATES.put(
+                        playerId,
+                        new MeditationVisualState(environmentValues, movementAffinities)
+                );
+            } else {
+                visualState.update(environmentValues, movementAffinities);
+            }
+        } else if (visualState != null) {
+            visualState.stopMeditating();
         }
         LocalPlayer player = Minecraft.getInstance().player;
         if (player != null && player.getUUID().equals(playerId)) {
@@ -70,11 +78,12 @@ public final class ClientMeditationManager {
     }
 
     public static boolean isMeditating(UUID playerId) {
-        return MEDITATING_PLAYERS.containsKey(playerId);
+        MeditationVisualState visualState = MEDITATION_VISUAL_STATES.get(playerId);
+        return visualState != null && visualState.isMeditating();
     }
 
     public static Map<UUID, MeditationVisualState> getVisualStates() {
-        return Collections.unmodifiableMap(MEDITATING_PLAYERS);
+        return Collections.unmodifiableMap(MEDITATION_VISUAL_STATES);
     }
 
     public static boolean isLocalPlayerMeditating() {
@@ -88,13 +97,10 @@ public final class ClientMeditationManager {
 
     public static void reset() {
         ClientMeditationCameraManager.reset();
-        Map.copyOf(MEDITATING_PLAYERS).keySet().forEach(playerId -> setMeditating(
-                playerId,
-                false,
-                FiveElementValues.EMPTY,
-                FiveElementValues.EMPTY
-        ));
-        MEDITATING_PLAYERS.clear();
+        MEDITATION_VISUAL_STATES.keySet().forEach(
+                playerId -> MeditationAnimationManager.setMeditating(playerId, false)
+        );
+        MEDITATION_VISUAL_STATES.clear();
     }
 
     private static void requestState(LocalPlayer player, boolean meditating) {

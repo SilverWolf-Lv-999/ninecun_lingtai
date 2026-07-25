@@ -1,12 +1,18 @@
 package com.seraphina.ninecun_lingtai.utility;
 
+import com.seraphina.ninecun_lingtai.api.aptitude.SpiritualRoot;
 import com.seraphina.ninecun_lingtai.api.element.ElementRelation;
 import com.seraphina.ninecun_lingtai.api.element.ElementType;
+import com.seraphina.ninecun_lingtai.api.element.FiveElementValues;
 import com.seraphina.ninecun_lingtai.common.config.CommonConfig;
 
 import java.util.Set;
 
 public final class SpiritualEnergyUtility {
+    public static final float ABSORPTION_AFFINITY = 1.0F;
+    public static final float GENERATION_AFFINITY = 0.72F;
+    public static final float REPULSION_AFFINITY = 0.0F;
+
     private SpiritualEnergyUtility() {
     }
 
@@ -27,6 +33,48 @@ public final class SpiritualEnergyUtility {
             relatedElementCount++;
         }
         return relatedElementCount == 0 ? 1.0D : multiplierSum / relatedElementCount;
+    }
+
+    public static FiveElementValues createMovementAffinities(SpiritualRoot spiritualRoot) {
+        if (spiritualRoot.isChaos() || spiritualRoot.elements().contains(ElementType.YIN_YANG)) {
+            return new FiveElementValues(
+                    ABSORPTION_AFFINITY,
+                    ABSORPTION_AFFINITY,
+                    ABSORPTION_AFFINITY,
+                    ABSORPTION_AFFINITY,
+                    ABSORPTION_AFFINITY
+            );
+        }
+        return new FiveElementValues(
+                getMovementAffinity(ElementType.METAL, spiritualRoot.elements()),
+                getMovementAffinity(ElementType.WOOD, spiritualRoot.elements()),
+                getMovementAffinity(ElementType.WATER, spiritualRoot.elements()),
+                getMovementAffinity(ElementType.FIRE, spiritualRoot.elements()),
+                getMovementAffinity(ElementType.EARTH, spiritualRoot.elements())
+        );
+    }
+
+    private static float getMovementAffinity(
+            ElementType spiritualEnergyElement,
+            Set<ElementType> spiritualRootElements
+    ) {
+        if (spiritualRootElements.contains(spiritualEnergyElement)) {
+            return ABSORPTION_AFFINITY;
+        }
+
+        int generationRelationCount = 0;
+        int restraintRelationCount = 0;
+        for (ElementType spiritualRootElement : spiritualRootElements) {
+            ElementRelation relation = spiritualEnergyElement.getRelationTo(spiritualRootElement);
+            if (relation == ElementRelation.GENERATES || relation == ElementRelation.GENERATED_BY) {
+                generationRelationCount++;
+            } else if (relation == ElementRelation.OVERCOMES || relation == ElementRelation.OVERCOME_BY) {
+                restraintRelationCount++;
+            }
+        }
+        return generationRelationCount > restraintRelationCount
+                ? GENERATION_AFFINITY
+                : REPULSION_AFFINITY;
     }
 
     private static double getRelationMultiplier(ElementRelation relation) {

@@ -13,6 +13,7 @@ import com.seraphina.ninecun_lingtai.api.element.FiveElementValues;
 import com.seraphina.ninecun_lingtai.client.player.ClientMeditationManager;
 import com.seraphina.ninecun_lingtai.client.player.MeditationVisualState;
 import com.seraphina.ninecun_lingtai.client.render.SpiritualEnergyShader;
+import com.seraphina.ninecun_lingtai.utility.SpiritualEnergyUtility;
 import com.seraphina.ninecun_lingtai.utility.SpiritualRootUtility;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -73,7 +74,6 @@ public final class SpiritualEnergyRenderUtility {
             }
             renderPlayerEnergy(
                     poseStack,
-                    shaderInstance,
                     player,
                     entry.getValue(),
                     minecraft.level.getGameTime() + event.getPartialTick(),
@@ -92,7 +92,6 @@ public final class SpiritualEnergyRenderUtility {
 
     private static void renderPlayerEnergy(
             PoseStack poseStack,
-            ShaderInstance shaderInstance,
             Player player,
             MeditationVisualState visualState,
             float currentTick,
@@ -101,6 +100,10 @@ public final class SpiritualEnergyRenderUtility {
             Vector3f cameraUp
     ) {
         FiveElementValues environmentValues = visualState.environmentValues();
+        float visibility = smoothStep(visualState.visibility());
+        if (visibility <= 0.0F) {
+            return;
+        }
         float maximumDensity = Math.max(0.0001F, environmentValues.maximum());
         ElementType dominantElement = environmentValues.dominantElement();
         Vec3 playerPosition = new Vec3(
@@ -116,25 +119,24 @@ public final class SpiritualEnergyRenderUtility {
                 continue;
             }
             float relativeDensity = density / maximumDensity;
-            float absorptionEfficiency = visualState.absorptionEfficiencies().get(element);
+            float movementAffinity = visualState.movementAffinities().get(element);
             int particleCount = Mth.clamp(
                     Math.round(4.0F + density * 4.0F + relativeDensity * 3.0F
                             + (element == dominantElement ? 4.0F : 0.0F)),
                     4,
                     18
             );
-            shaderInstance.safeGetUniform("ElementStyle").set((float) element.ordinal());
             renderElementParticles(
                     poseStack.last().pose(),
                     player.getUUID(),
                     element,
                     particleCount,
-                    density,
                     relativeDensity,
-                    absorptionEfficiency,
+                    movementAffinity,
                     element == dominantElement,
                     absorptionPosition,
                     currentTick,
+                    visibility,
                     cameraRight,
                     cameraUp
             );
@@ -146,12 +148,12 @@ public final class SpiritualEnergyRenderUtility {
             UUID playerId,
             ElementType element,
             int particleCount,
-            float density,
             float relativeDensity,
-            float absorptionEfficiency,
+            float movementAffinity,
             boolean dominant,
             Vec3 absorptionPosition,
             float currentTick,
+            float visibility,
             Vector3f cameraRight,
             Vector3f cameraUp
     ) {
@@ -162,9 +164,9 @@ public final class SpiritualEnergyRenderUtility {
                     ^ Long.rotateLeft(playerId.getLeastSignificantBits(), 17)
                     ^ element.ordinal() * HASH_MULTIPLIER
                     ^ particleIndex * 0xD1B54A32D192ED03L;
-            float speedScale = absorptionEfficiency > 0.0F
-                    ? 0.78F + Math.min(absorptionEfficiency, 2.5F) * 0.58F
-                    : 0.62F;
+            boolean attracted = movementAffinity > 0.5F;
+            boolean absorbed = movementAffinity >= SpiritualEnergyUtility.ABSORPTION_AFFINITY;
+            float speedScale = attracted ? 1.08F + movementAffinity * 0.38F : 0.86F;
             float duration = getBaseDuration(element) / speedScale;
             float phaseOffset = randomValue(baseSeed) * duration;
             double cyclePosition = (currentTick + phaseOffset) / duration;
@@ -172,36 +174,38 @@ public final class SpiritualEnergyRenderUtility {
             float progress = (float) (cyclePosition - Math.floor(cyclePosition));
             long cycleSeed = baseSeed ^ cycleIndex * HASH_MULTIPLIER;
 
-            Vec3 startPosition = createStartPosition(absorptionPosition, cycleSeed);
-            Vec3 particlePosition = interpolateAbsorptionPath(
-                    startPosition,
-                    absorptionPosition,
+            Vec3 distantPosition = createDistantPosition(absorptionPosition, cycleSeed);
+            Vec3 nearbyPosition = absorbed
+                    ? absorptionPosition
+                    : createNearbyPosition(absorptionPosition, cycleSeed);
+            Vec3 particlePosition = interpolateEnergyPath(
+                    attracted ? distantPosition : nearbyPosition,
+                    attracted ? nearbyPosition : distantPosition,
                     progress,
-                    cycleSeed
+                    cycleSeed,
+                    attracted
             );
             float fadeIn = Mth.clamp(progress / 0.09F, 0.0F, 1.0F);
             float fadeOut = 1.0F - Mth.clamp((progress - 0.965F) / 0.035F, 0.0F, 1.0F);
-            float absorptionPulse = Mth.clamp((progress - 0.78F) / 0.22F, 0.0F, 1.0F);
-            float size = getBaseSize(element)
+            float absorptionPulse = absorbed
+                    ? Mth.clamp((progress - 0.78F) / 0.22F, 0.0F, 1.0F)
+                    : 0.0F;
+            float size = (0.105F + randomValue(cycleSeed ^ 0x369DEA0F31A53F85L) * 0.045F)
                     * (0.82F + relativeDensity * 0.32F)
                     * (dominant ? 1.16F : 1.0F)
                     * Mth.lerp(absorptionPulse, 1.0F, 0.42F);
             float alpha = (0.42F + relativeDensity * 0.36F)
                     * (dominant ? 1.18F : 1.0F)
-                    * (absorptionEfficiency > 0.0F ? 1.08F : 0.86F)
+                    * (attracted ? 1.04F : 0.82F)
                     * fadeIn
-                    * fadeOut;
+                    * fadeOut
+                    * visibility;
             int color = SpiritualRootUtility.getElementColor(element);
-            float rotationPhase = randomValue(cycleSeed ^ 0x94D049BB133111EBL) * TWO_PI;
-            float rotation = element == ElementType.FIRE
-                    ? createFireTilt(currentTick, cycleSeed, rotationPhase)
-                    : rotationPhase + currentTick * getRotationSpeed(element);
             appendBillboard(
                     bufferBuilder,
                     matrix,
                     particlePosition,
                     size,
-                    rotation,
                     color,
                     Mth.clamp(alpha, 0.0F, 1.0F),
                     cameraRight,
@@ -211,7 +215,7 @@ public final class SpiritualEnergyRenderUtility {
         BufferUploader.drawWithShader(bufferBuilder.end());
     }
 
-    private static Vec3 createStartPosition(Vec3 absorptionPosition, long seed) {
+    private static Vec3 createDistantPosition(Vec3 absorptionPosition, long seed) {
         float angle = randomValue(seed ^ 0x632BE59BD9B4E019L) * TWO_PI;
         double radius = Mth.lerp(randomValue(seed ^ 0xC6BC279692B5CC83L), 3.5F, 10.0F);
         double height = Mth.lerp(randomValue(seed ^ 0xDB4F0B9175AE2165L), -0.35F, 5.2F);
@@ -222,15 +226,29 @@ public final class SpiritualEnergyRenderUtility {
         );
     }
 
-    private static Vec3 interpolateAbsorptionPath(
+    private static Vec3 createNearbyPosition(Vec3 absorptionPosition, long seed) {
+        float angle = randomValue(seed ^ 0xF1357AEA2E62A9C5L) * TWO_PI;
+        double radius = Mth.lerp(randomValue(seed ^ 0xC13FA9A902A6328FL), 0.72F, 1.24F);
+        double height = Mth.lerp(randomValue(seed ^ 0x91E10DA5C79E7B1DL), -0.46F, 0.72F);
+        return absorptionPosition.add(
+                Mth.cos(angle) * radius,
+                height,
+                Mth.sin(angle) * radius
+        );
+    }
+
+    private static Vec3 interpolateEnergyPath(
             Vec3 startPosition,
-            Vec3 absorptionPosition,
+            Vec3 endPosition,
             float progress,
-            long seed
+            long seed,
+            boolean approaching
     ) {
-        float easedProgress = progress * progress;
-        Vec3 directPosition = startPosition.lerp(absorptionPosition, easedProgress);
-        Vec3 radialDirection = startPosition.subtract(absorptionPosition).multiply(1.0D, 0.0D, 1.0D);
+        float easedProgress = approaching
+                ? progress * progress
+                : 1.0F - (1.0F - progress) * (1.0F - progress);
+        Vec3 directPosition = startPosition.lerp(endPosition, easedProgress);
+        Vec3 radialDirection = startPosition.subtract(endPosition).multiply(1.0D, 0.0D, 1.0D);
         if (radialDirection.lengthSqr() < 0.0001D) {
             radialDirection = new Vec3(1.0D, 0.0D, 0.0D);
         } else {
@@ -238,12 +256,12 @@ public final class SpiritualEnergyRenderUtility {
         }
         Vec3 tangentDirection = new Vec3(-radialDirection.z, 0.0D, radialDirection.x);
         float spiralPhase = randomValue(seed ^ 0xA24BAED4963EE407L) * TWO_PI;
-        double remainingDistance = 1.0D - easedProgress;
+        double pathEnvelope = Mth.sin(progress * Mth.PI);
         double spiralOffset = Mth.sin(progress * TWO_PI * 2.25F + spiralPhase)
-                * remainingDistance
+                * pathEnvelope
                 * 0.72D;
         double verticalOffset = Mth.cos(progress * TWO_PI * 1.65F + spiralPhase)
-                * remainingDistance
+                * pathEnvelope
                 * 0.28D;
         return directPosition.add(tangentDirection.scale(spiralOffset)).add(0.0D, verticalOffset, 0.0D);
     }
@@ -253,20 +271,17 @@ public final class SpiritualEnergyRenderUtility {
             Matrix4f matrix,
             Vec3 center,
             float size,
-            float rotation,
             int color,
             float alpha,
             Vector3f cameraRight,
             Vector3f cameraUp
     ) {
-        float cosine = Mth.cos(rotation);
-        float sine = Mth.sin(rotation);
-        float rightX = (cameraRight.x() * cosine + cameraUp.x() * sine) * size;
-        float rightY = (cameraRight.y() * cosine + cameraUp.y() * sine) * size;
-        float rightZ = (cameraRight.z() * cosine + cameraUp.z() * sine) * size;
-        float upX = (cameraUp.x() * cosine - cameraRight.x() * sine) * size;
-        float upY = (cameraUp.y() * cosine - cameraRight.y() * sine) * size;
-        float upZ = (cameraUp.z() * cosine - cameraRight.z() * sine) * size;
+        float rightX = cameraRight.x() * size;
+        float rightY = cameraRight.y() * size;
+        float rightZ = cameraRight.z() * size;
+        float upX = cameraUp.x() * size;
+        float upY = cameraUp.y() * size;
+        float upZ = cameraUp.z() * size;
         int alphaChannel = Mth.clamp(Math.round(alpha * 255.0F), 0, 255);
         int red = color >> 16 & 0xFF;
         int green = color >> 8 & 0xFF;
@@ -315,32 +330,8 @@ public final class SpiritualEnergyRenderUtility {
         };
     }
 
-    private static float getBaseSize(ElementType element) {
-        return switch (element) {
-            case METAL -> 0.17F;
-            case WOOD -> 0.21F;
-            case WATER -> 0.2F;
-            case FIRE -> 0.22F;
-            case EARTH -> 0.23F;
-            case YIN_YANG, THUNDER, CHAOS -> 0.2F;
-        };
-    }
-
-    private static float createFireTilt(float currentTick, long seed, float rotationPhase) {
-        float baseTilt = (randomValue(seed ^ 0x369DEA0F31A53F85L) - 0.5F) * 0.24F;
-        float flickerTilt = Mth.sin(currentTick * 0.14F + rotationPhase) * 0.075F;
-        return baseTilt + flickerTilt;
-    }
-
-    private static float getRotationSpeed(ElementType element) {
-        return switch (element) {
-            case METAL -> 0.055F;
-            case WOOD -> 0.018F;
-            case WATER -> 0.012F;
-            case FIRE -> 0.035F;
-            case EARTH -> 0.009F;
-            case YIN_YANG, THUNDER, CHAOS -> 0.02F;
-        };
+    private static float smoothStep(float value) {
+        return value * value * (3.0F - 2.0F * value);
     }
 
     private static float randomValue(long seed) {

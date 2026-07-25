@@ -77,7 +77,7 @@ public final class ModNetwork {
             UUID playerId,
             boolean meditating,
             FiveElementValues environmentValues,
-            FiveElementValues absorptionEfficiencies
+            FiveElementValues movementAffinities
     ) {
         CHANNEL.send(
                 PacketDistributor.PLAYER.with(() -> recipient),
@@ -85,7 +85,7 @@ public final class ModNetwork {
                         playerId,
                         meditating,
                         environmentValues,
-                        absorptionEfficiencies
+                        movementAffinities
                 )
         );
     }
@@ -94,7 +94,7 @@ public final class ModNetwork {
             ServerPlayer player,
             boolean meditating,
             FiveElementValues environmentValues,
-            FiveElementValues absorptionEfficiencies
+            FiveElementValues movementAffinities
     ) {
         CHANNEL.send(
                 PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> player),
@@ -102,7 +102,7 @@ public final class ModNetwork {
                         player.getUUID(),
                         meditating,
                         environmentValues,
-                        absorptionEfficiencies
+                        movementAffinities
                 )
         );
     }
