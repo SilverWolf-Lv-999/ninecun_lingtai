@@ -192,8 +192,10 @@ public final class SpiritualEnergyRenderUtility {
                     * fadeIn
                     * fadeOut;
             int color = SpiritualRootUtility.getElementColor(element);
-            float rotation = randomValue(cycleSeed ^ 0x94D049BB133111EBL) * TWO_PI
-                    + currentTick * getRotationSpeed(element);
+            float rotationPhase = randomValue(cycleSeed ^ 0x94D049BB133111EBL) * TWO_PI;
+            float rotation = element == ElementType.FIRE
+                    ? createFireTilt(currentTick, cycleSeed, rotationPhase)
+                    : rotationPhase + currentTick * getRotationSpeed(element);
             appendBillboard(
                     bufferBuilder,
                     matrix,
@@ -318,10 +320,16 @@ public final class SpiritualEnergyRenderUtility {
             case METAL -> 0.17F;
             case WOOD -> 0.21F;
             case WATER -> 0.2F;
-            case FIRE -> 0.24F;
+            case FIRE -> 0.22F;
             case EARTH -> 0.23F;
             case YIN_YANG, THUNDER, CHAOS -> 0.2F;
         };
+    }
+
+    private static float createFireTilt(float currentTick, long seed, float rotationPhase) {
+        float baseTilt = (randomValue(seed ^ 0x369DEA0F31A53F85L) - 0.5F) * 0.24F;
+        float flickerTilt = Mth.sin(currentTick * 0.14F + rotationPhase) * 0.075F;
+        return baseTilt + flickerTilt;
     }
 
     private static float getRotationSpeed(ElementType element) {

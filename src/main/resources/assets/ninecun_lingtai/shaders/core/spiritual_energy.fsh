@@ -12,11 +12,34 @@ float softShape(float distanceValue, float innerEdge, float outerEdge) {
     return 1.0 - smoothstep(innerEdge, outerEdge, distanceValue);
 }
 
+float flameLobe(
+        vec2 point,
+        vec2 basePoint,
+        vec2 tipPoint,
+        float maximumWidth,
+        float edgeSoftness
+) {
+    vec2 axis = tipPoint - basePoint;
+    float axisLength = length(axis);
+    vec2 direction = axis / axisLength;
+    vec2 normal = vec2(-direction.y, direction.x);
+    vec2 relativePoint = point - basePoint;
+    float progress = dot(relativePoint, direction) / axisLength;
+    float clampedProgress = clamp(progress, 0.0, 1.0);
+    float widthEnvelope = pow(max(sin(clampedProgress * 3.14159265), 0.0), 1.05);
+    float halfWidth = maximumWidth * widthEnvelope;
+    float sideDistance = abs(dot(relativePoint, normal));
+    float heightMask = smoothstep(-0.015, 0.045, progress)
+            * (1.0 - smoothstep(0.99, 1.0, progress));
+    return softShape(sideDistance, halfWidth, halfWidth + edgeSoftness) * heightMask;
+}
+
 void main() {
     vec2 point = particleUv * 2.0 - 1.0;
     float radius = length(point);
     float halo = softShape(radius, 0.28, 1.0);
     halo *= halo;
+    float haloStrength = 0.34;
     float body = 0.0;
     float core = 0.0;
     vec3 energyColor = vertexColor.rgb;
@@ -53,16 +76,46 @@ void main() {
         core = softShape(roundedDrop, 0.08, 0.32);
         energyColor = mix(energyColor, vec3(0.78, 0.94, 1.0), core * 0.8);
     } else if (ElementStyle < 3.5) {
-        vec2 flamePoint = point;
-        flamePoint.x += sin(flamePoint.y * 5.4 + Time * 7.0) * (flamePoint.y + 1.0) * 0.055;
-        float flameWidth = mix(0.5, 0.07, clamp((flamePoint.y + 0.75) / 1.6, 0.0, 1.0));
-        float flameBody = softShape(abs(flamePoint.x), flameWidth, flameWidth + 0.14);
-        float flameHeight = smoothstep(-0.96, -0.6, flamePoint.y)
-                * (1.0 - smoothstep(0.58, 0.96, flamePoint.y));
-        body = flameBody * flameHeight;
-        core = softShape(abs(flamePoint.x), flameWidth * 0.24, flameWidth * 0.52)
-                * flameHeight;
-        energyColor = mix(energyColor, vec3(1.0, 0.9, 0.28), core * 0.88);
+        float mainSway = sin(Time * 7.0) * 0.055;
+        float sideSway = sin(Time * 8.6 + 1.7) * 0.04;
+        float mainFlame = flameLobe(
+                point,
+                vec2(0.0, 0.94),
+                vec2(0.1 + mainSway, -0.98),
+                0.45,
+                0.055
+        );
+        float leftTongue = flameLobe(
+                point,
+                vec2(-0.02, 0.72),
+                vec2(-0.5 + sideSway, -0.18),
+                0.19,
+                0.05
+        );
+        body = max(mainFlame, leftTongue);
+
+        float innerFlame = flameLobe(
+                point,
+                vec2(0.02, 0.78),
+                vec2(-0.12 - mainSway * 0.45, -0.48),
+                0.2,
+                0.04
+        );
+        float innerTongue = flameLobe(
+                point,
+                vec2(0.08, 0.72),
+                vec2(0.28 + sideSway * 0.35, 0.02),
+                0.1,
+                0.035
+        );
+        core = max(innerFlame, innerTongue) * body;
+
+        vec2 flameHaloPoint = vec2(point.x * 1.24, (point.y + 0.08) * 0.82);
+        halo = softShape(length(flameHaloPoint), 0.22, 0.92);
+        halo *= halo;
+        haloStrength = 0.16;
+        energyColor = mix(energyColor, vec3(1.0, 0.46, 0.06), body * 0.58);
+        energyColor = mix(energyColor, vec3(1.0, 0.92, 0.3), core * 0.92);
     } else {
         vec2 rockPoint = point;
         float hexagon = max(abs(rockPoint.y), abs(rockPoint.x) * 0.866 + abs(rockPoint.y) * 0.5);
@@ -74,7 +127,7 @@ void main() {
     }
 
     float flicker = 0.84 + 0.16 * sin(Time * 5.0 + particleUv.x * 9.0 + particleUv.y * 13.0);
-    float alpha = vertexColor.a * (body * 0.9 + halo * 0.34) * flicker;
+    float alpha = vertexColor.a * (body * 0.9 + halo * haloStrength) * flicker;
     energyColor = mix(energyColor, vec3(1.0), core * 0.28 + halo * 0.12);
     if (alpha <= 0.003) {
         discard;
