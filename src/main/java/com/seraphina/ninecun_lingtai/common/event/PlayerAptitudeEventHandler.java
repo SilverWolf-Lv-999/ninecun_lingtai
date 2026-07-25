@@ -20,7 +20,7 @@ public final class PlayerAptitudeEventHandler {
 
     @SubscribeEvent
     public static void onPlayerClone(PlayerEvent.Clone event) {
-        PlayerAptitudeData.copySpiritualRoot(event.getOriginal(), event.getEntity());
+        PlayerAptitudeData.copyAptitude(event.getOriginal(), event.getEntity());
     }
 
     @SubscribeEvent
@@ -30,7 +30,7 @@ public final class PlayerAptitudeEventHandler {
 
     private static void requestScreenWhenMissing(net.minecraft.world.entity.player.Player player) {
         if (player instanceof ServerPlayer serverPlayer
-                && PlayerAptitudeData.getSpiritualRoot(serverPlayer).isEmpty()) {
+                && !PlayerAptitudeData.hasCompleteAptitude(serverPlayer)) {
             ModNetwork.sendAptitudeScreenRequest(serverPlayer);
         }
     }

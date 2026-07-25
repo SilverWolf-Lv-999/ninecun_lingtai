@@ -1,6 +1,7 @@
 package com.seraphina.ninecun_lingtai.client.screen;
 
 import com.seraphina.ninecun_lingtai.ModMain;
+import com.seraphina.ninecun_lingtai.api.aptitude.SoulStrength;
 import com.seraphina.ninecun_lingtai.api.aptitude.SpiritualRoot;
 import com.seraphina.ninecun_lingtai.api.element.ElementRelation;
 import com.seraphina.ninecun_lingtai.api.element.ElementType;
@@ -9,6 +10,7 @@ import com.seraphina.ninecun_lingtai.client.utility.AptitudeFormationRenderUtili
 import com.seraphina.ninecun_lingtai.client.utility.AptitudeRenderUtility;
 import com.seraphina.ninecun_lingtai.client.utility.AptitudeRenderUtility.ScreenPoint;
 import com.seraphina.ninecun_lingtai.client.utility.ElementRelationRenderUtility;
+import com.seraphina.ninecun_lingtai.client.utility.SoulConstellationRenderUtility;
 import com.seraphina.ninecun_lingtai.common.font.CustomFontConstants;
 import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import com.seraphina.ninecun_lingtai.common.network.packet.SubmitAptitudePacket;
@@ -51,6 +53,9 @@ public final class AptitudeSelectionScreen extends Screen {
             + ROOT_HOLD_DURATION
             + ROOT_FADE_OUT_DURATION;
     private static final long SPROUT_GROW_DURATION = 920L;
+    private static final long SPROUT_FADE_DURATION = 620L;
+    private static final long SOUL_INTRO_DURATION = 1150L;
+    private static final long SOUL_BLOOM_DURATION = 1800L;
     private static final long COMPLETE_FADE_DURATION = 720L;
     private static final float SELECTED_ELEMENT_SCALE = 1.14F;
     private static final float SELECTED_TAIJI_SCALE = 1.09F;
@@ -60,7 +65,10 @@ public final class AptitudeSelectionScreen extends Screen {
     private final EnumMap<ElementType, Component> elementComponents = new EnumMap<>(ElementType.class);
     private final Component selectionHint = customFontText("灵根属性");
     private final Component lengthHint = customFontText("灵根长度");
+    private final Component lengthSelectionHint = customFontText("拖动灵根，按下回车确认");
     private final Component maximumLengthHint = customFontText("九寸");
+    private final Component soulStrengthHint = customFontText("魂魄强度");
+    private final Component soulSelectionHint = customFontText("点亮北斗，按下回车确认");
 
     private AptitudePhase phase = AptitudePhase.INTRO;
     private long phaseStartedAt;
@@ -69,6 +77,7 @@ public final class AptitudeSelectionScreen extends Screen {
     private Component spiritualRootName = Component.empty();
     private int spiritualRootColor = 0xFFFFFF;
     private float spiritualRootLength = SpiritualRoot.MINIMUM_LENGTH_INCHES;
+    private int illuminatedSoulStarMask;
     private float taijiScale = 1.0F;
     private boolean draggingSprout;
     private boolean submitted;
@@ -115,18 +124,31 @@ public final class AptitudeSelectionScreen extends Screen {
         switch (this.phase) {
             case INTRO, SELECTING, SELECTION_FADE -> renderElementSelection(guiGraphics, currentTime);
             case ROOT_DISPLAY -> renderSpiritualRootName(guiGraphics, currentTime);
-            case SPROUT_GROW, LENGTH_SELECTION, COMPLETE_FADE -> renderSproutStage(guiGraphics, currentTime);
+            case SPROUT_GROW, LENGTH_SELECTION, SPROUT_FADE -> renderSproutStage(guiGraphics, currentTime);
+            case SOUL_INTRO, SOUL_SELECTION, SOUL_BLOOM, COMPLETE_FADE -> renderSoulStage(
+                    guiGraphics,
+                    currentTime
+            );
         }
         super.render(guiGraphics, mouseX, mouseY, partialTick);
     }
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if ((keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER)
-                && this.phase == AptitudePhase.SELECTING
-                && !this.selectedElements.isEmpty()) {
-            confirmElementSelection();
-            return true;
+        if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
+            if (this.phase == AptitudePhase.SELECTING && !this.selectedElements.isEmpty()) {
+                confirmElementSelection();
+                return true;
+            }
+            if (this.phase == AptitudePhase.LENGTH_SELECTION) {
+                confirmSpiritualRootLength();
+                return true;
+            }
+            if (this.phase == AptitudePhase.SOUL_SELECTION
+                    && getIlluminatedSoulStarCount() >= SoulStrength.MINIMUM_ILLUMINATED_STARS) {
+                submitAptitude();
+                return true;
+            }
         }
         return super.keyPressed(keyCode, scanCode, modifiers);
     }
@@ -140,6 +162,13 @@ public final class AptitudeSelectionScreen extends Screen {
             ElementType clickedElement = findClickedElement(mouseX, mouseY);
             if (clickedElement != null) {
                 toggleElement(clickedElement);
+                return true;
+            }
+        }
+        if (this.phase == AptitudePhase.SOUL_SELECTION) {
+            int clickedStarIndex = findClickedSoulStar(mouseX, mouseY);
+            if (clickedStarIndex >= 0) {
+                toggleSoulStar(clickedStarIndex);
                 return true;
             }
         }
@@ -169,7 +198,6 @@ public final class AptitudeSelectionScreen extends Screen {
                 && this.draggingSprout) {
             this.draggingSprout = false;
             updateSpiritualRootLength(mouseY);
-            submitSpiritualRoot();
             return true;
         }
         return false;
@@ -429,9 +457,9 @@ public final class AptitudeSelectionScreen extends Screen {
 
     private void renderSproutStage(GuiGraphics guiGraphics, long currentTime) {
         long elapsed = currentTime - this.phaseStartedAt;
-        float stageAlpha = this.phase == AptitudePhase.COMPLETE_FADE
+        float stageAlpha = this.phase == AptitudePhase.SPROUT_FADE
                 ? 1.0F - AnimationUtility.easeInOutCubic(
-                        AnimationUtility.progress(elapsed, COMPLETE_FADE_DURATION)
+                        AnimationUtility.progress(elapsed, SPROUT_FADE_DURATION)
                 )
                 : 1.0F;
         float bottomY = getSproutBottomY();
@@ -488,7 +516,7 @@ public final class AptitudeSelectionScreen extends Screen {
                     stageAlpha * hintAlpha * 0.42F
             );
         }
-        if (this.phase == AptitudePhase.LENGTH_SELECTION || this.phase == AptitudePhase.COMPLETE_FADE) {
+        if (this.phase == AptitudePhase.LENGTH_SELECTION || this.phase == AptitudePhase.SPROUT_FADE) {
             Component lengthText = customFontText(formatLength(this.spiritualRootLength));
             float lengthLabelY = rootMarker.y() - 18.0F;
             if (lengthLabelY < this.height * 0.145F) {
@@ -506,6 +534,97 @@ public final class AptitudeSelectionScreen extends Screen {
                     stageAlpha * 0.58F
             );
         }
+        if (this.phase == AptitudePhase.LENGTH_SELECTION) {
+            AptitudeRenderUtility.drawCenteredText(
+                    guiGraphics,
+                    this.font,
+                    this.lengthSelectionHint,
+                    this.width * 0.5F,
+                    this.height * 0.91F,
+                    getHintScale() * 0.78F,
+                    ColorUtility.withAlpha(0xD8D4CA, stageAlpha * 0.82F),
+                    0x111318,
+                    stageAlpha * 0.42F
+            );
+        }
+    }
+
+    private void renderSoulStage(GuiGraphics guiGraphics, long currentTime) {
+        long elapsed = currentTime - this.phaseStartedAt;
+        float introProgress = this.phase == AptitudePhase.SOUL_INTRO
+                ? AnimationUtility.easeOutCubic(AnimationUtility.progress(elapsed, SOUL_INTRO_DURATION))
+                : 1.0F;
+        float bloomProgress;
+        if (this.phase == AptitudePhase.SOUL_BLOOM) {
+            bloomProgress = AnimationUtility.progress(elapsed, SOUL_BLOOM_DURATION);
+        } else if (this.phase == AptitudePhase.COMPLETE_FADE
+                && this.illuminatedSoulStarMask == SoulConstellationRenderUtility.ALL_STARS_MASK) {
+            bloomProgress = 1.0F;
+        } else {
+            bloomProgress = 0.0F;
+        }
+        float stageAlpha = this.phase == AptitudePhase.COMPLETE_FADE
+                ? 1.0F - AnimationUtility.easeInOutCubic(
+                        AnimationUtility.progress(elapsed, COMPLETE_FADE_DURATION)
+                )
+                : 1.0F;
+        SoulConstellationRenderUtility.drawConstellation(
+                guiGraphics,
+                this.width * 0.5F,
+                getSoulConstellationCenterY(),
+                getSoulConstellationRadius(),
+                currentTime,
+                this.illuminatedSoulStarMask,
+                introProgress,
+                bloomProgress,
+                stageAlpha
+        );
+
+        AptitudeRenderUtility.drawCenteredText(
+                guiGraphics,
+                this.font,
+                this.soulStrengthHint,
+                this.width * 0.5F,
+                this.height * 0.1F,
+                getHintScale() * 1.08F,
+                ColorUtility.withAlpha(0xD8F1FF, stageAlpha * introProgress * 0.94F),
+                0x111827,
+                stageAlpha * introProgress * 0.52F
+        );
+        if (this.phase != AptitudePhase.SOUL_INTRO) {
+            int illuminatedStarCount = getIlluminatedSoulStarCount();
+            String starCountText = ChineseNumberUtility.toChineseInteger(illuminatedStarCount) + "星";
+            AptitudeRenderUtility.drawCenteredText(
+                    guiGraphics,
+                    this.font,
+                    customFontText(starCountText),
+                    this.width * 0.5F,
+                    this.height * 0.78F,
+                    getHintScale() * 0.9F,
+                    ColorUtility.withAlpha(
+                            illuminatedStarCount == SoulStrength.MAXIMUM_ILLUMINATED_STARS
+                                    ? 0xF4FCFF
+                                    : 0xA9D7EA,
+                            stageAlpha * 0.9F
+                    ),
+                    0x101722,
+                    stageAlpha * 0.48F
+            );
+        }
+        if (this.phase == AptitudePhase.SOUL_SELECTION) {
+            boolean canConfirm = getIlluminatedSoulStarCount() >= SoulStrength.MINIMUM_ILLUMINATED_STARS;
+            AptitudeRenderUtility.drawCenteredText(
+                    guiGraphics,
+                    this.font,
+                    this.soulSelectionHint,
+                    this.width * 0.5F,
+                    this.height * 0.91F,
+                    getHintScale() * 0.78F,
+                    ColorUtility.withAlpha(canConfirm ? 0xDCEEF5 : 0x89939E, stageAlpha * 0.86F),
+                    0x111318,
+                    stageAlpha * 0.44F
+            );
+        }
     }
 
     private void confirmElementSelection() {
@@ -518,17 +637,28 @@ public final class AptitudeSelectionScreen extends Screen {
         setPhase(AptitudePhase.SELECTION_FADE);
     }
 
-    private void submitSpiritualRoot() {
-        if (this.submitted || this.confirmedElements.isEmpty()) {
+    private void confirmSpiritualRootLength() {
+        this.draggingSprout = false;
+        playUiSound(0.96F);
+        setPhase(AptitudePhase.SPROUT_FADE);
+    }
+
+    private void submitAptitude() {
+        int illuminatedSoulStars = getIlluminatedSoulStarCount();
+        if (this.submitted
+                || this.confirmedElements.isEmpty()
+                || illuminatedSoulStars < SoulStrength.MINIMUM_ILLUMINATED_STARS) {
             return;
         }
         this.submitted = true;
-        playUiSound(1.18F);
+        boolean allStarsIlluminated = illuminatedSoulStars == SoulStrength.MAXIMUM_ILLUMINATED_STARS;
+        playUiSound(allStarsIlluminated ? 1.42F : 1.18F);
         ModNetwork.sendToServer(new SubmitAptitudePacket(
                 SpiritualRoot.createElementMask(this.confirmedElements),
-                this.spiritualRootLength
+                this.spiritualRootLength,
+                illuminatedSoulStars
         ));
-        setPhase(AptitudePhase.COMPLETE_FADE);
+        setPhase(allStarsIlluminated ? AptitudePhase.SOUL_BLOOM : AptitudePhase.COMPLETE_FADE);
     }
 
     private void toggleElement(ElementType element) {
@@ -538,6 +668,17 @@ public final class AptitudeSelectionScreen extends Screen {
         } else {
             this.selectedElements.add(element);
             playUiSound(1.04F);
+        }
+    }
+
+    private void toggleSoulStar(int starIndex) {
+        int starBit = 1 << starIndex;
+        if ((this.illuminatedSoulStarMask & starBit) != 0) {
+            this.illuminatedSoulStarMask &= ~starBit;
+            playUiSound(0.82F);
+        } else {
+            this.illuminatedSoulStarMask |= starBit;
+            playUiSound(0.98F + starIndex * 0.045F);
         }
     }
 
@@ -563,6 +704,28 @@ public final class AptitudeSelectionScreen extends Screen {
             return ElementType.YIN_YANG;
         }
         return null;
+    }
+
+    private int findClickedSoulStar(double mouseX, double mouseY) {
+        List<ScreenPoint> starPositions = SoulConstellationRenderUtility.getStarPositions(
+                this.width * 0.5F,
+                getSoulConstellationCenterY(),
+                getSoulConstellationRadius()
+        );
+        float hitRadius = Mth.clamp(getSoulConstellationRadius() * 0.06F, 8.0F, 17.0F);
+        for (int starIndex = 0; starIndex < starPositions.size(); starIndex++) {
+            ScreenPoint starPosition = starPositions.get(starIndex);
+            float deltaX = (float) mouseX - starPosition.x();
+            float deltaY = (float) mouseY - starPosition.y();
+            if (deltaX * deltaX + deltaY * deltaY <= hitRadius * hitRadius) {
+                return starIndex;
+            }
+        }
+        return -1;
+    }
+
+    private int getIlluminatedSoulStarCount() {
+        return Integer.bitCount(this.illuminatedSoulStarMask & SoulConstellationRenderUtility.ALL_STARS_MASK);
     }
 
     private boolean isMouseOverSprout(double mouseX, double mouseY) {
@@ -610,13 +773,28 @@ public final class AptitudeSelectionScreen extends Screen {
                     setPhase(AptitudePhase.LENGTH_SELECTION);
                 }
             }
+            case SPROUT_FADE -> {
+                if (elapsed >= SPROUT_FADE_DURATION) {
+                    setPhase(AptitudePhase.SOUL_INTRO);
+                }
+            }
+            case SOUL_INTRO -> {
+                if (elapsed >= SOUL_INTRO_DURATION) {
+                    setPhase(AptitudePhase.SOUL_SELECTION);
+                }
+            }
+            case SOUL_BLOOM -> {
+                if (elapsed >= SOUL_BLOOM_DURATION) {
+                    setPhase(AptitudePhase.COMPLETE_FADE);
+                }
+            }
             case COMPLETE_FADE -> {
                 if (elapsed >= COMPLETE_FADE_DURATION && this.minecraft != null) {
                     this.minecraft.setScreen(null);
                     return true;
                 }
             }
-            case SELECTING, LENGTH_SELECTION -> {
+            case SELECTING, LENGTH_SELECTION, SOUL_SELECTION -> {
             }
         }
         return false;
@@ -752,6 +930,14 @@ public final class AptitudeSelectionScreen extends Screen {
         return Mth.clamp(this.width * 0.76F / textWidth, 2.0F, 6.2F);
     }
 
+    private float getSoulConstellationCenterY() {
+        return this.height * 0.46F;
+    }
+
+    private float getSoulConstellationRadius() {
+        return Mth.clamp(Math.min(this.width, this.height) * 0.36F, 72.0F, 210.0F);
+    }
+
     private float getSproutBottomY() {
         return this.height - Math.max(24.0F, this.height * 0.08F);
     }
@@ -852,6 +1038,10 @@ public final class AptitudeSelectionScreen extends Screen {
         ROOT_DISPLAY,
         SPROUT_GROW,
         LENGTH_SELECTION,
+        SPROUT_FADE,
+        SOUL_INTRO,
+        SOUL_SELECTION,
+        SOUL_BLOOM,
         COMPLETE_FADE
     }
 }

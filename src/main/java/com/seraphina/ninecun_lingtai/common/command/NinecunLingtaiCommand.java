@@ -29,7 +29,7 @@ public final class NinecunLingtaiCommand {
 
     private static int reopenAptitudeScreen(CommandSourceStack commandSource) throws CommandSyntaxException {
         ServerPlayer player = commandSource.getPlayerOrException();
-        PlayerAptitudeData.clearSpiritualRoot(player);
+        PlayerAptitudeData.clearAptitude(player);
         ModNetwork.sendAptitudeScreenRequest(player);
         commandSource.sendSuccess(
                 () -> Component.literal("已清除当前资质并重新打开选择界面。"),

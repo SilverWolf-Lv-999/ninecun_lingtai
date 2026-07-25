@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.seraphina.ninecun_lingtai.ModMain;
 import com.seraphina.ninecun_lingtai.client.render.AptitudeFormationShader;
 import com.seraphina.ninecun_lingtai.client.render.ElementFlowShader;
+import com.seraphina.ninecun_lingtai.client.render.SoulConstellationShader;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
@@ -22,6 +23,10 @@ public final class ClientModEventHandler {
     private static final ResourceLocation APTITUDE_FORMATION_SHADER = ResourceLocation.fromNamespaceAndPath(
             ModMain.MOD_ID,
             "aptitude_formation"
+    );
+    private static final ResourceLocation SOUL_CONSTELLATION_SHADER = ResourceLocation.fromNamespaceAndPath(
+            ModMain.MOD_ID,
+            "soul_constellation"
     );
 
     private ClientModEventHandler() {
@@ -44,6 +49,14 @@ public final class ClientModEventHandler {
                         DefaultVertexFormat.POSITION_COLOR_TEX
                 ),
                 ElementFlowShader::setElementFlowShader
+        );
+        event.registerShader(
+                new ShaderInstance(
+                        event.getResourceProvider(),
+                        SOUL_CONSTELLATION_SHADER,
+                        DefaultVertexFormat.POSITION_COLOR_TEX
+                ),
+                SoulConstellationShader::setSoulConstellationShader
         );
     }
 }
