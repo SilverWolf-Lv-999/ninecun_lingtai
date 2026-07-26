@@ -23,8 +23,12 @@ public final class PlayerSpiritualEnergyData {
         }
         CompoundTag spiritualEnergyData = persistentData.getCompound(SPIRITUAL_ENERGY_KEY);
         String elementKey = element.getSerializedName();
-        return spiritualEnergyData.contains(elementKey, Tag.TAG_ANY_NUMERIC)
-                ? Math.max(0.0D, spiritualEnergyData.getDouble(elementKey))
+        if (!spiritualEnergyData.contains(elementKey, Tag.TAG_ANY_NUMERIC)) {
+            return 0.0D;
+        }
+        double spiritualEnergy = spiritualEnergyData.getDouble(elementKey);
+        return Double.isFinite(spiritualEnergy) && spiritualEnergy > 0.0D
+                ? spiritualEnergy
                 : 0.0D;
     }
 
@@ -51,6 +55,22 @@ public final class PlayerSpiritualEnergyData {
         double updatedEnergy = getEnergy(player, element) + amount;
         spiritualEnergyData.putDouble(elementKey, Double.isFinite(updatedEnergy) ? updatedEnergy : Double.MAX_VALUE);
         persistentData.put(SPIRITUAL_ENERGY_KEY, spiritualEnergyData);
+    }
+
+    public static boolean consumeEnergy(Player player, ElementType element, double amount) {
+        if (!Double.isFinite(amount) || amount <= 0.0D) {
+            return false;
+        }
+        double currentEnergy = getEnergy(player, element);
+        if (currentEnergy < amount) {
+            return false;
+        }
+
+        CompoundTag persistentData = player.getPersistentData();
+        CompoundTag spiritualEnergyData = persistentData.getCompound(SPIRITUAL_ENERGY_KEY);
+        spiritualEnergyData.putDouble(element.getSerializedName(), currentEnergy - amount);
+        persistentData.put(SPIRITUAL_ENERGY_KEY, spiritualEnergyData);
+        return true;
     }
 
     public static void copy(Player sourcePlayer, Player targetPlayer) {

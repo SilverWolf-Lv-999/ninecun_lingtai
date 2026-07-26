@@ -1,12 +1,17 @@
 package com.seraphina.ninecun_lingtai.common.player;
 
 import com.seraphina.ninecun_lingtai.api.aptitude.SpiritualRoot;
+import com.seraphina.ninecun_lingtai.api.cultivation.BreakthroughResult;
+import com.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
 import com.seraphina.ninecun_lingtai.api.element.ElementType;
 import com.seraphina.ninecun_lingtai.api.element.FiveElementValues;
 import com.seraphina.ninecun_lingtai.common.config.CommonConfig;
 import com.seraphina.ninecun_lingtai.common.data.ElementEnvironmentManager;
 import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
+import com.seraphina.ninecun_lingtai.utility.CultivationUtility;
 import com.seraphina.ninecun_lingtai.utility.SpiritualEnergyUtility;
+import com.seraphina.ninecun_lingtai.utility.SpiritualRootUtility;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
 
@@ -135,7 +140,24 @@ public final class PlayerMeditationManager {
                 / absorptionProfile.efficiencies().size();
         for (Map.Entry<ElementType, Double> entry : absorptionProfile.efficiencies().entrySet()) {
             PlayerSpiritualEnergyData.addEnergy(player, entry.getKey(), baseAbsorption * entry.getValue());
+            tryBreakthrough(player, entry.getKey());
         }
+    }
+
+    private static void tryBreakthrough(ServerPlayer player, ElementType spiritualRootElement) {
+        BreakthroughResult result = PlayerCultivationManager.tryBreakthrough(player, spiritualRootElement);
+        if (result != BreakthroughResult.SUCCESS) {
+            return;
+        }
+        CultivationStage stage = PlayerCultivationData.getStage(player, spiritualRootElement).orElseThrow();
+        player.displayClientMessage(
+                Component.literal(
+                        SpiritualRootUtility.getElementName(spiritualRootElement)
+                                + "灵根突破至"
+                                + CultivationUtility.getDisplayName(stage)
+                ),
+                false
+        );
     }
 
     private static MeditationAbsorptionProfile calculateAbsorptionProfile(ServerPlayer player) {

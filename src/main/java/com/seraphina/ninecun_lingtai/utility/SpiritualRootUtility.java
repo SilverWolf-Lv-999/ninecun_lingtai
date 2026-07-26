@@ -24,13 +24,15 @@ public final class SpiritualRootUtility {
             ElementType.METAL
     );
 
-    private static final Map<ElementType, String> ELEMENT_NAMES = Map.of(
-            ElementType.METAL, "金",
-            ElementType.WOOD, "木",
-            ElementType.WATER, "水",
-            ElementType.FIRE, "火",
-            ElementType.EARTH, "土",
-            ElementType.YIN_YANG, "阴阳"
+    private static final Map<ElementType, String> ELEMENT_NAMES = Map.ofEntries(
+            Map.entry(ElementType.METAL, "金"),
+            Map.entry(ElementType.WOOD, "木"),
+            Map.entry(ElementType.WATER, "水"),
+            Map.entry(ElementType.FIRE, "火"),
+            Map.entry(ElementType.EARTH, "土"),
+            Map.entry(ElementType.YIN_YANG, "阴阳"),
+            Map.entry(ElementType.THUNDER, "雷"),
+            Map.entry(ElementType.CHAOS, "混沌")
     );
     private static final Map<ElementType, Integer> ELEMENT_COLORS = Map.of(
             ElementType.WATER, 0x328CFF,
@@ -93,5 +95,11 @@ public final class SpiritualRootUtility {
     public static boolean isChaos(Set<ElementType> elements) {
         return elements.size() == SpiritualRoot.SELECTABLE_ELEMENTS.size()
                 && elements.containsAll(SpiritualRoot.SELECTABLE_ELEMENTS);
+    }
+
+    public static Set<ElementType> getIndependentRootElements(SpiritualRoot spiritualRoot) {
+        return spiritualRoot.isChaos()
+                ? Set.of(ElementType.CHAOS)
+                : spiritualRoot.elements();
     }
 }

@@ -1,0 +1,75 @@
+package com.seraphina.ninecun_lingtai.utility;
+
+import com.seraphina.ninecun_lingtai.api.cultivation.CultivationRealm;
+import com.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
+
+import java.math.BigInteger;
+import java.util.Optional;
+
+public final class CultivationUtility {
+    private static final long[] QI_REFINING_REQUIREMENTS = {
+            25L,
+            35L,
+            50L,
+            70L,
+            130L,
+            250L,
+            490L,
+            970L,
+            1930L
+    };
+    private static final int MAJOR_REALM_BREAKTHROUGH_MULTIPLIER = 2;
+    private static final int MINOR_REALM_REQUIREMENT_OFFSET = 10;
+    private static final BigInteger[][] SPIRITUAL_ENERGY_REQUIREMENTS = createSpiritualEnergyRequirements();
+
+    private CultivationUtility() {
+    }
+
+    public static BigInteger getRequiredSpiritualEnergy(CultivationStage targetStage) {
+        return SPIRITUAL_ENERGY_REQUIREMENTS[targetStage.realm().ordinal()][targetStage.layer() - 1];
+    }
+
+    public static Optional<BigInteger> getNextRequiredSpiritualEnergy(Optional<CultivationStage> currentStage) {
+        Optional<CultivationStage> nextStage = currentStage.isPresent()
+                ? currentStage.get().next()
+                : Optional.of(CultivationStage.first());
+        return nextStage.map(CultivationUtility::getRequiredSpiritualEnergy);
+    }
+
+    public static String getDisplayName(CultivationStage stage) {
+        String layerUnit = stage.realm().usesHeavenlyLayerName() ? "重天" : "层";
+        return stage.realm().getChineseName()
+                + ChineseNumberUtility.toChineseInteger(stage.layer())
+                + layerUnit;
+    }
+
+    public static int getProgressionIndex(CultivationStage stage) {
+        return stage.realm().ordinal() * CultivationStage.MAXIMUM_LAYER + stage.layer() - 1;
+    }
+
+    private static BigInteger[][] createSpiritualEnergyRequirements() {
+        CultivationRealm[] realms = CultivationRealm.values();
+        BigInteger[][] requirements = new BigInteger[realms.length][CultivationStage.MAXIMUM_LAYER];
+        for (int layerIndex = 0; layerIndex < QI_REFINING_REQUIREMENTS.length; layerIndex++) {
+            requirements[CultivationRealm.QI_REFINING.ordinal()][layerIndex] = BigInteger.valueOf(
+                    QI_REFINING_REQUIREMENTS[layerIndex]
+            );
+        }
+
+        BigInteger requirementOffset = BigInteger.valueOf(MINOR_REALM_REQUIREMENT_OFFSET);
+        for (int realmIndex = 1; realmIndex < realms.length; realmIndex++) {
+            BigInteger previousRealmPeak = requirements[realmIndex - 1][CultivationStage.MAXIMUM_LAYER - 1];
+            requirements[realmIndex][0] = previousRealmPeak.multiply(
+                    BigInteger.valueOf(MAJOR_REALM_BREAKTHROUGH_MULTIPLIER)
+            );
+
+            BigInteger minorRealmMultiplier = BigInteger.valueOf(realmIndex + 2L);
+            for (int layerIndex = 1; layerIndex < CultivationStage.MAXIMUM_LAYER; layerIndex++) {
+                requirements[realmIndex][layerIndex] = requirements[realmIndex][layerIndex - 1]
+                        .multiply(minorRealmMultiplier)
+                        .subtract(requirementOffset);
+            }
+        }
+        return requirements;
+    }
+}
