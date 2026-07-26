@@ -73,3 +73,9 @@ mandatory = true
 versionRange = "[0,)"
 ordering = "AFTER"
 side = "CLIENT"
+[[dependencies."${mod_id}"]]
+modId = "jade"
+mandatory = false
+versionRange = "[11,)"
+ordering = "AFTER"
+side = "BOTH"

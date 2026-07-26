@@ -7,9 +7,11 @@ import com.seraphina.ninecun_lingtai.api.element.ElementType;
 import com.seraphina.ninecun_lingtai.client.menu.CultivationInfoMenu;
 import com.seraphina.ninecun_lingtai.client.player.ClientCultivationInfoManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientMeditationManager;
+import com.seraphina.ninecun_lingtai.common.lifespan.LifespanSnapshot;
 import com.seraphina.ninecun_lingtai.common.player.PlayerCultivationInfo;
 import com.seraphina.ninecun_lingtai.utility.ChineseNumberUtility;
 import com.seraphina.ninecun_lingtai.utility.CultivationUtility;
+import com.seraphina.ninecun_lingtai.utility.LifespanUtility;
 import com.seraphina.ninecun_lingtai.utility.SpiritualRootUtility;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -29,7 +31,7 @@ public final class CultivationInfoScreen extends AbstractContainerScreen<Cultiva
     private static final int PREFERRED_IMAGE_HEIGHT = 226;
     private static final int MINIMUM_IMAGE_WIDTH = 230;
     private static final int MINIMUM_IMAGE_HEIGHT = 178;
-    private static final int PROFILE_HEIGHT = 72;
+    private static final int PROFILE_HEIGHT = 102;
     private static final int CULTIVATION_OVERVIEW_HEIGHT = 30;
     private static final int CARD_HEIGHT = 44;
     private static final int CARD_GAP = 5;
@@ -187,6 +189,7 @@ public final class CultivationInfoScreen extends AbstractContainerScreen<Cultiva
                 .map(strength -> ChineseNumberUtility.toChineseInteger(strength.illuminatedStars()) + "星")
                 .orElse("尚未测定");
         String meditationState = ClientMeditationManager.isLocalPlayerMeditating() ? "打坐中" : "未打坐";
+        LifespanSnapshot lifespan = cultivationInfo.lifespan();
         int textLeft = left + 9;
         int maximumWidth = right - textLeft - 8;
         drawFittedText(
@@ -220,6 +223,22 @@ public final class CultivationInfoScreen extends AbstractContainerScreen<Cultiva
                 top + 53,
                 maximumWidth,
                 SECONDARY_TEXT_COLOR
+        );
+        drawFittedText(
+                guiGraphics,
+                styledText("年轮年龄　" + LifespanUtility.formatAge(lifespan.ageTicks()), SECONDARY_TEXT_COLOR),
+                textLeft,
+                top + 68,
+                maximumWidth,
+                SECONDARY_TEXT_COLOR
+        );
+        drawFittedText(
+                guiGraphics,
+                styledText("剩余寿元　" + LifespanUtility.formatRemaining(lifespan), PRIMARY_TEXT_COLOR),
+                textLeft,
+                top + 83,
+                maximumWidth,
+                PRIMARY_TEXT_COLOR
         );
     }
 

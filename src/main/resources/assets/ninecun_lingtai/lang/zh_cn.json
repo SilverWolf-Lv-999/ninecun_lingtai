@@ -1,5 +1,11 @@
 {
   "inventory_tab.ninecun_lingtai.techniques": "魂魄功法",
+  "config.jade.plugin_ninecun_lingtai.lifespan": "寿元",
+  "jade.ninecun_lingtai.lifespan": "年轮：%1$s　寿元：%2$s",
+  "jade.ninecun_lingtai.age_duration": "%1$s岁%2$s天",
+  "jade.ninecun_lingtai.remaining_duration": "%1$s年%2$s天",
+  "jade.ninecun_lingtai.immortal": "与天地齐寿",
+  "message.ninecun_lingtai.lifespan_expired": "寿元已尽，肉身归于尘土",
   "item.ninecun_lingtai.jade_slip": "玉简",
   "itemGroup.ninecun_lingtai": "九寸灵台",
   "key.categories.ninecun_lingtai": "九寸灵台",

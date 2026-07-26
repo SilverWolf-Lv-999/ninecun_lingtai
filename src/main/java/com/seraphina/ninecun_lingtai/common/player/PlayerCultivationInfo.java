@@ -4,6 +4,8 @@ import com.seraphina.ninecun_lingtai.api.aptitude.SoulStrength;
 import com.seraphina.ninecun_lingtai.api.aptitude.SpiritualRoot;
 import com.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
 import com.seraphina.ninecun_lingtai.api.element.ElementType;
+import com.seraphina.ninecun_lingtai.common.lifespan.EntityLifespanData;
+import com.seraphina.ninecun_lingtai.common.lifespan.LifespanSnapshot;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.Collections;
@@ -15,13 +17,15 @@ public record PlayerCultivationInfo(
         Optional<SpiritualRoot> spiritualRoot,
         Optional<SoulStrength> soulStrength,
         Optional<CultivationStage> cultivationStage,
-        Map<ElementType, Double> spiritualEnergy
+        Map<ElementType, Double> spiritualEnergy,
+        LifespanSnapshot lifespan
 ) {
     public PlayerCultivationInfo {
         spiritualRoot = spiritualRoot == null ? Optional.empty() : spiritualRoot;
         soulStrength = soulStrength == null ? Optional.empty() : soulStrength;
         cultivationStage = cultivationStage == null ? Optional.empty() : cultivationStage;
         spiritualEnergy = immutableEnumMap(spiritualEnergy);
+        lifespan = lifespan == null ? LifespanSnapshot.empty() : lifespan;
     }
 
     public static PlayerCultivationInfo capture(Player player) {
@@ -29,12 +33,19 @@ public record PlayerCultivationInfo(
                 PlayerAptitudeData.getSpiritualRoot(player),
                 PlayerAptitudeData.getSoulStrength(player),
                 PlayerCultivationData.getStage(player),
-                PlayerSpiritualEnergyData.getAllEnergy(player)
+                PlayerSpiritualEnergyData.getAllEnergy(player),
+                EntityLifespanData.capture(player)
         );
     }
 
     public static PlayerCultivationInfo empty() {
-        return new PlayerCultivationInfo(Optional.empty(), Optional.empty(), Optional.empty(), Map.of());
+        return new PlayerCultivationInfo(
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty(),
+                Map.of(),
+                LifespanSnapshot.empty()
+        );
     }
 
     public double getSpiritualEnergy(ElementType element) {

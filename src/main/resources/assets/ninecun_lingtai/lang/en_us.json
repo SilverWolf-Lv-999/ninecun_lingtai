@@ -1,5 +1,11 @@
 {
   "inventory_tab.ninecun_lingtai.techniques": "Soul Techniques",
+  "config.jade.plugin_ninecun_lingtai.lifespan": "Lifespan",
+  "jade.ninecun_lingtai.lifespan": "Age: %1$s  Lifespan remaining: %2$s",
+  "jade.ninecun_lingtai.age_duration": "%1$s years %2$s days",
+  "jade.ninecun_lingtai.remaining_duration": "%1$s years %2$s days",
+  "jade.ninecun_lingtai.immortal": "as enduring as heaven and earth",
+  "message.ninecun_lingtai.lifespan_expired": "Your lifespan is exhausted; your mortal body returns to dust",
   "item.ninecun_lingtai.jade_slip": "Jade Slip",
   "itemGroup.ninecun_lingtai": "Ninecun Lingtai",
   "key.categories.ninecun_lingtai": "Ninecun Lingtai",

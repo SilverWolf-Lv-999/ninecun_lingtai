@@ -10,6 +10,7 @@ public final class CommonConfig {
     public static final double MAXIMUM_MULTIPLIER = 100.0D;
     public static final double MINIMUM_NATURAL_RESTRAINT_ADVANTAGE = 1.0D;
     public static final double MAXIMUM_BASE_ABSORPTION_PER_SECOND = 1000000.0D;
+    public static final int MAXIMUM_LIFESPAN_YEARS = 1000000;
 
     public static final ForgeConfigSpec.DoubleValue GENERATION_WEAKENING_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue RESTRAINT_ENHANCEMENT_MULTIPLIER;
@@ -25,6 +26,12 @@ public final class CommonConfig {
     public static final ForgeConfigSpec.DoubleValue MEDITATION_GENERATED_BY_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue MEDITATION_OVERCOMES_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue MEDITATION_OVERCOME_BY_MULTIPLIER;
+    public static final ForgeConfigSpec.IntValue MORTAL_PLAYER_LIFESPAN_YEARS;
+    public static final ForgeConfigSpec.IntValue QI_REFINING_LIFESPAN_YEARS;
+    public static final ForgeConfigSpec.IntValue FOUNDATION_ESTABLISHMENT_LIFESPAN_YEARS;
+    public static final ForgeConfigSpec.IntValue GOLDEN_CORE_LIFESPAN_YEARS;
+    public static final ForgeConfigSpec.IntValue NASCENT_SOUL_LIFESPAN_YEARS;
+    public static final ForgeConfigSpec.IntValue DEFAULT_CREATURE_LIFESPAN_YEARS;
     public static final ForgeConfigSpec.EnumValue<AiProvider> AI_PROVIDER;
     public static final ForgeConfigSpec.ConfigValue<String> AI_API_KEY;
     public static final ForgeConfigSpec.ConfigValue<String> AI_MODEL;
@@ -100,6 +107,39 @@ public final class CommonConfig {
                 .defineInRange("overcomeByMultiplier", 0.65D, MINIMUM_MULTIPLIER, MAXIMUM_MULTIPLIER);
         BUILDER.pop();
 
+        BUILDER.push("lifespan");
+        MORTAL_PLAYER_LIFESPAN_YEARS = defineLifespanYears(
+                "mortalPlayerYears",
+                100,
+                "Maximum lifespan in years for a mortal player"
+        );
+        QI_REFINING_LIFESPAN_YEARS = defineLifespanYears(
+                "qiRefiningYears",
+                120,
+                "Maximum lifespan in years for a Qi Refining player"
+        );
+        FOUNDATION_ESTABLISHMENT_LIFESPAN_YEARS = defineLifespanYears(
+                "foundationEstablishmentYears",
+                200,
+                "Maximum lifespan in years for a Foundation Establishment player"
+        );
+        GOLDEN_CORE_LIFESPAN_YEARS = defineLifespanYears(
+                "goldenCoreYears",
+                500,
+                "Maximum lifespan in years for a Golden Core player"
+        );
+        NASCENT_SOUL_LIFESPAN_YEARS = defineLifespanYears(
+                "nascentSoulYears",
+                1000,
+                "Maximum lifespan in years for a Nascent Soul player"
+        );
+        DEFAULT_CREATURE_LIFESPAN_YEARS = defineLifespanYears(
+                "defaultCreatureYears",
+                30,
+                "Maximum lifespan in years for non-undead creatures"
+        );
+        BUILDER.pop();
+
         BUILDER.push("ai");
         AI_PROVIDER = BUILDER
                 .comment("AI provider used to assess technique comprehension. Supported values: OPENAI, DEEPSEEK")
@@ -115,5 +155,15 @@ public final class CommonConfig {
     }
 
     private CommonConfig() {
+    }
+
+    private static ForgeConfigSpec.IntValue defineLifespanYears(
+            String name,
+            int defaultValue,
+            String comment
+    ) {
+        return BUILDER
+                .comment(comment, "One year equals 36 Minecraft days")
+                .defineInRange(name, defaultValue, 1, MAXIMUM_LIFESPAN_YEARS);
     }
 }

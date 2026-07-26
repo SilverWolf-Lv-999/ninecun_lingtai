@@ -6,6 +6,7 @@ import com.seraphina.ninecun_lingtai.api.cultivation.CultivationRealm;
 import com.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
 import com.seraphina.ninecun_lingtai.api.element.ElementType;
 import com.seraphina.ninecun_lingtai.client.player.ClientCultivationInfoManager;
+import com.seraphina.ninecun_lingtai.common.lifespan.LifespanSnapshot;
 import com.seraphina.ninecun_lingtai.common.player.PlayerCultivationInfo;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
@@ -38,6 +39,9 @@ public record SyncCultivationInfoPacket(PlayerCultivationInfo cultivationInfo) {
         for (ElementType element : ElementType.values()) {
             buffer.writeDouble(cultivationInfo.getSpiritualEnergy(element));
         }
+        buffer.writeVarLong(cultivationInfo.lifespan().ageTicks());
+        buffer.writeVarInt(cultivationInfo.lifespan().maximumLifespanYears());
+        buffer.writeBoolean(cultivationInfo.lifespan().immortal());
     }
 
     public static SyncCultivationInfoPacket decode(FriendlyByteBuf buffer) {
@@ -66,11 +70,17 @@ public record SyncCultivationInfoPacket(PlayerCultivationInfo cultivationInfo) {
                 spiritualEnergy.put(element, energy);
             }
         }
+        LifespanSnapshot lifespan = new LifespanSnapshot(
+                buffer.readVarLong(),
+                buffer.readVarInt(),
+                buffer.readBoolean()
+        );
         return new SyncCultivationInfoPacket(new PlayerCultivationInfo(
                 spiritualRoot,
                 soulStrength,
                 cultivationStage,
-                spiritualEnergy
+                spiritualEnergy,
+                lifespan
         ));
     }
 

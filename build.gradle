@@ -163,6 +163,7 @@ dependencies {
     implementation fg.deobf("curse.maven:inventory-tabs-forge-716101:${inventory_tabs_version}")
     implementation fg.deobf("maven.modrinth:filters-api:${filters_api_version}")
 
+    compileOnly fg.deobf("maven.modrinth:jade:${jade_version}")
     runtimeOnly fg.deobf("maven.modrinth:jade:${jade_version}")
     compileOnly fg.deobf("mezz.jei:jei-${minecraft_version}-common-api:${jei_version}")
     compileOnly fg.deobf("mezz.jei:jei-${minecraft_version}-forge-api:${jei_version}")
