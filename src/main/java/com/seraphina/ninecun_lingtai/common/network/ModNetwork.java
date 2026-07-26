@@ -3,9 +3,12 @@ package com.seraphina.ninecun_lingtai.common.network;
 import com.seraphina.ninecun_lingtai.ModMain;
 import com.seraphina.ninecun_lingtai.api.element.FiveElementValues;
 import com.seraphina.ninecun_lingtai.common.network.packet.OpenAptitudeScreenPacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.RequestCultivationInfoPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SetMeditationStatePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SubmitAptitudePacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.SyncCultivationInfoPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncMeditationStatePacket;
+import com.seraphina.ninecun_lingtai.common.player.PlayerCultivationInfo;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkDirection;
@@ -16,7 +19,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
 import java.util.UUID;
 
 public final class ModNetwork {
-    private static final String PROTOCOL_VERSION = "4";
+    private static final String PROTOCOL_VERSION = "5";
     private static final SimpleChannel CHANNEL = NetworkRegistry.ChannelBuilder
             .named(ResourceLocation.fromNamespaceAndPath(ModMain.MOD_ID, "main"))
             .networkProtocolVersion(() -> PROTOCOL_VERSION)
@@ -66,6 +69,24 @@ public final class ModNetwork {
                 .decoder(SyncMeditationStatePacket::decode)
                 .consumerMainThread(SyncMeditationStatePacket::handle)
                 .add();
+        CHANNEL.messageBuilder(
+                        RequestCultivationInfoPacket.class,
+                        nextPacketId++,
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(RequestCultivationInfoPacket::encode)
+                .decoder(RequestCultivationInfoPacket::decode)
+                .consumerMainThread(RequestCultivationInfoPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        SyncCultivationInfoPacket.class,
+                        nextPacketId++,
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(SyncCultivationInfoPacket::encode)
+                .decoder(SyncCultivationInfoPacket::decode)
+                .consumerMainThread(SyncCultivationInfoPacket::handle)
+                .add();
     }
 
     public static void sendAptitudeScreenRequest(ServerPlayer player) {
@@ -104,6 +125,13 @@ public final class ModNetwork {
                         environmentValues,
                         movementAffinities
                 )
+        );
+    }
+
+    public static void sendCultivationInfo(ServerPlayer player) {
+        CHANNEL.send(
+                PacketDistributor.PLAYER.with(() -> player),
+                new SyncCultivationInfoPacket(PlayerCultivationInfo.capture(player))
         );
     }
 

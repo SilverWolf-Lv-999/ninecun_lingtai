@@ -8,6 +8,7 @@ import java.math.BigInteger;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CultivationUtilityTest {
@@ -110,5 +111,20 @@ class CultivationUtilityTest {
                 new CultivationStage(CultivationRealm.QI_REFINING, 9).next()
         );
         assertTrue(new CultivationStage(CultivationRealm.IMMORTAL, 9).next().isEmpty());
+    }
+
+    @Test
+    void formatsAllCultivationNumbersWithChineseCharacters() {
+        assertEquals("九寸", ChineseNumberUtility.formatTenths(9.0F, "寸", "分"));
+        assertEquals("八寸五分", ChineseNumberUtility.formatTenths(8.5F, "寸", "分"));
+        assertEquals("一千二百三十四万五千六百七十八", ChineseNumberUtility.toChineseInteger(12_345_678L));
+        assertEquals("一亿零一万零一", ChineseNumberUtility.toChineseInteger(100_010_001L));
+        assertEquals("二十五点五", ChineseNumberUtility.toChineseDecimal(25.5D, 1));
+        String maximumRequirement = ChineseNumberUtility.toChineseInteger(
+                CultivationUtility.getRequiredSpiritualEnergy(
+                        new CultivationStage(CultivationRealm.IMMORTAL, CultivationStage.MAXIMUM_LAYER)
+                )
+        );
+        assertFalse(maximumRequirement.matches(".*[0-9].*"));
     }
 }

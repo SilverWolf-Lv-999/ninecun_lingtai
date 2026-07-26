@@ -34,13 +34,15 @@ public final class SpiritualRootUtility {
             Map.entry(ElementType.THUNDER, "雷"),
             Map.entry(ElementType.CHAOS, "混沌")
     );
-    private static final Map<ElementType, Integer> ELEMENT_COLORS = Map.of(
-            ElementType.WATER, 0x328CFF,
-            ElementType.FIRE, 0xFF413A,
-            ElementType.EARTH, 0xC98A4A,
-            ElementType.WOOD, 0x67B85F,
-            ElementType.METAL, 0xE6C45C,
-            ElementType.YIN_YANG, 0xC8C8D0
+    private static final Map<ElementType, Integer> ELEMENT_COLORS = Map.ofEntries(
+            Map.entry(ElementType.WATER, 0x328CFF),
+            Map.entry(ElementType.FIRE, 0xFF413A),
+            Map.entry(ElementType.EARTH, 0xC98A4A),
+            Map.entry(ElementType.WOOD, 0x67B85F),
+            Map.entry(ElementType.METAL, 0xE6C45C),
+            Map.entry(ElementType.YIN_YANG, 0xC8C8D0),
+            Map.entry(ElementType.THUNDER, 0xA67CFF),
+            Map.entry(ElementType.CHAOS, 0xC46CFF)
     );
 
     private SpiritualRootUtility() {

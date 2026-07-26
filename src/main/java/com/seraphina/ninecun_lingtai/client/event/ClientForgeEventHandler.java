@@ -2,6 +2,7 @@ package com.seraphina.ninecun_lingtai.client.event;
 
 import com.seraphina.ninecun_lingtai.ModMain;
 import com.seraphina.ninecun_lingtai.client.player.ClientMeditationManager;
+import com.seraphina.ninecun_lingtai.client.player.ClientCultivationInfoManager;
 import com.seraphina.ninecun_lingtai.client.screen.ClientAptitudeScreenManager;
 import com.seraphina.ninecun_lingtai.client.utility.SpiritualEnergyRenderUtility;
 import net.minecraft.client.player.Input;
@@ -73,6 +74,7 @@ public final class ClientForgeEventHandler {
     @SubscribeEvent
     public static void onLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
         ClientAptitudeScreenManager.reset();
+        ClientCultivationInfoManager.reset();
         ClientMeditationManager.reset();
     }
 }
