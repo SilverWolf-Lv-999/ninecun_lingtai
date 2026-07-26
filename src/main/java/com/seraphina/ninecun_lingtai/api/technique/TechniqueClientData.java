@@ -8,13 +8,24 @@ public record TechniqueClientData(
         ResourceLocation id,
         String name,
         String description,
-        String content
+        String content,
+        double breathingAbsorptionMultiplier
 ) {
+    /** Multiplier value marking a technique that is not a breathing technique. */
+    public static final double NOT_BREATHING = 0.0D;
+
     public TechniqueClientData {
         Objects.requireNonNull(id, "id");
         name = requireText(name, "name");
         description = Objects.requireNonNull(description, "description");
         content = requireText(content, "content");
+        if (!Double.isFinite(breathingAbsorptionMultiplier) || breathingAbsorptionMultiplier < 0.0D) {
+            breathingAbsorptionMultiplier = NOT_BREATHING;
+        }
+    }
+
+    public boolean isBreathingTechnique() {
+        return this.breathingAbsorptionMultiplier > NOT_BREATHING;
     }
 
     public static TechniqueClientData fromDefinition(TechniqueDefinition technique) {
@@ -22,7 +33,10 @@ public record TechniqueClientData(
                 technique.id(),
                 technique.name(),
                 technique.description(),
-                technique.content()
+                technique.content(),
+                technique.breathing()
+                        .map(TechniqueBreathing::absorptionMultiplier)
+                        .orElse(NOT_BREATHING)
         );
     }
 

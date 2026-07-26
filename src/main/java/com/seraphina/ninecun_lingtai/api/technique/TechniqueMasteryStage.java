@@ -15,22 +15,29 @@ import java.util.Optional;
  * remaining stages.
  */
 public enum TechniqueMasteryStage {
-    ENTRY("entry", "入门", 0L),
-    MINOR_MASTERY("minor_mastery", "小成", 60L),
-    MAJOR_MASTERY("major_mastery", "大成", 360L),
-    PERFECTION("perfection", "圆满", 1800L);
+    ENTRY("entry", "入门", 0L, 0.5D),
+    MINOR_MASTERY("minor_mastery", "小成", 60L, 0.7D),
+    MAJOR_MASTERY("major_mastery", "大成", 360L, 0.85D),
+    PERFECTION("perfection", "圆满", 1800L, 1.0D);
 
     private static final Map<ResourceLocation, TechniqueMasteryStage> BY_MASTERY_ID = createMasteryIndex();
 
     private final String serializedName;
     private final String chineseName;
     private final long requiredProficiency;
+    private final double breathingEfficiency;
     private final ResourceLocation masteryId;
 
-    TechniqueMasteryStage(String serializedName, String chineseName, long requiredProficiency) {
+    TechniqueMasteryStage(
+            String serializedName,
+            String chineseName,
+            long requiredProficiency,
+            double breathingEfficiency
+    ) {
         this.serializedName = serializedName;
         this.chineseName = chineseName;
         this.requiredProficiency = requiredProficiency;
+        this.breathingEfficiency = breathingEfficiency;
         this.masteryId = ResourceLocation.fromNamespaceAndPath(ModMain.MOD_ID, serializedName);
     }
 
@@ -45,6 +52,14 @@ public enum TechniqueMasteryStage {
     /** Total training proficiency required to reach this stage through cultivation. */
     public long getRequiredProficiency() {
         return this.requiredProficiency;
+    }
+
+    /**
+     * Fraction of a breathing technique's full absorption power available at this stage: how well
+     * the technique is understood limits how fast qi can be drawn in, reaching 100% at perfection.
+     */
+    public double getBreathingEfficiency() {
+        return this.breathingEfficiency;
     }
 
     public ResourceLocation getMasteryId() {

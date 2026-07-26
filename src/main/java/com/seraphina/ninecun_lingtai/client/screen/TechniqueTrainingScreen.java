@@ -27,8 +27,40 @@ public final class TechniqueTrainingScreen extends AbstractTechniqueImprintScree
     private static final float NAME_FONT_SCALE = 0.42F;
     private static final float PROFICIENCY_FONT_SCALE = 0.28F;
 
+    /**
+     * TRAIN meditates on any learned technique for proficiency; REALM picks the breathing
+     * technique that realm cultivation must run through, so it only lists breathing techniques.
+     */
+    public enum Mode {
+        TRAIN(
+                "screen.ninecun_lingtai.train.title",
+                "screen.ninecun_lingtai.train.choose_hint",
+                "screen.ninecun_lingtai.train.start",
+                "screen.ninecun_lingtai.no_learned_techniques"
+        ),
+        REALM(
+                "screen.ninecun_lingtai.breathing.title",
+                "screen.ninecun_lingtai.breathing.choose_hint",
+                "screen.ninecun_lingtai.breathing.start",
+                "screen.ninecun_lingtai.no_learned_breathing"
+        );
+
+        private final String titleKey;
+        private final String hintKey;
+        private final String startKey;
+        private final String emptyKey;
+
+        Mode(String titleKey, String hintKey, String startKey, String emptyKey) {
+            this.titleKey = titleKey;
+            this.hintKey = hintKey;
+            this.startKey = startKey;
+            this.emptyKey = emptyKey;
+        }
+    }
+
     @Nullable
     private final Screen parentScreen;
+    private final Mode mode;
 
     private int layoutLeft;
     private int layoutRight;
@@ -47,8 +79,13 @@ public final class TechniqueTrainingScreen extends AbstractTechniqueImprintScree
     private boolean submitted;
 
     public TechniqueTrainingScreen(@Nullable Screen parentScreen) {
-        super(Component.translatable("screen.ninecun_lingtai.train.title"));
+        this(parentScreen, Mode.TRAIN);
+    }
+
+    public TechniqueTrainingScreen(@Nullable Screen parentScreen, Mode mode) {
+        super(Component.translatable(mode.titleKey));
         this.parentScreen = parentScreen;
+        this.mode = mode;
     }
 
     @Override
@@ -163,7 +200,7 @@ public final class TechniqueTrainingScreen extends AbstractTechniqueImprintScree
         TechniqueImprintRenderUtility.drawVerticalText(
                 guiGraphics,
                 this.font,
-                Component.translatable("screen.ninecun_lingtai.train.title").getString(),
+                Component.translatable(this.mode.titleKey).getString(),
                 this.width - 19.0F,
                 23.0F,
                 0.43F,
@@ -176,7 +213,7 @@ public final class TechniqueTrainingScreen extends AbstractTechniqueImprintScree
         TechniqueImprintRenderUtility.drawVerticalText(
                 guiGraphics,
                 this.font,
-                Component.translatable("screen.ninecun_lingtai.train.choose_hint").getString(),
+                Component.translatable(this.mode.hintKey).getString(),
                 18.0F,
                 28.0F,
                 0.29F,
@@ -200,7 +237,7 @@ public final class TechniqueTrainingScreen extends AbstractTechniqueImprintScree
             TechniqueImprintRenderUtility.drawVerticalText(
                     guiGraphics,
                     this.font,
-                    Component.translatable("screen.ninecun_lingtai.no_learned_techniques").getString(),
+                    Component.translatable(this.mode.emptyKey).getString(),
                     this.width * 0.5F,
                     this.height * 0.32F,
                     0.36F,
@@ -317,7 +354,7 @@ public final class TechniqueTrainingScreen extends AbstractTechniqueImprintScree
         TechniqueImprintRenderUtility.drawStarButton(
                 guiGraphics,
                 this.font,
-                translatedTechniqueText("screen.ninecun_lingtai.train.start"),
+                translatedTechniqueText(this.mode.startKey),
                 this.actionButtonLeft,
                 this.actionButtonTop,
                 ACTION_BUTTON_WIDTH,
@@ -377,7 +414,13 @@ public final class TechniqueTrainingScreen extends AbstractTechniqueImprintScree
     }
 
     private List<TechniqueClientData> getTechniques() {
-        return ClientTechniqueManager.getLearnedTechniques();
+        List<TechniqueClientData> learnedTechniques = ClientTechniqueManager.getLearnedTechniques();
+        if (this.mode != Mode.REALM) {
+            return learnedTechniques;
+        }
+        return learnedTechniques.stream()
+                .filter(TechniqueClientData::isBreathingTechnique)
+                .toList();
     }
 
     private void ensureSelection(List<TechniqueClientData> techniques) {

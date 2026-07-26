@@ -5,6 +5,7 @@ import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 public record TechniqueDefinition(
@@ -16,7 +17,8 @@ public record TechniqueDefinition(
         Set<ElementType> compatibleElements,
         TechniqueRequirements requirements,
         TechniqueComprehension comprehension,
-        List<TechniqueEffect> effects
+        List<TechniqueEffect> effects,
+        Optional<TechniqueBreathing> breathing
 ) {
     public TechniqueDefinition {
         Objects.requireNonNull(id, "id");
@@ -28,6 +30,11 @@ public record TechniqueDefinition(
         Objects.requireNonNull(requirements, "requirements");
         Objects.requireNonNull(comprehension, "comprehension");
         effects = List.copyOf(effects);
+        Objects.requireNonNull(breathing, "breathing");
+    }
+
+    public boolean isBreathingTechnique() {
+        return this.breathing.isPresent();
     }
 
     private static String requireText(String value, String fieldName) {

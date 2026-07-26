@@ -3,6 +3,9 @@
   "description": "感应天地灵气并引气入体的基础功法。",
   "content": "静心凝神，感应周身灵气。呼吸绵长，引灵气入膻中，沿任脉下行，过三关而归于窍穴。行气不可躁进，须使气息与心神相合，完成一次小周天后再徐徐吐纳。",
   "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 1.0
+  },
   "compatible_elements": [
     "metal",
     "wood",

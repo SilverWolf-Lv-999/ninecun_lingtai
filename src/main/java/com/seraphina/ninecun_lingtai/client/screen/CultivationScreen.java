@@ -345,8 +345,12 @@ public final class CultivationScreen extends AbstractTechniqueImprintScreen {
     }
 
     private void startRealmCultivation() {
-        ClientMeditationManager.startQiCultivation();
-        beginClosing();
+        if (this.minecraft != null) {
+            this.minecraft.setScreen(new TechniqueTrainingScreen(
+                    this,
+                    TechniqueTrainingScreen.Mode.REALM
+            ));
+        }
     }
 
     private void requestBreakthrough() {

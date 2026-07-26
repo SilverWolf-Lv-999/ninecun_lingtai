@@ -66,6 +66,9 @@ public final class PlayerMeditationManager {
         player.stopUsingItem();
         stopMovement(player);
         lockRotation(player);
+        if (techniqueId == null) {
+            remindBreathingTechniqueRequired(player);
+        }
         syncStateToTrackingAndSelf(player, true);
         return true;
     }
@@ -112,8 +115,9 @@ public final class PlayerMeditationManager {
         stopMovement(player);
         lockRotation(player);
         if (session.techniqueId() == null) {
+            // Realm cultivation is impossible without a breathing technique guiding the qi.
             if (player.tickCount % ABSORPTION_INTERVAL_TICKS == 0) {
-                absorbSpiritualEnergy(player);
+                remindBreathingTechniqueRequired(player);
                 syncStateToTrackingAndSelf(player, true);
             }
             return;
@@ -123,6 +127,10 @@ public final class PlayerMeditationManager {
             grantProficiency(player, session);
         }
         if (player.tickCount % ABSORPTION_INTERVAL_TICKS == 0) {
+            double breathingMultiplier = getBreathingAbsorptionMultiplier(player, session.techniqueId());
+            if (breathingMultiplier > 0.0D) {
+                absorbSpiritualEnergy(player, breathingMultiplier);
+            }
             syncStateToTrackingAndSelf(player, true);
         }
     }
@@ -194,16 +202,40 @@ public final class PlayerMeditationManager {
         player.yBodyRotO = rotation.yBodyRot();
     }
 
-    private static void absorbSpiritualEnergy(ServerPlayer player) {
+    private static void absorbSpiritualEnergy(ServerPlayer player, double breathingMultiplier) {
         MeditationAbsorptionProfile absorptionProfile = calculateAbsorptionProfile(player);
         if (absorptionProfile.absorptionRates().isEmpty()) {
             return;
         }
-        double baseAbsorption = CommonConfig.MEDITATION_BASE_ABSORPTION_PER_SECOND.get();
+        double baseAbsorption = CommonConfig.MEDITATION_BASE_ABSORPTION_PER_SECOND.get() * breathingMultiplier;
         for (Map.Entry<ElementType, Double> entry : absorptionProfile.absorptionRates().entrySet()) {
             PlayerSpiritualEnergyData.addEnergy(player, entry.getKey(), baseAbsorption * entry.getValue());
         }
         tryAdvanceLayer(player);
+    }
+
+    /**
+     * Absorption multiplier of the breathing technique the player is currently cultivating with,
+     * scaled by how far the technique has been learned. Returns {@code 0} when the technique is
+     * not a breathing technique, so plain technique training draws in no spiritual energy.
+     */
+    private static double getBreathingAbsorptionMultiplier(ServerPlayer player, ResourceLocation techniqueId) {
+        Optional<TechniqueDefinition> technique = TechniqueManager.INSTANCE.getTechnique(techniqueId);
+        if (technique.isEmpty() || technique.get().breathing().isEmpty()) {
+            return 0.0D;
+        }
+        double masteryEfficiency = PlayerTechniqueData.getTechnique(player, techniqueId)
+                .flatMap(progress -> TechniqueMasteryStage.fromMastery(progress.mastery()))
+                .orElse(TechniqueMasteryStage.ENTRY)
+                .getBreathingEfficiency();
+        return technique.get().breathing().get().absorptionMultiplier() * masteryEfficiency;
+    }
+
+    private static void remindBreathingTechniqueRequired(ServerPlayer player) {
+        player.displayClientMessage(
+                Component.translatable("message.ninecun_lingtai.breathing_technique_required"),
+                true
+        );
     }
 
     private static void tryAdvanceLayer(ServerPlayer player) {

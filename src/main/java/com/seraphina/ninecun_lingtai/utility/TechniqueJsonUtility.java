@@ -8,6 +8,7 @@ import com.seraphina.ninecun_lingtai.ModMain;
 import com.seraphina.ninecun_lingtai.api.cultivation.CultivationRealm;
 import com.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
 import com.seraphina.ninecun_lingtai.api.element.ElementType;
+import com.seraphina.ninecun_lingtai.api.technique.TechniqueBreathing;
 import com.seraphina.ninecun_lingtai.api.technique.TechniqueComprehension;
 import com.seraphina.ninecun_lingtai.api.technique.TechniqueDefinition;
 import com.seraphina.ninecun_lingtai.api.technique.TechniqueEffect;
@@ -52,6 +53,7 @@ public final class TechniqueJsonUtility {
         TechniqueRequirements requirements = parseRequirements(jsonObject);
         TechniqueComprehension comprehension = parseComprehension(jsonObject);
         List<TechniqueEffect> effects = parseEffects(jsonObject);
+        Optional<TechniqueBreathing> breathing = parseBreathing(jsonObject);
         return new TechniqueDefinition(
                 techniqueId,
                 name,
@@ -61,8 +63,22 @@ public final class TechniqueJsonUtility {
                 compatibleElements,
                 requirements,
                 comprehension,
-                effects
+                effects,
+                breathing
         );
+    }
+
+    private static Optional<TechniqueBreathing> parseBreathing(JsonObject techniqueJson) {
+        if (!techniqueJson.has("breathing")) {
+            return Optional.empty();
+        }
+        JsonObject breathingJson = GsonHelper.getAsJsonObject(techniqueJson, "breathing");
+        double absorptionMultiplier = GsonHelper.getAsDouble(breathingJson, "absorption_multiplier", 1.0D);
+        try {
+            return Optional.of(new TechniqueBreathing(absorptionMultiplier));
+        } catch (IllegalArgumentException exception) {
+            throw new JsonParseException(exception.getMessage(), exception);
+        }
     }
 
     private static TechniqueRequirements parseRequirements(JsonObject techniqueJson) {

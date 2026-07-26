@@ -9,6 +9,7 @@ import net.minecraft.resources.ResourceLocation;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -58,6 +59,45 @@ class TechniqueJsonUtilityTest {
         assertEquals(ResourceLocation.fromNamespaceAndPath("ninecun_lingtai", "minor_mastery"),
                 technique.comprehension().getMastery(100).orElseThrow());
         assertEquals(1.15D, technique.effects().get(0).parameters().get("multiplier").getAsDouble());
+        assertFalse(technique.isBreathingTechnique());
+    }
+
+    @Test
+    void parsesBreathingTechnique() {
+        TechniqueDefinition technique = TechniqueJsonUtility.parse(TECHNIQUE_ID, JsonParser.parseString("""
+                {
+                  "name": "基础吐纳诀",
+                  "content": "引气入膻中。",
+                  "breathing": {
+                    "absorption_multiplier": 1.5
+                  },
+                  "comprehension": {
+                    "minimum_learning_score": 60
+                  }
+                }
+                """));
+
+        assertTrue(technique.isBreathingTechnique());
+        assertEquals(1.5D, technique.breathing().orElseThrow().absorptionMultiplier());
+    }
+
+    @Test
+    void rejectsNonPositiveBreathingMultiplier() {
+        assertThrows(JsonParseException.class, () -> TechniqueJsonUtility.parse(
+                TECHNIQUE_ID,
+                JsonParser.parseString("""
+                        {
+                          "name": "错误呼吸法",
+                          "content": "内容",
+                          "breathing": {
+                            "absorption_multiplier": 0
+                          },
+                          "comprehension": {
+                            "minimum_learning_score": 60
+                          }
+                        }
+                        """)
+        ));
     }
 
     @Test

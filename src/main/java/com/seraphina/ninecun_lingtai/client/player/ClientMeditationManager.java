@@ -43,13 +43,6 @@ public final class ClientMeditationManager {
         ClientMeditationCameraManager.lockPlayerRotation(player);
     }
 
-    public static void startQiCultivation() {
-        LocalPlayer player = Minecraft.getInstance().player;
-        if (player != null && !isMeditating(player.getUUID())) {
-            requestState(player, true, null);
-        }
-    }
-
     public static void startTechniqueCultivation(ResourceLocation techniqueId) {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player != null && !isMeditating(player.getUUID())) {

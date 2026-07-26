@@ -21,6 +21,7 @@ public final class TechniqueNetworkUtility {
         buffer.writeUtf(technique.name(), MAXIMUM_NAME_LENGTH);
         buffer.writeUtf(technique.description(), MAXIMUM_DESCRIPTION_LENGTH);
         buffer.writeUtf(technique.content(), MAXIMUM_CONTENT_LENGTH);
+        buffer.writeDouble(technique.breathingAbsorptionMultiplier());
     }
 
     public static TechniqueClientData readTechnique(FriendlyByteBuf buffer) {
@@ -28,7 +29,14 @@ public final class TechniqueNetworkUtility {
         String name = buffer.readUtf(MAXIMUM_NAME_LENGTH);
         String description = buffer.readUtf(MAXIMUM_DESCRIPTION_LENGTH);
         String content = buffer.readUtf(MAXIMUM_CONTENT_LENGTH);
-        return new TechniqueClientData(techniqueId, name, description, content);
+        double breathingAbsorptionMultiplier = buffer.readDouble();
+        return new TechniqueClientData(
+                techniqueId,
+                name,
+                description,
+                content,
+                breathingAbsorptionMultiplier
+        );
     }
 
     public static void writeTechniques(FriendlyByteBuf buffer, List<TechniqueClientData> techniques) {
