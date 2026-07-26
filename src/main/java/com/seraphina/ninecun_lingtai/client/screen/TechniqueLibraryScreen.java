@@ -1,8 +1,12 @@
 package com.seraphina.ninecun_lingtai.client.screen;
 
+import com.seraphina.ninecun_lingtai.api.technique.LearnedTechniqueClientData;
 import com.seraphina.ninecun_lingtai.api.technique.TechniqueClientData;
+import com.seraphina.ninecun_lingtai.api.technique.TechniqueComprehension;
+import com.seraphina.ninecun_lingtai.api.technique.TechniqueMasteryStage;
 import com.seraphina.ninecun_lingtai.client.menu.TechniqueLibraryMenu;
 import com.seraphina.ninecun_lingtai.client.player.ClientTechniqueManager;
+import com.seraphina.ninecun_lingtai.utility.ChineseNumberUtility;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -13,6 +17,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import org.lwjgl.glfw.GLFW;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
@@ -30,11 +36,17 @@ public final class TechniqueLibraryScreen extends AbstractContainerScreen<Techni
     private static final int PRIMARY_TEXT_COLOR = 0xFFF0E5CA;
     private static final int SECONDARY_TEXT_COLOR = 0xFFB9B2A4;
     private static final int MUTED_TEXT_COLOR = 0xFF817D75;
+    private static final int STATUS_TEXT_COLOR = 0xFFDFC98A;
+    private static final int PROGRESS_TRACK_COLOR = 0xFF2B2D35;
+    private static final int PROGRESS_FILL_COLOR = 0xFF9C8768;
+    private static final int PROGRESS_FULL_COLOR = 0xFFD9B968;
     private static final long DOUBLE_CLICK_INTERVAL_MILLIS = 300L;
+    private static final int REFRESH_INTERVAL_TICKS = 20;
 
     private EditBox searchBox;
     private String searchQuery = "";
     private int scrollRow;
+    private int refreshTicks;
     private ResourceLocation selectedTechniqueId;
     private ResourceLocation lastClickedTechniqueId;
     private long lastClickTime;
@@ -73,10 +85,20 @@ public final class TechniqueLibraryScreen extends AbstractContainerScreen<Techni
     }
 
     @Override
+    protected void containerTick() {
+        this.refreshTicks++;
+        if (this.refreshTicks >= REFRESH_INTERVAL_TICKS) {
+            this.refreshTicks = 0;
+            ClientTechniqueManager.requestRefresh();
+        }
+    }
+
+    @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(guiGraphics);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
         this.renderTooltip(guiGraphics, mouseX, mouseY);
+        renderRowTooltip(guiGraphics, mouseX, mouseY);
     }
 
     @Override
@@ -134,9 +156,29 @@ public final class TechniqueLibraryScreen extends AbstractContainerScreen<Techni
                     rowTop + ROW_HEIGHT - 3,
                     rowColor
             );
+            LearnedTechniqueClientData learnedTechnique =
+                    ClientTechniqueManager.getLearnedTechniqueData(technique.id()).orElse(null);
+            String statusText = getRowStatusText(learnedTechnique);
+            int statusWidth = this.font.width(statusText);
             guiGraphics.drawString(
                     this.font,
-                    technique.name(),
+                    statusText,
+                    panelRight - 17 - statusWidth,
+                    rowTop + 5,
+                    learnedTechnique != null ? STATUS_TEXT_COLOR : MUTED_TEXT_COLOR,
+                    false
+            );
+            String name = technique.name();
+            int nameWidth = this.imageWidth - 38 - statusWidth - 6;
+            if (this.font.width(name) > nameWidth) {
+                name = this.font.plainSubstrByWidth(
+                        name,
+                        Math.max(0, nameWidth - this.font.width("…"))
+                ) + "…";
+            }
+            guiGraphics.drawString(
+                    this.font,
+                    name,
                     this.leftPos + 17,
                     rowTop + 5,
                     PRIMARY_TEXT_COLOR,
@@ -158,6 +200,9 @@ public final class TechniqueLibraryScreen extends AbstractContainerScreen<Techni
                     SECONDARY_TEXT_COLOR,
                     false
             );
+            if (learnedTechnique != null) {
+                renderProficiencyBar(guiGraphics, learnedTechnique, rowTop, panelRight);
+            }
         }
         guiGraphics.disableScissor();
 
@@ -243,15 +288,132 @@ public final class TechniqueLibraryScreen extends AbstractContainerScreen<Techni
 
     private List<TechniqueClientData> getFilteredTechniques() {
         String normalizedQuery = this.searchQuery.trim().toLowerCase(Locale.ROOT);
-        if (normalizedQuery.isEmpty()) {
-            return ClientTechniqueManager.getImprintedTechniques();
-        }
         return ClientTechniqueManager.getImprintedTechniques().stream()
-                .filter(technique -> technique.name().toLowerCase(Locale.ROOT).contains(normalizedQuery)
+                .filter(technique -> normalizedQuery.isEmpty()
+                        || technique.name().toLowerCase(Locale.ROOT).contains(normalizedQuery)
                         || technique.description().toLowerCase(Locale.ROOT).contains(normalizedQuery)
                         || technique.content().toLowerCase(Locale.ROOT).contains(normalizedQuery)
                         || technique.id().toString().contains(normalizedQuery))
+                .sorted(Comparator.comparing(
+                        technique -> !ClientTechniqueManager.isLearned(technique.id())
+                ))
                 .toList();
+    }
+
+    private String getRowStatusText(LearnedTechniqueClientData learnedTechnique) {
+        if (learnedTechnique == null) {
+            return Component.translatable("screen.ninecun_lingtai.library.not_learned").getString();
+        }
+        return Component.translatable(
+                "screen.ninecun_lingtai.library.status_learned",
+                TechniqueMasteryStage.getDisplayName(learnedTechnique.mastery()),
+                learnedTechnique.comprehensionScore()
+        ).getString();
+    }
+
+    private void renderProficiencyBar(
+            GuiGraphics guiGraphics,
+            LearnedTechniqueClientData learnedTechnique,
+            int rowTop,
+            int panelRight
+    ) {
+        int barLeft = this.leftPos + 10;
+        int barRight = panelRight - 10;
+        int barTop = rowTop + ROW_HEIGHT - 5;
+        int barBottom = rowTop + ROW_HEIGHT - 3;
+        guiGraphics.fill(barLeft, barTop, barRight, barBottom, PROGRESS_TRACK_COLOR);
+        float progress = getStageProgress(learnedTechnique);
+        int fillWidth = Math.round((barRight - barLeft) * progress);
+        if (fillWidth > 0) {
+            guiGraphics.fill(
+                    barLeft,
+                    barTop,
+                    barLeft + fillWidth,
+                    barBottom,
+                    progress >= 1.0F ? PROGRESS_FULL_COLOR : PROGRESS_FILL_COLOR
+            );
+        }
+    }
+
+    /** Progress within the current mastery stage toward the next one; 1 when at perfection. */
+    private static float getStageProgress(LearnedTechniqueClientData learnedTechnique) {
+        TechniqueMasteryStage stage = TechniqueMasteryStage.fromMastery(learnedTechnique.mastery())
+                .orElse(TechniqueMasteryStage.getStageForProficiency(learnedTechnique.proficiency()));
+        return stage.next()
+                .map(nextStage -> {
+                    long stageStart = stage.getRequiredProficiency();
+                    long stageSpan = nextStage.getRequiredProficiency() - stageStart;
+                    return Mth.clamp(
+                            (float) (learnedTechnique.proficiency() - stageStart) / stageSpan,
+                            0.0F,
+                            1.0F
+                    );
+                })
+                .orElse(1.0F);
+    }
+
+    private void renderRowTooltip(GuiGraphics guiGraphics, int mouseX, int mouseY) {
+        TechniqueClientData technique = getTechniqueAt(mouseX, mouseY);
+        if (technique == null) {
+            return;
+        }
+        List<Component> lines = new ArrayList<>();
+        lines.add(Component.literal(technique.name()));
+        LearnedTechniqueClientData learnedTechnique =
+                ClientTechniqueManager.getLearnedTechniqueData(technique.id()).orElse(null);
+        if (learnedTechnique == null) {
+            lines.add(Component.translatable("screen.ninecun_lingtai.library.tooltip.not_learned"));
+        } else {
+            lines.add(Component.translatable(
+                    "screen.ninecun_lingtai.library.tooltip.stage",
+                    TechniqueMasteryStage.getDisplayName(learnedTechnique.mastery())
+            ));
+            lines.add(Component.translatable(
+                    "screen.ninecun_lingtai.library.tooltip.comprehension",
+                    learnedTechnique.comprehensionScore(),
+                    TechniqueComprehension.MAXIMUM_SCORE
+            ));
+            TechniqueMasteryStage stage = TechniqueMasteryStage.fromMastery(learnedTechnique.mastery())
+                    .orElse(TechniqueMasteryStage.getStageForProficiency(learnedTechnique.proficiency()));
+            String proficiencyText =
+                    ChineseNumberUtility.toChineseInteger(learnedTechnique.proficiency());
+            if (stage.next().isPresent()) {
+                TechniqueMasteryStage nextStage = stage.next().get();
+                lines.add(Component.translatable(
+                        "screen.ninecun_lingtai.library.tooltip.proficiency",
+                        proficiencyText,
+                        ChineseNumberUtility.toChineseInteger(nextStage.getRequiredProficiency())
+                ));
+                lines.add(Component.translatable(
+                        "screen.ninecun_lingtai.library.tooltip.next_stage",
+                        nextStage.getChineseName()
+                ));
+            } else {
+                lines.add(Component.translatable(
+                        "screen.ninecun_lingtai.library.tooltip.proficiency_max",
+                        proficiencyText
+                ));
+            }
+        }
+        guiGraphics.renderComponentTooltip(this.font, lines, mouseX, mouseY);
+    }
+
+    private TechniqueClientData getTechniqueAt(double mouseX, double mouseY) {
+        if (mouseX < this.leftPos + 10
+                || mouseX >= this.leftPos + this.imageWidth - 10
+                || mouseY < getListTop()
+                || mouseY >= getListBottom()) {
+            return null;
+        }
+        int visibleRowIndex = ((int) mouseY - getListTop()) / ROW_HEIGHT;
+        if ((int) mouseY - getListTop() - visibleRowIndex * ROW_HEIGHT >= ROW_HEIGHT - 3) {
+            return null;
+        }
+        int techniqueIndex = this.scrollRow + visibleRowIndex;
+        List<TechniqueClientData> filteredTechniques = getFilteredTechniques();
+        return techniqueIndex >= 0 && techniqueIndex < filteredTechniques.size()
+                ? filteredTechniques.get(techniqueIndex)
+                : null;
     }
 
     private void renderScrollBar(
