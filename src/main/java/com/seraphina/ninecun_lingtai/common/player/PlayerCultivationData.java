@@ -3,14 +3,10 @@ package com.seraphina.ninecun_lingtai.common.player;
 import com.seraphina.ninecun_lingtai.ModMain;
 import com.seraphina.ninecun_lingtai.api.cultivation.CultivationRealm;
 import com.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
-import com.seraphina.ninecun_lingtai.api.element.ElementType;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.entity.player.Player;
 
-import java.util.Collections;
-import java.util.EnumMap;
-import java.util.Map;
 import java.util.Optional;
 
 public final class PlayerCultivationData {
@@ -21,19 +17,13 @@ public final class PlayerCultivationData {
     private PlayerCultivationData() {
     }
 
-    public static Optional<CultivationStage> getStage(Player player, ElementType spiritualRootElement) {
+    public static Optional<CultivationStage> getStage(Player player) {
         CompoundTag persistentData = player.getPersistentData();
         if (!persistentData.contains(CULTIVATION_KEY, Tag.TAG_COMPOUND)) {
             return Optional.empty();
         }
 
-        CompoundTag cultivationData = persistentData.getCompound(CULTIVATION_KEY);
-        String spiritualRootKey = spiritualRootElement.getSerializedName();
-        if (!cultivationData.contains(spiritualRootKey, Tag.TAG_COMPOUND)) {
-            return Optional.empty();
-        }
-
-        CompoundTag stageData = cultivationData.getCompound(spiritualRootKey);
+        CompoundTag stageData = persistentData.getCompound(CULTIVATION_KEY);
         if (!stageData.contains(REALM_KEY, Tag.TAG_STRING)
                 || !stageData.contains(LAYER_KEY, Tag.TAG_ANY_NUMERIC)) {
             return Optional.empty();
@@ -50,24 +40,11 @@ public final class PlayerCultivationData {
         }
     }
 
-    public static Map<ElementType, CultivationStage> getAllStages(Player player) {
-        EnumMap<ElementType, CultivationStage> stages = new EnumMap<>(ElementType.class);
-        for (ElementType element : ElementType.values()) {
-            getStage(player, element).ifPresent(stage -> stages.put(element, stage));
-        }
-        return Collections.unmodifiableMap(stages);
-    }
-
-    public static void setStage(Player player, ElementType spiritualRootElement, CultivationStage stage) {
-        CompoundTag persistentData = player.getPersistentData();
-        CompoundTag cultivationData = persistentData.contains(CULTIVATION_KEY, Tag.TAG_COMPOUND)
-                ? persistentData.getCompound(CULTIVATION_KEY)
-                : new CompoundTag();
+    public static void setStage(Player player, CultivationStage stage) {
         CompoundTag stageData = new CompoundTag();
         stageData.putString(REALM_KEY, stage.realm().getSerializedName());
         stageData.putInt(LAYER_KEY, stage.layer());
-        cultivationData.put(spiritualRootElement.getSerializedName(), stageData);
-        persistentData.put(CULTIVATION_KEY, cultivationData);
+        player.getPersistentData().put(CULTIVATION_KEY, stageData);
     }
 
     public static void copy(Player sourcePlayer, Player targetPlayer) {

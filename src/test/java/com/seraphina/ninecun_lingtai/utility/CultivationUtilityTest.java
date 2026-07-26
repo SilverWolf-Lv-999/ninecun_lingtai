@@ -7,6 +7,7 @@ import com.seraphina.ninecun_lingtai.api.element.ElementType;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigInteger;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -65,6 +66,62 @@ class CultivationUtilityTest {
         assertEquals(BigInteger.valueOf(25L), CultivationUtility.getCombinedRequiredSpiritualEnergy(
                 firstStage,
                 chaosRoot
+        ));
+    }
+
+    @Test
+    void requiresEveryIndependentRootToBeCompleteForEveryBreakthrough() {
+        SpiritualRoot doubleRoot = new SpiritualRoot(
+                Set.of(ElementType.METAL, ElementType.WATER),
+                9.0F
+        );
+
+        for (CultivationRealm realm : CultivationRealm.values()) {
+            for (int layer = CultivationStage.MINIMUM_LAYER;
+                 layer <= CultivationStage.MAXIMUM_LAYER;
+                 layer++) {
+                CultivationStage targetStage = new CultivationStage(realm, layer);
+                double requiredEnergy = CultivationUtility.getRequiredSpiritualEnergy(targetStage).doubleValue();
+
+                assertFalse(CultivationUtility.areAllSpiritualRootsComplete(
+                        targetStage,
+                        doubleRoot,
+                        Map.of(ElementType.METAL, requiredEnergy * 2.0D)
+                ));
+                assertFalse(CultivationUtility.areAllSpiritualRootsComplete(
+                        targetStage,
+                        doubleRoot,
+                        Map.of(
+                                ElementType.METAL, requiredEnergy,
+                                ElementType.WATER, Math.nextDown(requiredEnergy)
+                        )
+                ));
+                assertTrue(CultivationUtility.areAllSpiritualRootsComplete(
+                        targetStage,
+                        doubleRoot,
+                        Map.of(
+                                ElementType.METAL, requiredEnergy,
+                                ElementType.WATER, requiredEnergy
+                        )
+                ));
+            }
+        }
+    }
+
+    @Test
+    void letsASingleRootEnterQiRefiningOnlyAfterReachingTwentyFiveEnergy() {
+        CultivationStage firstStage = CultivationStage.first();
+        SpiritualRoot singleRoot = new SpiritualRoot(Set.of(ElementType.METAL), 9.0F);
+
+        assertFalse(CultivationUtility.areAllSpiritualRootsComplete(
+                firstStage,
+                singleRoot,
+                Map.of(ElementType.METAL, Math.nextDown(25.0D))
+        ));
+        assertTrue(CultivationUtility.areAllSpiritualRootsComplete(
+                firstStage,
+                singleRoot,
+                Map.of(ElementType.METAL, 25.0D)
         ));
     }
 

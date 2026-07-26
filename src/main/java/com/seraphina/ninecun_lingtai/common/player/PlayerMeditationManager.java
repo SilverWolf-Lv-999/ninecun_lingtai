@@ -138,22 +138,20 @@ public final class PlayerMeditationManager {
         double baseAbsorption = CommonConfig.MEDITATION_BASE_ABSORPTION_PER_SECOND.get();
         for (Map.Entry<ElementType, Double> entry : absorptionProfile.absorptionRates().entrySet()) {
             PlayerSpiritualEnergyData.addEnergy(player, entry.getKey(), baseAbsorption * entry.getValue());
-            tryBreakthrough(player, entry.getKey());
         }
+        tryBreakthrough(player);
     }
 
-    private static void tryBreakthrough(ServerPlayer player, ElementType spiritualRootElement) {
-        BreakthroughResult result = PlayerCultivationManager.tryBreakthrough(player, spiritualRootElement);
+    private static void tryBreakthrough(ServerPlayer player) {
+        BreakthroughResult result = PlayerCultivationManager.tryBreakthrough(player);
         if (result != BreakthroughResult.SUCCESS) {
             return;
         }
-        CultivationStage stage = PlayerCultivationData.getStage(player, spiritualRootElement).orElseThrow();
+        CultivationStage stage = PlayerCultivationData.getStage(player).orElseThrow();
         player.displayClientMessage(
-                Component.literal(
-                        SpiritualRootUtility.getElementName(spiritualRootElement)
-                                + "灵根突破至"
-                                + CultivationUtility.getDisplayName(stage)
-                ),
+                Component.empty()
+                        .append(player.getDisplayName())
+                        .append(" 踏入" + CultivationUtility.getDisplayName(stage)),
                 false
         );
     }

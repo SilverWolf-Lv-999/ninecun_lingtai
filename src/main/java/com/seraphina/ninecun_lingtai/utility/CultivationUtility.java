@@ -3,8 +3,10 @@ package com.seraphina.ninecun_lingtai.utility;
 import com.seraphina.ninecun_lingtai.api.aptitude.SpiritualRoot;
 import com.seraphina.ninecun_lingtai.api.cultivation.CultivationRealm;
 import com.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
+import com.seraphina.ninecun_lingtai.api.element.ElementType;
 
 import java.math.BigInteger;
+import java.util.Map;
 import java.util.Optional;
 
 public final class CultivationUtility {
@@ -43,6 +45,16 @@ public final class CultivationUtility {
                 ? currentStage.get().next()
                 : Optional.of(CultivationStage.first());
         return nextStage.map(CultivationUtility::getRequiredSpiritualEnergy);
+    }
+
+    public static boolean areAllSpiritualRootsComplete(
+            CultivationStage targetStage,
+            SpiritualRoot spiritualRoot,
+            Map<ElementType, Double> spiritualEnergy
+    ) {
+        double requiredSpiritualEnergy = getRequiredSpiritualEnergy(targetStage).doubleValue();
+        return SpiritualRootUtility.getIndependentRootElements(spiritualRoot).stream()
+                .allMatch(element -> spiritualEnergy.getOrDefault(element, 0.0D) >= requiredSpiritualEnergy);
     }
 
     public static String getDisplayName(CultivationStage stage) {

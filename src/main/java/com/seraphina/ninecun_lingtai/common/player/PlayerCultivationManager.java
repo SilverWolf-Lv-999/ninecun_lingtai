@@ -9,22 +9,21 @@ import com.seraphina.ninecun_lingtai.utility.SpiritualRootUtility;
 import net.minecraft.world.entity.player.Player;
 
 import java.math.BigInteger;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 public final class PlayerCultivationManager {
     private PlayerCultivationManager() {
     }
 
-    public static BreakthroughResult tryBreakthrough(Player player, ElementType spiritualRootElement) {
+    public static BreakthroughResult tryBreakthrough(Player player) {
         Optional<SpiritualRoot> spiritualRoot = PlayerAptitudeData.getSpiritualRoot(player);
         if (spiritualRoot.isEmpty()) {
             return BreakthroughResult.NO_SPIRITUAL_ROOT;
         }
-        if (!SpiritualRootUtility.getIndependentRootElements(spiritualRoot.get()).contains(spiritualRootElement)) {
-            return BreakthroughResult.NOT_A_SPIRITUAL_ROOT;
-        }
 
-        Optional<CultivationStage> currentStage = PlayerCultivationData.getStage(player, spiritualRootElement);
+        Optional<CultivationStage> currentStage = PlayerCultivationData.getStage(player);
         Optional<CultivationStage> targetStage = currentStage.isPresent()
                 ? currentStage.get().next()
                 : Optional.of(CultivationStage.first());
@@ -33,15 +32,24 @@ public final class PlayerCultivationManager {
         }
 
         BigInteger requiredSpiritualEnergy = CultivationUtility.getRequiredSpiritualEnergy(targetStage.get());
+        Set<ElementType> rootElements = SpiritualRootUtility.getIndependentRootElements(spiritualRoot.get());
+        Map<ElementType, Double> spiritualEnergy = PlayerSpiritualEnergyData.getAllEnergy(player);
+        if (!CultivationUtility.areAllSpiritualRootsComplete(
+                targetStage.get(),
+                spiritualRoot.get(),
+                spiritualEnergy
+        )) {
+            return BreakthroughResult.INSUFFICIENT_SPIRITUAL_ENERGY;
+        }
         if (!PlayerSpiritualEnergyData.consumeEnergy(
                 player,
-                spiritualRootElement,
+                rootElements,
                 requiredSpiritualEnergy.doubleValue()
         )) {
             return BreakthroughResult.INSUFFICIENT_SPIRITUAL_ENERGY;
         }
 
-        PlayerCultivationData.setStage(player, spiritualRootElement, targetStage.get());
+        PlayerCultivationData.setStage(player, targetStage.get());
         return BreakthroughResult.SUCCESS;
     }
 }

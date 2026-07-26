@@ -9,6 +9,7 @@ import net.minecraft.world.entity.player.Player;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.Set;
 
 public final class PlayerSpiritualEnergyData {
     private static final String SPIRITUAL_ENERGY_KEY = ModMain.MOD_ID + ":spiritual_energy";
@@ -58,17 +59,30 @@ public final class PlayerSpiritualEnergyData {
     }
 
     public static boolean consumeEnergy(Player player, ElementType element, double amount) {
-        if (!Double.isFinite(amount) || amount <= 0.0D) {
+        return consumeEnergy(player, Set.of(element), amount);
+    }
+
+    public static boolean consumeEnergy(Player player, Set<ElementType> elements, double amount) {
+        if (elements == null || elements.isEmpty() || !Double.isFinite(amount) || amount <= 0.0D) {
             return false;
         }
-        double currentEnergy = getEnergy(player, element);
-        if (currentEnergy < amount) {
-            return false;
+        EnumMap<ElementType, Double> currentEnergy = new EnumMap<>(ElementType.class);
+        for (ElementType element : elements) {
+            double elementEnergy = getEnergy(player, element);
+            if (elementEnergy < amount) {
+                return false;
+            }
+            currentEnergy.put(element, elementEnergy);
         }
 
         CompoundTag persistentData = player.getPersistentData();
         CompoundTag spiritualEnergyData = persistentData.getCompound(SPIRITUAL_ENERGY_KEY);
-        spiritualEnergyData.putDouble(element.getSerializedName(), currentEnergy - amount);
+        for (Map.Entry<ElementType, Double> entry : currentEnergy.entrySet()) {
+            spiritualEnergyData.putDouble(
+                    entry.getKey().getSerializedName(),
+                    entry.getValue() - amount
+            );
+        }
         persistentData.put(SPIRITUAL_ENERGY_KEY, spiritualEnergyData);
         return true;
     }

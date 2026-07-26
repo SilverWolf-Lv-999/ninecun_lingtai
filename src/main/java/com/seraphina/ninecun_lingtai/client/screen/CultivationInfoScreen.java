@@ -30,6 +30,7 @@ public final class CultivationInfoScreen extends AbstractContainerScreen<Cultiva
     private static final int MINIMUM_IMAGE_WIDTH = 230;
     private static final int MINIMUM_IMAGE_HEIGHT = 178;
     private static final int PROFILE_HEIGHT = 72;
+    private static final int CULTIVATION_OVERVIEW_HEIGHT = 30;
     private static final int CARD_HEIGHT = 44;
     private static final int CARD_GAP = 5;
     private static final int ENERGY_ROW_HEIGHT = 15;
@@ -234,7 +235,7 @@ public final class CultivationInfoScreen extends AbstractContainerScreen<Cultiva
         List<ElementType> storedEnergyElements = getStoredEnergyElements(cultivationInfo);
         int cultivationHeight = rootElements.isEmpty()
                 ? 19
-                : rootElements.size() * (CARD_HEIGHT + CARD_GAP);
+                : CULTIVATION_OVERVIEW_HEIGHT + rootElements.size() * (CARD_HEIGHT + CARD_GAP);
         int energyHeight = 22 + Math.max(1, storedEnergyElements.size()) * ENERGY_ROW_HEIGHT;
         int contentHeight = cultivationHeight + energyHeight;
         int viewportHeight = Math.max(1, viewportBottom - viewportTop);
@@ -246,7 +247,7 @@ public final class CultivationInfoScreen extends AbstractContainerScreen<Cultiva
         if (rootElements.isEmpty()) {
             drawFittedText(
                     guiGraphics,
-                    styledText("尚无可修行的灵根境界", MUTED_TEXT_COLOR),
+                    styledText("尚无可修行的灵根", MUTED_TEXT_COLOR),
                     left + 4,
                     contentY + 4,
                     right - left - 8,
@@ -254,6 +255,8 @@ public final class CultivationInfoScreen extends AbstractContainerScreen<Cultiva
             );
             contentY += cultivationHeight;
         } else {
+            renderCultivationOverview(guiGraphics, cultivationInfo, left, right, contentY);
+            contentY += CULTIVATION_OVERVIEW_HEIGHT;
             for (ElementType element : rootElements) {
                 renderCultivationCard(guiGraphics, cultivationInfo, element, left, right, contentY);
                 contentY += CARD_HEIGHT + CARD_GAP;
@@ -300,6 +303,37 @@ public final class CultivationInfoScreen extends AbstractContainerScreen<Cultiva
         renderScrollBar(guiGraphics, right + 2, viewportTop, viewportBottom, contentHeight);
     }
 
+    private void renderCultivationOverview(
+            GuiGraphics guiGraphics,
+            PlayerCultivationInfo cultivationInfo,
+            int left,
+            int right,
+            int top
+    ) {
+        Optional<CultivationStage> currentStage = cultivationInfo.cultivationStage();
+        Optional<CultivationStage> targetStage = getTargetStage(currentStage);
+        String currentStageName = currentStage.map(CultivationUtility::getDisplayName).orElse("凡人");
+        String targetStageName = targetStage
+                .map(stage -> "下境　" + CultivationUtility.getDisplayName(stage) + "（需全部灵根圆满）")
+                .orElse("已至极境");
+        drawFittedText(
+                guiGraphics,
+                styledText("当前境界　" + currentStageName, PRIMARY_TEXT_COLOR),
+                left + 3,
+                top + 1,
+                right - left - 8,
+                PRIMARY_TEXT_COLOR
+        );
+        drawFittedText(
+                guiGraphics,
+                styledText(targetStageName, SECONDARY_TEXT_COLOR),
+                left + 3,
+                top + 14,
+                right - left - 8,
+                SECONDARY_TEXT_COLOR
+        );
+    }
+
     private void renderCultivationCard(
             GuiGraphics guiGraphics,
             PlayerCultivationInfo cultivationInfo,
@@ -312,39 +346,24 @@ public final class CultivationInfoScreen extends AbstractContainerScreen<Cultiva
         int elementColor = SpiritualRootUtility.getElementColor(element);
         guiGraphics.fill(left + 1, top + 1, left + 4, top + CARD_HEIGHT - 1, 0xFF000000 | elementColor);
 
-        Optional<CultivationStage> currentStage = Optional.ofNullable(
-                cultivationInfo.cultivationStages().get(element)
-        );
-        Optional<CultivationStage> targetStage = currentStage
-                .map(CultivationStage::next)
-                .orElseGet(() -> Optional.of(CultivationStage.first()));
-        String currentStageName = currentStage.map(CultivationUtility::getDisplayName).orElse("未入道");
+        Optional<CultivationStage> targetStage = getTargetStage(cultivationInfo.cultivationStage());
         String elementName = SpiritualRootUtility.getElementName(element) + "灵根";
-        drawFittedText(
-                guiGraphics,
-                styledText(elementName + "　" + currentStageName, PRIMARY_TEXT_COLOR),
-                left + 9,
-                top + 5,
-                right - left - 16,
-                PRIMARY_TEXT_COLOR
-        );
-
         double currentEnergy = cultivationInfo.getSpiritualEnergy(element);
         String energyName = getEnergyName(element);
         if (targetStage.isEmpty()) {
             drawFittedText(
                     guiGraphics,
-                    styledText("已至极境", SECONDARY_TEXT_COLOR),
+                    styledText(elementName + "　已至极境", PRIMARY_TEXT_COLOR),
                     left + 9,
-                    top + 18,
+                    top + 5,
                     right - left - 16,
-                    SECONDARY_TEXT_COLOR
+                    PRIMARY_TEXT_COLOR
             );
             drawFittedText(
                     guiGraphics,
                     styledText(energyName + "　" + formatEnergy(currentEnergy), MUTED_TEXT_COLOR),
                     left + 9,
-                    top + 30,
+                    top + 20,
                     right - left - 16,
                     MUTED_TEXT_COLOR
             );
@@ -355,7 +374,7 @@ public final class CultivationInfoScreen extends AbstractContainerScreen<Cultiva
         BigDecimal missingEnergy = new BigDecimal(requiredEnergy)
                 .subtract(BigDecimal.valueOf(currentEnergy))
                 .max(BigDecimal.ZERO);
-        String nextStageText = "下境　" + CultivationUtility.getDisplayName(targetStage.get());
+        String completionText = missingEnergy.signum() == 0 ? "已圆满" : "尚未圆满";
         String energyText = energyName + "　"
                 + formatEnergy(currentEnergy)
                 + "　所需　"
@@ -364,21 +383,26 @@ public final class CultivationInfoScreen extends AbstractContainerScreen<Cultiva
                 + ChineseNumberUtility.toChineseDecimal(missingEnergy, 1);
         drawFittedText(
                 guiGraphics,
-                styledText(nextStageText, SECONDARY_TEXT_COLOR),
+                styledText(elementName + "　" + completionText, PRIMARY_TEXT_COLOR),
                 left + 9,
-                top + 18,
+                top + 5,
                 right - left - 16,
-                SECONDARY_TEXT_COLOR
+                PRIMARY_TEXT_COLOR
         );
         drawFittedText(
                 guiGraphics,
                 styledText(energyText, MUTED_TEXT_COLOR),
                 left + 9,
-                top + 30,
+                top + 19,
                 right - left - 16,
                 MUTED_TEXT_COLOR
         );
-        renderProgressBar(guiGraphics, currentEnergy, requiredEnergy, elementColor, left + 5, right - 5, top + 40);
+        renderProgressBar(guiGraphics, currentEnergy, requiredEnergy, elementColor, left + 5, right - 5, top + 35);
+    }
+
+    private static Optional<CultivationStage> getTargetStage(Optional<CultivationStage> currentStage) {
+        return currentStage.map(CultivationStage::next)
+                .orElseGet(() -> Optional.of(CultivationStage.first()));
     }
 
     private void renderProgressBar(

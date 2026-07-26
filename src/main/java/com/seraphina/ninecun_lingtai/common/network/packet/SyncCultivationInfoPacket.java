@@ -29,13 +29,13 @@ public record SyncCultivationInfoPacket(PlayerCultivationInfo cultivationInfo) {
                 .map(SoulStrength::illuminatedStars)
                 .orElse(0));
 
+        buffer.writeBoolean(cultivationInfo.cultivationStage().isPresent());
+        cultivationInfo.cultivationStage().ifPresent(stage -> {
+            buffer.writeVarInt(stage.realm().ordinal());
+            buffer.writeVarInt(stage.layer());
+        });
+
         for (ElementType element : ElementType.values()) {
-            CultivationStage stage = cultivationInfo.cultivationStages().get(element);
-            buffer.writeBoolean(stage != null);
-            if (stage != null) {
-                buffer.writeVarInt(stage.realm().ordinal());
-                buffer.writeVarInt(stage.layer());
-            }
             buffer.writeDouble(cultivationInfo.getSpiritualEnergy(element));
         }
     }
@@ -46,20 +46,21 @@ public record SyncCultivationInfoPacket(PlayerCultivationInfo cultivationInfo) {
             spiritualRoot = SpiritualRoot.fromElementMask(buffer.readVarInt(), buffer.readFloat());
         }
         Optional<SoulStrength> soulStrength = SoulStrength.fromIlluminatedStars(buffer.readVarInt());
-        Map<ElementType, CultivationStage> stages = new EnumMap<>(ElementType.class);
-        Map<ElementType, Double> spiritualEnergy = new EnumMap<>(ElementType.class);
+        Optional<CultivationStage> cultivationStage = Optional.empty();
         CultivationRealm[] realms = CultivationRealm.values();
-        for (ElementType element : ElementType.values()) {
-            if (buffer.readBoolean()) {
-                int realmIndex = buffer.readVarInt();
-                int layer = buffer.readVarInt();
-                if (realmIndex >= 0 && realmIndex < realms.length) {
-                    try {
-                        stages.put(element, new CultivationStage(realms[realmIndex], layer));
-                    } catch (IllegalArgumentException ignored) {
-                    }
+        if (buffer.readBoolean()) {
+            int realmIndex = buffer.readVarInt();
+            int layer = buffer.readVarInt();
+            if (realmIndex >= 0 && realmIndex < realms.length) {
+                try {
+                    cultivationStage = Optional.of(new CultivationStage(realms[realmIndex], layer));
+                } catch (IllegalArgumentException ignored) {
                 }
             }
+        }
+
+        Map<ElementType, Double> spiritualEnergy = new EnumMap<>(ElementType.class);
+        for (ElementType element : ElementType.values()) {
             double energy = buffer.readDouble();
             if (Double.isFinite(energy) && energy > 0.0D) {
                 spiritualEnergy.put(element, energy);
@@ -68,7 +69,7 @@ public record SyncCultivationInfoPacket(PlayerCultivationInfo cultivationInfo) {
         return new SyncCultivationInfoPacket(new PlayerCultivationInfo(
                 spiritualRoot,
                 soulStrength,
-                stages,
+                cultivationStage,
                 spiritualEnergy
         ));
     }

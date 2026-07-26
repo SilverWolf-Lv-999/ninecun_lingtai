@@ -14,13 +14,13 @@ import java.util.Optional;
 public record PlayerCultivationInfo(
         Optional<SpiritualRoot> spiritualRoot,
         Optional<SoulStrength> soulStrength,
-        Map<ElementType, CultivationStage> cultivationStages,
+        Optional<CultivationStage> cultivationStage,
         Map<ElementType, Double> spiritualEnergy
 ) {
     public PlayerCultivationInfo {
         spiritualRoot = spiritualRoot == null ? Optional.empty() : spiritualRoot;
         soulStrength = soulStrength == null ? Optional.empty() : soulStrength;
-        cultivationStages = immutableEnumMap(cultivationStages);
+        cultivationStage = cultivationStage == null ? Optional.empty() : cultivationStage;
         spiritualEnergy = immutableEnumMap(spiritualEnergy);
     }
 
@@ -28,13 +28,13 @@ public record PlayerCultivationInfo(
         return new PlayerCultivationInfo(
                 PlayerAptitudeData.getSpiritualRoot(player),
                 PlayerAptitudeData.getSoulStrength(player),
-                PlayerCultivationData.getAllStages(player),
+                PlayerCultivationData.getStage(player),
                 PlayerSpiritualEnergyData.getAllEnergy(player)
         );
     }
 
     public static PlayerCultivationInfo empty() {
-        return new PlayerCultivationInfo(Optional.empty(), Optional.empty(), Map.of(), Map.of());
+        return new PlayerCultivationInfo(Optional.empty(), Optional.empty(), Optional.empty(), Map.of());
     }
 
     public double getSpiritualEnergy(ElementType element) {
