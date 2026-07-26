@@ -14,13 +14,15 @@ public record SyncMeditationStatePacket(
         UUID playerId,
         boolean meditating,
         FiveElementValues environmentValues,
-        FiveElementValues movementAffinities
+        FiveElementValues movementAffinities,
+        int realmLevel
 ) {
     public static void encode(SyncMeditationStatePacket packet, FriendlyByteBuf buffer) {
         buffer.writeUUID(packet.playerId);
         buffer.writeBoolean(packet.meditating);
         writeFiveElementValues(buffer, packet.environmentValues);
         writeFiveElementValues(buffer, packet.movementAffinities);
+        buffer.writeVarInt(packet.realmLevel);
     }
 
     public static SyncMeditationStatePacket decode(FriendlyByteBuf buffer) {
@@ -28,7 +30,8 @@ public record SyncMeditationStatePacket(
                 buffer.readUUID(),
                 buffer.readBoolean(),
                 readFiveElementValues(buffer),
-                readFiveElementValues(buffer)
+                readFiveElementValues(buffer),
+                buffer.readVarInt()
         );
     }
 
@@ -39,7 +42,8 @@ public record SyncMeditationStatePacket(
                         packet.playerId,
                         packet.meditating,
                         packet.environmentValues,
-                        packet.movementAffinities
+                        packet.movementAffinities,
+                        packet.realmLevel
                 )
         );
     }

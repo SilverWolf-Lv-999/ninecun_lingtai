@@ -20,6 +20,7 @@ public final class CommonConfig {
     public static final ForgeConfigSpec.DoubleValue REALM_BONUS_BASE_DAMAGE;
     public static final ForgeConfigSpec.DoubleValue REALM_BONUS_LAYER_GROWTH;
     public static final ForgeConfigSpec.DoubleValue MEDITATION_BASE_ABSORPTION_PER_SECOND;
+    public static final ForgeConfigSpec.DoubleValue MEDITATION_ABSORPTION_REQUIREMENT_EXPONENT;
     public static final ForgeConfigSpec.DoubleValue MEDITATION_GENERATES_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue MEDITATION_GENERATED_BY_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue MEDITATION_OVERCOMES_MULTIPLIER;
@@ -79,6 +80,12 @@ public final class CommonConfig {
                         MINIMUM_MULTIPLIER,
                         MAXIMUM_BASE_ABSORPTION_PER_SECOND
                 );
+        MEDITATION_ABSORPTION_REQUIREMENT_EXPONENT = BUILDER
+                .comment(
+                        "Absorption speed scales with (next layer requirement / first layer requirement)^exponent.",
+                        "1.0 makes every layer take the same time; 0.0 disables realm scaling entirely"
+                )
+                .defineInRange("absorptionRequirementExponent", 0.95D, 0.0D, 1.0D);
         MEDITATION_GENERATES_MULTIPLIER = BUILDER
                 .comment("Absorption multiplier when the incoming element generates another element in a multi-element root")
                 .defineInRange("generatesMultiplier", 1.1D, MINIMUM_MULTIPLIER, MAXIMUM_MULTIPLIER);

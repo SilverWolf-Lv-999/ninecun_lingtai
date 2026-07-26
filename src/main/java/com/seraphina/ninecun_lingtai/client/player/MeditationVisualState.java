@@ -9,23 +9,28 @@ public final class MeditationVisualState {
 
     private FiveElementValues environmentValues;
     private FiveElementValues movementAffinities;
+    private int realmLevel;
     private boolean meditating = true;
     private float visibility;
 
     public MeditationVisualState(
             FiveElementValues environmentValues,
-            FiveElementValues movementAffinities
+            FiveElementValues movementAffinities,
+            int realmLevel
     ) {
         this.environmentValues = environmentValues;
         this.movementAffinities = movementAffinities;
+        this.realmLevel = realmLevel;
     }
 
     public void update(
             FiveElementValues environmentValues,
-            FiveElementValues movementAffinities
+            FiveElementValues movementAffinities,
+            int realmLevel
     ) {
         this.environmentValues = environmentValues;
         this.movementAffinities = movementAffinities;
+        this.realmLevel = realmLevel;
         this.meditating = true;
     }
 
@@ -46,6 +51,10 @@ public final class MeditationVisualState {
 
     public FiveElementValues movementAffinities() {
         return this.movementAffinities;
+    }
+
+    public int realmLevel() {
+        return this.realmLevel;
     }
 
     public boolean isMeditating() {

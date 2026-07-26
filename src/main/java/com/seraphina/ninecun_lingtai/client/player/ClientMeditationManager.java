@@ -61,7 +61,8 @@ public final class ClientMeditationManager {
             UUID playerId,
             boolean meditating,
             FiveElementValues environmentValues,
-            FiveElementValues movementAffinities
+            FiveElementValues movementAffinities,
+            int realmLevel
     ) {
         MeditationVisualState visualState = MEDITATION_VISUAL_STATES.get(playerId);
         boolean wasMeditating = visualState != null && visualState.isMeditating();
@@ -69,10 +70,10 @@ public final class ClientMeditationManager {
             if (visualState == null) {
                 MEDITATION_VISUAL_STATES.put(
                         playerId,
-                        new MeditationVisualState(environmentValues, movementAffinities)
+                        new MeditationVisualState(environmentValues, movementAffinities, realmLevel)
                 );
             } else {
-                visualState.update(environmentValues, movementAffinities);
+                visualState.update(environmentValues, movementAffinities, realmLevel);
             }
         } else if (visualState != null) {
             visualState.stopMeditating();
@@ -103,7 +104,7 @@ public final class ClientMeditationManager {
     }
 
     public static void removePlayer(UUID playerId) {
-        setMeditating(playerId, false, FiveElementValues.EMPTY, FiveElementValues.EMPTY);
+        setMeditating(playerId, false, FiveElementValues.EMPTY, FiveElementValues.EMPTY, 0);
     }
 
     public static void reset() {
@@ -119,11 +120,13 @@ public final class ClientMeditationManager {
             boolean meditating,
             @Nullable ResourceLocation techniqueId
     ) {
+        // Local prediction only; the realm level is corrected by the server sync that follows.
         setMeditating(
                 player.getUUID(),
                 meditating,
                 meditating ? FiveElementValues.NEUTRAL : FiveElementValues.EMPTY,
-                FiveElementValues.EMPTY
+                FiveElementValues.EMPTY,
+                0
         );
         ModNetwork.sendToServer(new SetMeditationStatePacket(
                 meditating,

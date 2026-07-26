@@ -33,6 +33,13 @@ public final class SpiritualEnergyRenderUtility {
     private static final double MAXIMUM_RENDER_DISTANCE_SQUARED = 56.0D * 56.0D;
     private static final long HASH_MULTIPLIER = 0x9E3779B97F4A7C15L;
     private static final float TWO_PI = (float) (Math.PI * 2.0D);
+    // Higher realms see more, farther, and faster energy; each axis is hard-capped for performance.
+    private static final float REALM_PARTICLE_COUNT_GROWTH = 0.75F;
+    private static final int MAXIMUM_PARTICLE_COUNT = 80;
+    private static final float REALM_RADIUS_GROWTH = 0.50F;
+    private static final double MAXIMUM_DISTANT_RADIUS = 40.0D;
+    private static final float REALM_SPEED_GROWTH = 0.18F;
+    private static final float MAXIMUM_REALM_SPEED_MULTIPLIER = 2.6F;
 
     private SpiritualEnergyRenderUtility() {
     }
@@ -106,6 +113,13 @@ public final class SpiritualEnergyRenderUtility {
         }
         float maximumDensity = Math.max(0.0001F, environmentValues.maximum());
         ElementType dominantElement = environmentValues.dominantElement();
+        int realmLevel = Math.max(0, visualState.realmLevel());
+        float realmParticleMultiplier = 1.0F + realmLevel * REALM_PARTICLE_COUNT_GROWTH;
+        float realmRadiusMultiplier = 1.0F + realmLevel * REALM_RADIUS_GROWTH;
+        float realmSpeedMultiplier = Math.min(
+                1.0F + realmLevel * REALM_SPEED_GROWTH,
+                MAXIMUM_REALM_SPEED_MULTIPLIER
+        );
         Vec3 playerPosition = new Vec3(
                 Mth.lerp(partialTick, player.xOld, player.getX()),
                 Mth.lerp(partialTick, player.yOld, player.getY()),
@@ -121,10 +135,10 @@ public final class SpiritualEnergyRenderUtility {
             float relativeDensity = density / maximumDensity;
             float movementAffinity = visualState.movementAffinities().get(element);
             int particleCount = Mth.clamp(
-                    Math.round(4.0F + density * 4.0F + relativeDensity * 3.0F
-                            + (element == dominantElement ? 4.0F : 0.0F)),
+                    Math.round((4.0F + density * 4.0F + relativeDensity * 3.0F
+                            + (element == dominantElement ? 4.0F : 0.0F)) * realmParticleMultiplier),
                     4,
-                    18
+                    MAXIMUM_PARTICLE_COUNT
             );
             renderElementParticles(
                     poseStack.last().pose(),
@@ -137,6 +151,8 @@ public final class SpiritualEnergyRenderUtility {
                     absorptionPosition,
                     currentTick,
                     visibility,
+                    realmRadiusMultiplier,
+                    realmSpeedMultiplier,
                     cameraRight,
                     cameraUp
             );
@@ -154,6 +170,8 @@ public final class SpiritualEnergyRenderUtility {
             Vec3 absorptionPosition,
             float currentTick,
             float visibility,
+            float realmRadiusMultiplier,
+            float realmSpeedMultiplier,
             Vector3f cameraRight,
             Vector3f cameraUp
     ) {
@@ -166,7 +184,8 @@ public final class SpiritualEnergyRenderUtility {
                     ^ particleIndex * 0xD1B54A32D192ED03L;
             boolean attracted = movementAffinity > 0.5F;
             boolean absorbed = movementAffinity >= SpiritualEnergyUtility.ABSORPTION_AFFINITY;
-            float speedScale = attracted ? 1.08F + movementAffinity * 0.38F : 0.86F;
+            float speedScale = (attracted ? 1.08F + movementAffinity * 0.38F : 0.86F)
+                    * (attracted ? realmSpeedMultiplier : 1.0F);
             float duration = getBaseDuration(element) / speedScale;
             float phaseOffset = randomValue(baseSeed) * duration;
             double cyclePosition = (currentTick + phaseOffset) / duration;
@@ -174,7 +193,7 @@ public final class SpiritualEnergyRenderUtility {
             float progress = (float) (cyclePosition - Math.floor(cyclePosition));
             long cycleSeed = baseSeed ^ cycleIndex * HASH_MULTIPLIER;
 
-            Vec3 distantPosition = createDistantPosition(absorptionPosition, cycleSeed);
+            Vec3 distantPosition = createDistantPosition(absorptionPosition, cycleSeed, realmRadiusMultiplier);
             Vec3 nearbyPosition = absorbed
                     ? absorptionPosition
                     : createNearbyPosition(absorptionPosition, cycleSeed);
@@ -215,9 +234,12 @@ public final class SpiritualEnergyRenderUtility {
         BufferUploader.drawWithShader(bufferBuilder.end());
     }
 
-    private static Vec3 createDistantPosition(Vec3 absorptionPosition, long seed) {
+    private static Vec3 createDistantPosition(Vec3 absorptionPosition, long seed, float realmRadiusMultiplier) {
         float angle = randomValue(seed ^ 0x632BE59BD9B4E019L) * TWO_PI;
-        double radius = Mth.lerp(randomValue(seed ^ 0xC6BC279692B5CC83L), 3.5F, 10.0F);
+        double radius = Math.min(
+                Mth.lerp(randomValue(seed ^ 0xC6BC279692B5CC83L), 3.5F, 10.0F) * realmRadiusMultiplier,
+                MAXIMUM_DISTANT_RADIUS
+        );
         double height = Mth.lerp(randomValue(seed ^ 0xDB4F0B9175AE2165L), -0.35F, 5.2F);
         return absorptionPosition.add(
                 Mth.cos(angle) * radius,

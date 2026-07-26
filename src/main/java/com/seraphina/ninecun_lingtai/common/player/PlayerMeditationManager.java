@@ -22,6 +22,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -147,7 +148,8 @@ public final class PlayerMeditationManager {
                 meditating
                         ? ElementEnvironmentManager.INSTANCE.getFiveElementValues(trackedPlayer)
                         : FiveElementValues.EMPTY,
-                absorptionProfile.movementAffinities()
+                absorptionProfile.movementAffinities(),
+                getRealmLevel(trackedPlayer)
         );
     }
 
@@ -156,10 +158,30 @@ public final class PlayerMeditationManager {
     }
 
     public static long getProficiencyGainPerMinute(Player player) {
-        int realmOrdinal = PlayerCultivationData.getStage(player)
+        return 1L << Math.min(getRealmLevel(player), 62);
+    }
+
+    /**
+     * Layer requirements grow super-exponentially, so absorption must follow the requirement
+     * curve — a per-realm constant would leave high realms absorbing a rounding error of what
+     * their next layer needs. The exponent below 1 keeps higher layers slightly slower overall.
+     */
+    public static double getRealmAbsorptionMultiplier(Player player) {
+        Optional<CultivationStage> stage = PlayerCultivationData.getStage(player);
+        BigInteger nextRequirement = CultivationUtility.getNextRequiredSpiritualEnergy(stage)
+                .orElseGet(() -> CultivationUtility.getRequiredSpiritualEnergy(stage.orElseThrow()));
+        double requirementScale = Math.max(
+                1.0D,
+                nextRequirement.doubleValue()
+                        / CultivationUtility.getRequiredSpiritualEnergy(CultivationStage.first()).doubleValue()
+        );
+        return Math.pow(requirementScale, CommonConfig.MEDITATION_ABSORPTION_REQUIREMENT_EXPONENT.get());
+    }
+
+    public static int getRealmLevel(Player player) {
+        return PlayerCultivationData.getStage(player)
                 .map(stage -> stage.realm().ordinal())
                 .orElse(0);
-        return 1L << Math.min(realmOrdinal, 62);
     }
 
     private static boolean canCultivateTechnique(ServerPlayer player, ResourceLocation techniqueId) {
@@ -207,7 +229,9 @@ public final class PlayerMeditationManager {
         if (absorptionProfile.absorptionRates().isEmpty()) {
             return;
         }
-        double baseAbsorption = CommonConfig.MEDITATION_BASE_ABSORPTION_PER_SECOND.get() * breathingMultiplier;
+        double baseAbsorption = CommonConfig.MEDITATION_BASE_ABSORPTION_PER_SECOND.get()
+                * breathingMultiplier
+                * getRealmAbsorptionMultiplier(player);
         for (Map.Entry<ElementType, Double> entry : absorptionProfile.absorptionRates().entrySet()) {
             PlayerSpiritualEnergyData.addEnergy(player, entry.getKey(), baseAbsorption * entry.getValue());
         }
@@ -339,7 +363,8 @@ public final class PlayerMeditationManager {
                 meditating
                         ? ElementEnvironmentManager.INSTANCE.getFiveElementValues(player)
                         : FiveElementValues.EMPTY,
-                absorptionProfile.movementAffinities()
+                absorptionProfile.movementAffinities(),
+                getRealmLevel(player)
         );
     }
 
@@ -353,7 +378,8 @@ public final class PlayerMeditationManager {
                 meditating
                         ? ElementEnvironmentManager.INSTANCE.getFiveElementValues(player)
                         : FiveElementValues.EMPTY,
-                absorptionProfile.movementAffinities()
+                absorptionProfile.movementAffinities(),
+                getRealmLevel(player)
         );
     }
 
