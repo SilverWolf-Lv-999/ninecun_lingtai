@@ -56,6 +56,18 @@ public final class LifespanUtility {
         return years * TICKS_PER_YEAR;
     }
 
+    public static long ticksForYearsAndDays(int years, int days) {
+        long dayTicks = Math.max(0, days) * TICKS_PER_DAY;
+        return saturatingAdd(ticksForYears(years), dayTicks);
+    }
+
+    public static String formatMaximum(LifespanSnapshot lifespan) {
+        if (lifespan.immortal()) {
+            return "无上限（长生）";
+        }
+        return lifespan.maximumLifespanYears() + "年";
+    }
+
     public static String formatAge(long ageTicks) {
         return formatYearsAndDays(ageTicks, "岁");
     }
@@ -76,5 +88,12 @@ public final class LifespanUtility {
             return years + yearUnit;
         }
         return years + yearUnit + days + "天";
+    }
+
+    private static long saturatingAdd(long left, long right) {
+        if (right > Long.MAX_VALUE - left) {
+            return Long.MAX_VALUE;
+        }
+        return left + right;
     }
 }

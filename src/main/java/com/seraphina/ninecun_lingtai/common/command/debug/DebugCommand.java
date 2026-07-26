@@ -22,7 +22,9 @@ public final class DebugCommand {
                 .then(AptitudeDebugCommand.create())
                 .then(CultivationDebugCommand.create())
                 .then(SpiritualEnergyDebugCommand.create())
-                .then(MeditationDebugCommand.create());
+                .then(MeditationDebugCommand.create())
+                .then(LifespanDebugCommand.create())
+                .then(TechniqueDebugCommand.create());
     }
 
     private static int showHelp(CommandSourceStack commandSource) {
@@ -41,6 +43,12 @@ public final class DebugCommand {
         ), false);
         commandSource.sendSuccess(() -> Component.literal(
                 "§emeditation§r：查询、开始、停止或切换打坐状态"
+        ), false);
+        commandSource.sendSuccess(() -> Component.literal(
+                "§elifespan§r：查询、设置、增减年龄，或触发寿终、重置寿元"
+        ), false);
+        commandSource.sendSuccess(() -> Component.literal(
+                "§etechnique§r：查询、列出、授予、遗忘功法，或调整理解度、境界、熟练度"
         ), false);
         commandSource.sendSuccess(() -> Component.literal(
                 "参数支持 @s、玩家名、@a；元素与境界支持英文 ID 或中文名（中文候选会自动加引号）。"

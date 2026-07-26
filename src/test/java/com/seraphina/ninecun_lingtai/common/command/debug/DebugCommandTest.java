@@ -17,6 +17,8 @@ class DebugCommandTest {
         assertNotNull(debugCommand.getChild("cultivation"));
         assertNotNull(debugCommand.getChild("energy"));
         assertNotNull(debugCommand.getChild("meditation"));
+        assertNotNull(debugCommand.getChild("lifespan"));
+        assertNotNull(debugCommand.getChild("technique"));
     }
 
     @Test
@@ -31,5 +33,13 @@ class DebugCommandTest {
         assertNotNull(debugCommand.getChild("energy").getChild("all"));
         assertNotNull(debugCommand.getChild("energy").getChild("remove"));
         assertNotNull(debugCommand.getChild("meditation").getChild("toggle"));
+        assertNotNull(debugCommand.getChild("lifespan").getChild("set"));
+        assertNotNull(debugCommand.getChild("lifespan").getChild("add"));
+        assertNotNull(debugCommand.getChild("lifespan").getChild("expire"));
+        assertNotNull(debugCommand.getChild("lifespan").getChild("reset"));
+        assertNotNull(debugCommand.getChild("technique").getChild("learn"));
+        assertNotNull(debugCommand.getChild("technique").getChild("mastery"));
+        assertNotNull(debugCommand.getChild("technique").getChild("proficiency"));
+        assertNotNull(debugCommand.getChild("technique").getChild("forget"));
     }
 }

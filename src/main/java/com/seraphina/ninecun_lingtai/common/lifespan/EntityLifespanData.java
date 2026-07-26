@@ -40,6 +40,36 @@ public final class EntityLifespanData {
         }
     }
 
+    public static long getAgeTicks(LivingEntity entity) {
+        return Math.max(0L, getLifespanData(entity).getLong(AGE_TICKS_KEY));
+    }
+
+    /**
+     * Overwrites the entity's accumulated age, rebasing the calendar reference to now so subsequent
+     * natural aging is measured from this moment, and clears the expiration latch so the lifespan
+     * handler re-evaluates the new age on its next tick.
+     */
+    public static void setAgeTicks(LivingEntity entity, long ageTicks) {
+        CompoundTag lifespanData = getLifespanData(entity);
+        lifespanData.putLong(AGE_TICKS_KEY, Math.max(0L, ageTicks));
+        lifespanData.putLong(LAST_CALENDAR_TICK_KEY, getCalendarTick(entity));
+        lifespanData.putBoolean(EXPIRATION_HANDLED_KEY, false);
+        saveLifespanData(entity, lifespanData);
+    }
+
+    /** Adjusts the entity's age by {@code deltaTicks}, clamping to the non-negative saturated range. */
+    public static long addAgeTicks(LivingEntity entity, long deltaTicks) {
+        long currentAgeTicks = getAgeTicks(entity);
+        long updatedAgeTicks;
+        if (deltaTicks >= 0L) {
+            updatedAgeTicks = saturatingAdd(currentAgeTicks, deltaTicks);
+        } else {
+            updatedAgeTicks = currentAgeTicks + deltaTicks < 0L ? 0L : currentAgeTicks + deltaTicks;
+        }
+        setAgeTicks(entity, updatedAgeTicks);
+        return updatedAgeTicks;
+    }
+
     public static boolean isExpirationHandled(LivingEntity entity) {
         return getLifespanData(entity).getBoolean(EXPIRATION_HANDLED_KEY);
     }
@@ -65,10 +95,6 @@ public final class EntityLifespanData {
         }
         lifespanData.putLong(LAST_CALENDAR_TICK_KEY, calendarTick);
         saveLifespanData(entity, lifespanData);
-    }
-
-    private static long getAgeTicks(LivingEntity entity) {
-        return Math.max(0L, getLifespanData(entity).getLong(AGE_TICKS_KEY));
     }
 
     private static long getCalendarTick(LivingEntity entity) {
