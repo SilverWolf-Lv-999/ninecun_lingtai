@@ -68,6 +68,9 @@ public final class SpiritualRootUtility {
         if (isChaos(elements)) {
             return "混沌灵根";
         }
+        if (isFiveElementRoot(elements)) {
+            return "五行灵根";
+        }
         StringBuilder spiritualRootName = new StringBuilder();
         if (elements.contains(ElementType.YIN_YANG)) {
             spiritualRootName.append(getElementName(ElementType.YIN_YANG));
@@ -97,6 +100,11 @@ public final class SpiritualRootUtility {
     public static boolean isChaos(Set<ElementType> elements) {
         return elements.size() == SpiritualRoot.SELECTABLE_ELEMENTS.size()
                 && elements.containsAll(SpiritualRoot.SELECTABLE_ELEMENTS);
+    }
+
+    private static boolean isFiveElementRoot(Set<ElementType> elements) {
+        return elements.size() == ElementType.FIVE_ELEMENTS.size()
+                && elements.containsAll(ElementType.FIVE_ELEMENTS);
     }
 
     public static Set<ElementType> getIndependentRootElements(SpiritualRoot spiritualRoot) {
