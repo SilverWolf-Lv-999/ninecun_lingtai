@@ -1,0 +1,46 @@
+{
+  "name": "基础吐纳诀",
+  "description": "感应天地灵气并引气入体的基础功法。",
+  "content": "静心凝神，感应周身灵气。呼吸绵长，引灵气入膻中，沿任脉下行，过三关而归于窍穴。行气不可躁进，须使气息与心神相合，完成一次小周天后再徐徐吐纳。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "compatible_elements": [
+    "metal",
+    "wood",
+    "water",
+    "fire",
+    "earth",
+    "yin_yang"
+  ],
+  "requirements": {
+    "minimum_soul_strength": 1
+  },
+  "comprehension": {
+    "minimum_learning_score": 60,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "引气入膻中",
+      "沿任脉行气",
+      "过三关",
+      "完成小周天"
+    ],
+    "grading_criteria": [
+      "说明感应、引气、行气与归窍的先后顺序",
+      "理解行气不可躁进，心神需要与气息相合",
+      "不能把一次吐纳误解为直接突破境界"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:initial_understanding",
+        "minimum_score": 60
+      },
+      {
+        "id": "ninecun_lingtai:proficient",
+        "minimum_score": 80
+      },
+      {
+        "id": "ninecun_lingtai:minor_mastery",
+        "minimum_score": 100
+      }
+    ]
+  }
+}

@@ -1,5 +1,6 @@
 package com.seraphina.ninecun_lingtai.common.config;
 
+import com.seraphina.ninecun_lingtai.api.ai.AiProvider;
 import net.minecraftforge.common.ForgeConfigSpec;
 
 public final class CommonConfig {
@@ -16,6 +17,9 @@ public final class CommonConfig {
     public static final ForgeConfigSpec.DoubleValue MEDITATION_GENERATED_BY_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue MEDITATION_OVERCOMES_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue MEDITATION_OVERCOME_BY_MULTIPLIER;
+    public static final ForgeConfigSpec.EnumValue<AiProvider> AI_PROVIDER;
+    public static final ForgeConfigSpec.ConfigValue<String> AI_API_KEY;
+    public static final ForgeConfigSpec.ConfigValue<String> AI_MODEL;
     public static final ForgeConfigSpec SPEC;
 
     static {
@@ -56,6 +60,18 @@ public final class CommonConfig {
         MEDITATION_OVERCOME_BY_MULTIPLIER = BUILDER
                 .comment("Absorption multiplier when another element in a multi-element root overcomes the incoming element")
                 .defineInRange("overcomeByMultiplier", 0.65D, 0.0D, 100.0D);
+        BUILDER.pop();
+
+        BUILDER.push("ai");
+        AI_PROVIDER = BUILDER
+                .comment("AI provider used to assess technique comprehension. Supported values: OPENAI, DEEPSEEK")
+                .defineEnum("provider", AiProvider.OPENAI);
+        AI_API_KEY = BUILDER
+                .comment("Server-side API key for the selected provider. Keep the generated config file private")
+                .define("apiKey", "");
+        AI_MODEL = BUILDER
+                .comment("Model id from the selected provider. This is intentionally configurable as models change")
+                .define("model", "");
         BUILDER.pop();
         SPEC = BUILDER.build();
     }
