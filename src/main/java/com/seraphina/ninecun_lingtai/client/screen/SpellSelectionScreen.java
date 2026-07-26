@@ -1,5 +1,6 @@
 package com.seraphina.ninecun_lingtai.client.screen;
 
+import com.seraphina.ninecun_lingtai.api.spell.SpellCategory;
 import com.seraphina.ninecun_lingtai.api.spell.SpellGrade;
 import com.seraphina.ninecun_lingtai.api.technique.TechniqueClientData;
 import com.seraphina.ninecun_lingtai.api.technique.TechniqueMasteryStage;
@@ -157,13 +158,23 @@ public final class SpellSelectionScreen extends Screen {
         String gradeName = SpellGrade.fromRank(technique.spellGrade())
                 .map(SpellGrade::getChineseName)
                 .orElse("");
+        String categoryName = technique.getSpellCategory()
+                .map(SpellCategory::getChineseName)
+                .orElse("");
         String masteryName = ClientTechniqueManager.getLearnedTechniqueData(technique.id())
                 .map(learned -> TechniqueMasteryStage.getDisplayName(learned.mastery()))
                 .orElse("");
-        if (gradeName.isEmpty()) {
-            return masteryName;
+        StringBuilder detail = new StringBuilder();
+        for (String part : new String[]{gradeName, categoryName, masteryName}) {
+            if (part.isEmpty()) {
+                continue;
+            }
+            if (detail.length() > 0) {
+                detail.append("·");
+            }
+            detail.append(part);
         }
-        return masteryName.isEmpty() ? gradeName : gradeName + "·" + masteryName;
+        return detail.toString();
     }
 
     private void confirmSelection(int spellIndex) {

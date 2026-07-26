@@ -1,0 +1,43 @@
+{
+  "name": "御剑术",
+  "description": "踏剑乘风，御空而行的四品法术。筑基方可修习，不拘灵根。",
+  "content": "剑者，百兵之君；御剑者，以身心驭君王之器也。此术之要，首在人剑合一。行功之时，引丹田灵力沿督脉直上，过夹脊，抵百会，再由神识裹挟灵力，自泥丸倾泻而下，尽数灌注剑身。剑得灵力滋养，便如活物，嗡鸣颤动，浮空自立。修士踏剑其上，须以双足涌泉穴与剑脊相贴，灵力自涌泉下行入剑，如根须入土，人剑气机连成一体，此谓踏剑锁气。而后心念所指，剑光所向，升降起伏，全凭一点灵台清明。切记御剑非以力驱，而以神驭：神识散则剑坠，灵力断则剑亡。低空掠地之时，剑气与地气相冲，自生托浮之力，故剑不触尘，离地恒有微隙。凡人经脉浅窄，练气之士灵力单薄，皆载不动这等法门，须得筑基成府，丹田气足，方能人剑齐飞。此术不择五行，无论何种灵根，只需灵力浑厚，皆可修行。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "spell": {
+    "id": "ninecun_lingtai:sword_flight",
+    "category": "utility",
+    "grade": 4,
+    "base_cost": 2.5,
+    "cost_elements": []
+  },
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "foundation_establishment",
+      "layer": 1
+    }
+  },
+  "comprehension": {
+    "minimum_learning_score": 70,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "人剑合一以神驭剑非以力驱",
+      "灵力沿督脉过夹脊抵百会再灌注剑身",
+      "涌泉贴剑脊踏剑锁气气机一体",
+      "剑气与地气相冲剑不触尘离地有隙",
+      "筑基成府方能承载不择五行灵根"
+    ],
+    "grading_criteria": [
+      "说明御剑首重人剑合一，以神识驾驭而非蛮力驱使",
+      "理解灵力运行路线：丹田、督脉、夹脊、百会、泥丸、剑身",
+      "明白踏剑锁气：涌泉连剑、人剑气机一体",
+      "知晓贴地时剑气托浮、剑不触尘之理",
+      "理解为何须筑基之基，且不限灵根属性"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 70
+      }
+    ]
+  }
+}

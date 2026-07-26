@@ -5,6 +5,7 @@
   "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
   "spell": {
     "id": "ninecun_lingtai:fireball",
+    "category": "combat",
     "grade": 3,
     "base_cost": 6.0
   },

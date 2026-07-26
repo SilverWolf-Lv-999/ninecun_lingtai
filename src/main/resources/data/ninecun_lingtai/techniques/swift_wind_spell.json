@@ -5,6 +5,7 @@
   "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
   "spell": {
     "id": "ninecun_lingtai:swift_wind",
+    "category": "utility",
     "grade": 1,
     "base_cost": 3.0
   },

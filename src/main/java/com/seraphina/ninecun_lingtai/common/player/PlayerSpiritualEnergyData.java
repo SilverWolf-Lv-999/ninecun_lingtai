@@ -97,6 +97,44 @@ public final class PlayerSpiritualEnergyData {
         return consumeEnergy(player, Set.of(element), amount);
     }
 
+    /**
+     * 不挑属性地扣取灵力：从存量最多的属性开始依次抽取，直到凑足 {@code amount}。
+     * 返回实际扣取的分布（用于施法失败时退还）；灵力总量不足时不扣取任何灵力并返回 null。
+     */
+    public static Map<ElementType, Double> consumeEnergyAny(Player player, double amount) {
+        if (!Double.isFinite(amount) || amount <= 0.0D) {
+            return null;
+        }
+        Map<ElementType, Double> currentEnergy = getAllEnergy(player);
+        double totalEnergy = currentEnergy.values().stream().mapToDouble(Double::doubleValue).sum();
+        if (totalEnergy < amount) {
+            return null;
+        }
+        EnumMap<ElementType, Double> consumed = new EnumMap<>(ElementType.class);
+        double remaining = amount;
+        while (remaining > 1.0E-9D) {
+            ElementType richestElement = null;
+            double richestEnergy = 0.0D;
+            for (Map.Entry<ElementType, Double> entry : currentEnergy.entrySet()) {
+                double available = entry.getValue() - consumed.getOrDefault(entry.getKey(), 0.0D);
+                if (available > richestEnergy) {
+                    richestEnergy = available;
+                    richestElement = entry.getKey();
+                }
+            }
+            if (richestElement == null) {
+                return null;
+            }
+            double drained = Math.min(richestEnergy, remaining);
+            consumed.merge(richestElement, drained, Double::sum);
+            remaining -= drained;
+        }
+        for (Map.Entry<ElementType, Double> entry : consumed.entrySet()) {
+            setEnergy(player, entry.getKey(), currentEnergy.get(entry.getKey()) - entry.getValue());
+        }
+        return Collections.unmodifiableMap(consumed);
+    }
+
     public static boolean consumeEnergy(Player player, Set<ElementType> elements, double amount) {
         if (elements == null || elements.isEmpty() || !Double.isFinite(amount) || amount <= 0.0D) {
             return false;

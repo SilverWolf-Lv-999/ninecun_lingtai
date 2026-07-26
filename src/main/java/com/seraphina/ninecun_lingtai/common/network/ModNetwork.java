@@ -9,6 +9,7 @@ import com.seraphina.ninecun_lingtai.common.data.TechniqueManager;
 import com.seraphina.ninecun_lingtai.common.network.packet.BreakthroughRequestPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.CastSpellPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.CultivationFeedbackPacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.DismountSwordFlightPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.ImprintTechniquePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.ImprintTechniqueToJadeSlipPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.LearnTechniquePacket;
@@ -22,7 +23,9 @@ import com.seraphina.ninecun_lingtai.common.network.packet.SetMeditationStatePac
 import com.seraphina.ninecun_lingtai.common.network.packet.SubmitAptitudePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncCultivationInfoPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncMeditationStatePacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.SyncSwordFlightPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncTechniqueLibraryPacket;
+import com.seraphina.ninecun_lingtai.common.player.PlayerSwordFlightData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerCultivationInfo;
 import com.seraphina.ninecun_lingtai.common.player.PlayerImprintedTechniqueData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerTechniqueData;
@@ -41,7 +44,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public final class ModNetwork {
-    private static final String PROTOCOL_VERSION = "12";
+    private static final String PROTOCOL_VERSION = "13";
     private static final SimpleChannel CHANNEL = NetworkRegistry.ChannelBuilder
             .named(ResourceLocation.fromNamespaceAndPath(ModMain.MOD_ID, "main"))
             .networkProtocolVersion(() -> PROTOCOL_VERSION)
@@ -208,6 +211,48 @@ public final class ModNetwork {
                 .decoder(CastSpellPacket::decode)
                 .consumerMainThread(CastSpellPacket::handle)
                 .add();
+        CHANNEL.messageBuilder(
+                        SyncSwordFlightPacket.class,
+                        nextPacketId++,
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(SyncSwordFlightPacket::encode)
+                .decoder(SyncSwordFlightPacket::decode)
+                .consumerMainThread(SyncSwordFlightPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        DismountSwordFlightPacket.class,
+                        nextPacketId++,
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(DismountSwordFlightPacket::encode)
+                .decoder(DismountSwordFlightPacket::decode)
+                .consumerMainThread(DismountSwordFlightPacket::handle)
+                .add();
+    }
+
+    /** 把玩家当前的御剑状态广播给所有追踪者与其本人。 */
+    public static void sendSwordFlightState(ServerPlayer player) {
+        CHANNEL.send(
+                PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> player),
+                new SyncSwordFlightPacket(
+                        player.getUUID(),
+                        PlayerSwordFlightData.isFlying(player),
+                        PlayerSwordFlightData.getSword(player)
+                )
+        );
+    }
+
+    /** 把某玩家的御剑状态单发给一名观察者（开始追踪或刚登录时补发）。 */
+    public static void sendSwordFlightStateTo(ServerPlayer recipient, ServerPlayer subject) {
+        CHANNEL.send(
+                PacketDistributor.PLAYER.with(() -> recipient),
+                new SyncSwordFlightPacket(
+                        subject.getUUID(),
+                        PlayerSwordFlightData.isFlying(subject),
+                        PlayerSwordFlightData.getSword(subject)
+                )
+        );
     }
 
     public static void sendAptitudeScreenRequest(ServerPlayer player) {

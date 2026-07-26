@@ -1,8 +1,10 @@
 package com.seraphina.ninecun_lingtai.api.technique;
 
+import com.seraphina.ninecun_lingtai.api.spell.SpellCategory;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.Objects;
+import java.util.Optional;
 
 public record TechniqueClientData(
         ResourceLocation id,
@@ -10,12 +12,15 @@ public record TechniqueClientData(
         String description,
         String content,
         double breathingAbsorptionMultiplier,
-        int spellGrade
+        int spellGrade,
+        String spellCategory
 ) {
     /** Multiplier value marking a technique that is not a breathing technique. */
     public static final double NOT_BREATHING = 0.0D;
     /** Grade value marking a technique that is not a castable spell. */
     public static final int NOT_SPELL = 0;
+    /** Category value marking a technique that is not a castable spell. */
+    public static final String NO_CATEGORY = "";
 
     public TechniqueClientData {
         Objects.requireNonNull(id, "id");
@@ -28,6 +33,11 @@ public record TechniqueClientData(
         if (spellGrade < 0) {
             spellGrade = NOT_SPELL;
         }
+        spellCategory = Objects.requireNonNullElse(spellCategory, NO_CATEGORY);
+    }
+
+    public Optional<SpellCategory> getSpellCategory() {
+        return SpellCategory.fromSerializedName(this.spellCategory);
     }
 
     public boolean isBreathingTechnique() {
@@ -49,7 +59,10 @@ public record TechniqueClientData(
                         .orElse(NOT_BREATHING),
                 technique.spell()
                         .map(spell -> spell.grade().getRank())
-                        .orElse(NOT_SPELL)
+                        .orElse(NOT_SPELL),
+                technique.spell()
+                        .map(spell -> spell.category().getSerializedName())
+                        .orElse(NO_CATEGORY)
         );
     }
 

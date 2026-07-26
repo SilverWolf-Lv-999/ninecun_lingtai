@@ -19,6 +19,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -42,11 +43,13 @@ public final class SpellCastManager {
             sendActionBar(player, "尚未参悟《" + technique.get().name() + "》，无法施展");
             return;
         }
+        TechniqueSpell spellData = technique.get().spell().get();
         PlayerSelectedSpellData.setSelectedSpell(player, techniqueId);
         sendActionBar(player, String.format(
-                "已择定《%s》（%s）",
+                "已择定《%s》（%s·%s）",
                 technique.get().name(),
-                technique.get().spell().get().grade().getChineseName()
+                spellData.grade().getChineseName(),
+                spellData.category().getChineseName()
         ));
     }
 
@@ -63,7 +66,15 @@ public final class SpellCastManager {
             sendActionBar(player, "所择法术已失传，请重新择法");
             return;
         }
-        TechniqueDefinition technique = techniqueOptional.get();
+        castTechnique(player, techniqueOptional.get());
+    }
+
+    /** 施展指定的法术类功法（御剑等法术亦可绕过择法，由特定操作直接触发）。 */
+    public static void castTechnique(ServerPlayer player, TechniqueDefinition technique) {
+        if (technique.spell().isEmpty()) {
+            sendActionBar(player, "此功并非法术，无从施展");
+            return;
+        }
         TechniqueSpell spellData = technique.spell().get();
         if (!PlayerTechniqueData.hasTechnique(player, technique.id())) {
             sendActionBar(player, "尚未参悟《" + technique.name() + "》，无法施展");
@@ -80,7 +91,18 @@ public final class SpellCastManager {
             return;
         }
         double cost = getSpiritualEnergyCost(spellData, stage.get());
-        if (!PlayerSpiritualEnergyData.consumeEnergy(player, spellData.costElements(), cost)) {
+        Map<ElementType, Double> anyElementConsumption = null;
+        if (spellData.consumesAnyElement()) {
+            anyElementConsumption = PlayerSpiritualEnergyData.consumeEnergyAny(player, cost);
+            if (anyElementConsumption == null) {
+                sendActionBar(player, String.format(
+                        "灵力不足，施展《%s》需%s",
+                        technique.name(),
+                        describeCost(spellData, cost)
+                ));
+                return;
+            }
+        } else if (!PlayerSpiritualEnergyData.consumeEnergy(player, spellData.costElements(), cost)) {
             sendActionBar(player, String.format(
                     "灵力不足，施展《%s》需%s",
                     technique.name(),
@@ -99,8 +121,14 @@ public final class SpellCastManager {
                 getCultivationStrength(stage.get())
         );
         if (!spell.cast(player, context)) {
-            for (ElementType element : spellData.costElements()) {
-                PlayerSpiritualEnergyData.addEnergy(player, element, cost);
+            if (anyElementConsumption != null) {
+                for (Map.Entry<ElementType, Double> entry : anyElementConsumption.entrySet()) {
+                    PlayerSpiritualEnergyData.addEnergy(player, entry.getKey(), entry.getValue());
+                }
+            } else {
+                for (ElementType element : spellData.costElements()) {
+                    PlayerSpiritualEnergyData.addEnergy(player, element, cost);
+                }
             }
             sendActionBar(player, "施法未成，灵力已归丹田");
             return;
@@ -129,6 +157,9 @@ public final class SpellCastManager {
     }
 
     private static String describeCost(TechniqueSpell spellData, double cost) {
+        if (spellData.consumesAnyElement()) {
+            return formatCost(cost) + " 点灵力（不拘属性）";
+        }
         String elementNames = spellData.costElements().stream()
                 .map(SpiritualRootUtility::getElementName)
                 .collect(Collectors.joining("、"));

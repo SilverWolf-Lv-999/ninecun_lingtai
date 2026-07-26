@@ -5,9 +5,11 @@ import com.seraphina.ninecun_lingtai.client.player.ClientCultivationFeedbackMana
 import com.seraphina.ninecun_lingtai.client.player.ClientMeditationManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientCultivationInfoManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientSpellManager;
+import com.seraphina.ninecun_lingtai.client.player.ClientSwordFlightManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientTechniqueManager;
 import com.seraphina.ninecun_lingtai.client.screen.ClientAptitudeScreenManager;
 import com.seraphina.ninecun_lingtai.client.utility.SpiritualEnergyRenderUtility;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.Input;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
@@ -31,15 +33,20 @@ public final class ClientForgeEventHandler {
             ClientAptitudeScreenManager.tick();
             ClientMeditationManager.tick();
             ClientSpellManager.tick();
+            ClientSwordFlightManager.tick();
         }
     }
 
     @SubscribeEvent
     public static void onKeyInput(InputEvent.Key event) {
         if (event.getAction() == GLFW.GLFW_PRESS
-                && (event.getKey() == GLFW.GLFW_KEY_LEFT_SHIFT || event.getKey() == GLFW.GLFW_KEY_RIGHT_SHIFT)
-                && ClientMeditationManager.isLocalPlayerMeditating()) {
-            ClientMeditationManager.requestStop();
+                && (event.getKey() == GLFW.GLFW_KEY_LEFT_SHIFT || event.getKey() == GLFW.GLFW_KEY_RIGHT_SHIFT)) {
+            if (ClientMeditationManager.isLocalPlayerMeditating()) {
+                ClientMeditationManager.requestStop();
+            }
+            if (Minecraft.getInstance().screen == null) {
+                ClientSwordFlightManager.onShiftPressed();
+            }
         }
     }
 
@@ -72,6 +79,7 @@ public final class ClientForgeEventHandler {
     public static void onEntityLeaveLevel(EntityLeaveLevelEvent event) {
         if (event.getLevel().isClientSide && event.getEntity() instanceof net.minecraft.world.entity.player.Player player) {
             ClientMeditationManager.removePlayer(player.getUUID());
+            ClientSwordFlightManager.removePlayer(player.getUUID());
         }
     }
 
@@ -82,6 +90,7 @@ public final class ClientForgeEventHandler {
         ClientTechniqueManager.reset();
         ClientMeditationManager.reset();
         ClientSpellManager.reset();
+        ClientSwordFlightManager.reset();
         ClientCultivationFeedbackManager.reset();
     }
 }

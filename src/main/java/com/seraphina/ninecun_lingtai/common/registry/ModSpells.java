@@ -4,6 +4,7 @@ import com.seraphina.ninecun_lingtai.ModMain;
 import com.seraphina.ninecun_lingtai.api.spell.Spell;
 import com.seraphina.ninecun_lingtai.common.spell.FireballSpell;
 import com.seraphina.ninecun_lingtai.common.spell.SwiftWindSpell;
+import com.seraphina.ninecun_lingtai.common.spell.SwordFlightSpell;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -37,6 +38,11 @@ public final class ModSpells {
     public static final RegistryObject<Spell> FIREBALL = SPELLS.register(
             "fireball",
             FireballSpell::new
+    );
+
+    public static final RegistryObject<Spell> SWORD_FLIGHT = SPELLS.register(
+            "sword_flight",
+            SwordFlightSpell::new
     );
 
     private ModSpells() {
