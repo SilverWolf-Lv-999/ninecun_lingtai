@@ -17,6 +17,8 @@ public final class CommonConfig {
     public static final ForgeConfigSpec.DoubleValue NATURAL_RESTRAINT_ADVANTAGE;
     public static final ForgeConfigSpec.DoubleValue CHAOS_ENHANCEMENT_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue CHAOS_SUPPRESSED_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue REALM_BONUS_BASE_DAMAGE;
+    public static final ForgeConfigSpec.DoubleValue REALM_BONUS_LAYER_GROWTH;
     public static final ForgeConfigSpec.DoubleValue MEDITATION_BASE_ABSORPTION_PER_SECOND;
     public static final ForgeConfigSpec.DoubleValue MEDITATION_GENERATES_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue MEDITATION_GENERATED_BY_MULTIPLIER;
@@ -52,6 +54,20 @@ public final class CommonConfig {
         CHAOS_SUPPRESSED_MULTIPLIER = BUILDER
                 .comment("Damage multiplier when another element attacks a chaos target")
                 .defineInRange("chaosSuppressedMultiplier", 0.25D, MINIMUM_MULTIPLIER, MAXIMUM_MULTIPLIER);
+        BUILDER.pop();
+
+        BUILDER.push("realmBonusDamage");
+        REALM_BONUS_BASE_DAMAGE = BUILDER
+                .comment("Bonus damage added to player-sourced damage at the first qi refining layer")
+                .defineInRange("baseBonusDamage", 1.0D, MINIMUM_MULTIPLIER, MAXIMUM_MULTIPLIER);
+        REALM_BONUS_LAYER_GROWTH = BUILDER
+                .comment("Bonus damage growth multiplier applied for each cultivation layer above the first")
+                .defineInRange(
+                        "layerGrowthMultiplier",
+                        1.25D,
+                        MINIMUM_NATURAL_RESTRAINT_ADVANTAGE,
+                        MAXIMUM_MULTIPLIER
+                );
         BUILDER.pop();
 
         BUILDER.push("meditation");
