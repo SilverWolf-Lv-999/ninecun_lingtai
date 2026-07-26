@@ -35,7 +35,7 @@ public final class TechniqueItemUtility {
     }
 
     public static Optional<ResourceLocation> getTechniqueId(ItemStack itemStack) {
-        if (!itemStack.is(ModItems.TECHNIQUE.get()) || !itemStack.hasTag()) {
+        if (!itemStack.is(ModItems.JADE_SLIP.get()) || !itemStack.hasTag()) {
             return Optional.empty();
         }
         return Optional.ofNullable(ResourceLocation.tryParse(
@@ -60,7 +60,7 @@ public final class TechniqueItemUtility {
             String name,
             String description
     ) {
-        ItemStack itemStack = new ItemStack(ModItems.TECHNIQUE.get());
+        ItemStack itemStack = new ItemStack(ModItems.JADE_SLIP.get());
         CompoundTag itemData = itemStack.getOrCreateTag();
         itemData.putString(TECHNIQUE_ID_KEY, techniqueId.toString());
         itemData.putString(TECHNIQUE_NAME_KEY, name);
@@ -69,7 +69,7 @@ public final class TechniqueItemUtility {
     }
 
     private static Optional<String> getText(ItemStack itemStack, String key) {
-        if (!itemStack.is(ModItems.TECHNIQUE.get()) || !itemStack.hasTag()) {
+        if (!itemStack.is(ModItems.JADE_SLIP.get()) || !itemStack.hasTag()) {
             return Optional.empty();
         }
         String value = itemStack.getTag().getString(key);

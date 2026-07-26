@@ -14,8 +14,8 @@ public final class ModItems {
             ModMain.MOD_ID
     );
 
-    public static final RegistryObject<Item> TECHNIQUE = ITEMS.register(
-            "technique",
+    public static final RegistryObject<Item> JADE_SLIP = ITEMS.register(
+            "jade_slip",
             () -> new TechniqueItem(new Item.Properties().stacksTo(1))
     );
 

@@ -19,7 +19,7 @@ public final class ModCreativeModeTabs {
             "ninecun_lingtai",
             () -> CreativeModeTab.builder()
                     .title(Component.translatable("itemGroup.ninecun_lingtai"))
-                    .icon(() -> ModItems.TECHNIQUE.get().getDefaultInstance())
+                    .icon(() -> ModItems.JADE_SLIP.get().getDefaultInstance())
                     .displayItems((parameters, output) -> output.acceptAll(
                             TechniqueCreativeTabCache.getItemStacks()
                     ))

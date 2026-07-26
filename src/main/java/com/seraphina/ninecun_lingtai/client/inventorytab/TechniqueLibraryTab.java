@@ -10,7 +10,7 @@ import net.minecraft.world.item.ItemStack;
 
 public final class TechniqueLibraryTab extends Tab {
     public TechniqueLibraryTab() {
-        super(new ItemStack(ModItems.TECHNIQUE.get()));
+        super(new ItemStack(ModItems.JADE_SLIP.get()));
     }
 
     @Override
