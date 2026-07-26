@@ -5,6 +5,7 @@ import com.seraphina.ninecun_lingtai.ModMain;
 import com.seraphina.ninecun_lingtai.client.animation.MeditationAnimationManager;
 import com.seraphina.ninecun_lingtai.client.input.ModKeyMappings;
 import com.seraphina.ninecun_lingtai.client.inventorytab.CultivationInfoTabRegistrar;
+import com.seraphina.ninecun_lingtai.client.inventorytab.TechniqueLibraryTabRegistrar;
 import com.seraphina.ninecun_lingtai.client.render.AptitudeFormationShader;
 import com.seraphina.ninecun_lingtai.client.render.ElementFlowShader;
 import com.seraphina.ninecun_lingtai.client.render.SoulConstellationShader;
@@ -47,6 +48,7 @@ public final class ClientModEventHandler {
         event.enqueueWork(() -> {
             MeditationAnimationManager.register();
             CultivationInfoTabRegistrar.register();
+            TechniqueLibraryTabRegistrar.register();
         });
     }
 

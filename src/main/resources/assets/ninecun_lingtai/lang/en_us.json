@@ -1,4 +1,18 @@
 {
+  "inventory_tab.ninecun_lingtai.techniques": "Soul Techniques",
+  "item.ninecun_lingtai.technique": "Technique Jade Sword",
+  "itemGroup.ninecun_lingtai": "Ninecun Lingtai",
   "key.categories.ninecun_lingtai": "Ninecun Lingtai",
-  "key.ninecun_lingtai.meditation": "Meditate"
+  "key.ninecun_lingtai.meditation": "Meditate",
+  "message.ninecun_lingtai.invalid_technique_item": "This jade sword carries no technique",
+  "message.ninecun_lingtai.missing_technique": "The technique carried by this jade sword no longer exists",
+  "message.ninecun_lingtai.technique_already_imprinted": "This technique is already imprinted on your soul",
+  "message.ninecun_lingtai.technique_imprinted": "The technique has been imprinted on your soul",
+  "message.ninecun_lingtai.technique_not_held": "You must hold the matching technique jade sword to imprint it",
+  "screen.ninecun_lingtai.double_click_hint": "Double-click a technique to read it",
+  "screen.ninecun_lingtai.loading_techniques": "Reading soul imprints...",
+  "screen.ninecun_lingtai.no_imprinted_techniques": "No techniques are imprinted on your soul",
+  "screen.ninecun_lingtai.no_matching_techniques": "No techniques match the search",
+  "screen.ninecun_lingtai.search_techniques": "Search techniques...",
+  "screen.ninecun_lingtai.technique_library": "Soul Techniques"
 }

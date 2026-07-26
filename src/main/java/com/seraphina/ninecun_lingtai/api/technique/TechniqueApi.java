@@ -2,15 +2,19 @@ package com.seraphina.ninecun_lingtai.api.technique;
 
 import com.seraphina.ninecun_lingtai.common.ai.TechniqueComprehensionService;
 import com.seraphina.ninecun_lingtai.common.data.TechniqueManager;
+import com.seraphina.ninecun_lingtai.common.player.PlayerImprintedTechniqueData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerTechniqueData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerTechniqueManager;
+import com.seraphina.ninecun_lingtai.utility.TechniqueItemUtility;
 import com.seraphina.ninecun_lingtai.utility.TechniqueUtility;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 public final class TechniqueApi {
@@ -23,6 +27,18 @@ public final class TechniqueApi {
 
     public static List<TechniqueDefinition> getTechniques() {
         return TechniqueManager.INSTANCE.getTechniques();
+    }
+
+    public static Optional<ItemStack> createTechniqueItem(ResourceLocation techniqueId) {
+        return getTechnique(techniqueId).map(TechniqueItemUtility::createStack);
+    }
+
+    public static Set<ResourceLocation> getImprintedTechniques(Player player) {
+        return PlayerImprintedTechniqueData.getTechniques(player);
+    }
+
+    public static boolean isImprinted(Player player, ResourceLocation techniqueId) {
+        return PlayerImprintedTechniqueData.hasTechnique(player, techniqueId);
     }
 
     public static Map<ResourceLocation, TechniqueProgress> getLearnedTechniques(Player player) {

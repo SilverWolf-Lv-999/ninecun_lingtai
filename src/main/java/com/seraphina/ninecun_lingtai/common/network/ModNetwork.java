@@ -2,13 +2,20 @@ package com.seraphina.ninecun_lingtai.common.network;
 
 import com.seraphina.ninecun_lingtai.ModMain;
 import com.seraphina.ninecun_lingtai.api.element.FiveElementValues;
+import com.seraphina.ninecun_lingtai.api.technique.TechniqueClientData;
+import com.seraphina.ninecun_lingtai.common.data.TechniqueManager;
+import com.seraphina.ninecun_lingtai.common.network.packet.ImprintTechniquePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.OpenAptitudeScreenPacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.OpenTechniqueScreenPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.RequestCultivationInfoPacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.RequestTechniqueLibraryPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SetMeditationStatePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SubmitAptitudePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncCultivationInfoPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncMeditationStatePacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.SyncTechniqueLibraryPacket;
 import com.seraphina.ninecun_lingtai.common.player.PlayerCultivationInfo;
+import com.seraphina.ninecun_lingtai.common.player.PlayerImprintedTechniqueData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkDirection;
@@ -19,7 +26,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
 import java.util.UUID;
 
 public final class ModNetwork {
-    private static final String PROTOCOL_VERSION = "6";
+    private static final String PROTOCOL_VERSION = "7";
     private static final SimpleChannel CHANNEL = NetworkRegistry.ChannelBuilder
             .named(ResourceLocation.fromNamespaceAndPath(ModMain.MOD_ID, "main"))
             .networkProtocolVersion(() -> PROTOCOL_VERSION)
@@ -87,6 +94,42 @@ public final class ModNetwork {
                 .decoder(SyncCultivationInfoPacket::decode)
                 .consumerMainThread(SyncCultivationInfoPacket::handle)
                 .add();
+        CHANNEL.messageBuilder(
+                        OpenTechniqueScreenPacket.class,
+                        nextPacketId++,
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(OpenTechniqueScreenPacket::encode)
+                .decoder(OpenTechniqueScreenPacket::decode)
+                .consumerMainThread(OpenTechniqueScreenPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        RequestTechniqueLibraryPacket.class,
+                        nextPacketId++,
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(RequestTechniqueLibraryPacket::encode)
+                .decoder(RequestTechniqueLibraryPacket::decode)
+                .consumerMainThread(RequestTechniqueLibraryPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        SyncTechniqueLibraryPacket.class,
+                        nextPacketId++,
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(SyncTechniqueLibraryPacket::encode)
+                .decoder(SyncTechniqueLibraryPacket::decode)
+                .consumerMainThread(SyncTechniqueLibraryPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        ImprintTechniquePacket.class,
+                        nextPacketId++,
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(ImprintTechniquePacket::encode)
+                .decoder(ImprintTechniquePacket::decode)
+                .consumerMainThread(ImprintTechniquePacket::handle)
+                .add();
     }
 
     public static void sendAptitudeScreenRequest(ServerPlayer player) {
@@ -132,6 +175,29 @@ public final class ModNetwork {
         CHANNEL.send(
                 PacketDistributor.PLAYER.with(() -> player),
                 new SyncCultivationInfoPacket(PlayerCultivationInfo.capture(player))
+        );
+    }
+
+    public static void sendOpenTechniqueScreen(
+            ServerPlayer player,
+            TechniqueClientData technique,
+            boolean imprinted
+    ) {
+        CHANNEL.send(
+                PacketDistributor.PLAYER.with(() -> player),
+                new OpenTechniqueScreenPacket(technique, imprinted)
+        );
+    }
+
+    public static void sendTechniqueLibrary(ServerPlayer player) {
+        CHANNEL.send(
+                PacketDistributor.PLAYER.with(() -> player),
+                new SyncTechniqueLibraryPacket(
+                        TechniqueManager.INSTANCE.getTechniques().stream()
+                                .map(TechniqueClientData::fromDefinition)
+                                .toList(),
+                        PlayerImprintedTechniqueData.getTechniques(player)
+                )
         );
     }
 
