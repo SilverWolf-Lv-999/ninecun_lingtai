@@ -1,0 +1,18 @@
+{
+  "providers": [
+    {
+      "type": "ttf",
+      "file": "ninecun_lingtai:wen_ding_pl_jian_zhong_kai.ttf",
+      "shift": [
+        0.0,
+        0.0
+      ],
+      "size": 48.0,
+      "oversample": 1.0
+    },
+    {
+      "type": "reference",
+      "id": "minecraft:default"
+    }
+  ]
+}

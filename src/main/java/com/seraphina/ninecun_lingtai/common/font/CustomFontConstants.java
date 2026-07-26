@@ -12,6 +12,15 @@ public final class CustomFontConstants {
             ModMain.MOD_ID,
             "shan_bei_display"
     );
+    public static final ResourceLocation TECHNIQUE_FONT_ID = ResourceLocation.fromNamespaceAndPath(
+            ModMain.MOD_ID,
+            "technique"
+    );
+    public static final ResourceLocation TECHNIQUE_DISPLAY_FONT_ID =
+            ResourceLocation.fromNamespaceAndPath(
+                    ModMain.MOD_ID,
+                    "technique_display"
+            );
 
     private CustomFontConstants() {
     }

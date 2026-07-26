@@ -26,8 +26,11 @@ public final class TechniqueReadingScreen extends Screen {
     private static final int BUTTON_COLOR = 0xFFC1E0CF;
     private static final int BUTTON_HOVER_COLOR = 0xFFD5EFDF;
     private static final int BUTTON_DISABLED_COLOR = 0xFF89AA99;
-    private static final int LINE_HEIGHT = 14;
-    private static final int COLUMN_GAP = 18;
+    private static final float BODY_FONT_SCALE = 0.375F;
+    private static final float TITLE_FONT_SCALE = 0.5F;
+    private static final float INTERFACE_FONT_SCALE = 0.3F;
+    private static final int LINE_HEIGHT = 19;
+    private static final int COLUMN_GAP = 23;
     private static final int ACTION_BUTTON_WIDTH = 92;
     private static final int ACTION_BUTTON_HEIGHT = 20;
 
@@ -99,8 +102,8 @@ public final class TechniqueReadingScreen extends Screen {
                 guiGraphics,
                 displayFontText(this.technique.name()),
                 this.width / 2,
-                this.panelTop + 17,
-                1.6F,
+                this.panelTop + 15,
+                TITLE_FONT_SCALE,
                 this.panelRight - this.panelLeft - 76,
                 TEXT_COLOR
         );
@@ -211,12 +214,15 @@ public final class TechniqueReadingScreen extends Screen {
             int columnX = contentRight - visibleColumnIndex * COLUMN_GAP;
             for (int rowIndex = 0; rowIndex < column.size(); rowIndex++) {
                 Component symbol = customFontText(column.get(rowIndex));
-                int symbolX = columnX - this.font.width(symbol) / 2;
-                guiGraphics.drawString(
-                        this.font,
+                int symbolX = Math.round(
+                        columnX - this.font.width(symbol) * BODY_FONT_SCALE / 2.0F
+                );
+                drawScaledText(
+                        guiGraphics,
                         symbol,
                         symbolX,
                         contentTop + rowIndex * LINE_HEIGHT,
+                        BODY_FONT_SCALE,
                         TEXT_COLOR,
                         false
                 );
@@ -257,9 +263,9 @@ public final class TechniqueReadingScreen extends Screen {
                 + this.columns.size();
         guiGraphics.drawCenteredString(
                 this.font,
-                customFontText(pageText),
+                Component.literal(pageText),
                 this.width / 2,
-                this.actionButtonTop - 11,
+                this.actionButtonTop - 12,
                 MUTED_TEXT_COLOR
         );
     }
@@ -283,7 +289,7 @@ public final class TechniqueReadingScreen extends Screen {
                 this.actionButtonTop,
                 ACTION_BUTTON_WIDTH,
                 ACTION_BUTTON_HEIGHT,
-                displayFontText(buttonText),
+                customFontText(buttonText),
                 active,
                 isInside(
                         mouseX,
@@ -311,11 +317,13 @@ public final class TechniqueReadingScreen extends Screen {
                 : BUTTON_DISABLED_COLOR;
         guiGraphics.fill(left, top, left + width, top + height, color);
         guiGraphics.renderOutline(left, top, width, height, PANEL_BORDER_COLOR);
-        guiGraphics.drawCenteredString(
-                this.font,
+        drawScaledCenteredText(
+                guiGraphics,
                 text,
                 left + width / 2,
-                top + (height - this.font.lineHeight) / 2,
+                top + 3,
+                INTERFACE_FONT_SCALE,
+                width - 8,
                 active ? TEXT_COLOR : MUTED_TEXT_COLOR
         );
     }
@@ -360,6 +368,23 @@ public final class TechniqueReadingScreen extends Screen {
                 color,
                 false
         );
+        poseStack.popPose();
+    }
+
+    private void drawScaledText(
+            GuiGraphics guiGraphics,
+            Component text,
+            int left,
+            int top,
+            float scale,
+            int color,
+            boolean shadow
+    ) {
+        PoseStack poseStack = guiGraphics.pose();
+        poseStack.pushPose();
+        poseStack.translate(left, top, 0.0F);
+        poseStack.scale(scale, scale, 1.0F);
+        guiGraphics.drawString(this.font, text, 0, 0, color, shadow);
         poseStack.popPose();
     }
 
@@ -418,13 +443,13 @@ public final class TechniqueReadingScreen extends Screen {
 
     private static Component customFontText(String text) {
         return Component.literal(text).withStyle(
-                style -> style.withFont(CustomFontConstants.SHAN_BEI_FONT_ID)
+                style -> style.withFont(CustomFontConstants.TECHNIQUE_FONT_ID)
         );
     }
 
     private static Component displayFontText(String text) {
         return Component.literal(text).withStyle(
-                style -> style.withFont(CustomFontConstants.SHAN_BEI_DISPLAY_FONT_ID)
+                style -> style.withFont(CustomFontConstants.TECHNIQUE_DISPLAY_FONT_ID)
         );
     }
 }
