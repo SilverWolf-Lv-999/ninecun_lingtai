@@ -15,7 +15,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -133,12 +132,11 @@ public final class PlayerMeditationManager {
 
     private static void absorbSpiritualEnergy(ServerPlayer player) {
         MeditationAbsorptionProfile absorptionProfile = calculateAbsorptionProfile(player);
-        if (absorptionProfile.efficiencies().isEmpty()) {
+        if (absorptionProfile.absorptionRates().isEmpty()) {
             return;
         }
-        double baseAbsorption = CommonConfig.MEDITATION_BASE_ABSORPTION_PER_SECOND.get()
-                / absorptionProfile.efficiencies().size();
-        for (Map.Entry<ElementType, Double> entry : absorptionProfile.efficiencies().entrySet()) {
+        double baseAbsorption = CommonConfig.MEDITATION_BASE_ABSORPTION_PER_SECOND.get();
+        for (Map.Entry<ElementType, Double> entry : absorptionProfile.absorptionRates().entrySet()) {
             PlayerSpiritualEnergyData.addEnergy(player, entry.getKey(), baseAbsorption * entry.getValue());
             tryBreakthrough(player, entry.getKey());
         }
@@ -167,37 +165,9 @@ public final class PlayerMeditationManager {
         }
 
         SpiritualRoot spiritualRoot = spiritualRootOptional.get();
-        EnumMap<ElementType, Double> efficiencies = new EnumMap<>(ElementType.class);
-        if (spiritualRoot.isChaos() || spiritualRoot.elements().contains(ElementType.YIN_YANG)) {
-            for (ElementType element : ElementType.values()) {
-                efficiencies.put(
-                        element,
-                        spiritualRoot.quality()
-                                * ElementEnvironmentManager.INSTANCE.getEnvironmentMultiplier(player, element)
-                );
-            }
-            return new MeditationAbsorptionProfile(
-                    efficiencies,
-                    SpiritualEnergyUtility.createMovementAffinities(spiritualRoot)
-            );
-        }
-
-        for (ElementType element : spiritualRoot.elements()) {
-            double environmentMultiplier = ElementEnvironmentManager.INSTANCE.getEnvironmentMultiplier(
-                    player,
-                    element
-            );
-            double interactionMultiplier = SpiritualEnergyUtility.getMultiElementInteractionMultiplier(
-                    element,
-                    spiritualRoot.elements()
-            );
-            efficiencies.put(
-                    element,
-                    spiritualRoot.quality() * environmentMultiplier * interactionMultiplier
-            );
-        }
+        FiveElementValues environmentValues = ElementEnvironmentManager.INSTANCE.getFiveElementValues(player);
         return new MeditationAbsorptionProfile(
-                efficiencies,
+                SpiritualEnergyUtility.createCultivationAbsorptionRates(spiritualRoot, environmentValues),
                 SpiritualEnergyUtility.createMovementAffinities(spiritualRoot)
         );
     }
@@ -223,7 +193,7 @@ public final class PlayerMeditationManager {
     }
 
     private record MeditationAbsorptionProfile(
-            Map<ElementType, Double> efficiencies,
+            Map<ElementType, Double> absorptionRates,
             FiveElementValues movementAffinities
     ) {
         private static final MeditationAbsorptionProfile EMPTY = new MeditationAbsorptionProfile(
@@ -232,7 +202,7 @@ public final class PlayerMeditationManager {
         );
 
         private MeditationAbsorptionProfile {
-            efficiencies = Map.copyOf(efficiencies);
+            absorptionRates = Map.copyOf(absorptionRates);
         }
     }
 }

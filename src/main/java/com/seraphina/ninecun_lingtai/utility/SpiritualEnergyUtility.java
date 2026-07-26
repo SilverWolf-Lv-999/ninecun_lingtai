@@ -6,6 +6,8 @@ import com.seraphina.ninecun_lingtai.api.element.ElementType;
 import com.seraphina.ninecun_lingtai.api.element.FiveElementValues;
 import com.seraphina.ninecun_lingtai.common.config.CommonConfig;
 
+import java.util.EnumMap;
+import java.util.Map;
 import java.util.Set;
 
 public final class SpiritualEnergyUtility {
@@ -14,6 +16,37 @@ public final class SpiritualEnergyUtility {
     public static final float REPULSION_AFFINITY = 0.0F;
 
     private SpiritualEnergyUtility() {
+    }
+
+    public static Map<ElementType, Double> createCultivationAbsorptionRates(
+            SpiritualRoot spiritualRoot,
+            FiveElementValues environmentValues
+    ) {
+        EnumMap<ElementType, Double> absorptionRates = new EnumMap<>(ElementType.class);
+        double rootQuality = spiritualRoot.quality();
+        if (spiritualRoot.isChaos()) {
+            absorptionRates.put(ElementType.CHAOS, rootQuality * environmentValues.sum());
+            return Map.copyOf(absorptionRates);
+        }
+
+        for (ElementType element : ElementType.FIVE_ELEMENTS) {
+            if (!spiritualRoot.elements().contains(element)) {
+                continue;
+            }
+            absorptionRates.put(
+                    element,
+                    rootQuality
+                            * environmentValues.get(element)
+                            * getMultiElementInteractionMultiplier(element, spiritualRoot.elements())
+            );
+        }
+        if (spiritualRoot.elements().contains(ElementType.YIN_YANG)) {
+            absorptionRates.put(
+                    ElementType.YIN_YANG,
+                    rootQuality * environmentValues.minimum() * ElementType.FIVE_ELEMENTS.size()
+            );
+        }
+        return Map.copyOf(absorptionRates);
     }
 
     public static double getMultiElementInteractionMultiplier(

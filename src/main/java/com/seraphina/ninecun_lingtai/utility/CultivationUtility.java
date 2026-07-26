@@ -1,5 +1,6 @@
 package com.seraphina.ninecun_lingtai.utility;
 
+import com.seraphina.ninecun_lingtai.api.aptitude.SpiritualRoot;
 import com.seraphina.ninecun_lingtai.api.cultivation.CultivationRealm;
 import com.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
 
@@ -27,6 +28,14 @@ public final class CultivationUtility {
 
     public static BigInteger getRequiredSpiritualEnergy(CultivationStage targetStage) {
         return SPIRITUAL_ENERGY_REQUIREMENTS[targetStage.realm().ordinal()][targetStage.layer() - 1];
+    }
+
+    public static BigInteger getCombinedRequiredSpiritualEnergy(
+            CultivationStage targetStage,
+            SpiritualRoot spiritualRoot
+    ) {
+        int independentRootCount = SpiritualRootUtility.getIndependentRootElements(spiritualRoot).size();
+        return getRequiredSpiritualEnergy(targetStage).multiply(BigInteger.valueOf(independentRootCount));
     }
 
     public static Optional<BigInteger> getNextRequiredSpiritualEnergy(Optional<CultivationStage> currentStage) {

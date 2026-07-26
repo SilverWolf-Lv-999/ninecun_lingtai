@@ -34,6 +34,17 @@ public record FiveElementValues(float metal, float wood, float water, float fire
         );
     }
 
+    public float minimum() {
+        return Math.min(
+                Math.min(this.metal, this.wood),
+                Math.min(this.water, Math.min(this.fire, this.earth))
+        );
+    }
+
+    public double sum() {
+        return (double) this.metal + this.wood + this.water + this.fire + this.earth;
+    }
+
     public ElementType dominantElement() {
         return ElementType.FIVE_ELEMENTS.stream()
                 .max(Comparator.comparingDouble(this::get))

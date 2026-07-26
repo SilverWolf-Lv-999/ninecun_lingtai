@@ -282,8 +282,8 @@ public final class CultivationInfoScreen extends AbstractContainerScreen<Cultiva
             for (ElementType element : storedEnergyElements) {
                 int color = SpiritualRootUtility.getElementColor(element);
                 guiGraphics.fill(left + 3, contentY + 2, left + 5, contentY + 11, 0xFF000000 | color);
-                String energyText = SpiritualRootUtility.getElementName(element)
-                        + "灵力　"
+                String energyText = getEnergyName(element)
+                        + "　"
                         + formatEnergy(cultivationInfo.getSpiritualEnergy(element));
                 drawFittedText(
                         guiGraphics,
@@ -330,6 +330,7 @@ public final class CultivationInfoScreen extends AbstractContainerScreen<Cultiva
         );
 
         double currentEnergy = cultivationInfo.getSpiritualEnergy(element);
+        String energyName = getEnergyName(element);
         if (targetStage.isEmpty()) {
             drawFittedText(
                     guiGraphics,
@@ -341,7 +342,7 @@ public final class CultivationInfoScreen extends AbstractContainerScreen<Cultiva
             );
             drawFittedText(
                     guiGraphics,
-                    styledText("灵力　" + formatEnergy(currentEnergy), MUTED_TEXT_COLOR),
+                    styledText(energyName + "　" + formatEnergy(currentEnergy), MUTED_TEXT_COLOR),
                     left + 9,
                     top + 30,
                     right - left - 16,
@@ -355,7 +356,7 @@ public final class CultivationInfoScreen extends AbstractContainerScreen<Cultiva
                 .subtract(BigDecimal.valueOf(currentEnergy))
                 .max(BigDecimal.ZERO);
         String nextStageText = "下境　" + CultivationUtility.getDisplayName(targetStage.get());
-        String energyText = "灵力　"
+        String energyText = energyName + "　"
                 + formatEnergy(currentEnergy)
                 + "　所需　"
                 + ChineseNumberUtility.toChineseInteger(requiredEnergy)
@@ -434,13 +435,23 @@ public final class CultivationInfoScreen extends AbstractContainerScreen<Cultiva
     }
 
     private List<ElementType> getStoredEnergyElements(PlayerCultivationInfo cultivationInfo) {
+        Set<ElementType> independentElements = cultivationInfo.spiritualRoot()
+                .map(SpiritualRootUtility::getIndependentRootElements)
+                .orElse(Set.of());
         List<ElementType> orderedElements = new ArrayList<>();
         for (ElementType element : ELEMENT_DISPLAY_ORDER) {
-            if (cultivationInfo.getSpiritualEnergy(element) > 0.0D) {
+            if (independentElements.contains(element)
+                    && cultivationInfo.getSpiritualEnergy(element) > 0.0D) {
                 orderedElements.add(element);
             }
         }
         return orderedElements;
+    }
+
+    private static String getEnergyName(ElementType element) {
+        return element == ElementType.CHAOS
+                ? "混沌气"
+                : SpiritualRootUtility.getElementName(element) + "灵力";
     }
 
     private void drawBorderedPanel(

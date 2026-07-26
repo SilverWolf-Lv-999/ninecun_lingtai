@@ -1,11 +1,14 @@
 package com.seraphina.ninecun_lingtai.utility;
 
+import com.seraphina.ninecun_lingtai.api.aptitude.SpiritualRoot;
 import com.seraphina.ninecun_lingtai.api.cultivation.CultivationRealm;
 import com.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
+import com.seraphina.ninecun_lingtai.api.element.ElementType;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigInteger;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -34,6 +37,35 @@ class CultivationUtilityTest {
                     )
             );
         }
+    }
+
+    @Test
+    void calculatesBreakthroughCostForEveryIndependentRoot() {
+        CultivationStage firstStage = CultivationStage.first();
+        SpiritualRoot singleRoot = new SpiritualRoot(Set.of(ElementType.METAL), 9.0F);
+        SpiritualRoot doubleRoot = new SpiritualRoot(
+                Set.of(ElementType.METAL, ElementType.WATER),
+                9.0F
+        );
+        SpiritualRoot yinYangRoot = new SpiritualRoot(Set.of(ElementType.YIN_YANG), 9.0F);
+        SpiritualRoot chaosRoot = new SpiritualRoot(SpiritualRoot.SELECTABLE_ELEMENTS, 9.0F);
+
+        assertEquals(BigInteger.valueOf(25L), CultivationUtility.getCombinedRequiredSpiritualEnergy(
+                firstStage,
+                singleRoot
+        ));
+        assertEquals(BigInteger.valueOf(50L), CultivationUtility.getCombinedRequiredSpiritualEnergy(
+                firstStage,
+                doubleRoot
+        ));
+        assertEquals(BigInteger.valueOf(25L), CultivationUtility.getCombinedRequiredSpiritualEnergy(
+                firstStage,
+                yinYangRoot
+        ));
+        assertEquals(BigInteger.valueOf(25L), CultivationUtility.getCombinedRequiredSpiritualEnergy(
+                firstStage,
+                chaosRoot
+        ));
     }
 
     @Test
