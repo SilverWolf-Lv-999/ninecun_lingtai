@@ -25,19 +25,19 @@ public enum TechniqueMasteryStage {
     private final String serializedName;
     private final String chineseName;
     private final long requiredProficiency;
-    private final double breathingEfficiency;
+    private final double efficiency;
     private final ResourceLocation masteryId;
 
     TechniqueMasteryStage(
             String serializedName,
             String chineseName,
             long requiredProficiency,
-            double breathingEfficiency
+            double efficiency
     ) {
         this.serializedName = serializedName;
         this.chineseName = chineseName;
         this.requiredProficiency = requiredProficiency;
-        this.breathingEfficiency = breathingEfficiency;
+        this.efficiency = efficiency;
         this.masteryId = ResourceLocation.fromNamespaceAndPath(ModMain.MOD_ID, serializedName);
     }
 
@@ -55,11 +55,12 @@ public enum TechniqueMasteryStage {
     }
 
     /**
-     * Fraction of a breathing technique's full absorption power available at this stage: how well
-     * the technique is understood limits how fast qi can be drawn in, reaching 100% at perfection.
+     * Fraction of a technique's full power available at this stage — entry unlocks half of it,
+     * perfection all of it. Breathing techniques scale absorption speed by this; spells scale
+     * their effect strength by it.
      */
-    public double getBreathingEfficiency() {
-        return this.breathingEfficiency;
+    public double getEfficiency() {
+        return this.efficiency;
     }
 
     public ResourceLocation getMasteryId() {

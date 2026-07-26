@@ -7,6 +7,7 @@ import com.seraphina.ninecun_lingtai.api.technique.TechniqueClientData;
 import com.seraphina.ninecun_lingtai.api.technique.TechniqueProgress;
 import com.seraphina.ninecun_lingtai.common.data.TechniqueManager;
 import com.seraphina.ninecun_lingtai.common.network.packet.BreakthroughRequestPacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.CastSpellPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.CultivationFeedbackPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.ImprintTechniquePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.ImprintTechniqueToJadeSlipPacket;
@@ -16,6 +17,7 @@ import com.seraphina.ninecun_lingtai.common.network.packet.OpenTechniqueImprintS
 import com.seraphina.ninecun_lingtai.common.network.packet.OpenTechniqueScreenPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.RequestCultivationInfoPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.RequestTechniqueLibraryPacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.SelectSpellPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SetMeditationStatePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SubmitAptitudePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncCultivationInfoPacket;
@@ -39,7 +41,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public final class ModNetwork {
-    private static final String PROTOCOL_VERSION = "11";
+    private static final String PROTOCOL_VERSION = "12";
     private static final SimpleChannel CHANNEL = NetworkRegistry.ChannelBuilder
             .named(ResourceLocation.fromNamespaceAndPath(ModMain.MOD_ID, "main"))
             .networkProtocolVersion(() -> PROTOCOL_VERSION)
@@ -187,6 +189,24 @@ public final class ModNetwork {
                 .encoder(CultivationFeedbackPacket::encode)
                 .decoder(CultivationFeedbackPacket::decode)
                 .consumerMainThread(CultivationFeedbackPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        SelectSpellPacket.class,
+                        nextPacketId++,
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(SelectSpellPacket::encode)
+                .decoder(SelectSpellPacket::decode)
+                .consumerMainThread(SelectSpellPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        CastSpellPacket.class,
+                        nextPacketId++,
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(CastSpellPacket::encode)
+                .decoder(CastSpellPacket::decode)
+                .consumerMainThread(CastSpellPacket::handle)
                 .add();
     }
 

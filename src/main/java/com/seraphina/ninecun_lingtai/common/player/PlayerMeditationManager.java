@@ -7,7 +7,6 @@ import com.seraphina.ninecun_lingtai.api.element.ElementType;
 import com.seraphina.ninecun_lingtai.api.element.FiveElementValues;
 import com.seraphina.ninecun_lingtai.api.technique.TechniqueDefinition;
 import com.seraphina.ninecun_lingtai.api.technique.TechniqueMasteryStage;
-import com.seraphina.ninecun_lingtai.api.technique.TechniqueProgress;
 import com.seraphina.ninecun_lingtai.common.config.CommonConfig;
 import com.seraphina.ninecun_lingtai.common.data.ElementEnvironmentManager;
 import com.seraphina.ninecun_lingtai.common.data.TechniqueManager;
@@ -251,7 +250,7 @@ public final class PlayerMeditationManager {
         double masteryEfficiency = PlayerTechniqueData.getTechnique(player, techniqueId)
                 .flatMap(progress -> TechniqueMasteryStage.fromMastery(progress.mastery()))
                 .orElse(TechniqueMasteryStage.ENTRY)
-                .getBreathingEfficiency();
+                .getEfficiency();
         return technique.get().breathing().get().absorptionMultiplier() * masteryEfficiency;
     }
 
@@ -286,7 +285,7 @@ public final class PlayerMeditationManager {
             return;
         }
         long gain = getProficiencyGainPerMinute(player);
-        long total = PlayerTechniqueProficiencyData.add(player, techniqueId, gain);
+        long total = PlayerTechniqueManager.addProficiency(player, techniqueId, gain);
         session.addGainedProficiency(gain);
         player.displayClientMessage(
                 Component.translatable(
@@ -297,39 +296,6 @@ public final class PlayerMeditationManager {
                 ),
                 true
         );
-        advanceMasteryStage(player, techniqueId, total);
-    }
-
-    private static void advanceMasteryStage(
-            ServerPlayer player,
-            ResourceLocation techniqueId,
-            long totalProficiency
-    ) {
-        Optional<TechniqueProgress> progress = PlayerTechniqueData.getTechnique(player, techniqueId);
-        if (progress.isEmpty()) {
-            return;
-        }
-        TechniqueMasteryStage targetStage = TechniqueMasteryStage.getStageForProficiency(totalProficiency);
-        int currentRank = TechniqueMasteryStage.fromMastery(progress.get().mastery())
-                .map(Enum::ordinal)
-                .orElse(TechniqueMasteryStage.ENTRY.ordinal());
-        if (targetStage.ordinal() <= currentRank) {
-            return;
-        }
-        PlayerTechniqueData.setTechnique(player, techniqueId, new TechniqueProgress(
-                progress.get().comprehensionScore(),
-                targetStage.getMasteryId(),
-                progress.get().feedback()
-        ));
-        player.displayClientMessage(
-                Component.translatable(
-                        "message.ninecun_lingtai.technique_stage_advanced",
-                        getTechniqueName(techniqueId),
-                        targetStage.getChineseName()
-                ),
-                false
-        );
-        ModNetwork.sendTechniqueLibrary(player);
     }
 
     private static String getTechniqueName(ResourceLocation techniqueId) {

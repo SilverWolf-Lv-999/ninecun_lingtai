@@ -18,7 +18,8 @@ public record TechniqueDefinition(
         TechniqueRequirements requirements,
         TechniqueComprehension comprehension,
         List<TechniqueEffect> effects,
-        Optional<TechniqueBreathing> breathing
+        Optional<TechniqueBreathing> breathing,
+        Optional<TechniqueSpell> spell
 ) {
     public TechniqueDefinition {
         Objects.requireNonNull(id, "id");
@@ -31,10 +32,20 @@ public record TechniqueDefinition(
         Objects.requireNonNull(comprehension, "comprehension");
         effects = List.copyOf(effects);
         Objects.requireNonNull(breathing, "breathing");
+        Objects.requireNonNull(spell, "spell");
+        if (breathing.isPresent() && spell.isPresent()) {
+            throw new IllegalArgumentException(
+                    "A technique cannot be both a breathing technique and a spell"
+            );
+        }
     }
 
     public boolean isBreathingTechnique() {
         return this.breathing.isPresent();
+    }
+
+    public boolean isSpellTechnique() {
+        return this.spell.isPresent();
     }
 
     private static String requireText(String value, String fieldName) {

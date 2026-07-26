@@ -1,0 +1,42 @@
+{
+  "name": "火球术",
+  "description": "聚火成球，隔空掷敌的三品法术。",
+  "content": "火性炎上而散，聚之最难，故此术首重一个凝字。行功之时，引火行灵力自丹田升至膻中，再沿臂脉推至掌心劳宫穴，以意为模，以气为壁，将散乱火气团团裹住，搓炼成球。火球在掌，须觉其烫而不灼、跳而不逸，方算凝形已成。掷出之际，臂随腰转，意在球先，心念锁定所向，火球便循念而去。凝气不足则球散于半途，心念不坚则火反噬己身，掌心焦烂犹是轻的。故初习者宜以小球试手，宁小而凝，勿大而散。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "spell": {
+    "id": "ninecun_lingtai:fireball",
+    "grade": 3,
+    "base_cost": 6.0
+  },
+  "compatible_elements": ["fire"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 3
+    },
+    "required_elements": ["fire"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 65,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "火性炎上而散首重凝字",
+      "灵力自丹田经膻中推至掌心劳宫",
+      "以意为模以气为壁搓炼成球",
+      "意在球先心念锁定所向",
+      "凝气不足球散心念不坚反噬"
+    ],
+    "grading_criteria": [
+      "说明火气散乱难聚，须以意与气凝形",
+      "理解灵力运行路线：丹田、膻中、臂脉、劳宫",
+      "明白掷球时意在球先、以念导向",
+      "知晓凝气不足与心念不坚的反噬后果"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 65
+      }
+    ]
+  }
+}

@@ -12,8 +12,10 @@ import com.seraphina.ninecun_lingtai.api.technique.TechniqueBreathing;
 import com.seraphina.ninecun_lingtai.api.technique.TechniqueComprehension;
 import com.seraphina.ninecun_lingtai.api.technique.TechniqueDefinition;
 import com.seraphina.ninecun_lingtai.api.technique.TechniqueEffect;
+import com.seraphina.ninecun_lingtai.api.spell.SpellGrade;
 import com.seraphina.ninecun_lingtai.api.technique.TechniqueMasteryThreshold;
 import com.seraphina.ninecun_lingtai.api.technique.TechniqueRequirements;
+import com.seraphina.ninecun_lingtai.api.technique.TechniqueSpell;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.GsonHelper;
 
@@ -54,18 +56,50 @@ public final class TechniqueJsonUtility {
         TechniqueComprehension comprehension = parseComprehension(jsonObject);
         List<TechniqueEffect> effects = parseEffects(jsonObject);
         Optional<TechniqueBreathing> breathing = parseBreathing(jsonObject);
-        return new TechniqueDefinition(
-                techniqueId,
-                name,
-                description,
-                content,
-                cultivationPath,
-                compatibleElements,
-                requirements,
-                comprehension,
-                effects,
-                breathing
+        Optional<TechniqueSpell> spell = parseSpell(jsonObject, compatibleElements);
+        try {
+            return new TechniqueDefinition(
+                    techniqueId,
+                    name,
+                    description,
+                    content,
+                    cultivationPath,
+                    compatibleElements,
+                    requirements,
+                    comprehension,
+                    effects,
+                    breathing,
+                    spell
+            );
+        } catch (IllegalArgumentException exception) {
+            throw new JsonParseException(exception.getMessage(), exception);
+        }
+    }
+
+    private static Optional<TechniqueSpell> parseSpell(
+            JsonObject techniqueJson,
+            Set<ElementType> compatibleElements
+    ) {
+        if (!techniqueJson.has("spell")) {
+            return Optional.empty();
+        }
+        JsonObject spellJson = GsonHelper.getAsJsonObject(techniqueJson, "spell");
+        ResourceLocation spellId = parseResourceLocation(
+                GsonHelper.getAsString(spellJson, "id"),
+                "spell id"
         );
+        int gradeRank = GsonHelper.getAsInt(spellJson, "grade");
+        SpellGrade grade = SpellGrade.fromRank(gradeRank)
+                .orElseThrow(() -> new JsonParseException("Spell grade must be between 1 and 9: " + gradeRank));
+        double baseCost = GsonHelper.getAsDouble(spellJson, "base_cost", 1.0D);
+        Set<ElementType> costElements = spellJson.has("cost_elements")
+                ? parseElements(spellJson, "cost_elements")
+                : compatibleElements;
+        try {
+            return Optional.of(new TechniqueSpell(spellId, grade, baseCost, costElements));
+        } catch (IllegalArgumentException exception) {
+            throw new JsonParseException(exception.getMessage(), exception);
+        }
     }
 
     private static Optional<TechniqueBreathing> parseBreathing(JsonObject techniqueJson) {

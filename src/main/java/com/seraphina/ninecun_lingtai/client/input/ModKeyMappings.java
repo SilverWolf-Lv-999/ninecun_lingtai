@@ -17,6 +17,22 @@ public final class ModKeyMappings {
             "key.categories." + ModMain.MOD_ID
     );
 
+    public static final KeyMapping SPELL_SELECTION = new KeyMapping(
+            "key." + ModMain.MOD_ID + ".spell_selection",
+            KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_R,
+            "key.categories." + ModMain.MOD_ID
+    );
+
+    public static final KeyMapping CAST_SPELL = new KeyMapping(
+            "key." + ModMain.MOD_ID + ".cast_spell",
+            KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_V,
+            "key.categories." + ModMain.MOD_ID
+    );
+
     private ModKeyMappings() {
     }
 }

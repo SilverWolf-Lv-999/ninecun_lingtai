@@ -1,0 +1,40 @@
+{
+  "name": "御风术",
+  "description": "引木气化风附身，健步如飞的一品法术。",
+  "content": "风者，木气之动也。草木得气而摇，其摇便是风形。此术不外求风，而是引自身木行灵力散于周身毛窍，化作一层贴体的气衣。行功之时，意守双足涌泉，灵力自丹田分作两股，沿腿脉下行，再由足底翻涌而上，托住周身。气衣既成，身子便似落叶得风，轻了数分，奔行跳纵皆快人一步。切记灵力须散而不乱，聚则成滞，乱则成颠；心念一松，气衣即散，故施术之后仍要留一缕心神看顾。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "spell": {
+    "id": "ninecun_lingtai:swift_wind",
+    "grade": 1,
+    "base_cost": 3.0
+  },
+  "compatible_elements": ["wood"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 1
+    },
+    "required_elements": ["wood"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 60,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "风为木气之动",
+      "灵力散于周身毛窍化作气衣",
+      "意守涌泉灵力沿腿脉下行再翻涌而上",
+      "散而不乱须留心神看顾"
+    ],
+    "grading_criteria": [
+      "说明此术不外求风，而以自身木行灵力化风",
+      "理解气衣托身、身轻步疾的原理",
+      "明白灵力聚则成滞、乱则成颠，施术后须留心神"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 60
+      }
+    ]
+  }
+}

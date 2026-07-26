@@ -4,6 +4,7 @@ import com.seraphina.ninecun_lingtai.ModMain;
 import com.seraphina.ninecun_lingtai.client.player.ClientCultivationFeedbackManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientMeditationManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientCultivationInfoManager;
+import com.seraphina.ninecun_lingtai.client.player.ClientSpellManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientTechniqueManager;
 import com.seraphina.ninecun_lingtai.client.screen.ClientAptitudeScreenManager;
 import com.seraphina.ninecun_lingtai.client.utility.SpiritualEnergyRenderUtility;
@@ -29,6 +30,7 @@ public final class ClientForgeEventHandler {
         if (event.phase == TickEvent.Phase.END) {
             ClientAptitudeScreenManager.tick();
             ClientMeditationManager.tick();
+            ClientSpellManager.tick();
         }
     }
 
@@ -79,6 +81,7 @@ public final class ClientForgeEventHandler {
         ClientCultivationInfoManager.reset();
         ClientTechniqueManager.reset();
         ClientMeditationManager.reset();
+        ClientSpellManager.reset();
         ClientCultivationFeedbackManager.reset();
     }
 }

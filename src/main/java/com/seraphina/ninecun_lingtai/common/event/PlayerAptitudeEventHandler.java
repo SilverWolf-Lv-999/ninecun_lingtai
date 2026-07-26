@@ -5,6 +5,7 @@ import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import com.seraphina.ninecun_lingtai.common.player.PlayerAptitudeData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerCultivationData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerImprintedTechniqueData;
+import com.seraphina.ninecun_lingtai.common.player.PlayerSelectedSpellData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerSpiritualEnergyData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerTechniqueData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerTechniqueProficiencyData;
@@ -31,6 +32,7 @@ public final class PlayerAptitudeEventHandler {
         PlayerTechniqueData.copy(event.getOriginal(), event.getEntity());
         PlayerImprintedTechniqueData.copy(event.getOriginal(), event.getEntity());
         PlayerTechniqueProficiencyData.copy(event.getOriginal(), event.getEntity());
+        PlayerSelectedSpellData.copy(event.getOriginal(), event.getEntity());
     }
 
     @SubscribeEvent
