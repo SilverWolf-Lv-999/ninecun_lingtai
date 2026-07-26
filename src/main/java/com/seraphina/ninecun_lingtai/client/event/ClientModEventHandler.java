@@ -3,6 +3,7 @@ package com.seraphina.ninecun_lingtai.client.event;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.seraphina.ninecun_lingtai.ModMain;
 import com.seraphina.ninecun_lingtai.client.animation.MeditationAnimationManager;
+import com.seraphina.ninecun_lingtai.client.config.ClientConfigScreenRegistrar;
 import com.seraphina.ninecun_lingtai.client.input.ModKeyMappings;
 import com.seraphina.ninecun_lingtai.client.inventorytab.CultivationInfoTabRegistrar;
 import com.seraphina.ninecun_lingtai.client.inventorytab.TechniqueLibraryTabRegistrar;
@@ -50,6 +51,7 @@ public final class ClientModEventHandler {
 
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
+        ClientConfigScreenRegistrar.register();
         event.enqueueWork(() -> {
             MeditationAnimationManager.register();
             CultivationInfoTabRegistrar.register();
