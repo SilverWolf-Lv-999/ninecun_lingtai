@@ -64,6 +64,14 @@ public final class TechniqueReadingScreen extends Screen {
     }
 
     @Override
+    public void tick() {
+        if (this.awaitingImprint
+                && ClientTechniqueManager.getRevision() > this.imprintRequestRevision) {
+            this.awaitingImprint = false;
+        }
+    }
+
+    @Override
     protected void init() {
         int panelWidth = Mth.clamp(this.width - 36, 280, 520);
         int panelHeight = Mth.clamp(this.height - 30, 210, 360);
@@ -83,14 +91,6 @@ public final class TechniqueReadingScreen extends Screen {
         int visibleColumns = Math.max(1, (panelWidth - 58) / COLUMN_GAP);
         this.maximumColumnOffset = Math.max(0, this.columns.size() - visibleColumns);
         this.columnOffset = Mth.clamp(this.columnOffset, 0, this.maximumColumnOffset);
-    }
-
-    @Override
-    public void tick() {
-        if (this.awaitingImprint
-                && ClientTechniqueManager.getRevision() > this.imprintRequestRevision) {
-            this.awaitingImprint = false;
-        }
     }
 
     @Override

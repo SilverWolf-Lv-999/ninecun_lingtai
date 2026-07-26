@@ -55,17 +55,42 @@ public final class TechniqueItemUtility {
         return getTechniqueId(itemStack).filter(techniqueId::equals).isPresent();
     }
 
+    public static boolean isEmptyJadeSlip(ItemStack itemStack) {
+        return itemStack.is(ModItems.JADE_SLIP.get()) && getTechniqueId(itemStack).isEmpty();
+    }
+
+    public static void imprintTechnique(ItemStack itemStack, TechniqueDefinition technique) {
+        if (!itemStack.is(ModItems.JADE_SLIP.get())) {
+            throw new IllegalArgumentException("Only jade slips can carry techniques");
+        }
+        writeTechniqueData(
+                itemStack,
+                technique.id(),
+                technique.name(),
+                technique.description()
+        );
+    }
+
     private static ItemStack createStack(
             ResourceLocation techniqueId,
             String name,
             String description
     ) {
         ItemStack itemStack = new ItemStack(ModItems.JADE_SLIP.get());
+        writeTechniqueData(itemStack, techniqueId, name, description);
+        return itemStack;
+    }
+
+    private static void writeTechniqueData(
+            ItemStack itemStack,
+            ResourceLocation techniqueId,
+            String name,
+            String description
+    ) {
         CompoundTag itemData = itemStack.getOrCreateTag();
         itemData.putString(TECHNIQUE_ID_KEY, techniqueId.toString());
         itemData.putString(TECHNIQUE_NAME_KEY, name);
         itemData.putString(TECHNIQUE_DESCRIPTION_KEY, description);
-        return itemStack;
     }
 
     private static Optional<String> getText(ItemStack itemStack, String key) {

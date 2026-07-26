@@ -5,7 +5,9 @@ import com.seraphina.ninecun_lingtai.api.element.FiveElementValues;
 import com.seraphina.ninecun_lingtai.api.technique.TechniqueClientData;
 import com.seraphina.ninecun_lingtai.common.data.TechniqueManager;
 import com.seraphina.ninecun_lingtai.common.network.packet.ImprintTechniquePacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.ImprintTechniqueToJadeSlipPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.OpenAptitudeScreenPacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.OpenTechniqueImprintScreenPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.OpenTechniqueScreenPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.RequestCultivationInfoPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.RequestTechniqueLibraryPacket;
@@ -18,15 +20,17 @@ import com.seraphina.ninecun_lingtai.common.player.PlayerCultivationInfo;
 import com.seraphina.ninecun_lingtai.common.player.PlayerImprintedTechniqueData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
 import net.minecraftforge.network.NetworkDirection;
 import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
+import java.util.List;
 import java.util.UUID;
 
 public final class ModNetwork {
-    private static final String PROTOCOL_VERSION = "7";
+    private static final String PROTOCOL_VERSION = "9";
     private static final SimpleChannel CHANNEL = NetworkRegistry.ChannelBuilder
             .named(ResourceLocation.fromNamespaceAndPath(ModMain.MOD_ID, "main"))
             .networkProtocolVersion(() -> PROTOCOL_VERSION)
@@ -104,6 +108,15 @@ public final class ModNetwork {
                 .consumerMainThread(OpenTechniqueScreenPacket::handle)
                 .add();
         CHANNEL.messageBuilder(
+                        OpenTechniqueImprintScreenPacket.class,
+                        nextPacketId++,
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(OpenTechniqueImprintScreenPacket::encode)
+                .decoder(OpenTechniqueImprintScreenPacket::decode)
+                .consumerMainThread(OpenTechniqueImprintScreenPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
                         RequestTechniqueLibraryPacket.class,
                         nextPacketId++,
                         NetworkDirection.PLAY_TO_SERVER
@@ -129,6 +142,15 @@ public final class ModNetwork {
                 .encoder(ImprintTechniquePacket::encode)
                 .decoder(ImprintTechniquePacket::decode)
                 .consumerMainThread(ImprintTechniquePacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        ImprintTechniqueToJadeSlipPacket.class,
+                        nextPacketId++,
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(ImprintTechniqueToJadeSlipPacket::encode)
+                .decoder(ImprintTechniqueToJadeSlipPacket::decode)
+                .consumerMainThread(ImprintTechniqueToJadeSlipPacket::handle)
                 .add();
     }
 
@@ -186,6 +208,17 @@ public final class ModNetwork {
         CHANNEL.send(
                 PacketDistributor.PLAYER.with(() -> player),
                 new OpenTechniqueScreenPacket(technique, imprinted)
+        );
+    }
+
+    public static void sendOpenTechniqueImprintScreen(
+            ServerPlayer player,
+            InteractionHand hand,
+            List<TechniqueClientData> techniques
+    ) {
+        CHANNEL.send(
+                PacketDistributor.PLAYER.with(() -> player),
+                new OpenTechniqueImprintScreenPacket(hand, techniques)
         );
     }
 

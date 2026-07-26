@@ -8,15 +8,20 @@ import com.seraphina.ninecun_lingtai.api.technique.TechniqueLearnability;
 import com.seraphina.ninecun_lingtai.api.technique.TechniqueRequirementFailure;
 import com.seraphina.ninecun_lingtai.api.technique.TechniqueRequirementType;
 import com.seraphina.ninecun_lingtai.api.technique.TechniqueRequirements;
+import com.seraphina.ninecun_lingtai.common.data.TechniqueManager;
 import com.seraphina.ninecun_lingtai.common.player.PlayerAptitudeData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerCultivationData;
+import com.seraphina.ninecun_lingtai.common.player.PlayerImprintedTechniqueData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerTechniqueData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public final class TechniqueUtility {
     private TechniqueUtility() {
@@ -69,6 +74,24 @@ public final class TechniqueUtility {
             }
         }
         return new TechniqueLearnability(failures);
+    }
+
+    public static List<TechniqueDefinition> getImprintableTechniques(Player player) {
+        Set<ResourceLocation> techniqueIds = new HashSet<>(
+                PlayerTechniqueData.getTechniques(player).keySet()
+        );
+        techniqueIds.addAll(PlayerImprintedTechniqueData.getTechniques(player));
+        return techniqueIds.stream()
+                .map(TechniqueManager.INSTANCE::getTechnique)
+                .flatMap(Optional::stream)
+                .sorted(Comparator.comparing(TechniqueDefinition::name)
+                        .thenComparing(technique -> technique.id().toString()))
+                .toList();
+    }
+
+    public static boolean canImprintToJadeSlip(Player player, ResourceLocation techniqueId) {
+        return PlayerTechniqueData.hasTechnique(player, techniqueId)
+                || PlayerImprintedTechniqueData.hasTechnique(player, techniqueId);
     }
 
     private static void checkCompatibleElements(

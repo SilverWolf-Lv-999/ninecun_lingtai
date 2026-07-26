@@ -1,9 +1,11 @@
 package com.seraphina.ninecun_lingtai.common.item;
 
 import com.seraphina.ninecun_lingtai.api.technique.TechniqueClientData;
+import com.seraphina.ninecun_lingtai.common.registry.ModItems;
 import com.seraphina.ninecun_lingtai.utility.TechniqueItemUtility;
 import net.minecraft.world.item.ItemStack;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public final class TechniqueCreativeTabCache {
@@ -19,7 +21,10 @@ public final class TechniqueCreativeTabCache {
     }
 
     public static List<ItemStack> getItemStacks() {
-        return itemStacks.stream().map(ItemStack::copy).toList();
+        List<ItemStack> displayedItemStacks = new ArrayList<>(itemStacks.size() + 1);
+        displayedItemStacks.add(new ItemStack(ModItems.JADE_SLIP.get()));
+        itemStacks.stream().map(ItemStack::copy).forEach(displayedItemStacks::add);
+        return List.copyOf(displayedItemStacks);
     }
 
     public static void clear() {
