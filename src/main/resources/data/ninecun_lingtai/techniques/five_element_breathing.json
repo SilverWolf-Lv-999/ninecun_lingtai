@@ -1,0 +1,39 @@
+{
+  "name": "五行周天诀",
+  "description": "五气循相生之序轮转周天，唯五行俱全者可修的呼吸法。",
+  "content": "此诀非五行俱全之灵根不可修。吐纳之际，五气并引：金气入肺，木气入肝，水气入肾，火气入心，土气入脾，五宫各得其养。行气须循五行相生之序：木生火，火生土，土生金，金生水，水复生木，五气首尾相衔，轮转如环，是为五行周天。一行独进则五行失衡，轮转即断，故引气务求五气均停，不偏不废。五气每轮转一周，彼此生发，灵气自倍于孤行一气，此五行相济之妙也。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 2.4
+  },
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 5
+    },
+    "minimum_soul_strength": 2,
+    "required_elements": ["metal", "wood", "water", "fire", "earth"],
+    "required_techniques": ["ninecun_lingtai:basic_breathing"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 70,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "五气并引各归其宫",
+      "循五行相生之序轮转",
+      "五气均停不偏不废",
+      "五气相生灵气自倍"
+    ],
+    "grading_criteria": [
+      "须能说出五行相生的顺序：木生火、火生土、土生金、金生水、水生木",
+      "说明五气须均停并进，一行独进则轮转即断",
+      "理解五气轮转相生、灵气倍于孤行一气的道理"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 70
+      }
+    ]
+  }
+}

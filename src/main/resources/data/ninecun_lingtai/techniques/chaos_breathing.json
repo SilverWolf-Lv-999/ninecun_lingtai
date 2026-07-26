@@ -1,0 +1,39 @@
+{
+  "name": "混沌归元诀",
+  "description": "吞纳万气、归于混沌一元，唯混沌灵根可修的至高呼吸法。",
+  "content": "混沌者，万物未分之始也。此诀不择灵气属性，金木水火土、阴阳清浊，皆可一口吞纳，是为吞纳万气。然万气入体驳杂冲撞，须以混沌灵根为炉鼎，将诸气尽数磨灭属性，还归未分之初的混沌一元之气，是为归元。行气之要在一个化字：不炼不锻，不导不引，只以混沌包容之意静候诸气自化，如百川入海，浊流归一。归元之气无形无相，却蕴万物之种，凝于气海则修为精进一日千里。灵根不至混沌之境者强修此诀，万气在体内相冲，顷刻经脉俱裂。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 3.6
+  },
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 7
+    },
+    "minimum_soul_strength": 3,
+    "required_elements": ["chaos"],
+    "required_techniques": ["ninecun_lingtai:basic_breathing"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 75,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "吞纳万气不择属性",
+      "磨灭属性还归混沌一元",
+      "以包容之意静候诸气自化",
+      "百川入海浊流归一"
+    ],
+    "grading_criteria": [
+      "说明此诀不择灵气属性、万气皆可吞纳的特性",
+      "理解归元在于磨灭诸气属性、化归混沌一元，而非炼锻导引",
+      "明白唯混沌灵根可为炉鼎，他种灵根强修则经脉俱裂"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 75
+      }
+    ]
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "name": "厚土吐纳诀",
+  "description": "纳中央厚土之气，凝元固本的土行呼吸法。",
+  "content": "择山岳厚土之地盘膝而坐，身如磐石，意沉丹田，引中央厚土之气入脾宫。土气厚重沉凝，行气最忌轻浮，一呼一吸皆须沉稳如山，令灵气层层沉降、层层夯实，如筑城垣。纳入的灵气在气海中沉淀凝实，化为根基。此诀吐纳最缓，然根基最牢，所谓厚德载物，根基愈厚，日后所能承载的修为愈高。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 1.6
+  },
+  "compatible_elements": ["earth"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 3
+    },
+    "minimum_soul_strength": 1,
+    "required_elements": ["earth"],
+    "required_techniques": ["ninecun_lingtai:basic_breathing"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 65,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "引厚土之气入脾宫",
+      "呼吸沉稳如山",
+      "灵气层层沉降夯实",
+      "厚德载物根基为先"
+    ],
+    "grading_criteria": [
+      "说明土气厚重，行气最忌轻浮",
+      "理解灵气层层夯实、沉淀为根基的过程",
+      "明白吐纳虽缓但根基牢固的取舍"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 65
+      }
+    ]
+  }
+}

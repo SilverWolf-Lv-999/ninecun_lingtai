@@ -1,0 +1,40 @@
+{
+  "name": "玄水吐纳诀",
+  "description": "引北方玄水之气入体，以柔克刚的水行呼吸法。",
+  "content": "夜半子时水气最旺，静坐调息，引北方玄水之气入肾宫。水气至柔，却能穿石裂岸，行气当如江河奔流，绵绵不绝而不见其形。以意驭水，使灵气如涓涓细流渗入经脉深处，涤荡气海浊质。水性趋下，纳气后须以心神托举，使其循任督缓缓上行，周流不息。久之气息悠长如渊，心境亦随之澄澈如镜。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 1.6
+  },
+  "compatible_elements": ["water"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 3
+    },
+    "minimum_soul_strength": 1,
+    "required_elements": ["water"],
+    "required_techniques": ["ninecun_lingtai:basic_breathing"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 65,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "引玄水之气入肾宫",
+      "行气绵绵不绝如江河",
+      "涤荡气海浊质",
+      "水性趋下须以心神托举"
+    ],
+    "grading_criteria": [
+      "说明水气至柔而能穿石，行气贵在绵绵不绝",
+      "理解水性趋下，须以心神托举使其循任督上行",
+      "不能把涤荡浊质误解为一蹴而就"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 65
+      }
+    ]
+  }
+}

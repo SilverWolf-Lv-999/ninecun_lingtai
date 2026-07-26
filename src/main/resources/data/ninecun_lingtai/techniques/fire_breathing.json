@@ -1,0 +1,40 @@
+{
+  "name": "离火吐纳诀",
+  "description": "纳南方离火之气，炼气如炉的火行呼吸法。",
+  "content": "正午阳气鼎盛之时，面南而坐，引离火之气入心宫。火气炽烈躁动，入体须先以静心之法压住心猿，方能驾驭。以丹田为炉，以呼吸为风箱，一吸纳火，一呼锻气，将吸入的灵气在炉中反复煅烧，炼去杂质，只余赤金般的精纯真元。火候是此诀的性命所在：火弱则炼不化杂质，火过则焚伤经脉，须凭心神时时看顾，不可有片刻懈怠。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 1.6
+  },
+  "compatible_elements": ["fire"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 3
+    },
+    "minimum_soul_strength": 1,
+    "required_elements": ["fire"],
+    "required_techniques": ["ninecun_lingtai:basic_breathing"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 65,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "引离火之气入心宫",
+      "以丹田为炉以呼吸为风箱",
+      "反复煅烧炼去杂质",
+      "火候不可失度"
+    ],
+    "grading_criteria": [
+      "说明火气炽烈，须先静心方能驾驭",
+      "理解丹田为炉、呼吸为风箱的炼气之法",
+      "明白火候失度的后果：火弱炼不化，火过伤经脉"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 65
+      }
+    ]
+  }
+}

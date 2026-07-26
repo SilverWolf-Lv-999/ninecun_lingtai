@@ -1,0 +1,40 @@
+{
+  "name": "锐金吐纳诀",
+  "description": "引庚金肃杀之气入体，锻脉如锋的金行呼吸法。",
+  "content": "候西方金气最盛之时，凝神静息，以意为引，纳庚金之气入肺宫。金气锐利肃杀，行气须以水磨之功缓缓炼化，切不可强行牵引，否则锐气伤脉。气行如刀锋过隙，沿手太阴肺经流转周身，去芜存菁，将驳杂灵气削尽，唯留精纯金元归入气海。日久经脉受金气淬炼，坚韧如百炼精钢。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 1.6
+  },
+  "compatible_elements": ["metal"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 3
+    },
+    "minimum_soul_strength": 1,
+    "required_elements": ["metal"],
+    "required_techniques": ["ninecun_lingtai:basic_breathing"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 65,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "纳庚金之气入肺宫",
+      "金气锐利须缓缓炼化",
+      "沿肺经流转去芜存菁",
+      "金气淬炼经脉"
+    ],
+    "grading_criteria": [
+      "说明金气锐利肃杀，不可强行牵引的道理",
+      "理解去芜存菁、只留精纯金元的炼化过程",
+      "须以金行灵根引气，与基础吐纳诀的差异在于专纳一行"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 65
+      }
+    ]
+  }
+}

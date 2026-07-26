@@ -1,0 +1,40 @@
+{
+  "name": "青木吐纳诀",
+  "description": "纳东方青木生机，温养经脉的木行呼吸法。",
+  "content": "于草木葱茏处静坐，呼吸与草木荣枯之息相合，引东方青木之气入肝宫。木气主生发，性温和绵长，如春雨润物，须以柔缓之息导引，任其自行滋养四肢百骸。行气一周，生机便在经脉中生根抽芽，损伤之处得其温养自愈。切忌以刚猛之法催逼木气，生机受折则枯，欲速则不达。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 1.6
+  },
+  "compatible_elements": ["wood"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 3
+    },
+    "minimum_soul_strength": 1,
+    "required_elements": ["wood"],
+    "required_techniques": ["ninecun_lingtai:basic_breathing"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 65,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "引青木之气入肝宫",
+      "与草木之息相合",
+      "木气主生发温养经脉",
+      "柔缓导引不可催逼"
+    ],
+    "grading_criteria": [
+      "说明木气温和主生发，须以柔缓之息导引",
+      "理解生机温养经脉、损伤自愈的功用",
+      "明白欲速则不达，刚猛催逼会折损生机"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 65
+      }
+    ]
+  }
+}

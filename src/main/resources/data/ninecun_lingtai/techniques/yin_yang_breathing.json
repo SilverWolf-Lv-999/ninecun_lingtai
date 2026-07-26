@@ -1,0 +1,40 @@
+{
+  "name": "阴阳两仪诀",
+  "description": "吸阳吐阴，运转两仪的阴阳呼吸法。",
+  "content": "此诀唯身负阴阳灵根者可修。天地之气，昼为阳，夜为阴；一呼一吸，吸为阳，呼为阴。吐纳之时，心悬太极之象：吸气引天地阳和之气自督脉升，呼气纳幽冥阴柔之气自任脉降，阴升阳降，两仪在丹田中交汇相抱，化生太极。阴阳互为其根，孤阳不生，孤阴不长，故吸不可尽，呼不可竭，须留三分余息使阴阳交融不绝。阴阳既济，则灵气生生不息，如环无端。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 2.4
+  },
+  "compatible_elements": ["yin_yang"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 5
+    },
+    "minimum_soul_strength": 2,
+    "required_elements": ["yin_yang"],
+    "required_techniques": ["ninecun_lingtai:basic_breathing"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 70,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "吸为阳呼为阴",
+      "两仪在丹田交汇化生太极",
+      "孤阳不生孤阴不长",
+      "留三分余息使阴阳交融"
+    ],
+    "grading_criteria": [
+      "说明吸阳呼阴、阳走督脉阴走任脉的行气路线",
+      "理解阴阳互为其根，吸不可尽、呼不可竭的分寸",
+      "明白阴阳既济方能生生不息，偏废一方则功法即破"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 70
+      }
+    ]
+  }
+}
