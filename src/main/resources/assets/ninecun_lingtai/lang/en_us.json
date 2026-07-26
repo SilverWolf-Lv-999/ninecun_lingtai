@@ -1,6 +1,9 @@
 {
   "inventory_tab.ninecun_lingtai.techniques": "Soul Techniques",
   "config.jade.plugin_ninecun_lingtai.lifespan": "Lifespan",
+  "config.jade.plugin_ninecun_lingtai.cultivation": "Cultivation",
+  "jade.ninecun_lingtai.cultivation": "Cultivation: %s",
+  "jade.ninecun_lingtai.spiritual_root": "Spiritual Root: %1$s (%2$s)",
   "jade.ninecun_lingtai.lifespan": "Age: %1$s  Lifespan remaining: %2$s",
   "jade.ninecun_lingtai.age_duration": "%1$s years %2$s days",
   "jade.ninecun_lingtai.remaining_duration": "%1$s years %2$s days",

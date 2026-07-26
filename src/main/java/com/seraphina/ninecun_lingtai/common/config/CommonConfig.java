@@ -32,6 +32,7 @@ public final class CommonConfig {
     public static final ForgeConfigSpec.IntValue GOLDEN_CORE_LIFESPAN_YEARS;
     public static final ForgeConfigSpec.IntValue NASCENT_SOUL_LIFESPAN_YEARS;
     public static final ForgeConfigSpec.IntValue DEFAULT_CREATURE_LIFESPAN_YEARS;
+    public static final ForgeConfigSpec.DoubleValue CREATURE_CULTIVATOR_CHANCE;
     public static final ForgeConfigSpec.EnumValue<AiProvider> AI_PROVIDER;
     public static final ForgeConfigSpec.ConfigValue<String> AI_API_KEY;
     public static final ForgeConfigSpec.ConfigValue<String> AI_MODEL;
@@ -138,6 +139,15 @@ public final class CommonConfig {
                 30,
                 "Maximum lifespan in years for non-undead creatures"
         );
+        BUILDER.pop();
+
+        BUILDER.push("creatureCultivation");
+        CREATURE_CULTIVATOR_CHANCE = BUILDER
+                .comment(
+                        "Chance for a newly spawned creature (spawn eggs included) to be born with",
+                        "cultivation between Qi Refining layer one and Foundation Establishment layer three"
+                )
+                .defineInRange("cultivatorChance", 0.05D, 0.0D, 1.0D);
         BUILDER.pop();
 
         BUILDER.push("ai");

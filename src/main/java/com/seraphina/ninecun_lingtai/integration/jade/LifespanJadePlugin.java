@@ -11,10 +11,12 @@ public final class LifespanJadePlugin implements IWailaPlugin {
     @Override
     public void register(IWailaCommonRegistration registration) {
         registration.registerEntityDataProvider(LifespanJadeProvider.INSTANCE, LivingEntity.class);
+        registration.registerEntityDataProvider(CultivationJadeProvider.INSTANCE, LivingEntity.class);
     }
 
     @Override
     public void registerClient(IWailaClientRegistration registration) {
         registration.registerEntityComponent(LifespanJadeProvider.INSTANCE, LivingEntity.class);
+        registration.registerEntityComponent(CultivationJadeProvider.INSTANCE, LivingEntity.class);
     }
 }

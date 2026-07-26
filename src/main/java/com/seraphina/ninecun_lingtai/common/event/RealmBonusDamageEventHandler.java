@@ -2,16 +2,15 @@ package com.seraphina.ninecun_lingtai.common.event;
 
 import com.seraphina.ninecun_lingtai.ModMain;
 import com.seraphina.ninecun_lingtai.api.aptitude.SpiritualRoot;
-import com.seraphina.ninecun_lingtai.api.aptitude.SpiritualRootApi;
 import com.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
 import com.seraphina.ninecun_lingtai.api.element.ElementApi;
 import com.seraphina.ninecun_lingtai.api.element.ElementType;
 import com.seraphina.ninecun_lingtai.api.element.ElementalPower;
+import com.seraphina.ninecun_lingtai.common.creature.CreatureCultivationData;
 import com.seraphina.ninecun_lingtai.common.data.ElementEnvironmentManager;
-import com.seraphina.ninecun_lingtai.common.player.PlayerCultivationData;
 import com.seraphina.ninecun_lingtai.utility.ElementDamageUtility;
 import com.seraphina.ninecun_lingtai.utility.RealmBonusDamageUtility;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -28,12 +27,12 @@ public final class RealmBonusDamageEventHandler {
     // the base damage; the realm bonus applies its own elemental multipliers below.
     @SubscribeEvent(priority = EventPriority.LOW)
     public static void onLivingHurt(LivingHurtEvent event) {
-        if (!(event.getSource().getEntity() instanceof Player player) || event.getEntity() == player) {
+        if (!(event.getSource().getEntity() instanceof LivingEntity attacker) || event.getEntity() == attacker) {
             return;
         }
 
-        Optional<CultivationStage> stage = PlayerCultivationData.getStage(player);
-        Optional<SpiritualRoot> spiritualRoot = SpiritualRootApi.getSpiritualRoot(player);
+        Optional<CultivationStage> stage = CreatureCultivationData.getStage(attacker);
+        Optional<SpiritualRoot> spiritualRoot = CreatureCultivationData.getSpiritualRoot(attacker);
         if (stage.isEmpty() || spiritualRoot.isEmpty()) {
             return;
         }
@@ -45,7 +44,7 @@ public final class RealmBonusDamageEventHandler {
 
         ElementType bonusElement = RealmBonusDamageUtility.rollBonusElement(
                 spiritualRoot.get(),
-                player.getRandom()
+                attacker.getRandom()
         );
         ElementalPower bonusPower = RealmBonusDamageUtility.createBonusElementalPower(
                 bonusElement,
