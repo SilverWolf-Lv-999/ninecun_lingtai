@@ -47,6 +47,10 @@ public final class PlayerCultivationData {
         player.getPersistentData().put(CULTIVATION_KEY, stageData);
     }
 
+    public static void clearStage(Player player) {
+        player.getPersistentData().remove(CULTIVATION_KEY);
+    }
+
     public static void copy(Player sourcePlayer, Player targetPlayer) {
         CompoundTag sourceData = sourcePlayer.getPersistentData();
         if (sourceData.contains(CULTIVATION_KEY, Tag.TAG_COMPOUND)) {

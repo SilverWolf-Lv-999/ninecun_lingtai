@@ -73,6 +73,10 @@ public final class PlayerAptitudeData {
         player.getPersistentData().remove(SPIRITUAL_ROOT_KEY);
     }
 
+    public static void clearSoulStrength(Player player) {
+        player.getPersistentData().remove(SOUL_STRENGTH_KEY);
+    }
+
     public static void clearAptitude(Player player) {
         CompoundTag persistentData = player.getPersistentData();
         persistentData.remove(SPIRITUAL_ROOT_KEY);

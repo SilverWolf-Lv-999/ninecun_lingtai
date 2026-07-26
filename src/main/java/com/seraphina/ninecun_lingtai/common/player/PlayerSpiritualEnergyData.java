@@ -48,14 +48,49 @@ public final class PlayerSpiritualEnergyData {
         if (!Double.isFinite(amount) || amount <= 0.0D) {
             return;
         }
+        double updatedEnergy = getEnergy(player, element) + amount;
+        setEnergy(player, element, Double.isFinite(updatedEnergy) ? updatedEnergy : Double.MAX_VALUE);
+    }
+
+    public static void setEnergy(Player player, ElementType element, double amount) {
+        if (!Double.isFinite(amount)) {
+            return;
+        }
+        if (amount <= 0.0D) {
+            clearEnergy(player, element);
+            return;
+        }
         CompoundTag persistentData = player.getPersistentData();
         CompoundTag spiritualEnergyData = persistentData.contains(SPIRITUAL_ENERGY_KEY, Tag.TAG_COMPOUND)
                 ? persistentData.getCompound(SPIRITUAL_ENERGY_KEY)
                 : new CompoundTag();
-        String elementKey = element.getSerializedName();
-        double updatedEnergy = getEnergy(player, element) + amount;
-        spiritualEnergyData.putDouble(elementKey, Double.isFinite(updatedEnergy) ? updatedEnergy : Double.MAX_VALUE);
+        spiritualEnergyData.putDouble(element.getSerializedName(), amount);
         persistentData.put(SPIRITUAL_ENERGY_KEY, spiritualEnergyData);
+    }
+
+    public static void removeEnergy(Player player, ElementType element, double amount) {
+        if (!Double.isFinite(amount) || amount <= 0.0D) {
+            return;
+        }
+        setEnergy(player, element, Math.max(0.0D, getEnergy(player, element) - amount));
+    }
+
+    public static void clearEnergy(Player player, ElementType element) {
+        CompoundTag persistentData = player.getPersistentData();
+        if (!persistentData.contains(SPIRITUAL_ENERGY_KEY, Tag.TAG_COMPOUND)) {
+            return;
+        }
+        CompoundTag spiritualEnergyData = persistentData.getCompound(SPIRITUAL_ENERGY_KEY);
+        spiritualEnergyData.remove(element.getSerializedName());
+        if (spiritualEnergyData.isEmpty()) {
+            persistentData.remove(SPIRITUAL_ENERGY_KEY);
+        } else {
+            persistentData.put(SPIRITUAL_ENERGY_KEY, spiritualEnergyData);
+        }
+    }
+
+    public static void clearAllEnergy(Player player) {
+        player.getPersistentData().remove(SPIRITUAL_ENERGY_KEY);
     }
 
     public static boolean consumeEnergy(Player player, ElementType element, double amount) {
