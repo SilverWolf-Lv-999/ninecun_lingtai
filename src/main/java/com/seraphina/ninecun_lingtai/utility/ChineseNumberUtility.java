@@ -61,17 +61,46 @@ public final class ChineseNumberUtility {
                 formattedValue.append(CHINESE_DIGITS[0]);
             }
             formattedValue.append(formatGroup(groupValue));
-            if (groupIndex < GROUP_UNITS.length) {
-                formattedValue.append(GROUP_UNITS[groupIndex]);
-            } else {
-                formattedValue.append("乘万的").append(toChineseInteger(groupIndex)).append("次方");
-            }
+            formattedValue.append(getGroupUnit(groupIndex));
             needsZero = false;
         }
         if (formattedValue.indexOf("一十") == 0) {
             formattedValue.deleteCharAt(0);
         }
         return formattedValue.toString();
+    }
+
+    public static String toCompactChinese(BigInteger value) {
+        if (value.signum() < 0) {
+            return "负" + toCompactChinese(value.negate());
+        }
+        if (value.compareTo(TEN_THOUSAND) < 0) {
+            return toChineseInteger(value);
+        }
+        int groupIndex = (value.toString().length() - 1) / 4;
+        BigDecimal scaledValue = scaleToGroup(value, groupIndex);
+        if (scaledValue.compareTo(new BigDecimal(TEN_THOUSAND)) >= 0) {
+            groupIndex++;
+            scaledValue = scaleToGroup(value, groupIndex);
+        }
+        return toChineseDecimal(scaledValue, 1) + getGroupUnit(groupIndex);
+    }
+
+    public static String toCompactChinese(BigDecimal value, int maximumFractionDigits) {
+        if (value.signum() < 0) {
+            return "负" + toCompactChinese(value.negate(), maximumFractionDigits);
+        }
+        if (value.compareTo(new BigDecimal(TEN_THOUSAND)) < 0) {
+            return toChineseDecimal(value, maximumFractionDigits);
+        }
+        return toCompactChinese(value.setScale(0, RoundingMode.HALF_UP).toBigInteger());
+    }
+
+    public static String toCompactChinese(double value, int maximumFractionDigits) {
+        if (!Double.isFinite(value)) {
+            throw new IllegalArgumentException("Chinese compact value must be finite");
+        }
+        return toCompactChinese(BigDecimal.valueOf(value), maximumFractionDigits);
     }
 
     public static String toChineseDecimal(double value, int maximumFractionDigits) {
@@ -103,6 +132,21 @@ public final class ChineseNumberUtility {
             formattedValue.append(CHINESE_DIGITS[plainValue.charAt(index) - '0']);
         }
         return formattedValue.toString();
+    }
+
+    private static BigDecimal scaleToGroup(BigInteger value, int groupIndex) {
+        return new BigDecimal(value).divide(
+                new BigDecimal(TEN_THOUSAND.pow(groupIndex)),
+                1,
+                RoundingMode.HALF_UP
+        );
+    }
+
+    private static String getGroupUnit(int groupIndex) {
+        if (groupIndex < GROUP_UNITS.length) {
+            return GROUP_UNITS[groupIndex];
+        }
+        return "乘万的" + toChineseInteger(groupIndex) + "次方";
     }
 
     private static int[] splitIntoGroups(BigInteger value) {

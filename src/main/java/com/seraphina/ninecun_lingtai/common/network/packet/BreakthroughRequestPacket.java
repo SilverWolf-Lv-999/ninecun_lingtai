@@ -87,7 +87,7 @@ public final class BreakthroughRequestPacket {
                 .map(nextRealm -> CultivationUtility.getRequiredSpiritualEnergy(
                         new CultivationStage(nextRealm, CultivationStage.MINIMUM_LAYER)
                 ))
-                .map(ChineseNumberUtility::toChineseInteger)
+                .map(ChineseNumberUtility::toCompactChinese)
                 .orElse(ChineseNumberUtility.toChineseInteger(BigInteger.ZERO));
     }
 }

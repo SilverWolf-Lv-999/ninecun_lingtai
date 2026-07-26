@@ -375,29 +375,36 @@ public final class CultivationInfoScreen extends AbstractContainerScreen<Cultiva
                 .subtract(BigDecimal.valueOf(currentEnergy))
                 .max(BigDecimal.ZERO);
         String completionText = missingEnergy.signum() == 0 ? "已圆满" : "尚未圆满";
-        String energyText = energyName + "　"
-                + formatEnergy(currentEnergy)
-                + "　所需　"
-                + ChineseNumberUtility.toChineseInteger(requiredEnergy)
+        String currentEnergyText = energyName + "　" + formatEnergy(currentEnergy);
+        String requirementText = "所需　"
+                + ChineseNumberUtility.toCompactChinese(requiredEnergy)
                 + "　尚缺　"
-                + ChineseNumberUtility.toChineseDecimal(missingEnergy, 1);
+                + ChineseNumberUtility.toCompactChinese(missingEnergy, 1);
         drawFittedText(
                 guiGraphics,
                 styledText(elementName + "　" + completionText, PRIMARY_TEXT_COLOR),
                 left + 9,
-                top + 5,
+                top + 4,
                 right - left - 16,
                 PRIMARY_TEXT_COLOR
         );
         drawFittedText(
                 guiGraphics,
-                styledText(energyText, MUTED_TEXT_COLOR),
+                styledText(currentEnergyText, MUTED_TEXT_COLOR),
                 left + 9,
-                top + 19,
+                top + 15,
                 right - left - 16,
                 MUTED_TEXT_COLOR
         );
-        renderProgressBar(guiGraphics, currentEnergy, requiredEnergy, elementColor, left + 5, right - 5, top + 35);
+        drawFittedText(
+                guiGraphics,
+                styledText(requirementText, MUTED_TEXT_COLOR),
+                left + 9,
+                top + 26,
+                right - left - 16,
+                MUTED_TEXT_COLOR
+        );
+        renderProgressBar(guiGraphics, currentEnergy, requiredEnergy, elementColor, left + 5, right - 5, top + 38);
     }
 
     private static Optional<CultivationStage> getTargetStage(Optional<CultivationStage> currentStage) {
@@ -538,6 +545,6 @@ public final class CultivationInfoScreen extends AbstractContainerScreen<Cultiva
     }
 
     private static String formatEnergy(double energy) {
-        return ChineseNumberUtility.toChineseDecimal(energy, 1);
+        return ChineseNumberUtility.toCompactChinese(energy, 1);
     }
 }
