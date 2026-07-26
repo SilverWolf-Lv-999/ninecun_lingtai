@@ -10,6 +10,7 @@ import com.seraphina.ninecun_lingtai.client.render.AptitudeFormationShader;
 import com.seraphina.ninecun_lingtai.client.render.ElementFlowShader;
 import com.seraphina.ninecun_lingtai.client.render.SoulConstellationShader;
 import com.seraphina.ninecun_lingtai.client.render.SpiritualEnergyShader;
+import com.seraphina.ninecun_lingtai.client.render.TechniqueCloudShader;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
@@ -38,6 +39,10 @@ public final class ClientModEventHandler {
     private static final ResourceLocation SPIRITUAL_ENERGY_SHADER = ResourceLocation.fromNamespaceAndPath(
             ModMain.MOD_ID,
             "spiritual_energy"
+    );
+    private static final ResourceLocation TECHNIQUE_CLOUD_SHADER = ResourceLocation.fromNamespaceAndPath(
+            ModMain.MOD_ID,
+            "technique_cloud"
     );
 
     private ClientModEventHandler() {
@@ -90,6 +95,14 @@ public final class ClientModEventHandler {
                         DefaultVertexFormat.POSITION_COLOR_TEX
                 ),
                 SpiritualEnergyShader::setSpiritualEnergyShader
+        );
+        event.registerShader(
+                new ShaderInstance(
+                        event.getResourceProvider(),
+                        TECHNIQUE_CLOUD_SHADER,
+                        DefaultVertexFormat.POSITION_COLOR_TEX
+                ),
+                TechniqueCloudShader::setTechniqueCloudShader
         );
     }
 }

@@ -1,60 +1,52 @@
 package com.seraphina.ninecun_lingtai.client.screen;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.seraphina.ninecun_lingtai.api.technique.TechniqueClientData;
 import com.seraphina.ninecun_lingtai.client.player.ClientTechniqueManager;
+import com.seraphina.ninecun_lingtai.client.utility.TechniqueImprintRenderUtility;
 import com.seraphina.ninecun_lingtai.client.utility.VerticalTextUtility;
-import com.seraphina.ninecun_lingtai.common.font.CustomFontConstants;
 import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import com.seraphina.ninecun_lingtai.common.network.packet.ImprintTechniquePacket;
+import com.seraphina.ninecun_lingtai.utility.ColorUtility;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import org.lwjgl.glfw.GLFW;
 
+import javax.annotation.Nullable;
 import java.util.List;
 
-public final class TechniqueReadingScreen extends Screen {
-    private static final int PANEL_COLOR = 0xF2A8CFBA;
-    private static final int PANEL_BORDER_COLOR = 0xFF315A48;
-    private static final int INNER_BORDER_COLOR = 0xFF6E9F87;
-    private static final int JADE_HIGHLIGHT_COLOR = 0x557CE0B5;
-    private static final int JADE_SHADOW_COLOR = 0x55345949;
-    private static final int TEXT_COLOR = 0xFF17372A;
-    private static final int MUTED_TEXT_COLOR = 0xFF49695A;
-    private static final int BUTTON_COLOR = 0xFFC1E0CF;
-    private static final int BUTTON_HOVER_COLOR = 0xFFD5EFDF;
-    private static final int BUTTON_DISABLED_COLOR = 0xFF89AA99;
+public final class TechniqueReadingScreen extends AbstractTechniqueImprintScreen {
     private static final float BODY_FONT_SCALE = 0.375F;
-    private static final float TITLE_FONT_SCALE = 0.5F;
-    private static final float INTERFACE_FONT_SCALE = 0.3F;
-    private static final int LINE_HEIGHT = 19;
-    private static final int COLUMN_GAP = 23;
-    private static final int ACTION_BUTTON_WIDTH = 92;
-    private static final int ACTION_BUTTON_HEIGHT = 20;
+    private static final float TITLE_FONT_SCALE = 0.46F;
+    private static final int BODY_LINE_HEIGHT = 18;
+    private static final int COLUMN_GAP = 24;
+    private static final int PAGE_BUTTON_WIDTH = 64;
+    private static final int ACTION_BUTTON_WIDTH = 104;
+    private static final int BUTTON_HEIGHT = 30;
 
     private final TechniqueClientData technique;
+    @Nullable
     private final Screen parentScreen;
     private final boolean allowImprint;
 
     private List<List<String>> columns = List.of();
     private int columnOffset;
     private int maximumColumnOffset;
-    private int panelLeft;
-    private int panelTop;
-    private int panelRight;
-    private int panelBottom;
-    private int actionButtonLeft;
+    private int layoutLeft;
+    private int layoutRight;
+    private int contentTop;
+    private int contentBottom;
     private int actionButtonTop;
     private int previousButtonLeft;
+    private int actionButtonLeft;
     private int nextButtonLeft;
     private boolean awaitingImprint;
     private int imprintRequestRevision;
 
     public TechniqueReadingScreen(
             TechniqueClientData technique,
-            Screen parentScreen,
+            @Nullable Screen parentScreen,
             boolean allowImprint
     ) {
         super(Component.literal(technique.name()));
@@ -64,106 +56,99 @@ public final class TechniqueReadingScreen extends Screen {
     }
 
     @Override
-    public void tick() {
-        if (this.awaitingImprint
-                && ClientTechniqueManager.getRevision() > this.imprintRequestRevision) {
-            this.awaitingImprint = false;
-        }
-    }
-
-    @Override
     protected void init() {
-        int panelWidth = Mth.clamp(this.width - 36, 280, 520);
-        int panelHeight = Mth.clamp(this.height - 30, 210, 360);
-        this.panelLeft = (this.width - panelWidth) / 2;
-        this.panelTop = (this.height - panelHeight) / 2;
-        this.panelRight = this.panelLeft + panelWidth;
-        this.panelBottom = this.panelTop + panelHeight;
+        super.init();
+        int layoutWidth = Mth.clamp(this.width - 32, 260, 620);
+        this.layoutLeft = (this.width - layoutWidth) / 2;
+        this.layoutRight = this.layoutLeft + layoutWidth;
+        this.actionButtonTop = this.height - 43;
+        this.contentTop = 30;
+        this.contentBottom = this.actionButtonTop - 18;
+        this.previousButtonLeft = this.layoutLeft + 8;
         this.actionButtonLeft = (this.width - ACTION_BUTTON_WIDTH) / 2;
-        this.actionButtonTop = this.panelBottom - 30;
-        this.previousButtonLeft = this.panelLeft + 18;
-        this.nextButtonLeft = this.panelRight - 18 - 54;
+        this.nextButtonLeft = this.layoutRight - PAGE_BUTTON_WIDTH - 8;
 
-        int contentTop = this.panelTop + 54;
-        int contentBottom = this.actionButtonTop - 14;
-        int maximumRows = Math.max(1, (contentBottom - contentTop) / LINE_HEIGHT);
+        int maximumRows = Math.max(1, (this.contentBottom - this.contentTop) / BODY_LINE_HEIGHT);
         this.columns = VerticalTextUtility.splitIntoColumns(this.technique.content(), maximumRows);
-        int visibleColumns = Math.max(1, (panelWidth - 58) / COLUMN_GAP);
+        int visibleColumns = getVisibleColumnCount();
         this.maximumColumnOffset = Math.max(0, this.columns.size() - visibleColumns);
         this.columnOffset = Mth.clamp(this.columnOffset, 0, this.maximumColumnOffset);
     }
 
     @Override
+    public void tick() {
+        super.tick();
+        if (this.awaitingImprint
+                && ClientTechniqueManager.getRevision() > this.imprintRequestRevision) {
+            this.awaitingImprint = false;
+            beginClosing();
+        }
+    }
+
+    @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        this.renderBackground(guiGraphics);
-        renderJadeSurface(guiGraphics);
-
-        drawScaledCenteredText(
+        long currentTime = getCurrentTime();
+        renderAnimatedBackground(guiGraphics, currentTime);
+        TechniqueImprintRenderUtility.drawConstellationField(
                 guiGraphics,
-                displayFontText(this.technique.name()),
-                this.width / 2,
-                this.panelTop + 15,
-                TITLE_FONT_SCALE,
-                this.panelRight - this.panelLeft - 76,
-                TEXT_COLOR
+                this.width,
+                this.height,
+                currentTime,
+                getElementAlpha(0, 5, currentTime)
         );
-        guiGraphics.fill(
-                this.panelLeft + 22,
-                this.panelTop + 43,
-                this.panelRight - 22,
-                this.panelTop + 44,
-                INNER_BORDER_COLOR
-        );
-
-        renderVerticalContent(guiGraphics);
-        renderPageControls(guiGraphics, mouseX, mouseY);
-        renderActionButton(guiGraphics, mouseX, mouseY);
+        renderTechniqueTitle(guiGraphics, currentTime);
+        renderTechniqueContent(guiGraphics, currentTime);
+        renderControls(guiGraphics, mouseX, mouseY, currentTime);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button != GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+        if (button != GLFW.GLFW_MOUSE_BUTTON_LEFT || !acceptsInput()) {
             return super.mouseClicked(mouseX, mouseY, button);
         }
-        if (isInside(mouseX, mouseY, this.previousButtonLeft, this.actionButtonTop, 54, 20)
-                && this.columnOffset > 0) {
+        if (TechniqueImprintRenderUtility.isInside(
+                mouseX,
+                mouseY,
+                this.previousButtonLeft,
+                this.actionButtonTop,
+                PAGE_BUTTON_WIDTH,
+                BUTTON_HEIGHT
+        ) && this.columnOffset > 0) {
             this.columnOffset = Math.max(0, this.columnOffset - getVisibleColumnCount());
             return true;
         }
-        if (isInside(mouseX, mouseY, this.nextButtonLeft, this.actionButtonTop, 54, 20)
-                && this.columnOffset < this.maximumColumnOffset) {
+        if (TechniqueImprintRenderUtility.isInside(
+                mouseX,
+                mouseY,
+                this.nextButtonLeft,
+                this.actionButtonTop,
+                PAGE_BUTTON_WIDTH,
+                BUTTON_HEIGHT
+        ) && this.columnOffset < this.maximumColumnOffset) {
             this.columnOffset = Math.min(
                     this.maximumColumnOffset,
                     this.columnOffset + getVisibleColumnCount()
             );
             return true;
         }
-        if (!isInside(
+        if (TechniqueImprintRenderUtility.isInside(
                 mouseX,
                 mouseY,
                 this.actionButtonLeft,
                 this.actionButtonTop,
                 ACTION_BUTTON_WIDTH,
-                ACTION_BUTTON_HEIGHT
+                BUTTON_HEIGHT
         )) {
-            return super.mouseClicked(mouseX, mouseY, button);
-        }
-        if (!this.allowImprint) {
-            this.onClose();
+            activateActionButton();
             return true;
         }
-        if (!ClientTechniqueManager.isImprinted(this.technique.id()) && !this.awaitingImprint) {
-            this.awaitingImprint = true;
-            this.imprintRequestRevision = ClientTechniqueManager.getRevision();
-            ModNetwork.sendToServer(new ImprintTechniquePacket(this.technique.id()));
-        }
-        return true;
+        return super.mouseClicked(mouseX, mouseY, button);
     }
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
-        if (this.maximumColumnOffset <= 0) {
+        if (!acceptsInput() || this.maximumColumnOffset <= 0) {
             return super.mouseScrolled(mouseX, mouseY, delta);
         }
         this.columnOffset = Mth.clamp(
@@ -176,280 +161,215 @@ public final class TechniqueReadingScreen extends Screen {
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (keyCode == GLFW.GLFW_KEY_LEFT && this.columnOffset > 0) {
+        if (acceptsInput() && keyCode == GLFW.GLFW_KEY_LEFT && this.columnOffset > 0) {
             this.columnOffset--;
             return true;
         }
-        if (keyCode == GLFW.GLFW_KEY_RIGHT && this.columnOffset < this.maximumColumnOffset) {
+        if (acceptsInput()
+                && keyCode == GLFW.GLFW_KEY_RIGHT
+                && this.columnOffset < this.maximumColumnOffset) {
             this.columnOffset++;
+            return true;
+        }
+        if (acceptsInput()
+                && (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER)) {
+            activateActionButton();
             return true;
         }
         return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
+    @Nullable
     @Override
-    public void onClose() {
-        if (this.parentScreen != null && this.minecraft != null) {
-            this.minecraft.setScreen(this.parentScreen);
-            return;
-        }
-        super.onClose();
+    protected Screen getParentScreen() {
+        return this.parentScreen;
     }
 
-    @Override
-    public boolean isPauseScreen() {
-        return false;
-    }
-
-    private void renderVerticalContent(GuiGraphics guiGraphics) {
-        int contentTop = this.panelTop + 54;
-        int contentRight = this.panelRight - 28;
-        int visibleColumns = getVisibleColumnCount();
-        int renderedColumns = Math.min(
-                visibleColumns,
-                this.columns.size() - this.columnOffset
+    private void renderTechniqueTitle(GuiGraphics guiGraphics, long currentTime) {
+        float titleAlpha = getElementAlpha(1, 4, currentTime);
+        float titleX = this.layoutRight - 16.0F;
+        TechniqueImprintRenderUtility.drawSeal(
+                guiGraphics,
+                titleX,
+                this.contentTop - 7.0F,
+                6.0F,
+                true,
+                false,
+                currentTime,
+                titleAlpha
         );
+        int maximumSymbols = Math.max(1, (this.contentBottom - this.contentTop) / 20);
+        TechniqueImprintRenderUtility.drawVerticalText(
+                guiGraphics,
+                this.font,
+                this.technique.name(),
+                titleX,
+                this.contentTop + 7.0F,
+                TITLE_FONT_SCALE,
+                20.0F,
+                TechniqueImprintRenderUtility.BRIGHT_GOLD_COLOR,
+                titleAlpha,
+                maximumSymbols,
+                true
+        );
+    }
+
+    private void renderTechniqueContent(GuiGraphics guiGraphics, long currentTime) {
+        int visibleColumns = getVisibleColumnCount();
+        int renderedColumns = Math.min(visibleColumns, this.columns.size() - this.columnOffset);
+        float contentRight = this.layoutRight - 48.0F;
         for (int visibleColumnIndex = 0; visibleColumnIndex < renderedColumns; visibleColumnIndex++) {
             List<String> column = this.columns.get(this.columnOffset + visibleColumnIndex);
-            int columnX = contentRight - visibleColumnIndex * COLUMN_GAP;
-            for (int rowIndex = 0; rowIndex < column.size(); rowIndex++) {
-                Component symbol = customFontText(column.get(rowIndex));
-                int symbolX = Math.round(
-                        columnX - this.font.width(symbol) * BODY_FONT_SCALE / 2.0F
-                );
-                drawScaledText(
-                        guiGraphics,
-                        symbol,
-                        symbolX,
-                        contentTop + rowIndex * LINE_HEIGHT,
-                        BODY_FONT_SCALE,
-                        TEXT_COLOR,
-                        false
-                );
-            }
+            float columnX = contentRight - visibleColumnIndex * COLUMN_GAP;
+            float columnAlpha = getElementAlpha(
+                    2 + Math.min(visibleColumnIndex, 6),
+                    1 + Math.min(visibleColumnIndex, 4),
+                    currentTime
+            );
+            TechniqueImprintRenderUtility.drawSeal(
+                    guiGraphics,
+                    columnX,
+                    this.contentTop - 7.0F,
+                    3.1F,
+                    false,
+                    false,
+                    currentTime,
+                    columnAlpha * 0.72F
+            );
+            TechniqueImprintRenderUtility.drawVerticalText(
+                    guiGraphics,
+                    this.font,
+                    String.join("", column),
+                    columnX,
+                    this.contentTop,
+                    BODY_FONT_SCALE,
+                    BODY_LINE_HEIGHT,
+                    TechniqueImprintRenderUtility.GOLD_COLOR,
+                    columnAlpha,
+                    column.size(),
+                    false
+            );
         }
     }
 
-    private void renderPageControls(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-        drawButton(
-                guiGraphics,
+    private void renderControls(
+            GuiGraphics guiGraphics,
+            int mouseX,
+            int mouseY,
+            long currentTime
+    ) {
+        float controlsAlpha = getElementAlpha(
+                3 + Math.min(getVisibleColumnCount(), 6),
+                0,
+                currentTime
+        );
+        boolean previousHovered = TechniqueImprintRenderUtility.isInside(
+                mouseX,
+                mouseY,
                 this.previousButtonLeft,
                 this.actionButtonTop,
-                54,
-                20,
-                customFontText("前卷"),
-                this.columnOffset > 0,
-                isInside(mouseX, mouseY, this.previousButtonLeft, this.actionButtonTop, 54, 20)
+                PAGE_BUTTON_WIDTH,
+                BUTTON_HEIGHT
         );
-        drawButton(
-                guiGraphics,
-                this.nextButtonLeft,
-                this.actionButtonTop,
-                54,
-                20,
-                customFontText("后卷"),
-                this.columnOffset < this.maximumColumnOffset,
-                isInside(mouseX, mouseY, this.nextButtonLeft, this.actionButtonTop, 54, 20)
-        );
-
-        int visibleColumns = Math.min(
-                getVisibleColumnCount(),
-                this.columns.size() - this.columnOffset
-        );
-        String pageText = (this.columnOffset + 1)
-                + "-"
-                + (this.columnOffset + Math.max(1, visibleColumns))
-                + " / "
-                + this.columns.size();
-        guiGraphics.drawCenteredString(
-                this.font,
-                Component.literal(pageText),
-                this.width / 2,
-                this.actionButtonTop - 12,
-                MUTED_TEXT_COLOR
-        );
-    }
-
-    private void renderActionButton(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-        boolean imprinted = ClientTechniqueManager.isImprinted(this.technique.id());
-        boolean active = !this.allowImprint || (!imprinted && !this.awaitingImprint);
-        String buttonText;
-        if (!this.allowImprint) {
-            buttonText = "退出";
-        } else if (imprinted) {
-            buttonText = "已烙印";
-        } else if (this.awaitingImprint) {
-            buttonText = "烙印中……";
-        } else {
-            buttonText = "烙印";
-        }
-        drawButton(
-                guiGraphics,
+        boolean actionHovered = TechniqueImprintRenderUtility.isInside(
+                mouseX,
+                mouseY,
                 this.actionButtonLeft,
                 this.actionButtonTop,
                 ACTION_BUTTON_WIDTH,
-                ACTION_BUTTON_HEIGHT,
-                customFontText(buttonText),
-                active,
-                isInside(
-                        mouseX,
-                        mouseY,
-                        this.actionButtonLeft,
-                        this.actionButtonTop,
-                        ACTION_BUTTON_WIDTH,
-                        ACTION_BUTTON_HEIGHT
+                BUTTON_HEIGHT
+        );
+        boolean nextHovered = TechniqueImprintRenderUtility.isInside(
+                mouseX,
+                mouseY,
+                this.nextButtonLeft,
+                this.actionButtonTop,
+                PAGE_BUTTON_WIDTH,
+                BUTTON_HEIGHT
+        );
+        TechniqueImprintRenderUtility.drawStarButton(
+                guiGraphics,
+                this.font,
+                Component.translatable("screen.ninecun_lingtai.previous_page")
+                        .withStyle(style -> style.withFont(
+                                com.seraphina.ninecun_lingtai.common.font.CustomFontConstants.TECHNIQUE_FONT_ID
+                        )),
+                this.previousButtonLeft,
+                this.actionButtonTop,
+                PAGE_BUTTON_WIDTH,
+                BUTTON_HEIGHT,
+                this.columnOffset > 0,
+                previousHovered,
+                currentTime,
+                controlsAlpha
+        );
+        TechniqueImprintRenderUtility.drawStarButton(
+                guiGraphics,
+                this.font,
+                getActionButtonText(),
+                this.actionButtonLeft,
+                this.actionButtonTop,
+                ACTION_BUTTON_WIDTH,
+                BUTTON_HEIGHT,
+                isActionButtonActive(),
+                actionHovered,
+                currentTime,
+                controlsAlpha
+        );
+        TechniqueImprintRenderUtility.drawStarButton(
+                guiGraphics,
+                this.font,
+                Component.translatable("screen.ninecun_lingtai.next_page")
+                        .withStyle(style -> style.withFont(
+                                com.seraphina.ninecun_lingtai.common.font.CustomFontConstants.TECHNIQUE_FONT_ID
+                        )),
+                this.nextButtonLeft,
+                this.actionButtonTop,
+                PAGE_BUTTON_WIDTH,
+                BUTTON_HEIGHT,
+                this.columnOffset < this.maximumColumnOffset,
+                nextHovered,
+                currentTime,
+                controlsAlpha
+        );
+    }
+
+    private Component getActionButtonText() {
+        String translationKey;
+        if (!this.allowImprint) {
+            translationKey = "screen.ninecun_lingtai.return";
+        } else if (ClientTechniqueManager.isImprinted(this.technique.id())) {
+            translationKey = "screen.ninecun_lingtai.imprinted";
+        } else if (this.awaitingImprint) {
+            translationKey = "screen.ninecun_lingtai.imprinting";
+        } else {
+            translationKey = "screen.ninecun_lingtai.imprint_soul";
+        }
+        return Component.translatable(translationKey).withStyle(
+                style -> style.withFont(
+                        com.seraphina.ninecun_lingtai.common.font.CustomFontConstants.TECHNIQUE_FONT_ID
                 )
         );
     }
 
-    private void drawButton(
-            GuiGraphics guiGraphics,
-            int left,
-            int top,
-            int width,
-            int height,
-            Component text,
-            boolean active,
-            boolean hovered
-    ) {
-        int color = active
-                ? (hovered ? BUTTON_HOVER_COLOR : BUTTON_COLOR)
-                : BUTTON_DISABLED_COLOR;
-        guiGraphics.fill(left, top, left + width, top + height, color);
-        guiGraphics.renderOutline(left, top, width, height, PANEL_BORDER_COLOR);
-        drawScaledCenteredText(
-                guiGraphics,
-                text,
-                left + width / 2,
-                top + 3,
-                INTERFACE_FONT_SCALE,
-                width - 8,
-                active ? TEXT_COLOR : MUTED_TEXT_COLOR
-        );
+    private boolean isActionButtonActive() {
+        return !this.awaitingImprint;
+    }
+
+    private void activateActionButton() {
+        if (this.awaitingImprint) {
+            return;
+        }
+        if (!this.allowImprint || ClientTechniqueManager.isImprinted(this.technique.id())) {
+            beginClosing();
+            return;
+        }
+        this.awaitingImprint = true;
+        this.imprintRequestRevision = ClientTechniqueManager.getRevision();
+        ModNetwork.sendToServer(new ImprintTechniquePacket(this.technique.id()));
     }
 
     private int getVisibleColumnCount() {
-        return Math.max(1, (this.panelRight - this.panelLeft - 58) / COLUMN_GAP);
-    }
-
-    private static boolean isInside(
-            double mouseX,
-            double mouseY,
-            int left,
-            int top,
-            int width,
-            int height
-    ) {
-        return mouseX >= left && mouseX < left + width && mouseY >= top && mouseY < top + height;
-    }
-
-    private void drawScaledCenteredText(
-            GuiGraphics guiGraphics,
-            Component text,
-            int centerX,
-            int top,
-            float preferredScale,
-            int maximumWidth,
-            int color
-    ) {
-        float scale = Math.min(
-                preferredScale,
-                maximumWidth / (float) Math.max(1, this.font.width(text))
-        );
-        PoseStack poseStack = guiGraphics.pose();
-        poseStack.pushPose();
-        poseStack.translate(centerX, top, 0.0F);
-        poseStack.scale(scale, scale, 1.0F);
-        guiGraphics.drawString(
-                this.font,
-                text,
-                -this.font.width(text) / 2,
-                0,
-                color,
-                false
-        );
-        poseStack.popPose();
-    }
-
-    private void drawScaledText(
-            GuiGraphics guiGraphics,
-            Component text,
-            int left,
-            int top,
-            float scale,
-            int color,
-            boolean shadow
-    ) {
-        PoseStack poseStack = guiGraphics.pose();
-        poseStack.pushPose();
-        poseStack.translate(left, top, 0.0F);
-        poseStack.scale(scale, scale, 1.0F);
-        guiGraphics.drawString(this.font, text, 0, 0, color, shadow);
-        poseStack.popPose();
-    }
-
-    private void renderJadeSurface(GuiGraphics guiGraphics) {
-        guiGraphics.fill(
-                this.panelLeft,
-                this.panelTop,
-                this.panelRight,
-                this.panelBottom,
-                PANEL_COLOR
-        );
-        guiGraphics.renderOutline(
-                this.panelLeft,
-                this.panelTop,
-                this.panelRight - this.panelLeft,
-                this.panelBottom - this.panelTop,
-                PANEL_BORDER_COLOR
-        );
-        guiGraphics.renderOutline(
-                this.panelLeft + 5,
-                this.panelTop + 5,
-                this.panelRight - this.panelLeft - 10,
-                this.panelBottom - this.panelTop - 10,
-                INNER_BORDER_COLOR
-        );
-
-        guiGraphics.fill(
-                this.panelLeft + 9,
-                this.panelTop + 9,
-                this.panelLeft + 11,
-                this.panelBottom - 9,
-                JADE_HIGHLIGHT_COLOR
-        );
-        guiGraphics.fill(
-                this.panelRight - 12,
-                this.panelTop + 9,
-                this.panelRight - 10,
-                this.panelBottom - 9,
-                JADE_SHADOW_COLOR
-        );
-        guiGraphics.fill(
-                this.panelLeft + 18,
-                this.panelTop + 31,
-                this.panelRight - 38,
-                this.panelTop + 32,
-                JADE_HIGHLIGHT_COLOR
-        );
-        guiGraphics.fill(
-                this.panelLeft + 42,
-                this.panelBottom - 43,
-                this.panelRight - 18,
-                this.panelBottom - 42,
-                JADE_SHADOW_COLOR
-        );
-    }
-
-    private static Component customFontText(String text) {
-        return Component.literal(text).withStyle(
-                style -> style.withFont(CustomFontConstants.TECHNIQUE_FONT_ID)
-        );
-    }
-
-    private static Component displayFontText(String text) {
-        return Component.literal(text).withStyle(
-                style -> style.withFont(CustomFontConstants.TECHNIQUE_DISPLAY_FONT_ID)
-        );
+        return Math.max(1, (this.layoutRight - this.layoutLeft - 78) / COLUMN_GAP);
     }
 }
