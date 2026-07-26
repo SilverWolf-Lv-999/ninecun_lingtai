@@ -7,7 +7,6 @@ import com.seraphina.ninecun_lingtai.api.element.ElementType;
 import com.seraphina.ninecun_lingtai.client.menu.CultivationInfoMenu;
 import com.seraphina.ninecun_lingtai.client.player.ClientCultivationInfoManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientMeditationManager;
-import com.seraphina.ninecun_lingtai.common.font.CustomFontConstants;
 import com.seraphina.ninecun_lingtai.common.player.PlayerCultivationInfo;
 import com.seraphina.ninecun_lingtai.utility.ChineseNumberUtility;
 import com.seraphina.ninecun_lingtai.utility.CultivationUtility;
@@ -500,9 +499,7 @@ public final class CultivationInfoScreen extends AbstractContainerScreen<Cultiva
     }
 
     private static Component styledText(String text, int color) {
-        return Component.literal(text).withStyle(style -> style
-                .withFont(CustomFontConstants.SHAN_BEI_FONT_ID)
-                .withColor(color & 0xFFFFFF));
+        return Component.literal(text).withStyle(style -> style.withColor(color & 0xFFFFFF));
     }
 
     private static String formatEnergy(double energy) {
