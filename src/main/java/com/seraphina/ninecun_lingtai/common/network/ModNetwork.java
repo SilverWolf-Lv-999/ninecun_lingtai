@@ -2,10 +2,15 @@ package com.seraphina.ninecun_lingtai.common.network;
 
 import com.seraphina.ninecun_lingtai.ModMain;
 import com.seraphina.ninecun_lingtai.api.element.FiveElementValues;
+import com.seraphina.ninecun_lingtai.api.technique.LearnedTechniqueClientData;
 import com.seraphina.ninecun_lingtai.api.technique.TechniqueClientData;
+import com.seraphina.ninecun_lingtai.api.technique.TechniqueProgress;
 import com.seraphina.ninecun_lingtai.common.data.TechniqueManager;
+import com.seraphina.ninecun_lingtai.common.network.packet.BreakthroughRequestPacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.CultivationFeedbackPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.ImprintTechniquePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.ImprintTechniqueToJadeSlipPacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.LearnTechniquePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.OpenAptitudeScreenPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.OpenTechniqueImprintScreenPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.OpenTechniqueScreenPacket;
@@ -18,6 +23,9 @@ import com.seraphina.ninecun_lingtai.common.network.packet.SyncMeditationStatePa
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncTechniqueLibraryPacket;
 import com.seraphina.ninecun_lingtai.common.player.PlayerCultivationInfo;
 import com.seraphina.ninecun_lingtai.common.player.PlayerImprintedTechniqueData;
+import com.seraphina.ninecun_lingtai.common.player.PlayerTechniqueData;
+import com.seraphina.ninecun_lingtai.common.player.PlayerTechniqueProficiencyData;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -27,10 +35,11 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public final class ModNetwork {
-    private static final String PROTOCOL_VERSION = "9";
+    private static final String PROTOCOL_VERSION = "10";
     private static final SimpleChannel CHANNEL = NetworkRegistry.ChannelBuilder
             .named(ResourceLocation.fromNamespaceAndPath(ModMain.MOD_ID, "main"))
             .networkProtocolVersion(() -> PROTOCOL_VERSION)
@@ -152,6 +161,33 @@ public final class ModNetwork {
                 .decoder(ImprintTechniqueToJadeSlipPacket::decode)
                 .consumerMainThread(ImprintTechniqueToJadeSlipPacket::handle)
                 .add();
+        CHANNEL.messageBuilder(
+                        LearnTechniquePacket.class,
+                        nextPacketId++,
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(LearnTechniquePacket::encode)
+                .decoder(LearnTechniquePacket::decode)
+                .consumerMainThread(LearnTechniquePacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        BreakthroughRequestPacket.class,
+                        nextPacketId++,
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(BreakthroughRequestPacket::encode)
+                .decoder(BreakthroughRequestPacket::decode)
+                .consumerMainThread(BreakthroughRequestPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        CultivationFeedbackPacket.class,
+                        nextPacketId++,
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(CultivationFeedbackPacket::encode)
+                .decoder(CultivationFeedbackPacket::decode)
+                .consumerMainThread(CultivationFeedbackPacket::handle)
+                .add();
     }
 
     public static void sendAptitudeScreenRequest(ServerPlayer player) {
@@ -200,6 +236,17 @@ public final class ModNetwork {
         );
     }
 
+    public static void sendCultivationFeedback(
+            ServerPlayer player,
+            boolean success,
+            Component message
+    ) {
+        CHANNEL.send(
+                PacketDistributor.PLAYER.with(() -> player),
+                new CultivationFeedbackPacket(success, message)
+        );
+    }
+
     public static void sendOpenTechniqueScreen(
             ServerPlayer player,
             TechniqueClientData technique,
@@ -223,13 +270,25 @@ public final class ModNetwork {
     }
 
     public static void sendTechniqueLibrary(ServerPlayer player) {
+        Map<ResourceLocation, TechniqueProgress> learnedProgress = PlayerTechniqueData.getTechniques(player);
+        Map<ResourceLocation, Long> proficiencies = PlayerTechniqueProficiencyData.getAll(player);
+        List<LearnedTechniqueClientData> learnedTechniques = learnedProgress.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(entry -> new LearnedTechniqueClientData(
+                        entry.getKey(),
+                        entry.getValue().comprehensionScore(),
+                        proficiencies.getOrDefault(entry.getKey(), 0L),
+                        entry.getValue().mastery()
+                ))
+                .toList();
         CHANNEL.send(
                 PacketDistributor.PLAYER.with(() -> player),
                 new SyncTechniqueLibraryPacket(
                         TechniqueManager.INSTANCE.getTechniques().stream()
                                 .map(TechniqueClientData::fromDefinition)
                                 .toList(),
-                        PlayerImprintedTechniqueData.getTechniques(player)
+                        PlayerImprintedTechniqueData.getTechniques(player),
+                        learnedTechniques
                 )
         );
     }

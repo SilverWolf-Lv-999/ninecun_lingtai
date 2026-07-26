@@ -5,6 +5,7 @@ import com.seraphina.ninecun_lingtai.api.technique.TechniqueDefinition;
 import com.seraphina.ninecun_lingtai.api.technique.TechniqueLearnability;
 import com.seraphina.ninecun_lingtai.api.technique.TechniqueLearningResult;
 import com.seraphina.ninecun_lingtai.api.technique.TechniqueLearningStatus;
+import com.seraphina.ninecun_lingtai.api.technique.TechniqueMasteryStage;
 import com.seraphina.ninecun_lingtai.api.technique.TechniqueProgress;
 import com.seraphina.ninecun_lingtai.common.data.TechniqueManager;
 import com.seraphina.ninecun_lingtai.utility.TechniqueUtility;
@@ -60,9 +61,13 @@ public final class PlayerTechniqueManager {
             );
         }
 
+        // A stage already reached through cultivation is never lost to a new assessment.
+        ResourceLocation resultMastery = existingProgress
+                .map(progress -> TechniqueMasteryStage.highest(progress.mastery(), mastery.get()))
+                .orElse(mastery.get());
         TechniqueProgress progress = new TechniqueProgress(
                 assessment.score(),
-                mastery.get(),
+                resultMastery,
                 assessment.feedback()
         );
         PlayerTechniqueData.setTechnique(player, techniqueId, progress);

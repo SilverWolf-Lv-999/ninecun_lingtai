@@ -5,6 +5,7 @@ import com.seraphina.ninecun_lingtai.common.data.TechniqueManager;
 import com.seraphina.ninecun_lingtai.common.player.PlayerImprintedTechniqueData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerTechniqueData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerTechniqueManager;
+import com.seraphina.ninecun_lingtai.common.player.PlayerTechniqueProficiencyData;
 import com.seraphina.ninecun_lingtai.utility.TechniqueItemUtility;
 import com.seraphina.ninecun_lingtai.utility.TechniqueUtility;
 import net.minecraft.resources.ResourceLocation;
@@ -47,6 +48,14 @@ public final class TechniqueApi {
 
     public static Optional<TechniqueProgress> getProgress(Player player, ResourceLocation techniqueId) {
         return PlayerTechniqueData.getTechnique(player, techniqueId);
+    }
+
+    public static long getProficiency(Player player, ResourceLocation techniqueId) {
+        return PlayerTechniqueProficiencyData.get(player, techniqueId);
+    }
+
+    public static Map<ResourceLocation, Long> getProficiencies(Player player) {
+        return PlayerTechniqueProficiencyData.getAll(player);
     }
 
     public static TechniqueLearnability getLearnability(Player player, TechniqueDefinition technique) {

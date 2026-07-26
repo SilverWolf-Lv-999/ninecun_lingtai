@@ -23,4 +23,18 @@ public final class CultivationApi {
     public static BreakthroughResult tryBreakthrough(Player player) {
         return PlayerCultivationManager.tryBreakthrough(player);
     }
+
+    public static BreakthroughResult tryAdvanceLayer(Player player) {
+        return PlayerCultivationManager.tryAdvanceLayer(player);
+    }
+
+    public static BreakthroughResult tryBreakthroughRealm(Player player) {
+        return PlayerCultivationManager.tryBreakthroughRealm(player);
+    }
+
+    public static boolean isAtRealmPeak(Player player) {
+        return getStage(player)
+                .map(stage -> stage.layer() >= CultivationStage.MAXIMUM_LAYER)
+                .orElse(false);
+    }
 }

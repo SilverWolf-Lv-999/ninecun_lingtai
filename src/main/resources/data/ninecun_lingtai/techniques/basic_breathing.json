@@ -30,16 +30,8 @@
     ],
     "mastery_levels": [
       {
-        "id": "ninecun_lingtai:initial_understanding",
+        "id": "ninecun_lingtai:entry",
         "minimum_score": 60
-      },
-      {
-        "id": "ninecun_lingtai:proficient",
-        "minimum_score": 80
-      },
-      {
-        "id": "ninecun_lingtai:minor_mastery",
-        "minimum_score": 100
       }
     ]
   }

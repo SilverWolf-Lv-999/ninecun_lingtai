@@ -1,6 +1,7 @@
 package com.seraphina.ninecun_lingtai.client.event;
 
 import com.seraphina.ninecun_lingtai.ModMain;
+import com.seraphina.ninecun_lingtai.client.player.ClientCultivationFeedbackManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientMeditationManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientCultivationInfoManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientTechniqueManager;
@@ -78,5 +79,6 @@ public final class ClientForgeEventHandler {
         ClientCultivationInfoManager.reset();
         ClientTechniqueManager.reset();
         ClientMeditationManager.reset();
+        ClientCultivationFeedbackManager.reset();
     }
 }

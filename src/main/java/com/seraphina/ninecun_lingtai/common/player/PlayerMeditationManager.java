@@ -5,16 +5,23 @@ import com.seraphina.ninecun_lingtai.api.cultivation.BreakthroughResult;
 import com.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
 import com.seraphina.ninecun_lingtai.api.element.ElementType;
 import com.seraphina.ninecun_lingtai.api.element.FiveElementValues;
+import com.seraphina.ninecun_lingtai.api.technique.TechniqueDefinition;
+import com.seraphina.ninecun_lingtai.api.technique.TechniqueMasteryStage;
+import com.seraphina.ninecun_lingtai.api.technique.TechniqueProgress;
 import com.seraphina.ninecun_lingtai.common.config.CommonConfig;
 import com.seraphina.ninecun_lingtai.common.data.ElementEnvironmentManager;
+import com.seraphina.ninecun_lingtai.common.data.TechniqueManager;
 import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import com.seraphina.ninecun_lingtai.utility.CultivationUtility;
 import com.seraphina.ninecun_lingtai.utility.SpiritualEnergyUtility;
 import com.seraphina.ninecun_lingtai.utility.SpiritualRootUtility;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
+import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -22,27 +29,40 @@ import java.util.UUID;
 
 public final class PlayerMeditationManager {
     private static final int ABSORPTION_INTERVAL_TICKS = 20;
-    private static final Map<UUID, MeditationRotation> MEDITATING_PLAYERS = new HashMap<>();
+    private static final int PROFICIENCY_INTERVAL_TICKS = 1200;
+    private static final Map<UUID, MeditationSession> MEDITATING_PLAYERS = new HashMap<>();
 
     private PlayerMeditationManager() {
     }
 
     public static boolean startMeditating(ServerPlayer player) {
-        if (isMeditating(player)) {
+        return startMeditating(player, null);
+    }
+
+    public static boolean startMeditating(ServerPlayer player, @Nullable ResourceLocation techniqueId) {
+        if (techniqueId != null && !canCultivateTechnique(player, techniqueId)) {
+            player.displayClientMessage(
+                    Component.translatable("message.ninecun_lingtai.technique_not_learned"),
+                    true
+            );
+            syncSelfState(player, isMeditating(player));
+            return false;
+        }
+
+        MeditationSession existingSession = MEDITATING_PLAYERS.get(player.getUUID());
+        if (existingSession != null) {
+            existingSession.setTechnique(techniqueId);
             syncStateToTrackingAndSelf(player, true);
             return true;
         }
         if (!canStartMeditating(player)) {
-            ModNetwork.sendMeditationState(
-                    player,
-                    player.getUUID(),
-                    false,
-                    FiveElementValues.EMPTY,
-                    FiveElementValues.EMPTY
-            );
+            syncSelfState(player, false);
             return false;
         }
-        MEDITATING_PLAYERS.put(player.getUUID(), MeditationRotation.capture(player));
+        MEDITATING_PLAYERS.put(
+                player.getUUID(),
+                new MeditationSession(MeditationRotation.capture(player), techniqueId)
+        );
         player.stopUsingItem();
         stopMovement(player);
         lockRotation(player);
@@ -51,7 +71,20 @@ public final class PlayerMeditationManager {
     }
 
     public static void stopMeditating(ServerPlayer player) {
-        MEDITATING_PLAYERS.remove(player.getUUID());
+        MeditationSession session = MEDITATING_PLAYERS.remove(player.getUUID());
+        if (session != null
+                && session.techniqueId() != null
+                && session.gainedProficiency() > 0L
+                && !player.hasDisconnected()) {
+            player.displayClientMessage(
+                    Component.translatable(
+                            "message.ninecun_lingtai.technique_training_summary",
+                            getTechniqueName(session.techniqueId()),
+                            session.gainedProficiency()
+                    ),
+                    false
+            );
+        }
         syncStateToTrackingAndSelf(player, false);
     }
 
@@ -59,8 +92,16 @@ public final class PlayerMeditationManager {
         return MEDITATING_PLAYERS.containsKey(player.getUUID());
     }
 
+    public static Optional<ResourceLocation> getCultivatedTechnique(ServerPlayer player) {
+        MeditationSession session = MEDITATING_PLAYERS.get(player.getUUID());
+        return session == null
+                ? Optional.empty()
+                : Optional.ofNullable(session.techniqueId());
+    }
+
     public static void tickMeditation(ServerPlayer player) {
-        if (!isMeditating(player)) {
+        MeditationSession session = MEDITATING_PLAYERS.get(player.getUUID());
+        if (session == null) {
             return;
         }
         if (!canContinueMeditating(player)) {
@@ -70,8 +111,18 @@ public final class PlayerMeditationManager {
         player.stopUsingItem();
         stopMovement(player);
         lockRotation(player);
+        if (session.techniqueId() == null) {
+            if (player.tickCount % ABSORPTION_INTERVAL_TICKS == 0) {
+                absorbSpiritualEnergy(player);
+                syncStateToTrackingAndSelf(player, true);
+            }
+            return;
+        }
+        if (session.incrementTechniqueTicks() >= PROFICIENCY_INTERVAL_TICKS) {
+            session.resetTechniqueTicks();
+            grantProficiency(player, session);
+        }
         if (player.tickCount % ABSORPTION_INTERVAL_TICKS == 0) {
-            absorbSpiritualEnergy(player);
             syncStateToTrackingAndSelf(player, true);
         }
     }
@@ -96,6 +147,18 @@ public final class PlayerMeditationManager {
         MEDITATING_PLAYERS.clear();
     }
 
+    public static long getProficiencyGainPerMinute(Player player) {
+        int realmOrdinal = PlayerCultivationData.getStage(player)
+                .map(stage -> stage.realm().ordinal())
+                .orElse(0);
+        return 1L << Math.min(realmOrdinal, 62);
+    }
+
+    private static boolean canCultivateTechnique(ServerPlayer player, ResourceLocation techniqueId) {
+        return TechniqueManager.INSTANCE.getTechnique(techniqueId).isPresent()
+                && PlayerTechniqueData.hasTechnique(player, techniqueId);
+    }
+
     private static boolean canStartMeditating(ServerPlayer player) {
         return player.isAlive()
                 && !player.isSpectator()
@@ -116,10 +179,11 @@ public final class PlayerMeditationManager {
     }
 
     private static void lockRotation(ServerPlayer player) {
-        MeditationRotation rotation = MEDITATING_PLAYERS.get(player.getUUID());
-        if (rotation == null) {
+        MeditationSession session = MEDITATING_PLAYERS.get(player.getUUID());
+        if (session == null) {
             return;
         }
+        MeditationRotation rotation = session.rotation();
         player.setYRot(rotation.yRot());
         player.setXRot(rotation.xRot());
         player.setYHeadRot(rotation.yHeadRot());
@@ -139,11 +203,11 @@ public final class PlayerMeditationManager {
         for (Map.Entry<ElementType, Double> entry : absorptionProfile.absorptionRates().entrySet()) {
             PlayerSpiritualEnergyData.addEnergy(player, entry.getKey(), baseAbsorption * entry.getValue());
         }
-        tryBreakthrough(player);
+        tryAdvanceLayer(player);
     }
 
-    private static void tryBreakthrough(ServerPlayer player) {
-        BreakthroughResult result = PlayerCultivationManager.tryBreakthrough(player);
+    private static void tryAdvanceLayer(ServerPlayer player) {
+        BreakthroughResult result = PlayerCultivationManager.tryAdvanceLayer(player);
         if (result != BreakthroughResult.SUCCESS) {
             return;
         }
@@ -154,6 +218,68 @@ public final class PlayerMeditationManager {
                         .append(" 踏入" + CultivationUtility.getDisplayName(stage)),
                 false
         );
+    }
+
+    private static void grantProficiency(ServerPlayer player, MeditationSession session) {
+        ResourceLocation techniqueId = session.techniqueId();
+        if (techniqueId == null) {
+            return;
+        }
+        if (!canCultivateTechnique(player, techniqueId)) {
+            stopMeditating(player);
+            return;
+        }
+        long gain = getProficiencyGainPerMinute(player);
+        long total = PlayerTechniqueProficiencyData.add(player, techniqueId, gain);
+        session.addGainedProficiency(gain);
+        player.displayClientMessage(
+                Component.translatable(
+                        "message.ninecun_lingtai.proficiency_gain",
+                        getTechniqueName(techniqueId),
+                        gain,
+                        total
+                ),
+                true
+        );
+        advanceMasteryStage(player, techniqueId, total);
+    }
+
+    private static void advanceMasteryStage(
+            ServerPlayer player,
+            ResourceLocation techniqueId,
+            long totalProficiency
+    ) {
+        Optional<TechniqueProgress> progress = PlayerTechniqueData.getTechnique(player, techniqueId);
+        if (progress.isEmpty()) {
+            return;
+        }
+        TechniqueMasteryStage targetStage = TechniqueMasteryStage.getStageForProficiency(totalProficiency);
+        int currentRank = TechniqueMasteryStage.fromMastery(progress.get().mastery())
+                .map(Enum::ordinal)
+                .orElse(TechniqueMasteryStage.ENTRY.ordinal());
+        if (targetStage.ordinal() <= currentRank) {
+            return;
+        }
+        PlayerTechniqueData.setTechnique(player, techniqueId, new TechniqueProgress(
+                progress.get().comprehensionScore(),
+                targetStage.getMasteryId(),
+                progress.get().feedback()
+        ));
+        player.displayClientMessage(
+                Component.translatable(
+                        "message.ninecun_lingtai.technique_stage_advanced",
+                        getTechniqueName(techniqueId),
+                        targetStage.getChineseName()
+                ),
+                false
+        );
+        ModNetwork.sendTechniqueLibrary(player);
+    }
+
+    private static String getTechniqueName(ResourceLocation techniqueId) {
+        return TechniqueManager.INSTANCE.getTechnique(techniqueId)
+                .map(TechniqueDefinition::name)
+                .orElse(techniqueId.toString());
     }
 
     private static MeditationAbsorptionProfile calculateAbsorptionProfile(ServerPlayer player) {
@@ -170,6 +296,21 @@ public final class PlayerMeditationManager {
         );
     }
 
+    private static void syncSelfState(ServerPlayer player, boolean meditating) {
+        MeditationAbsorptionProfile absorptionProfile = meditating
+                ? calculateAbsorptionProfile(player)
+                : MeditationAbsorptionProfile.EMPTY;
+        ModNetwork.sendMeditationState(
+                player,
+                player.getUUID(),
+                meditating,
+                meditating
+                        ? ElementEnvironmentManager.INSTANCE.getFiveElementValues(player)
+                        : FiveElementValues.EMPTY,
+                absorptionProfile.movementAffinities()
+        );
+    }
+
     private static void syncStateToTrackingAndSelf(ServerPlayer player, boolean meditating) {
         MeditationAbsorptionProfile absorptionProfile = meditating
                 ? calculateAbsorptionProfile(player)
@@ -182,6 +323,52 @@ public final class PlayerMeditationManager {
                         : FiveElementValues.EMPTY,
                 absorptionProfile.movementAffinities()
         );
+    }
+
+    private static final class MeditationSession {
+        private final MeditationRotation rotation;
+        @Nullable
+        private ResourceLocation techniqueId;
+        private int techniqueTicks;
+        private long gainedProficiency;
+
+        private MeditationSession(MeditationRotation rotation, @Nullable ResourceLocation techniqueId) {
+            this.rotation = rotation;
+            this.techniqueId = techniqueId;
+        }
+
+        private MeditationRotation rotation() {
+            return this.rotation;
+        }
+
+        @Nullable
+        private ResourceLocation techniqueId() {
+            return this.techniqueId;
+        }
+
+        private void setTechnique(@Nullable ResourceLocation updatedTechniqueId) {
+            if (!java.util.Objects.equals(this.techniqueId, updatedTechniqueId)) {
+                this.techniqueId = updatedTechniqueId;
+                this.techniqueTicks = 0;
+            }
+        }
+
+        private int incrementTechniqueTicks() {
+            this.techniqueTicks++;
+            return this.techniqueTicks;
+        }
+
+        private void resetTechniqueTicks() {
+            this.techniqueTicks = 0;
+        }
+
+        private long gainedProficiency() {
+            return this.gainedProficiency;
+        }
+
+        private void addGainedProficiency(long amount) {
+            this.gainedProficiency += Math.max(0L, amount);
+        }
     }
 
     private record MeditationRotation(float yRot, float xRot, float yHeadRot, float yBodyRot) {

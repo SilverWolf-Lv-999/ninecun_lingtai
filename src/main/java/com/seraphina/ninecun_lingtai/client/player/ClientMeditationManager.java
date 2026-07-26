@@ -3,15 +3,19 @@ package com.seraphina.ninecun_lingtai.client.player;
 import com.seraphina.ninecun_lingtai.api.element.FiveElementValues;
 import com.seraphina.ninecun_lingtai.client.animation.MeditationAnimationManager;
 import com.seraphina.ninecun_lingtai.client.input.ModKeyMappings;
+import com.seraphina.ninecun_lingtai.client.screen.CultivationScreen;
 import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import com.seraphina.ninecun_lingtai.common.network.packet.SetMeditationStatePacket;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 
+import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 public final class ClientMeditationManager {
@@ -28,7 +32,7 @@ public final class ClientMeditationManager {
         LocalPlayer player = minecraft.player;
         while (ModKeyMappings.MEDITATION.consumeClick()) {
             if (player != null && minecraft.screen == null && !isMeditating(player.getUUID())) {
-                requestState(player, true);
+                minecraft.setScreen(new CultivationScreen());
             }
         }
         if (player == null || !isMeditating(player.getUUID())) {
@@ -39,10 +43,24 @@ public final class ClientMeditationManager {
         ClientMeditationCameraManager.lockPlayerRotation(player);
     }
 
+    public static void startQiCultivation() {
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player != null && !isMeditating(player.getUUID())) {
+            requestState(player, true, null);
+        }
+    }
+
+    public static void startTechniqueCultivation(ResourceLocation techniqueId) {
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player != null && !isMeditating(player.getUUID())) {
+            requestState(player, true, techniqueId);
+        }
+    }
+
     public static void requestStop() {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player != null && isMeditating(player.getUUID())) {
-            requestState(player, false);
+            requestState(player, false, null);
         }
     }
 
@@ -103,13 +121,20 @@ public final class ClientMeditationManager {
         MEDITATION_VISUAL_STATES.clear();
     }
 
-    private static void requestState(LocalPlayer player, boolean meditating) {
+    private static void requestState(
+            LocalPlayer player,
+            boolean meditating,
+            @Nullable ResourceLocation techniqueId
+    ) {
         setMeditating(
                 player.getUUID(),
                 meditating,
                 meditating ? FiveElementValues.NEUTRAL : FiveElementValues.EMPTY,
                 FiveElementValues.EMPTY
         );
-        ModNetwork.sendToServer(new SetMeditationStatePacket(meditating));
+        ModNetwork.sendToServer(new SetMeditationStatePacket(
+                meditating,
+                Optional.ofNullable(techniqueId)
+        ));
     }
 }
