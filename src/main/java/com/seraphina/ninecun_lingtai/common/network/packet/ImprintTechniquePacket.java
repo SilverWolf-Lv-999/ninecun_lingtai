@@ -3,6 +3,7 @@ package com.seraphina.ninecun_lingtai.common.network.packet;
 import com.seraphina.ninecun_lingtai.common.data.TechniqueManager;
 import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import com.seraphina.ninecun_lingtai.common.player.PlayerImprintedTechniqueData;
+import com.seraphina.ninecun_lingtai.common.player.PlayerSoulRoamingManager;
 import com.seraphina.ninecun_lingtai.utility.TechniqueItemUtility;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -27,6 +28,9 @@ public record ImprintTechniquePacket(ResourceLocation techniqueId) {
     ) {
         ServerPlayer player = contextSupplier.get().getSender();
         if (player == null) {
+            return;
+        }
+        if (PlayerSoulRoamingManager.isSoulRoaming(player)) {
             return;
         }
         if (TechniqueManager.INSTANCE.getTechnique(packet.techniqueId).isEmpty()) {

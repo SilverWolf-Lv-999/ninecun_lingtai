@@ -1,5 +1,6 @@
 package com.seraphina.ninecun_lingtai.common.network.packet;
 
+import com.seraphina.ninecun_lingtai.common.player.PlayerSoulRoamingManager;
 import com.seraphina.ninecun_lingtai.common.spell.SpellCastManager;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
@@ -22,7 +23,7 @@ public final class CastSpellPacket {
 
     public static void handle(CastSpellPacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
         ServerPlayer player = contextSupplier.get().getSender();
-        if (player != null) {
+        if (player != null && !PlayerSoulRoamingManager.isSoulRoaming(player)) {
             SpellCastManager.castSelectedSpell(player);
         }
     }

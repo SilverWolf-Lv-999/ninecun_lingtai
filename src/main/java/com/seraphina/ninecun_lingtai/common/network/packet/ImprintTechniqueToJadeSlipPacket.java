@@ -2,6 +2,7 @@ package com.seraphina.ninecun_lingtai.common.network.packet;
 
 import com.seraphina.ninecun_lingtai.api.technique.TechniqueDefinition;
 import com.seraphina.ninecun_lingtai.common.data.TechniqueManager;
+import com.seraphina.ninecun_lingtai.common.player.PlayerSoulRoamingManager;
 import com.seraphina.ninecun_lingtai.utility.TechniqueItemUtility;
 import com.seraphina.ninecun_lingtai.utility.TechniqueUtility;
 import net.minecraft.network.FriendlyByteBuf;
@@ -40,6 +41,9 @@ public record ImprintTechniqueToJadeSlipPacket(
     ) {
         ServerPlayer player = contextSupplier.get().getSender();
         if (player == null) {
+            return;
+        }
+        if (PlayerSoulRoamingManager.isSoulRoaming(player)) {
             return;
         }
         Optional<TechniqueDefinition> technique = TechniqueManager.INSTANCE.getTechnique(

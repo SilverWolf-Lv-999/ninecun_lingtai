@@ -1,6 +1,7 @@
 package com.seraphina.ninecun_lingtai.common.network.packet;
 
 import com.seraphina.ninecun_lingtai.common.flight.LightFlightManager;
+import com.seraphina.ninecun_lingtai.common.player.PlayerSoulRoamingManager;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
@@ -18,7 +19,7 @@ public record SetLightFlightPacket(boolean flying) {
 
     public static void handle(SetLightFlightPacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
         ServerPlayer player = contextSupplier.get().getSender();
-        if (player != null) {
+        if (player != null && !PlayerSoulRoamingManager.isSoulRoaming(player)) {
             LightFlightManager.requestSetFlying(player, packet.flying);
         }
     }

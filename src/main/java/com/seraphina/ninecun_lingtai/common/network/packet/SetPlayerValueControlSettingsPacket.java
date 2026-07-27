@@ -2,6 +2,7 @@ package com.seraphina.ninecun_lingtai.common.network.packet;
 
 import com.seraphina.ninecun_lingtai.common.flight.LightFlightManager;
 import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
+import com.seraphina.ninecun_lingtai.common.player.PlayerSoulRoamingManager;
 import com.seraphina.ninecun_lingtai.common.player.PlayerValueControlData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerValueControlSettings;
 import com.seraphina.ninecun_lingtai.common.player.PlayerValueControlType;
@@ -36,6 +37,10 @@ public record SetPlayerValueControlSettingsPacket(PlayerValueControlSettings set
     ) {
         ServerPlayer player = contextSupplier.get().getSender();
         if (player == null) {
+            return;
+        }
+        if (PlayerSoulRoamingManager.isSoulRoaming(player)) {
+            ModNetwork.sendPlayerValueControlSettings(player);
             return;
         }
         PlayerValueControlSettings settings = PlayerValueControlUnlockUtility.mergeUnlockedApplications(

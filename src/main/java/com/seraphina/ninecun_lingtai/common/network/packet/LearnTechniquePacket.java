@@ -13,6 +13,7 @@ import com.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
 import com.seraphina.ninecun_lingtai.common.data.TechniqueManager;
 import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import com.seraphina.ninecun_lingtai.common.player.PlayerImprintedTechniqueData;
+import com.seraphina.ninecun_lingtai.common.player.PlayerSoulRoamingManager;
 import com.seraphina.ninecun_lingtai.common.player.PlayerTechniqueData;
 import com.seraphina.ninecun_lingtai.utility.CultivationUtility;
 import com.seraphina.ninecun_lingtai.utility.TechniqueUtility;
@@ -54,6 +55,9 @@ public record LearnTechniquePacket(ResourceLocation techniqueId, String understa
     ) {
         ServerPlayer player = contextSupplier.get().getSender();
         if (player == null) {
+            return;
+        }
+        if (PlayerSoulRoamingManager.isSoulRoaming(player)) {
             return;
         }
         Optional<TechniqueDefinition> technique = TechniqueManager.INSTANCE.getTechnique(packet.techniqueId);
@@ -106,6 +110,10 @@ public record LearnTechniquePacket(ResourceLocation techniqueId, String understa
                 .whenComplete((assessment, error) -> server.execute(() -> {
                     PENDING_EVALUATIONS.remove(playerId);
                     if (player.hasDisconnected()) {
+                        return;
+                    }
+                    if (PlayerSoulRoamingManager.isSoulRoaming(player)) {
+                        ModNetwork.sendTechniqueLibrary(player);
                         return;
                     }
                     if (error != null || assessment == null) {

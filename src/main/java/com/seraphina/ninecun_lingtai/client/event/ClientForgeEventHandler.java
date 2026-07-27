@@ -9,6 +9,7 @@ import com.seraphina.ninecun_lingtai.client.player.ClientLightFlightManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientMeditationManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientPlayerValueControlManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientShrinkEarthManager;
+import com.seraphina.ninecun_lingtai.client.player.ClientSoulRoamingManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientSpellManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientSwordFlightManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientTechniqueManager;
@@ -46,6 +47,7 @@ public final class ClientForgeEventHandler {
             ClientLightFlightManager.tick();
             ClientShrinkEarthManager.tick();
             ClientBodyShieldManager.tick();
+            ClientSoulRoamingManager.tick();
         }
     }
 
@@ -99,6 +101,7 @@ public final class ClientForgeEventHandler {
     @SubscribeEvent
     public static void onRenderGuiOverlay(RenderGuiOverlayEvent.Post event) {
         DefenseBarRenderUtility.render(event);
+        ClientSoulRoamingManager.renderBodyArrow(event);
     }
 
     @SubscribeEvent
@@ -133,5 +136,6 @@ public final class ClientForgeEventHandler {
         ClientDefenseResourceManager.reset();
         ClientCultivationFeedbackManager.reset();
         ClientPlayerValueControlManager.reset();
+        ClientSoulRoamingManager.reset();
     }
 }

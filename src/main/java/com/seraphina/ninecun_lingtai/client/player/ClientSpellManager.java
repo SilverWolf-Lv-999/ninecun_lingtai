@@ -25,7 +25,8 @@ public final class ClientSpellManager {
         while (ModKeyMappings.SPELL_SELECTION.consumeClick()) {
             if (player != null
                     && minecraft.screen == null
-                    && !ClientMeditationManager.isLocalPlayerMeditating()) {
+                    && !ClientMeditationManager.isLocalPlayerMeditating()
+                    && !ClientSoulRoamingManager.isLocalPlayerSoulRoaming()) {
                 ClientTechniqueManager.requestRefresh();
                 minecraft.setScreen(new SpellSelectionScreen());
             }
@@ -33,13 +34,17 @@ public final class ClientSpellManager {
         while (ModKeyMappings.CAST_SPELL.consumeClick()) {
             if (player != null
                     && minecraft.screen == null
-                    && !ClientMeditationManager.isLocalPlayerMeditating()) {
+                    && !ClientMeditationManager.isLocalPlayerMeditating()
+                    && !ClientSoulRoamingManager.isLocalPlayerSoulRoaming()) {
                 ModNetwork.sendToServer(CastSpellPacket.INSTANCE);
             }
         }
     }
 
     public static void selectSpell(ResourceLocation spellId) {
+        if (ClientSoulRoamingManager.isLocalPlayerSoulRoaming()) {
+            return;
+        }
         selectedSpellId = spellId;
         ModNetwork.sendToServer(new SelectSpellPacket(spellId));
     }

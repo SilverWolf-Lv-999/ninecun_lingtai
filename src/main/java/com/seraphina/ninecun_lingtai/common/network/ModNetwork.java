@@ -21,6 +21,7 @@ import com.seraphina.ninecun_lingtai.common.network.packet.RequestCultivationInf
 import com.seraphina.ninecun_lingtai.common.network.packet.RequestPlayerValueControlSettingsPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.RequestTechniqueLibraryPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SelectSpellPacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.StartSoulRoamingPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SetShrinkEarthPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SetPlayerValueControlSettingsPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SetLightFlightPacket;
@@ -33,6 +34,7 @@ import com.seraphina.ninecun_lingtai.common.network.packet.SyncLightFlightPacket
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncMeditationStatePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncPlayerValueControlSettingsPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncShrinkEarthPacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.SyncSoulRoamingPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncSwordFlightPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncTechniqueLibraryPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.TriggerBodyShieldPacket;
@@ -41,11 +43,14 @@ import com.seraphina.ninecun_lingtai.common.player.PlayerLightFlightData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerShrinkEarthData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerValueControlData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerSwordFlightData;
+import com.seraphina.ninecun_lingtai.common.player.DefenseResourceSnapshot;
 import com.seraphina.ninecun_lingtai.common.player.PlayerCultivationInfo;
 import com.seraphina.ninecun_lingtai.common.player.PlayerDefenseResourceData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerImprintedTechniqueData;
+import com.seraphina.ninecun_lingtai.common.player.PlayerSoulRoamingManager;
 import com.seraphina.ninecun_lingtai.common.player.PlayerTechniqueData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerTechniqueProficiencyData;
+import com.seraphina.ninecun_lingtai.common.player.SoulRoamingSyncData;
 import com.seraphina.ninecun_lingtai.utility.PlayerValueControlUnlockUtility;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -60,10 +65,11 @@ import net.minecraftforge.network.simple.SimpleChannel;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 public final class ModNetwork {
-    private static final String PROTOCOL_VERSION = "21";
+    private static final String PROTOCOL_VERSION = "22";
     private static final SimpleChannel CHANNEL = NetworkRegistry.ChannelBuilder
             .named(ResourceLocation.fromNamespaceAndPath(ModMain.MOD_ID, "main"))
             .networkProtocolVersion(() -> PROTOCOL_VERSION)
@@ -347,6 +353,24 @@ public final class ModNetwork {
                 .decoder(SyncDefenseResourcePacket::decode)
                 .consumerMainThread(SyncDefenseResourcePacket::handle)
                 .add();
+        CHANNEL.messageBuilder(
+                        StartSoulRoamingPacket.class,
+                        nextPacketId++,
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(StartSoulRoamingPacket::encode)
+                .decoder(StartSoulRoamingPacket::decode)
+                .consumerMainThread(StartSoulRoamingPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        SyncSoulRoamingPacket.class,
+                        nextPacketId++,
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(SyncSoulRoamingPacket::encode)
+                .decoder(SyncSoulRoamingPacket::decode)
+                .consumerMainThread(SyncSoulRoamingPacket::handle)
+                .add();
     }
 
     /** 把玩家当前的缩地状态广播给所有追踪者与其本人。 */
@@ -483,16 +507,33 @@ public final class ModNetwork {
     }
 
     public static void sendCultivationInfo(ServerPlayer player) {
+        PlayerCultivationInfo cultivationInfo = PlayerSoulRoamingManager.isSoulRoaming(player)
+                ? PlayerCultivationInfo.empty()
+                : PlayerCultivationInfo.capture(player);
         CHANNEL.send(
                 PacketDistributor.PLAYER.with(() -> player),
-                new SyncCultivationInfoPacket(PlayerCultivationInfo.capture(player))
+                new SyncCultivationInfoPacket(cultivationInfo)
         );
     }
 
     public static void sendDefenseResource(ServerPlayer player) {
+        if (PlayerSoulRoamingManager.isSoulRoaming(player)) {
+            CHANNEL.send(
+                    PacketDistributor.PLAYER.with(() -> player),
+                    new SyncDefenseResourcePacket(DefenseResourceSnapshot.empty(0))
+            );
+            return;
+        }
         CHANNEL.send(
                 PacketDistributor.PLAYER.with(() -> player),
                 new SyncDefenseResourcePacket(PlayerDefenseResourceData.capture(player))
+        );
+    }
+
+    public static void sendSoulRoamingState(ServerPlayer player, SoulRoamingSyncData syncData) {
+        CHANNEL.send(
+                PacketDistributor.PLAYER.with(() -> player),
+                new SyncSoulRoamingPacket(syncData)
         );
     }
 
@@ -501,7 +542,9 @@ public final class ModNetwork {
                 PacketDistributor.PLAYER.with(() -> player),
                 new SyncPlayerValueControlSettingsPacket(
                         PlayerValueControlData.getSettings(player),
-                        PlayerValueControlUnlockUtility.getUnlockedTypes(player)
+                        PlayerSoulRoamingManager.isSoulRoaming(player)
+                                ? Set.of()
+                                : PlayerValueControlUnlockUtility.getUnlockedTypes(player)
                 )
         );
     }
@@ -540,6 +583,19 @@ public final class ModNetwork {
     }
 
     public static void sendTechniqueLibrary(ServerPlayer player) {
+        if (PlayerSoulRoamingManager.isSoulRoaming(player)) {
+            CHANNEL.send(
+                    PacketDistributor.PLAYER.with(() -> player),
+                    new SyncTechniqueLibraryPacket(
+                            TechniqueManager.INSTANCE.getTechniques().stream()
+                                    .map(TechniqueClientData::fromDefinition)
+                                    .toList(),
+                            Set.of(),
+                            List.of()
+                    )
+            );
+            return;
+        }
         Map<ResourceLocation, TechniqueProgress> learnedProgress = PlayerTechniqueData.getTechniques(player);
         Map<ResourceLocation, Long> proficiencies = PlayerTechniqueProficiencyData.getAll(player);
         List<LearnedTechniqueClientData> learnedTechniques = learnedProgress.entrySet().stream()

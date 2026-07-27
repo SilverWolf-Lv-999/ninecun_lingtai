@@ -46,7 +46,8 @@ public final class ClientLightFlightManager {
         if (player != null
                 && isFlying(player.getUUID())
                 && player.getAbilities().mayfly
-                && !player.getAbilities().flying) {
+                && !player.getAbilities().flying
+                && !ClientSoulRoamingManager.isLocalPlayerSoulRoaming()) {
             player.getAbilities().flying = true;
         }
     }
@@ -57,6 +58,7 @@ public final class ClientLightFlightManager {
         if (player == null
                 || minecraft.screen != null
                 || ClientMeditationManager.isLocalPlayerMeditating()
+                || ClientSoulRoamingManager.isLocalPlayerSoulRoaming()
                 || !isShiftDown(minecraft)) {
             return;
         }
@@ -75,6 +77,7 @@ public final class ClientLightFlightManager {
         if (player == null
                 || minecraft.screen != null
                 || ClientMeditationManager.isLocalPlayerMeditating()
+                || ClientSoulRoamingManager.isLocalPlayerSoulRoaming()
                 || !isFlying(player.getUUID())) {
             return;
         }
@@ -142,6 +145,9 @@ public final class ClientLightFlightManager {
     public static double getFovMultiplier(float partialTick) {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player == null) {
+            return 1.0D;
+        }
+        if (ClientSoulRoamingManager.isLocalPlayerSoulRoaming()) {
             return 1.0D;
         }
         LightFlightVisualState visualState = VISUAL_STATES.get(player.getUUID());

@@ -1,5 +1,6 @@
 package com.seraphina.ninecun_lingtai.client.screen;
 
+import com.seraphina.ninecun_lingtai.api.cultivation.CultivationRealm;
 import com.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
 import com.seraphina.ninecun_lingtai.client.animation.MeditationAnimationManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientCultivationFeedbackManager;
@@ -11,6 +12,7 @@ import com.seraphina.ninecun_lingtai.client.utility.TechniqueImprintRenderUtilit
 import com.seraphina.ninecun_lingtai.common.font.CustomFontConstants;
 import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import com.seraphina.ninecun_lingtai.common.network.packet.BreakthroughRequestPacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.StartSoulRoamingPacket;
 import com.seraphina.ninecun_lingtai.utility.CultivationUtility;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
@@ -30,6 +32,8 @@ public final class CultivationScreen extends AbstractTechniqueImprintScreen {
     private int rightButtonLeft;
     private int upperButtonTop;
     private int lowerButtonTop;
+    private int soulButtonLeft;
+    private int soulButtonTop;
     private int feedbackBaselineRevision;
     private boolean awaitingBreakthrough;
     private int breakthroughRequestRevision;
@@ -56,6 +60,8 @@ public final class CultivationScreen extends AbstractTechniqueImprintScreen {
         );
         this.upperButtonTop = (int) (this.height * 0.32F) - BUTTON_HEIGHT / 2;
         this.lowerButtonTop = (int) (this.height * 0.60F) - BUTTON_HEIGHT / 2;
+        this.soulButtonLeft = (this.width - ACTION_BUTTON_WIDTH) / 2;
+        this.soulButtonTop = Math.max(18, this.upperButtonTop - BUTTON_HEIGHT - 34);
         this.feedbackBaselineRevision = ClientCultivationFeedbackManager.getRevision();
         if (this.minecraft != null
                 && this.minecraft.player != null
@@ -121,6 +127,10 @@ public final class CultivationScreen extends AbstractTechniqueImprintScreen {
         }
         if (isInsideButton(mouseX, mouseY, this.rightButtonLeft, this.lowerButtonTop)) {
             requestBreakthrough();
+            return true;
+        }
+        if (isInsideButton(mouseX, mouseY, this.soulButtonLeft, this.soulButtonTop)) {
+            startSoulRoaming();
             return true;
         }
         return super.mouseClicked(mouseX, mouseY, button);
@@ -275,6 +285,17 @@ public final class CultivationScreen extends AbstractTechniqueImprintScreen {
                 currentTime,
                 controlsAlpha
         );
+        drawButton(
+                guiGraphics,
+                "screen.ninecun_lingtai.cultivation.soul_roaming",
+                this.soulButtonLeft,
+                this.soulButtonTop,
+                canStartSoulRoaming(),
+                mouseX,
+                mouseY,
+                currentTime,
+                controlsAlpha
+        );
     }
 
     private void renderFeedback(GuiGraphics guiGraphics, long currentTime) {
@@ -288,7 +309,7 @@ public final class CultivationScreen extends AbstractTechniqueImprintScreen {
                         .append(message)
                         .withStyle(style -> style.withFont(CustomFontConstants.TECHNIQUE_FONT_ID)),
                 this.width / 2.0F,
-                this.height - 76.0F,
+                Math.max(this.height - 76.0F, this.soulButtonTop + BUTTON_HEIGHT + 14.0F),
                 (int) (this.width * 0.62F),
                 0.3F,
                 ClientCultivationFeedbackManager.isSuccess()
@@ -362,8 +383,24 @@ public final class CultivationScreen extends AbstractTechniqueImprintScreen {
         ModNetwork.sendToServer(BreakthroughRequestPacket.INSTANCE);
     }
 
+    private void startSoulRoaming() {
+        if (!canStartSoulRoaming()) {
+            return;
+        }
+        ModNetwork.sendToServer(StartSoulRoamingPacket.INSTANCE);
+        if (this.minecraft != null) {
+            this.minecraft.setScreen(null);
+        }
+    }
+
     private boolean canRequestBreakthrough() {
         return !this.awaitingBreakthrough && isAtRealmPeak();
+    }
+
+    private boolean canStartSoulRoaming() {
+        return getStage()
+                .map(stage -> stage.realm().ordinal() >= CultivationRealm.SPIRIT_TRANSFORMATION.ordinal())
+                .orElse(false);
     }
 
     private boolean isAtRealmPeak() {

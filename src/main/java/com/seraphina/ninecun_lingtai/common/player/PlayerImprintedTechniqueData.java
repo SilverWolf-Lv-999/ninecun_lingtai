@@ -42,6 +42,10 @@ public final class PlayerImprintedTechniqueData {
         return added;
     }
 
+    public static void clear(Player player) {
+        player.getPersistentData().remove(IMPRINTED_TECHNIQUES_KEY);
+    }
+
     public static void copy(Player sourcePlayer, Player targetPlayer) {
         if (sourcePlayer.getPersistentData().contains(IMPRINTED_TECHNIQUES_KEY, Tag.TAG_LIST)) {
             targetPlayer.getPersistentData().put(

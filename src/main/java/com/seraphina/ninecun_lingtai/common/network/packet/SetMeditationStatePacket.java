@@ -1,6 +1,7 @@
 package com.seraphina.ninecun_lingtai.common.network.packet;
 
 import com.seraphina.ninecun_lingtai.common.player.PlayerMeditationManager;
+import com.seraphina.ninecun_lingtai.common.player.PlayerSoulRoamingManager;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -31,6 +32,9 @@ public record SetMeditationStatePacket(boolean meditating, Optional<ResourceLoca
     public static void handle(SetMeditationStatePacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
         ServerPlayer player = contextSupplier.get().getSender();
         if (player == null) {
+            return;
+        }
+        if (PlayerSoulRoamingManager.isSoulRoaming(player)) {
             return;
         }
         if (packet.meditating) {

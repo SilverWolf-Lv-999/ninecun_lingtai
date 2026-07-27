@@ -13,11 +13,14 @@ import com.seraphina.ninecun_lingtai.client.render.AptitudeFormationShader;
 import com.seraphina.ninecun_lingtai.client.render.DefenseBarShader;
 import com.seraphina.ninecun_lingtai.client.render.ElementFlowShader;
 import com.seraphina.ninecun_lingtai.client.render.SoulConstellationShader;
+import com.seraphina.ninecun_lingtai.client.render.SoulBodyRenderer;
 import com.seraphina.ninecun_lingtai.client.render.SpiritualEnergyShader;
 import com.seraphina.ninecun_lingtai.client.render.TechniqueCloudShader;
+import com.seraphina.ninecun_lingtai.common.registry.ModEntityTypes;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.client.event.RegisterShadersEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -73,6 +76,11 @@ public final class ClientModEventHandler {
         event.register(ModKeyMappings.MEDITATION);
         event.register(ModKeyMappings.SPELL_SELECTION);
         event.register(ModKeyMappings.CAST_SPELL);
+    }
+
+    @SubscribeEvent
+    public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
+        event.registerEntityRenderer(ModEntityTypes.SOUL_BODY.get(), SoulBodyRenderer::new);
     }
 
     @SubscribeEvent

@@ -6,6 +6,7 @@ import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import com.seraphina.ninecun_lingtai.common.player.PlayerCultivationData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerCultivationManager;
 import com.seraphina.ninecun_lingtai.common.player.PlayerDefenseResourceData;
+import com.seraphina.ninecun_lingtai.common.player.PlayerSoulRoamingManager;
 import com.seraphina.ninecun_lingtai.utility.ChineseNumberUtility;
 import com.seraphina.ninecun_lingtai.utility.CultivationUtility;
 import net.minecraft.network.FriendlyByteBuf;
@@ -36,6 +37,9 @@ public final class BreakthroughRequestPacket {
     ) {
         ServerPlayer player = contextSupplier.get().getSender();
         if (player == null) {
+            return;
+        }
+        if (PlayerSoulRoamingManager.isSoulRoaming(player)) {
             return;
         }
         Optional<CultivationStage> previousStage = PlayerCultivationData.getStage(player);

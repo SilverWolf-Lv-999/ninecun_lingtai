@@ -31,7 +31,9 @@ public final class ClientMeditationManager {
         Minecraft minecraft = Minecraft.getInstance();
         LocalPlayer player = minecraft.player;
         while (ModKeyMappings.MEDITATION.consumeClick()) {
-            if (player != null && minecraft.screen == null && !isMeditating(player.getUUID())) {
+            if (player != null
+                    && minecraft.screen == null
+                    && !ClientSoulRoamingManager.isLocalPlayerSoulRoaming()) {
                 minecraft.setScreen(new CultivationScreen());
             }
         }

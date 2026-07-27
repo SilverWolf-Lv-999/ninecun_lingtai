@@ -1,0 +1,180 @@
+package com.seraphina.ninecun_lingtai.common.event;
+
+import com.seraphina.ninecun_lingtai.ModMain;
+import com.seraphina.ninecun_lingtai.common.entity.SoulBodyEntity;
+import com.seraphina.ninecun_lingtai.common.player.PlayerSoulRoamingManager;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.item.ItemTossEvent;
+import net.minecraftforge.event.entity.living.LivingAttackEvent;
+import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import net.minecraftforge.event.entity.living.LivingHurtEvent;
+import net.minecraftforge.event.entity.player.AttackEntityEvent;
+import net.minecraftforge.event.entity.player.EntityItemPickupEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.event.entity.player.PlayerXpEvent;
+import net.minecraftforge.event.server.ServerStoppedEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+
+@Mod.EventBusSubscriber(modid = ModMain.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+public final class PlayerSoulRoamingEventHandler {
+    private PlayerSoulRoamingEventHandler() {
+    }
+
+    @SubscribeEvent
+    public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
+        if (event.phase == TickEvent.Phase.END && event.player instanceof ServerPlayer player) {
+            PlayerSoulRoamingManager.tick(player);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onAttackEntity(AttackEntityEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player && PlayerSoulRoamingManager.isSoulRoaming(player)) {
+            event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onEntityInteractSpecific(PlayerInteractEvent.EntityInteractSpecific event) {
+        if (event.getEntity() instanceof ServerPlayer player && PlayerSoulRoamingManager.isSoulRoaming(player)) {
+            consumeSoulEntityInteraction(player, event.getTarget(), event.getHand(), event);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onEntityInteract(PlayerInteractEvent.EntityInteract event) {
+        if (event.getEntity() instanceof ServerPlayer player && PlayerSoulRoamingManager.isSoulRoaming(player)) {
+            consumeSoulEntityInteraction(player, event.getTarget(), event.getHand(), event);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
+        cancelSoulInteraction(event);
+    }
+
+    @SubscribeEvent
+    public static void onRightClickItem(PlayerInteractEvent.RightClickItem event) {
+        cancelSoulInteraction(event);
+    }
+
+    @SubscribeEvent
+    public static void onLeftClickBlock(PlayerInteractEvent.LeftClickBlock event) {
+        cancelSoulInteraction(event);
+    }
+
+    @SubscribeEvent
+    public static void onItemPickup(EntityItemPickupEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player && PlayerSoulRoamingManager.isSoulRoaming(player)) {
+            event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onItemToss(ItemTossEvent event) {
+        if (event.getPlayer() instanceof ServerPlayer player && PlayerSoulRoamingManager.isSoulRoaming(player)) {
+            event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPickupXp(PlayerXpEvent.PickupXp event) {
+        if (event.getEntity() instanceof ServerPlayer player && PlayerSoulRoamingManager.isSoulRoaming(player)) {
+            event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onBreakSpeed(PlayerEvent.BreakSpeed event) {
+        if (event.getEntity() instanceof ServerPlayer player && PlayerSoulRoamingManager.isSoulRoaming(player)) {
+            event.setNewSpeed(0.0F);
+            event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onLivingAttack(LivingAttackEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player && PlayerSoulRoamingManager.isSoulRoaming(player)) {
+            event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onLivingHurt(LivingHurtEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player && PlayerSoulRoamingManager.isSoulRoaming(player)) {
+            event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onLivingDeath(LivingDeathEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player && PlayerSoulRoamingManager.isSoulRoaming(player)) {
+            player.setHealth(Math.max(1.0F, player.getHealth()));
+            event.setCanceled(true);
+            return;
+        }
+        if (event.getEntity() instanceof SoulBodyEntity body) {
+            PlayerSoulRoamingManager.onBodyDestroyed(body);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            PlayerSoulRoamingManager.syncState(player);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            PlayerSoulRoamingManager.cleanup(player);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player && PlayerSoulRoamingManager.isSoulRoaming(player)) {
+            PlayerSoulRoamingManager.syncState(player);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onServerStopped(ServerStoppedEvent event) {
+        PlayerSoulRoamingManager.clear(event.getServer());
+    }
+
+    private static void consumeSoulEntityInteraction(
+            ServerPlayer player,
+            Entity target,
+            InteractionHand hand,
+            PlayerInteractEvent event
+    ) {
+        event.setCanceled(true);
+        event.setCancellationResult(InteractionResult.SUCCESS);
+        if (hand != InteractionHand.MAIN_HAND) {
+            return;
+        }
+        if (target instanceof SoulBodyEntity body && PlayerSoulRoamingManager.ownsBody(player, body)) {
+            PlayerSoulRoamingManager.returnToBody(player);
+            return;
+        }
+        if (target instanceof LivingEntity livingEntity) {
+            PlayerSoulRoamingManager.tryPossess(player, livingEntity);
+        }
+    }
+
+    private static void cancelSoulInteraction(PlayerInteractEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player && PlayerSoulRoamingManager.isSoulRoaming(player)) {
+            event.setCanceled(true);
+            event.setCancellationResult(InteractionResult.SUCCESS);
+        }
+    }
+}

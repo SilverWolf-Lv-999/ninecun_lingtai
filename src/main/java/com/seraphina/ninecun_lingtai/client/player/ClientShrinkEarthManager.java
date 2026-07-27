@@ -42,6 +42,9 @@ public final class ClientShrinkEarthManager {
         if (minecraft.player == null || minecraft.screen != null || !isControlAltDown(minecraft)) {
             controlAltPressed = false;
         }
+        if (ClientSoulRoamingManager.isLocalPlayerSoulRoaming()) {
+            controlAltPressed = false;
+        }
     }
 
     public static void onKeyInput(int key, int action) {
@@ -50,6 +53,7 @@ public final class ClientShrinkEarthManager {
         if (player == null
                 || minecraft.screen != null
                 || ClientMeditationManager.isLocalPlayerMeditating()
+                || ClientSoulRoamingManager.isLocalPlayerSoulRoaming()
                 || !isControlOrAlt(key)) {
             return;
         }

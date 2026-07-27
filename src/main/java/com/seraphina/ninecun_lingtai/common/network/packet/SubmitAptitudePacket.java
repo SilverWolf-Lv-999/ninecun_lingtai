@@ -4,6 +4,7 @@ import com.seraphina.ninecun_lingtai.api.aptitude.SoulStrength;
 import com.seraphina.ninecun_lingtai.api.aptitude.SpiritualRoot;
 import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import com.seraphina.ninecun_lingtai.common.player.PlayerAptitudeData;
+import com.seraphina.ninecun_lingtai.common.player.PlayerSoulRoamingManager;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
@@ -24,7 +25,9 @@ public record SubmitAptitudePacket(int elementMask, float lengthInches, int illu
 
     public static void handle(SubmitAptitudePacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
         ServerPlayer player = contextSupplier.get().getSender();
-        if (player == null || PlayerAptitudeData.hasCompleteAptitude(player)) {
+        if (player == null
+                || PlayerSoulRoamingManager.isSoulRoaming(player)
+                || PlayerAptitudeData.hasCompleteAptitude(player)) {
             return;
         }
         Optional<SpiritualRoot> spiritualRoot = SpiritualRoot.fromElementMask(

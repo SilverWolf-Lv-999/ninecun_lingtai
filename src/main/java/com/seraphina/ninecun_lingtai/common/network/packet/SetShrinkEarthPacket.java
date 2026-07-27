@@ -1,5 +1,6 @@
 package com.seraphina.ninecun_lingtai.common.network.packet;
 
+import com.seraphina.ninecun_lingtai.common.player.PlayerSoulRoamingManager;
 import com.seraphina.ninecun_lingtai.common.spell.ShrinkEarthManager;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
@@ -18,7 +19,7 @@ public record SetShrinkEarthPacket(boolean active) {
 
     public static void handle(SetShrinkEarthPacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
         ServerPlayer player = contextSupplier.get().getSender();
-        if (player != null) {
+        if (player != null && !PlayerSoulRoamingManager.isSoulRoaming(player)) {
             ShrinkEarthManager.requestSetActive(player, packet.active);
         }
     }
