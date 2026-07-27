@@ -11,6 +11,7 @@
   "client": [
     "client.CameraMixin",
     "client.GameRendererMixin",
+    "client.LightTextureMixin",
     "client.MouseHandlerMixin"
   ],
   "injectors": {

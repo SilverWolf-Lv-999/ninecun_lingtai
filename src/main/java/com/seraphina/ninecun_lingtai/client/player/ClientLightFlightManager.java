@@ -205,8 +205,7 @@ public final class ClientLightFlightManager {
         if (visualState != null) {
             return visualState.style();
         }
-        return ClientCultivationInfoManager.getCultivationInfo()
-                .flatMap(cultivationInfo -> cultivationInfo.cultivationStage())
+        return ClientCultivationInfoManager.getCultivationStage()
                 .flatMap(stage -> LightFlightStyle.forRealm(stage.realm()))
                 .orElse(LightFlightStyle.AIR_WALKING);
     }

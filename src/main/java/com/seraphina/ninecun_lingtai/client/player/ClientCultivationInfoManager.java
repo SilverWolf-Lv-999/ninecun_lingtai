@@ -1,5 +1,6 @@
 package com.seraphina.ninecun_lingtai.client.player;
 
+import com.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
 import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import com.seraphina.ninecun_lingtai.common.network.packet.RequestCultivationInfoPacket;
 import com.seraphina.ninecun_lingtai.common.player.PlayerCultivationInfo;
@@ -8,6 +9,7 @@ import java.util.Optional;
 
 public final class ClientCultivationInfoManager {
     private static PlayerCultivationInfo cultivationInfo;
+    private static Optional<CultivationStage> cultivationStage = Optional.empty();
 
     private ClientCultivationInfoManager() {
     }
@@ -23,13 +25,19 @@ public final class ClientCultivationInfoManager {
 
     public static void accept(PlayerCultivationInfo updatedCultivationInfo) {
         cultivationInfo = updatedCultivationInfo;
+        cultivationStage = updatedCultivationInfo.cultivationStage();
     }
 
     public static Optional<PlayerCultivationInfo> getCultivationInfo() {
         return Optional.ofNullable(cultivationInfo);
     }
 
+    public static Optional<CultivationStage> getCultivationStage() {
+        return cultivationStage;
+    }
+
     public static void reset() {
         cultivationInfo = null;
+        cultivationStage = Optional.empty();
     }
 }

@@ -11,6 +11,7 @@ import com.seraphina.ninecun_lingtai.common.player.PlayerTechniqueData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerTechniqueProficiencyData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerValueControlData;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -22,6 +23,7 @@ public final class PlayerAptitudeEventHandler {
 
     @SubscribeEvent
     public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
+        syncCultivationInfo(event.getEntity());
         requestScreenWhenMissing(event.getEntity());
     }
 
@@ -39,10 +41,17 @@ public final class PlayerAptitudeEventHandler {
 
     @SubscribeEvent
     public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
+        syncCultivationInfo(event.getEntity());
         requestScreenWhenMissing(event.getEntity());
     }
 
-    private static void requestScreenWhenMissing(net.minecraft.world.entity.player.Player player) {
+    private static void syncCultivationInfo(Player player) {
+        if (player instanceof ServerPlayer serverPlayer) {
+            ModNetwork.sendCultivationInfo(serverPlayer);
+        }
+    }
+
+    private static void requestScreenWhenMissing(Player player) {
         if (player instanceof ServerPlayer serverPlayer
                 && !PlayerAptitudeData.hasCompleteAptitude(serverPlayer)) {
             ModNetwork.sendAptitudeScreenRequest(serverPlayer);
