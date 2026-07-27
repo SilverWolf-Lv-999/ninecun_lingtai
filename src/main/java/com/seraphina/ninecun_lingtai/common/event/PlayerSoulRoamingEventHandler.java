@@ -1,13 +1,11 @@
 package com.seraphina.ninecun_lingtai.common.event;
 
 import com.seraphina.ninecun_lingtai.ModMain;
-import com.seraphina.ninecun_lingtai.common.entity.SoulBodyEntity;
+import com.seraphina.ninecun_lingtai.common.entity.SoulEntity;
 import com.seraphina.ninecun_lingtai.common.player.PlayerSoulRoamingManager;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.item.ItemTossEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
@@ -44,14 +42,14 @@ public final class PlayerSoulRoamingEventHandler {
     @SubscribeEvent
     public static void onEntityInteractSpecific(PlayerInteractEvent.EntityInteractSpecific event) {
         if (event.getEntity() instanceof ServerPlayer player && PlayerSoulRoamingManager.isSoulRoaming(player)) {
-            consumeSoulEntityInteraction(player, event.getTarget(), event.getHand(), event);
+            cancelSoulInteraction(event);
         }
     }
 
     @SubscribeEvent
     public static void onEntityInteract(PlayerInteractEvent.EntityInteract event) {
         if (event.getEntity() instanceof ServerPlayer player && PlayerSoulRoamingManager.isSoulRoaming(player)) {
-            consumeSoulEntityInteraction(player, event.getTarget(), event.getHand(), event);
+            cancelSoulInteraction(event);
         }
     }
 
@@ -120,8 +118,8 @@ public final class PlayerSoulRoamingEventHandler {
             event.setCanceled(true);
             return;
         }
-        if (event.getEntity() instanceof SoulBodyEntity body) {
-            PlayerSoulRoamingManager.onBodyDestroyed(body);
+        if (event.getEntity() instanceof SoulEntity soul) {
+            PlayerSoulRoamingManager.onSoulDestroyed(soul);
         }
     }
 
@@ -149,26 +147,6 @@ public final class PlayerSoulRoamingEventHandler {
     @SubscribeEvent
     public static void onServerStopped(ServerStoppedEvent event) {
         PlayerSoulRoamingManager.clear(event.getServer());
-    }
-
-    private static void consumeSoulEntityInteraction(
-            ServerPlayer player,
-            Entity target,
-            InteractionHand hand,
-            PlayerInteractEvent event
-    ) {
-        event.setCanceled(true);
-        event.setCancellationResult(InteractionResult.SUCCESS);
-        if (hand != InteractionHand.MAIN_HAND) {
-            return;
-        }
-        if (target instanceof SoulBodyEntity body && PlayerSoulRoamingManager.ownsBody(player, body)) {
-            PlayerSoulRoamingManager.returnToBody(player);
-            return;
-        }
-        if (target instanceof LivingEntity livingEntity) {
-            PlayerSoulRoamingManager.tryPossess(player, livingEntity);
-        }
     }
 
     private static void cancelSoulInteraction(PlayerInteractEvent event) {

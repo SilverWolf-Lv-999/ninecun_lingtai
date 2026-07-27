@@ -2,7 +2,7 @@ package com.seraphina.ninecun_lingtai.mixin.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.seraphina.ninecun_lingtai.client.player.ClientSoulRoamingManager;
-import net.minecraft.client.Minecraft;
+import com.seraphina.ninecun_lingtai.common.entity.SoulEntity;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
@@ -54,7 +54,7 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, M extend
             index = 7
     )
     private float ninecunLingtai$useSoulRoamingAlpha(float alpha) {
-        if (this.ninecunLingtai$renderingEntity == Minecraft.getInstance().player
+        if (this.ninecunLingtai$renderingEntity instanceof SoulEntity
                 && ClientSoulRoamingManager.isLocalPlayerSoulRoaming()) {
             return 0.05F;
         }

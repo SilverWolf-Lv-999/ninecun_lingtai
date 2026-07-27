@@ -13,7 +13,7 @@ import com.seraphina.ninecun_lingtai.client.render.AptitudeFormationShader;
 import com.seraphina.ninecun_lingtai.client.render.DefenseBarShader;
 import com.seraphina.ninecun_lingtai.client.render.ElementFlowShader;
 import com.seraphina.ninecun_lingtai.client.render.SoulConstellationShader;
-import com.seraphina.ninecun_lingtai.client.render.SoulBodyRenderer;
+import com.seraphina.ninecun_lingtai.client.render.SoulRenderer;
 import com.seraphina.ninecun_lingtai.client.render.SpiritualEnergyShader;
 import com.seraphina.ninecun_lingtai.client.render.TechniqueCloudShader;
 import com.seraphina.ninecun_lingtai.common.registry.ModEntityTypes;
@@ -80,7 +80,7 @@ public final class ClientModEventHandler {
 
     @SubscribeEvent
     public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
-        event.registerEntityRenderer(ModEntityTypes.SOUL_BODY.get(), SoulBodyRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.SOUL_ENTITY.get(), SoulRenderer::new);
     }
 
     @SubscribeEvent

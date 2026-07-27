@@ -2,6 +2,7 @@ package com.seraphina.ninecun_lingtai.common.event;
 
 import com.seraphina.ninecun_lingtai.ModMain;
 import com.seraphina.ninecun_lingtai.common.player.PlayerMeditationManager;
+import com.seraphina.ninecun_lingtai.common.player.PlayerSoulRoamingManager;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
@@ -57,21 +58,27 @@ public final class PlayerMeditationEventHandler {
 
     @SubscribeEvent
     public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player && PlayerMeditationManager.isMeditating(player)) {
+        if (event.getEntity() instanceof ServerPlayer player
+                && PlayerMeditationManager.isMeditating(player)
+                && !PlayerSoulRoamingManager.isSoulRoaming(player)) {
             PlayerMeditationManager.stopMeditating(player);
         }
     }
 
     @SubscribeEvent
     public static void onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player && PlayerMeditationManager.isMeditating(player)) {
+        if (event.getEntity() instanceof ServerPlayer player
+                && PlayerMeditationManager.isMeditating(player)
+                && !PlayerSoulRoamingManager.isSoulRoaming(player)) {
             PlayerMeditationManager.stopMeditating(player);
         }
     }
 
     @SubscribeEvent
     public static void onLivingDeath(LivingDeathEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player && PlayerMeditationManager.isMeditating(player)) {
+        if (event.getEntity() instanceof ServerPlayer player
+                && PlayerMeditationManager.isMeditating(player)
+                && !PlayerSoulRoamingManager.isSoulRoaming(player)) {
             PlayerMeditationManager.stopMeditating(player);
         }
     }

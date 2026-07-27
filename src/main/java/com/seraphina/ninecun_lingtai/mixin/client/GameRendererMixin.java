@@ -1,6 +1,6 @@
 package com.seraphina.ninecun_lingtai.mixin.client;
 
-import com.seraphina.ninecun_lingtai.client.player.ClientMeditationCameraManager;
+import com.seraphina.ninecun_lingtai.client.player.ClientSoulRoamingManager;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.HitResult;
@@ -24,7 +24,7 @@ public abstract class GameRendererMixin {
             float partialTick,
             boolean hitFluids
     ) {
-        return ClientMeditationCameraManager.pick(cameraEntity, hitDistance, partialTick, hitFluids);
+        return ClientSoulRoamingManager.pick(cameraEntity, hitDistance, partialTick, hitFluids);
     }
 
     @Redirect(
@@ -35,6 +35,6 @@ public abstract class GameRendererMixin {
             )
     )
     private Vec3 ninecunLingtai$getMeditationCameraViewVector(Entity cameraEntity, float partialTick) {
-        return ClientMeditationCameraManager.getCameraViewVector(cameraEntity, partialTick);
+        return ClientSoulRoamingManager.getCameraViewVector(cameraEntity, partialTick);
     }
 }

@@ -36,9 +36,6 @@ public final class ClientCultivationInfoManager {
     }
 
     public static Optional<CultivationStage> getCultivationStage() {
-        if (ClientSoulRoamingManager.isLocalPlayerSoulRoaming()) {
-            return Optional.empty();
-        }
         return cultivationStage;
     }
 

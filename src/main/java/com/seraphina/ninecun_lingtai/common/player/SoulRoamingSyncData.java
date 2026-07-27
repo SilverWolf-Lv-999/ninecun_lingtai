@@ -8,7 +8,7 @@ public record SoulRoamingSyncData(
         boolean active,
         ResourceKey<Level> bodyDimension,
         Vec3 bodyPosition,
-        int bodyEntityId,
+        int soulEntityId,
         boolean bodyExists
 ) {
     public static SoulRoamingSyncData inactive() {

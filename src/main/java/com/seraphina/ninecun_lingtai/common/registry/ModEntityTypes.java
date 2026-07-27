@@ -1,7 +1,7 @@
 package com.seraphina.ninecun_lingtai.common.registry;
 
 import com.seraphina.ninecun_lingtai.ModMain;
-import com.seraphina.ninecun_lingtai.common.entity.SoulBodyEntity;
+import com.seraphina.ninecun_lingtai.common.entity.SoulEntity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -15,14 +15,14 @@ public final class ModEntityTypes {
             ModMain.MOD_ID
     );
 
-    public static final RegistryObject<EntityType<SoulBodyEntity>> SOUL_BODY = ENTITY_TYPES.register(
-            "soul_body",
+    public static final RegistryObject<EntityType<SoulEntity>> SOUL_ENTITY = ENTITY_TYPES.register(
+            "soul_entity",
             () -> EntityType.Builder
-                    .of(SoulBodyEntity::new, MobCategory.MISC)
+                    .of(SoulEntity::new, MobCategory.MISC)
                     .sized(0.6F, 1.8F)
                     .clientTrackingRange(64)
-                    .updateInterval(2)
-                    .build("soul_body")
+                    .updateInterval(1)
+                    .build("soul_entity")
     );
 
     private ModEntityTypes() {

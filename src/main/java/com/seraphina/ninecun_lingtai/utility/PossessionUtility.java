@@ -64,8 +64,7 @@ public final class PossessionUtility {
         if (targetStage.isEmpty() || targetRoot.isEmpty()) {
             return PossessionResult.failure(Component.translatable("message.ninecun_lingtai.soul_roaming.possess_no_cultivation"));
         }
-        int requiredRealm = playerStage.get().realm().ordinal() - 1;
-        if (targetStage.get().realm().ordinal() != requiredRealm) {
+        if (targetStage.get().realm().ordinal() >= playerStage.get().realm().ordinal()) {
             return PossessionResult.failure(Component.translatable("message.ninecun_lingtai.soul_roaming.possess_realm_mismatch"));
         }
         return PossessionResult.success(Component.empty());

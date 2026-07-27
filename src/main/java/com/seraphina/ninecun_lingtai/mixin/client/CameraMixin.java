@@ -1,6 +1,6 @@
 package com.seraphina.ninecun_lingtai.mixin.client;
 
-import com.seraphina.ninecun_lingtai.client.player.ClientMeditationCameraManager;
+import com.seraphina.ninecun_lingtai.client.player.ClientSoulRoamingManager;
 import net.minecraft.client.Camera;
 import net.minecraft.world.entity.Entity;
 import org.spongepowered.asm.mixin.Mixin;
@@ -17,7 +17,7 @@ public abstract class CameraMixin {
             )
     )
     private float ninecunLingtai$getMeditationCameraYRot(Entity cameraEntity, float partialTick) {
-        return ClientMeditationCameraManager.getCameraYRot(cameraEntity, partialTick);
+        return ClientSoulRoamingManager.getCameraYRot(cameraEntity, partialTick);
     }
 
     @Redirect(
@@ -28,6 +28,6 @@ public abstract class CameraMixin {
             )
     )
     private float ninecunLingtai$getMeditationCameraXRot(Entity cameraEntity, float partialTick) {
-        return ClientMeditationCameraManager.getCameraXRot(cameraEntity, partialTick);
+        return ClientSoulRoamingManager.getCameraXRot(cameraEntity, partialTick);
     }
 }

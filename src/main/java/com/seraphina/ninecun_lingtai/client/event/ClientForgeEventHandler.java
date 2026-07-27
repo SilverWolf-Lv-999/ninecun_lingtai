@@ -19,6 +19,7 @@ import com.seraphina.ninecun_lingtai.client.utility.DefenseBarRenderUtility;
 import com.seraphina.ninecun_lingtai.client.utility.SpiritualEnergyRenderUtility;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.Input;
+import net.minecraft.world.entity.Entity;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.client.event.InputEvent;
@@ -56,10 +57,12 @@ public final class ClientForgeEventHandler {
         ClientShrinkEarthManager.onKeyInput(event.getKey(), event.getAction());
         if (event.getAction() == GLFW.GLFW_PRESS
                 && (event.getKey() == GLFW.GLFW_KEY_LEFT_SHIFT || event.getKey() == GLFW.GLFW_KEY_RIGHT_SHIFT)) {
-            if (ClientMeditationManager.isLocalPlayerMeditating()) {
+            if (!ClientSoulRoamingManager.isLocalPlayerSoulRoaming()
+                    && ClientMeditationManager.isLocalPlayerMeditating()) {
                 ClientMeditationManager.requestStop();
             }
-            if (Minecraft.getInstance().screen == null) {
+            if (Minecraft.getInstance().screen == null
+                    && !ClientSoulRoamingManager.isLocalPlayerSoulRoaming()) {
                 ClientSwordFlightManager.onShiftPressed();
             }
         }
@@ -74,6 +77,16 @@ public final class ClientForgeEventHandler {
 
     @SubscribeEvent
     public static void onInteractionInput(InputEvent.InteractionKeyMappingTriggered event) {
+        if (ClientSoulRoamingManager.isLocalPlayerSoulRoaming()) {
+            if (event.isUseItem()) {
+                Minecraft minecraft = Minecraft.getInstance();
+                Entity target = minecraft.crosshairPickEntity;
+                ClientSoulRoamingManager.sendInteraction(target == null ? -1 : target.getId());
+            }
+            event.setSwingHand(false);
+            event.setCanceled(true);
+            return;
+        }
         if (ClientMeditationManager.isLocalPlayerMeditating()) {
             event.setSwingHand(false);
             event.setCanceled(true);
@@ -82,6 +95,15 @@ public final class ClientForgeEventHandler {
 
     @SubscribeEvent
     public static void onMovementInput(MovementInputUpdateEvent event) {
+        if (ClientSoulRoamingManager.isLocalPlayerSoulRoaming()) {
+            Input input = event.getInput();
+            ClientSoulRoamingManager.sendMovement(input);
+            input.leftImpulse = 0.0F;
+            input.forwardImpulse = 0.0F;
+            input.jumping = false;
+            input.shiftKeyDown = false;
+            return;
+        }
         if (!ClientMeditationManager.isLocalPlayerMeditating()) {
             return;
         }

@@ -6,15 +6,22 @@ import com.mojang.blaze3d.vertex.BufferUploader;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import com.seraphina.ninecun_lingtai.common.entity.SoulEntity;
+import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
+import com.seraphina.ninecun_lingtai.common.network.packet.SoulInteractionPacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.SoulMovementPacket;
 import com.seraphina.ninecun_lingtai.common.player.SoulRoamingSyncData;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.player.Input;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.client.event.RenderGuiOverlayEvent;
 import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
@@ -28,12 +35,20 @@ public final class ClientSoulRoamingManager {
     private static final float ARROW_HEAD_WIDTH = 8.0F;
     private static final float ARROW_TAIL_LENGTH = 13.0F;
     private static final float ARROW_TAIL_HALF_WIDTH = 2.5F;
+    private static final float MOUSE_ROTATION_SCALE = 0.15F;
 
     private static boolean active;
     private static ResourceKey<Level> bodyDimension = Level.OVERWORLD;
     private static Vec3 bodyPosition = Vec3.ZERO;
-    private static int bodyEntityId = -1;
+    private static int soulEntityId = -1;
     private static boolean bodyExists;
+    private static float soulYRot;
+    private static float soulXRot;
+    private static boolean soulRotationInitialized;
+    private static float leftImpulse;
+    private static float forwardImpulse;
+    private static boolean jumping;
+    private static boolean shiftKeyDown;
 
     private ClientSoulRoamingManager() {
     }
@@ -43,20 +58,28 @@ public final class ClientSoulRoamingManager {
             reset();
             return;
         }
+        boolean wasActive = active;
         active = true;
         bodyDimension = syncData.bodyDimension();
         bodyPosition = syncData.bodyPosition();
-        bodyEntityId = syncData.bodyEntityId();
+        soulEntityId = syncData.soulEntityId();
         bodyExists = syncData.bodyExists();
 
-        LocalPlayer player = Minecraft.getInstance().player;
+        Minecraft minecraft = Minecraft.getInstance();
+        LocalPlayer player = minecraft.player;
         if (player != null) {
-            ClientMeditationManager.removePlayer(player.getUUID());
+            if (!wasActive) {
+                soulYRot = player.getYRot();
+                soulXRot = player.getXRot();
+                soulRotationInitialized = true;
+            }
             ClientSpellManager.reset();
             ClientTechniqueManager.reset();
             ClientPlayerValueControlManager.reset();
             ClientLightFlightManager.removePlayer(player.getUUID());
             ClientShrinkEarthManager.setActive(player.getUUID(), false, 1);
+            applySoulRotation(findSoulEntity(minecraft), soulYRot, soulXRot);
+            updateCameraEntity(minecraft);
         }
     }
 
@@ -66,20 +89,105 @@ public final class ClientSoulRoamingManager {
         }
         Minecraft minecraft = Minecraft.getInstance();
         LocalPlayer player = minecraft.player;
-        if (player == null) {
+        if (player == null || minecraft.level == null) {
             reset();
             return;
         }
-        player.noPhysics = true;
-        player.setNoGravity(true);
-        player.fallDistance = 0.0F;
-        if (player.getAbilities().mayfly && !player.getAbilities().flying) {
-            player.getAbilities().flying = true;
+        SoulEntity soul = findSoulEntity(minecraft);
+        if (soul != null) {
+            if (!soulRotationInitialized) {
+                soulYRot = soul.getYRot();
+                soulXRot = soul.getXRot();
+                soulRotationInitialized = true;
+            }
+            soul.moveSoul(
+                    leftImpulse,
+                    forwardImpulse,
+                    (jumping ? 1.0F : 0.0F) + (shiftKeyDown ? -1.0F : 0.0F),
+                    soulYRot,
+                    soulXRot
+            );
+            applySoulRotation(soul, soulYRot, soulXRot);
+            updateCameraEntity(minecraft);
+        }
+    }
+
+    public static void sendMovement(Input input) {
+        if (!active) {
+            return;
+        }
+        float leftImpulse = Mth.clamp(input.leftImpulse, -1.0F, 1.0F);
+        float forwardImpulse = Mth.clamp(input.forwardImpulse, -1.0F, 1.0F);
+        ClientSoulRoamingManager.leftImpulse = leftImpulse;
+        ClientSoulRoamingManager.forwardImpulse = forwardImpulse;
+        ClientSoulRoamingManager.jumping = input.jumping;
+        ClientSoulRoamingManager.shiftKeyDown = input.shiftKeyDown;
+        ModNetwork.sendToServer(new SoulMovementPacket(
+            leftImpulse,
+            forwardImpulse,
+                input.jumping,
+                input.shiftKeyDown,
+                soulYRot,
+                soulXRot
+        ));
+    }
+
+    public static boolean rotateSoul(LocalPlayer player, double yRotDelta, double xRotDelta) {
+        if (!active) {
+            return false;
+        }
+        soulYRot = Mth.wrapDegrees(soulYRot + (float) yRotDelta * MOUSE_ROTATION_SCALE);
+        soulXRot = Mth.clamp(
+                soulXRot + (float) xRotDelta * MOUSE_ROTATION_SCALE,
+                -90.0F,
+                90.0F
+        );
+        applySoulRotation(findSoulEntity(Minecraft.getInstance()), soulYRot, soulXRot);
+        return true;
+    }
+
+    public static void sendInteraction(int targetEntityId) {
+        if (active) {
+            ModNetwork.sendToServer(new SoulInteractionPacket(targetEntityId));
         }
     }
 
     public static boolean isLocalPlayerSoulRoaming() {
         return active && Minecraft.getInstance().player != null;
+    }
+
+    public static float getCameraYRot(Entity cameraEntity, float partialTick) {
+        return isSoulCameraEntity(cameraEntity)
+                ? soulYRot
+                : ClientMeditationCameraManager.getCameraYRot(cameraEntity, partialTick);
+    }
+
+    public static float getCameraXRot(Entity cameraEntity, float partialTick) {
+        return isSoulCameraEntity(cameraEntity)
+                ? soulXRot
+                : ClientMeditationCameraManager.getCameraXRot(cameraEntity, partialTick);
+    }
+
+    public static Vec3 getCameraViewVector(Entity cameraEntity, float partialTick) {
+        return isSoulCameraEntity(cameraEntity)
+                ? Vec3.directionFromRotation(soulXRot, soulYRot)
+                : ClientMeditationCameraManager.getCameraViewVector(cameraEntity, partialTick);
+    }
+
+    public static HitResult pick(Entity cameraEntity, double hitDistance, float partialTick, boolean hitFluids) {
+        if (!isSoulCameraEntity(cameraEntity)) {
+            return ClientMeditationCameraManager.pick(cameraEntity, hitDistance, partialTick, hitFluids);
+        }
+        Vec3 eyePosition = cameraEntity.getEyePosition(partialTick);
+        Vec3 viewVector = getCameraViewVector(cameraEntity, partialTick);
+        Vec3 targetPosition = eyePosition.add(viewVector.scale(hitDistance));
+        return cameraEntity.level().clip(new ClipContext(
+                eyePosition,
+                targetPosition,
+                ClipContext.Block.OUTLINE,
+                hitFluids ? ClipContext.Fluid.ANY : ClipContext.Fluid.NONE,
+                cameraEntity
+        ));
     }
 
     public static void renderBodyArrow(RenderGuiOverlayEvent.Post event) {
@@ -91,10 +199,18 @@ public final class ClientSoulRoamingManager {
         if (!active || !bodyExists || minecraft.options.hideGui || player == null || minecraft.level == null) {
             return;
         }
-        updateBodyPositionFromClientLevel(minecraft);
+        if (!minecraft.level.dimension().equals(bodyDimension)) {
+            return;
+        }
+        SoulEntity soul = findSoulEntity(minecraft);
+        if (soul == null) {
+            return;
+        }
 
-        double deltaX = bodyPosition.x - Mth.lerp(event.getPartialTick(), player.xo, player.getX());
-        double deltaZ = bodyPosition.z - Mth.lerp(event.getPartialTick(), player.zo, player.getZ());
+        double soulX = Mth.lerp(event.getPartialTick(), soul.xo, soul.getX());
+        double soulZ = Mth.lerp(event.getPartialTick(), soul.zo, soul.getZ());
+        double deltaX = bodyPosition.x - soulX;
+        double deltaZ = bodyPosition.z - soulZ;
         if (deltaX * deltaX + deltaZ * deltaZ < 0.0001D) {
             return;
         }
@@ -131,22 +247,55 @@ public final class ClientSoulRoamingManager {
     }
 
     public static void reset() {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player != null && minecraft.getCameraEntity() != minecraft.player) {
+            minecraft.setCameraEntity(minecraft.player);
+        }
         active = false;
         bodyDimension = Level.OVERWORLD;
         bodyPosition = Vec3.ZERO;
-        bodyEntityId = -1;
+        soulEntityId = -1;
         bodyExists = false;
+        soulYRot = 0.0F;
+        soulXRot = 0.0F;
+        soulRotationInitialized = false;
+        leftImpulse = 0.0F;
+        forwardImpulse = 0.0F;
+        jumping = false;
+        shiftKeyDown = false;
     }
 
-    private static void updateBodyPositionFromClientLevel(Minecraft minecraft) {
-        if (bodyEntityId < 0 || minecraft.level == null || !minecraft.level.dimension().equals(bodyDimension)) {
+    private static void updateCameraEntity(Minecraft minecraft) {
+        SoulEntity soul = findSoulEntity(minecraft);
+        if (soul != null && minecraft.getCameraEntity() != soul) {
+            minecraft.setCameraEntity(soul);
+        }
+    }
+
+    private static SoulEntity findSoulEntity(Minecraft minecraft) {
+        if (soulEntityId < 0 || minecraft.level == null) {
+            return null;
+        }
+        Entity entity = minecraft.level.getEntity(soulEntityId);
+        return entity instanceof SoulEntity soul ? soul : null;
+    }
+
+    private static boolean isSoulCameraEntity(Entity entity) {
+        return active && entity != null && entity.getId() == soulEntityId;
+    }
+
+    private static void applySoulRotation(Entity entity, float yRot, float xRot) {
+        if (!(entity instanceof SoulEntity soul)) {
             return;
         }
-        Entity body = minecraft.level.getEntity(bodyEntityId);
-        if (body == null) {
-            return;
-        }
-        bodyPosition = body.position();
+        soul.setYRot(yRot);
+        soul.setXRot(xRot);
+        soul.setYHeadRot(yRot);
+        soul.setYBodyRot(yRot);
+        soul.yRotO = yRot;
+        soul.xRotO = xRot;
+        soul.yHeadRotO = yRot;
+        soul.yBodyRotO = yRot;
     }
 
     private static void appendArrow(

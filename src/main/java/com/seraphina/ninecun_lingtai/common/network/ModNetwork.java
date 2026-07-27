@@ -21,6 +21,8 @@ import com.seraphina.ninecun_lingtai.common.network.packet.RequestCultivationInf
 import com.seraphina.ninecun_lingtai.common.network.packet.RequestPlayerValueControlSettingsPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.RequestTechniqueLibraryPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SelectSpellPacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.SoulInteractionPacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.SoulMovementPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.StartSoulRoamingPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SetShrinkEarthPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SetPlayerValueControlSettingsPacket;
@@ -371,6 +373,24 @@ public final class ModNetwork {
                 .decoder(SyncSoulRoamingPacket::decode)
                 .consumerMainThread(SyncSoulRoamingPacket::handle)
                 .add();
+        CHANNEL.messageBuilder(
+                        SoulMovementPacket.class,
+                        nextPacketId++,
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(SoulMovementPacket::encode)
+                .decoder(SoulMovementPacket::decode)
+                .consumerMainThread(SoulMovementPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        SoulInteractionPacket.class,
+                        nextPacketId++,
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(SoulInteractionPacket::encode)
+                .decoder(SoulInteractionPacket::decode)
+                .consumerMainThread(SoulInteractionPacket::handle)
+                .add();
     }
 
     /** 把玩家当前的缩地状态广播给所有追踪者与其本人。 */
@@ -507,12 +527,9 @@ public final class ModNetwork {
     }
 
     public static void sendCultivationInfo(ServerPlayer player) {
-        PlayerCultivationInfo cultivationInfo = PlayerSoulRoamingManager.isSoulRoaming(player)
-                ? PlayerCultivationInfo.empty()
-                : PlayerCultivationInfo.capture(player);
         CHANNEL.send(
                 PacketDistributor.PLAYER.with(() -> player),
-                new SyncCultivationInfoPacket(cultivationInfo)
+                new SyncCultivationInfoPacket(PlayerCultivationInfo.capture(player))
         );
     }
 

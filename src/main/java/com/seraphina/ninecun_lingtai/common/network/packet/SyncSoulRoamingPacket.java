@@ -22,7 +22,7 @@ public record SyncSoulRoamingPacket(SoulRoamingSyncData syncData) {
         buffer.writeDouble(syncData.bodyPosition().x);
         buffer.writeDouble(syncData.bodyPosition().y);
         buffer.writeDouble(syncData.bodyPosition().z);
-        buffer.writeVarInt(syncData.bodyEntityId());
+        buffer.writeVarInt(syncData.soulEntityId());
         buffer.writeBoolean(syncData.bodyExists());
     }
 
@@ -37,7 +37,7 @@ public record SyncSoulRoamingPacket(SoulRoamingSyncData syncData) {
                 buffer.readDouble(),
                 buffer.readDouble()
         );
-        int bodyEntityId = buffer.readVarInt();
+        int soulEntityId = buffer.readVarInt();
         boolean bodyExists = buffer.readBoolean();
         if (!active) {
             return new SyncSoulRoamingPacket(SoulRoamingSyncData.inactive());
@@ -46,7 +46,7 @@ public record SyncSoulRoamingPacket(SoulRoamingSyncData syncData) {
                 true,
                 bodyDimension,
                 bodyPosition,
-                bodyEntityId,
+                soulEntityId,
                 bodyExists
         ));
     }
