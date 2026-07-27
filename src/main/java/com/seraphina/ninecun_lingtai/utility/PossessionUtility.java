@@ -2,83 +2,73 @@ package com.seraphina.ninecun_lingtai.utility;
 
 import com.seraphina.ninecun_lingtai.api.aptitude.SpiritualRoot;
 import com.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
-import com.seraphina.ninecun_lingtai.common.creature.CreatureCultivationData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerAptitudeData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerCultivationData;
-import com.seraphina.ninecun_lingtai.common.player.PlayerDefenseResourceData;
-import com.seraphina.ninecun_lingtai.common.player.PlayerImprintedTechniqueData;
-import com.seraphina.ninecun_lingtai.common.player.PlayerSelectedSpellData;
-import com.seraphina.ninecun_lingtai.common.player.PlayerSpiritualEnergyData;
-import com.seraphina.ninecun_lingtai.common.player.PlayerTechniqueData;
-import com.seraphina.ninecun_lingtai.common.player.PlayerTechniqueProficiencyData;
+import com.seraphina.ninecun_lingtai.common.player.PlayerPossessionManager;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.MobType;
-import net.minecraft.world.entity.player.Player;
-
-import java.util.Optional;
 
 public final class PossessionUtility {
     private PossessionUtility() {
     }
 
-    public static PossessionResult tryPossess(ServerPlayer player, LivingEntity target) {
+    public static PossessionResult tryPossess(ServerPlayer player, ServerPlayer target) {
+        PossessionResult validationResult = validatePossession(player, target);
+        if (!validationResult.success()) {
+            return validationResult;
+        }
+        return possess(player, target);
+    }
+
+    public static PossessionResult validatePossession(ServerPlayer player, ServerPlayer target) {
+        return validateTarget(player, target);
+    }
+
+    public static PossessionResult possess(ServerPlayer player, ServerPlayer target) {
         PossessionResult validationResult = validateTarget(player, target);
         if (!validationResult.success()) {
             return validationResult;
         }
-        CultivationStage targetStage = CreatureCultivationData.getStage(target).orElseThrow();
-        SpiritualRoot targetRoot = CreatureCultivationData.getSpiritualRoot(target).orElseThrow();
-        player.teleportTo(target.getX(), target.getY(), target.getZ());
-        clearBodyBoundData(player);
-        PlayerCultivationData.setStage(player, targetStage);
-        PlayerAptitudeData.setSpiritualRoot(player, targetRoot);
-        CultivationDefenseUtility.syncMaxHealthModifier(player);
-        PlayerDefenseResourceData.refillToMaximum(player);
-        player.setHealth(Math.min(player.getMaxHealth(), Math.max(1.0F, target.getHealth())));
-        player.setYRot(target.getYRot());
-        player.setXRot(target.getXRot());
-        player.setYHeadRot(target.getYHeadRot());
-        player.setYBodyRot(target.yBodyRot);
-        target.discard();
-        return PossessionResult.success(Component.translatable("message.ninecun_lingtai.soul_roaming.possessed"));
+        if (!PlayerPossessionManager.startPossessing(player, target)) {
+            return PossessionResult.failure(
+                    Component.translatable("message.ninecun_lingtai.soul_roaming.possess_invalid")
+            );
+        }
+        return PossessionResult.success(
+                Component.translatable("message.ninecun_lingtai.soul_roaming.possessed")
+        );
     }
 
-    private static PossessionResult validateTarget(ServerPlayer player, LivingEntity target) {
-        if (target instanceof Player) {
-            return PossessionResult.failure(Component.translatable("message.ninecun_lingtai.soul_roaming.possess_player"));
+    private static PossessionResult validateTarget(ServerPlayer player, ServerPlayer target) {
+        if (player == target
+                || !target.isAlive()
+                || target.isSpectator()
+                || PlayerPossessionManager.isPossessing(target)
+                || PlayerPossessionManager.isPossessedTarget(target)) {
+            return PossessionResult.failure(
+                    Component.translatable("message.ninecun_lingtai.soul_roaming.possess_invalid")
+            );
         }
-        if (!target.isAlive()) {
-            return PossessionResult.failure(Component.translatable("message.ninecun_lingtai.soul_roaming.possess_invalid"));
+
+        CultivationStage playerStage = PlayerCultivationData.getStage(player).orElse(null);
+        CultivationStage targetStage = PlayerCultivationData.getStage(target).orElse(null);
+        SpiritualRoot targetRoot = PlayerAptitudeData.getSpiritualRoot(target).orElse(null);
+        if (playerStage == null) {
+            return PossessionResult.failure(
+                    Component.translatable("message.ninecun_lingtai.soul_roaming.no_soul_stage")
+            );
         }
-        if (target.getMobType() == MobType.UNDEAD) {
-            return PossessionResult.failure(Component.translatable("message.ninecun_lingtai.soul_roaming.possess_undead"));
+        if (targetStage == null || targetRoot == null) {
+            return PossessionResult.failure(
+                    Component.translatable("message.ninecun_lingtai.soul_roaming.possess_no_cultivation")
+            );
         }
-        Optional<CultivationStage> playerStage = PlayerCultivationData.getStage(player);
-        Optional<CultivationStage> targetStage = CreatureCultivationData.getStage(target);
-        Optional<SpiritualRoot> targetRoot = CreatureCultivationData.getSpiritualRoot(target);
-        if (playerStage.isEmpty()) {
-            return PossessionResult.failure(Component.translatable("message.ninecun_lingtai.soul_roaming.no_soul_stage"));
-        }
-        if (targetStage.isEmpty() || targetRoot.isEmpty()) {
-            return PossessionResult.failure(Component.translatable("message.ninecun_lingtai.soul_roaming.possess_no_cultivation"));
-        }
-        if (targetStage.get().realm().ordinal() >= playerStage.get().realm().ordinal()) {
-            return PossessionResult.failure(Component.translatable("message.ninecun_lingtai.soul_roaming.possess_realm_mismatch"));
+        if (targetStage.realm().ordinal() >= playerStage.realm().ordinal()) {
+            return PossessionResult.failure(
+                    Component.translatable("message.ninecun_lingtai.soul_roaming.possess_realm_mismatch")
+            );
         }
         return PossessionResult.success(Component.empty());
-    }
-
-    private static void clearBodyBoundData(ServerPlayer player) {
-        PlayerCultivationData.clearStage(player);
-        PlayerAptitudeData.clearAptitude(player);
-        PlayerTechniqueData.clear(player);
-        PlayerTechniqueProficiencyData.clear(player);
-        PlayerImprintedTechniqueData.clear(player);
-        PlayerSelectedSpellData.clearSelectedSpell(player);
-        PlayerSpiritualEnergyData.clearAllEnergy(player);
-        PlayerDefenseResourceData.clear(player);
     }
 
     public record PossessionResult(boolean success, Component message) {

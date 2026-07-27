@@ -2,6 +2,7 @@ package com.seraphina.ninecun_lingtai.common.event;
 
 import com.seraphina.ninecun_lingtai.ModMain;
 import com.seraphina.ninecun_lingtai.common.entity.SoulEntity;
+import com.seraphina.ninecun_lingtai.common.player.PlayerPossessionManager;
 import com.seraphina.ninecun_lingtai.common.player.PlayerSoulRoamingManager;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
@@ -126,7 +127,18 @@ public final class PlayerSoulRoamingEventHandler {
     @SubscribeEvent
     public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
+            PlayerPossessionManager.onPlayerLoggedIn(player);
             PlayerSoulRoamingManager.syncState(player);
+            PlayerPossessionManager.syncState(player);
+            PlayerPossessionManager.syncStatesTo(player);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerClone(PlayerEvent.Clone event) {
+        if (event.getOriginal() instanceof ServerPlayer original
+                && event.getEntity() instanceof ServerPlayer clone) {
+            PlayerPossessionManager.onPlayerClone(original, clone);
         }
     }
 
@@ -134,6 +146,7 @@ public final class PlayerSoulRoamingEventHandler {
     public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             PlayerSoulRoamingManager.cleanup(player);
+            PlayerPossessionManager.cleanup(player);
         }
     }
 
@@ -142,11 +155,15 @@ public final class PlayerSoulRoamingEventHandler {
         if (event.getEntity() instanceof ServerPlayer player && PlayerSoulRoamingManager.isSoulRoaming(player)) {
             PlayerSoulRoamingManager.syncState(player);
         }
+        if (event.getEntity() instanceof ServerPlayer player && PlayerPossessionManager.isPossessing(player)) {
+            PlayerPossessionManager.syncState(player);
+        }
     }
 
     @SubscribeEvent
     public static void onServerStopped(ServerStoppedEvent event) {
         PlayerSoulRoamingManager.clear(event.getServer());
+        PlayerPossessionManager.clear(event.getServer());
     }
 
     private static void cancelSoulInteraction(PlayerInteractEvent event) {

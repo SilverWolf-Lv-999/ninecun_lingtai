@@ -8,6 +8,7 @@ import com.seraphina.ninecun_lingtai.client.player.ClientDefenseResourceManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientLightFlightManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientMeditationManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientPlayerValueControlManager;
+import com.seraphina.ninecun_lingtai.client.player.ClientPossessionManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientShrinkEarthManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientSoulRoamingManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientSpellManager;
@@ -159,5 +160,6 @@ public final class ClientForgeEventHandler {
         ClientCultivationFeedbackManager.reset();
         ClientPlayerValueControlManager.reset();
         ClientSoulRoamingManager.reset();
+        ClientPossessionManager.reset();
     }
 }

@@ -55,9 +55,11 @@ public record SyncSoulRoamingPacket(SoulRoamingSyncData syncData) {
             SyncSoulRoamingPacket packet,
             Supplier<NetworkEvent.Context> contextSupplier
     ) {
+        NetworkEvent.Context context = contextSupplier.get();
         DistExecutor.unsafeRunWhenOn(
                 Dist.CLIENT,
                 () -> () -> ClientSoulRoamingManager.accept(packet.syncData)
         );
+        context.setPacketHandled(true);
     }
 }

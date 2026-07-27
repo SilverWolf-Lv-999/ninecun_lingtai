@@ -16,6 +16,7 @@
     "client.LevelRendererMixin",
     "client.LivingEntityRendererMixin",
     "client.LightTextureMixin",
+    "client.AbstractClientPlayerMixin",
     "client.MouseHandlerMixin"
   ],
   "injectors": {

@@ -14,7 +14,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
@@ -81,7 +80,6 @@ public final class PlayerSoulRoamingManager {
                 new SoulMovementInput()
         );
         SOUL_ROAMING_PLAYERS.put(player.getUUID(), session);
-        setServerCamera(player, soul);
         syncState(player);
         syncBodyBoundData(player);
         player.displayClientMessage(
@@ -96,6 +94,7 @@ public final class PlayerSoulRoamingManager {
         if (session == null) {
             return;
         }
+        keepBodyAtPosition(player, session);
         if (!PlayerMeditationManager.isMeditating(player)) {
             PlayerMeditationManager.startMeditating(
                     player,
@@ -119,7 +118,6 @@ public final class PlayerSoulRoamingManager {
                 movementInput.yRot(),
                 movementInput.xRot()
         );
-        setServerCamera(player, soul);
     }
 
     public static void moveSoul(
@@ -155,7 +153,7 @@ public final class PlayerSoulRoamingManager {
                 xRot,
                 player.tickCount
         );
-        setServerCamera(player, soul);
+        keepBodyAtPosition(player, session);
     }
 
     public static void interactWithEntity(ServerPlayer player, int targetEntityId) {
@@ -175,8 +173,8 @@ public final class PlayerSoulRoamingManager {
             returnToBody(player);
             return;
         }
-        if (target instanceof LivingEntity livingEntity) {
-            tryPossess(player, livingEntity);
+        if (target instanceof ServerPlayer targetPlayer) {
+            tryPossess(player, targetPlayer);
         }
     }
 
@@ -193,18 +191,23 @@ public final class PlayerSoulRoamingManager {
         return true;
     }
 
-    public static boolean tryPossess(ServerPlayer player, LivingEntity target) {
+    public static boolean tryPossess(ServerPlayer player, ServerPlayer target) {
         SoulRoamingSession session = SOUL_ROAMING_PLAYERS.get(player.getUUID());
         if (session == null) {
             return false;
         }
-        PossessionUtility.PossessionResult result = PossessionUtility.tryPossess(player, target);
-        if (!result.success()) {
-            player.displayClientMessage(result.message(), true);
+        PossessionUtility.PossessionResult validationResult = PossessionUtility.validatePossession(player, target);
+        if (!validationResult.success()) {
+            player.displayClientMessage(validationResult.message(), true);
             return false;
         }
         finishSoulRoaming(player, session);
         PlayerMeditationManager.stopMeditating(player);
+        PossessionUtility.PossessionResult result = PossessionUtility.possess(player, target);
+        if (!result.success()) {
+            player.displayClientMessage(result.message(), true);
+            return false;
+        }
         player.displayClientMessage(result.message(), true);
         return true;
     }
@@ -265,19 +268,23 @@ public final class PlayerSoulRoamingManager {
     }
 
     private static void finishSoulRoaming(ServerPlayer player, SoulRoamingSession session) {
+        keepBodyAtPosition(player, session);
         getSoulEntity(player.server, session).ifPresent(Entity::discard);
-        setServerCamera(player, player);
         SOUL_ROAMING_PLAYERS.remove(player.getUUID());
         syncInactive(player);
         syncBodyBoundData(player);
     }
 
-    private static void setServerCamera(ServerPlayer player, Entity cameraEntity) {
-        player.setCamera(cameraEntity);
-        if (cameraEntity.level() instanceof ServerLevel serverLevel) {
-            serverLevel.getChunkAt(cameraEntity.blockPosition());
-            serverLevel.getChunkSource().chunkMap.move(player);
+    private static void keepBodyAtPosition(ServerPlayer player, SoulRoamingSession session) {
+        if (player.level().dimension() != session.soulDimension()) {
+            return;
         }
+        Vec3 bodyPosition = session.bodyPosition();
+        if (player.distanceToSqr(bodyPosition) > 0.0001D) {
+            player.teleportTo(bodyPosition.x, bodyPosition.y, bodyPosition.z);
+        }
+        player.setDeltaMovement(Vec3.ZERO);
+        player.fallDistance = 0.0F;
     }
 
     private static SoulRoamingSyncData createSyncData(ServerPlayer player) {

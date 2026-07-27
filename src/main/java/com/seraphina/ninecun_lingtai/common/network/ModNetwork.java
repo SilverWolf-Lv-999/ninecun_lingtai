@@ -34,6 +34,7 @@ import com.seraphina.ninecun_lingtai.common.network.packet.SyncCultivationInfoPa
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncDefenseResourcePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncLightFlightPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncMeditationStatePacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.SyncPossessionPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncPlayerValueControlSettingsPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncShrinkEarthPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncSoulRoamingPacket;
@@ -52,6 +53,7 @@ import com.seraphina.ninecun_lingtai.common.player.PlayerImprintedTechniqueData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerSoulRoamingManager;
 import com.seraphina.ninecun_lingtai.common.player.PlayerTechniqueData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerTechniqueProficiencyData;
+import com.seraphina.ninecun_lingtai.common.player.PossessionSyncData;
 import com.seraphina.ninecun_lingtai.common.player.SoulRoamingSyncData;
 import com.seraphina.ninecun_lingtai.utility.PlayerValueControlUnlockUtility;
 import net.minecraft.network.chat.Component;
@@ -71,7 +73,7 @@ import java.util.Set;
 import java.util.UUID;
 
 public final class ModNetwork {
-    private static final String PROTOCOL_VERSION = "22";
+    private static final String PROTOCOL_VERSION = "24";
     private static final SimpleChannel CHANNEL = NetworkRegistry.ChannelBuilder
             .named(ResourceLocation.fromNamespaceAndPath(ModMain.MOD_ID, "main"))
             .networkProtocolVersion(() -> PROTOCOL_VERSION)
@@ -391,6 +393,15 @@ public final class ModNetwork {
                 .decoder(SoulInteractionPacket::decode)
                 .consumerMainThread(SoulInteractionPacket::handle)
                 .add();
+        CHANNEL.messageBuilder(
+                        SyncPossessionPacket.class,
+                        nextPacketId++,
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(SyncPossessionPacket::encode)
+                .decoder(SyncPossessionPacket::decode)
+                .consumerMainThread(SyncPossessionPacket::handle)
+                .add();
     }
 
     /** 把玩家当前的缩地状态广播给所有追踪者与其本人。 */
@@ -552,6 +563,22 @@ public final class ModNetwork {
                 PacketDistributor.PLAYER.with(() -> player),
                 new SyncSoulRoamingPacket(syncData)
         );
+    }
+
+    public static void sendPossessionState(ServerPlayer player, PossessionSyncData syncData) {
+        CHANNEL.send(
+                PacketDistributor.PLAYER.with(() -> player),
+                new SyncPossessionPacket(syncData)
+        );
+    }
+
+    public static void sendPossessionStateToAll(
+            List<ServerPlayer> players,
+            PossessionSyncData syncData
+    ) {
+        for (ServerPlayer player : players) {
+            sendPossessionState(player, syncData);
+        }
     }
 
     public static void sendPlayerValueControlSettings(ServerPlayer player) {

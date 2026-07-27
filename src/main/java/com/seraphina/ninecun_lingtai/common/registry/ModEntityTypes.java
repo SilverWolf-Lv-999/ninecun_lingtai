@@ -20,7 +20,7 @@ public final class ModEntityTypes {
             () -> EntityType.Builder
                     .of(SoulEntity::new, MobCategory.MISC)
                     .sized(0.6F, 1.8F)
-                    .clientTrackingRange(64)
+                    .clientTrackingRange(1024)
                     .updateInterval(1)
                     .build("soul_entity")
     );
