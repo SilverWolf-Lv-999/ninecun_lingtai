@@ -12,6 +12,7 @@ import com.seraphina.ninecun_lingtai.api.cultivation.CultivationRealm;
 import com.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
 import com.seraphina.ninecun_lingtai.api.element.ElementType;
 import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
+import com.seraphina.ninecun_lingtai.common.player.PlayerDefenseResourceData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerSpiritualEnergyData;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.SharedSuggestionProvider;
@@ -136,7 +137,11 @@ public final class DebugCommandUtility {
     }
 
     public static void syncCultivationInfo(Collection<ServerPlayer> players) {
-        players.forEach(ModNetwork::sendCultivationInfo);
+        players.forEach(player -> {
+            PlayerDefenseResourceData.refillToMaximum(player);
+            ModNetwork.sendCultivationInfo(player);
+            ModNetwork.sendDefenseResource(player);
+        });
     }
 
     public static String getPlayerNames(Collection<ServerPlayer> players) {

@@ -3,6 +3,9 @@ package com.seraphina.ninecun_lingtai.utility;
 import com.seraphina.ninecun_lingtai.api.cultivation.CultivationRealm;
 import com.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
 import com.seraphina.ninecun_lingtai.common.creature.CreatureCultivationData;
+import com.seraphina.ninecun_lingtai.common.player.DefenseResourceType;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -10,6 +13,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.UUID;
 
 public final class CultivationDefenseUtility {
@@ -28,6 +32,17 @@ public final class CultivationDefenseUtility {
     private static final double VERTICAL_KNOCKBACK_PER_DEFENDER_REALM = 0.06D;
     private static final double VERTICAL_KNOCKBACK_PER_STRENGTH_GAP = 0.01D;
     private static final double MAXIMUM_VERTICAL_KNOCKBACK = 0.9D;
+    private static final float HIGH_DAMAGE_COMMAND_THRESHOLD = 1000.0F;
+    private static final int GOLDEN_CORE_BODY_WIND_BASE = 500;
+    private static final int GOLDEN_CORE_BODY_WIND_PER_LAYER = 100;
+    private static final int NASCENT_SOUL_SPIRITUAL_POWER_BASE = 100;
+    private static final int NASCENT_SOUL_SPIRITUAL_POWER_PER_LAYER = 300;
+    private static final int DAO_BASE = 50;
+    private static final int DAO_MINOR_LAYER_MULTIPLIER = 700;
+    private static final int DAO_MAJOR_REALM_MULTIPLIER = 1000;
+    private static final int GOLDEN_CORE_HIGH_DAMAGE_COST = 250;
+    private static final int NASCENT_SOUL_HIGH_DAMAGE_COST = 10;
+    private static final int SPIRIT_TRANSFORMATION_HIGH_DAMAGE_COST = 1;
 
     private CultivationDefenseUtility() {
     }
@@ -93,6 +108,63 @@ public final class CultivationDefenseUtility {
         return Optional.empty();
     }
 
+    public static DefenseResourceType getDefenseResourceType(Optional<CultivationStage> stage) {
+        return stage.map(CultivationDefenseUtility::getDefenseResourceType).orElse(DefenseResourceType.NONE);
+    }
+
+    public static DefenseResourceType getDefenseResourceType(CultivationStage stage) {
+        if (stage.realm() == CultivationRealm.GOLDEN_CORE) {
+            return DefenseResourceType.BODY_WIND;
+        }
+        if (stage.realm() == CultivationRealm.NASCENT_SOUL) {
+            return DefenseResourceType.SPIRITUAL_POWER;
+        }
+        if (stage.realm().ordinal() >= CultivationRealm.SPIRIT_TRANSFORMATION.ordinal()) {
+            return DefenseResourceType.DAO;
+        }
+        return DefenseResourceType.NONE;
+    }
+
+    public static int getMaximumDefenseResource(Optional<CultivationStage> stage) {
+        return stage.map(CultivationDefenseUtility::getMaximumDefenseResource).orElse(0);
+    }
+
+    public static int getMaximumDefenseResource(CultivationStage stage) {
+        if (stage.realm() == CultivationRealm.GOLDEN_CORE) {
+            return GOLDEN_CORE_BODY_WIND_BASE
+                    + (stage.layer() - CultivationStage.MINIMUM_LAYER) * GOLDEN_CORE_BODY_WIND_PER_LAYER;
+        }
+        if (stage.realm() == CultivationRealm.NASCENT_SOUL) {
+            return NASCENT_SOUL_SPIRITUAL_POWER_BASE
+                    + (stage.layer() - CultivationStage.MINIMUM_LAYER) * NASCENT_SOUL_SPIRITUAL_POWER_PER_LAYER;
+        }
+        if (stage.realm().ordinal() >= CultivationRealm.SPIRIT_TRANSFORMATION.ordinal()) {
+            return getMaximumDaoResource(stage);
+        }
+        return 0;
+    }
+
+    public static boolean isHighDamageCommandAttack(DamageSource damageSource, float amount) {
+        return damageSource.is(DamageTypes.GENERIC_KILL) || amount >= HIGH_DAMAGE_COMMAND_THRESHOLD;
+    }
+
+    public static boolean isFullyImmuneToHighDamage(CultivationStage stage) {
+        return stage.realm().ordinal() > CultivationRealm.SPIRIT_TRANSFORMATION.ordinal();
+    }
+
+    public static OptionalInt getHighDamageImmunityCost(CultivationStage stage) {
+        if (stage.realm() == CultivationRealm.GOLDEN_CORE) {
+            return OptionalInt.of(GOLDEN_CORE_HIGH_DAMAGE_COST);
+        }
+        if (stage.realm() == CultivationRealm.NASCENT_SOUL) {
+            return OptionalInt.of(NASCENT_SOUL_HIGH_DAMAGE_COST);
+        }
+        if (stage.realm() == CultivationRealm.SPIRIT_TRANSFORMATION) {
+            return OptionalInt.of(SPIRIT_TRANSFORMATION_HIGH_DAMAGE_COST);
+        }
+        return OptionalInt.empty();
+    }
+
     public static void applyKnockback(LivingEntity defender, LivingEntity attacker, DefensiveReaction reaction) {
         Vec3 direction = attacker.position().subtract(defender.position()).multiply(1.0D, 0.0D, 1.0D);
         if (direction.lengthSqr() < 0.0001D) {
@@ -144,6 +216,23 @@ public final class CultivationDefenseUtility {
                         + strengthGap * VERTICAL_KNOCKBACK_PER_STRENGTH_GAP
         );
         return new DefensiveReaction(reflectedDamage, horizontalKnockback, verticalKnockback, showsBodyShield);
+    }
+
+    private static int getMaximumDaoResource(CultivationStage stage) {
+        int spiritTransformationRealmIndex = CultivationRealm.SPIRIT_TRANSFORMATION.ordinal();
+        int stageRealmIndex = stage.realm().ordinal();
+        int maximum = DAO_BASE;
+        for (int realmIndex = spiritTransformationRealmIndex; realmIndex <= stageRealmIndex; realmIndex++) {
+            int realmNumber = realmIndex + 1;
+            if (realmIndex > spiritTransformationRealmIndex) {
+                maximum += DAO_MAJOR_REALM_MULTIPLIER * realmNumber;
+            }
+            int layersInRealm = realmIndex == stageRealmIndex ? stage.layer() : CultivationStage.MAXIMUM_LAYER;
+            maximum += (layersInRealm - CultivationStage.MINIMUM_LAYER)
+                    * DAO_MINOR_LAYER_MULTIPLIER
+                    * realmNumber;
+        }
+        return maximum;
     }
 
     private static boolean isAttackerCultivationLower(

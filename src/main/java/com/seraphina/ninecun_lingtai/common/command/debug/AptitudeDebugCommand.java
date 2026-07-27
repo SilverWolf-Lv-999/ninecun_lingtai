@@ -281,6 +281,7 @@ public final class AptitudeDebugCommand {
         for (ServerPlayer player : players) {
             PlayerAptitudeData.clearAptitude(player);
             ModNetwork.sendCultivationInfo(player);
+            ModNetwork.sendDefenseResource(player);
             ModNetwork.sendAptitudeScreenRequest(player);
         }
         commandSource.sendSuccess(() -> Component.literal(

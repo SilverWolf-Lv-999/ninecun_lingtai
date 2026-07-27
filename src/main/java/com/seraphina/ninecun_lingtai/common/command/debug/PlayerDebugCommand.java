@@ -5,6 +5,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import com.seraphina.ninecun_lingtai.common.player.PlayerAptitudeData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerCultivationData;
+import com.seraphina.ninecun_lingtai.common.player.PlayerDefenseResourceData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerMeditationManager;
 import com.seraphina.ninecun_lingtai.common.player.PlayerSpiritualEnergyData;
 import com.seraphina.ninecun_lingtai.utility.DebugCommandUtility;
@@ -91,8 +92,10 @@ public final class PlayerDebugCommand {
             PlayerMeditationManager.stopMeditating(player);
             PlayerAptitudeData.clearAptitude(player);
             PlayerCultivationData.clearStage(player);
+            PlayerDefenseResourceData.clear(player);
             PlayerSpiritualEnergyData.clearAllEnergy(player);
             ModNetwork.sendCultivationInfo(player);
+            ModNetwork.sendDefenseResource(player);
             ModNetwork.sendAptitudeScreenRequest(player);
         }
         commandSource.sendSuccess(() -> Component.literal(

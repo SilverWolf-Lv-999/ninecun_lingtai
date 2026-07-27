@@ -4,6 +4,7 @@ import com.seraphina.ninecun_lingtai.ModMain;
 import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import com.seraphina.ninecun_lingtai.common.player.PlayerAptitudeData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerCultivationData;
+import com.seraphina.ninecun_lingtai.common.player.PlayerDefenseResourceData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerImprintedTechniqueData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerSelectedSpellData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerSpiritualEnergyData;
@@ -32,6 +33,7 @@ public final class PlayerAptitudeEventHandler {
         PlayerAptitudeData.copyAptitude(event.getOriginal(), event.getEntity());
         PlayerSpiritualEnergyData.copy(event.getOriginal(), event.getEntity());
         PlayerCultivationData.copy(event.getOriginal(), event.getEntity());
+        PlayerDefenseResourceData.copy(event.getOriginal(), event.getEntity());
         PlayerTechniqueData.copy(event.getOriginal(), event.getEntity());
         PlayerImprintedTechniqueData.copy(event.getOriginal(), event.getEntity());
         PlayerTechniqueProficiencyData.copy(event.getOriginal(), event.getEntity());
@@ -47,7 +49,9 @@ public final class PlayerAptitudeEventHandler {
 
     private static void syncCultivationInfo(Player player) {
         if (player instanceof ServerPlayer serverPlayer) {
+            PlayerDefenseResourceData.clampToStage(serverPlayer);
             ModNetwork.sendCultivationInfo(serverPlayer);
+            ModNetwork.sendDefenseResource(serverPlayer);
         }
     }
 

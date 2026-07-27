@@ -5,6 +5,7 @@ import com.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
 import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import com.seraphina.ninecun_lingtai.common.player.PlayerCultivationData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerCultivationManager;
+import com.seraphina.ninecun_lingtai.common.player.PlayerDefenseResourceData;
 import com.seraphina.ninecun_lingtai.utility.ChineseNumberUtility;
 import com.seraphina.ninecun_lingtai.utility.CultivationUtility;
 import net.minecraft.network.FriendlyByteBuf;
@@ -42,6 +43,7 @@ public final class BreakthroughRequestPacket {
         switch (result) {
             case SUCCESS -> {
                 CultivationStage stage = PlayerCultivationData.getStage(player).orElseThrow();
+                PlayerDefenseResourceData.refillToMaximum(player);
                 Component message = Component.translatable(
                         "message.ninecun_lingtai.breakthrough_success",
                         CultivationUtility.getDisplayName(stage)
@@ -79,6 +81,7 @@ public final class BreakthroughRequestPacket {
             );
         }
         ModNetwork.sendCultivationInfo(player);
+        ModNetwork.sendDefenseResource(player);
     }
 
     private static String getRequiredEnergyText(Optional<CultivationStage> currentStage) {

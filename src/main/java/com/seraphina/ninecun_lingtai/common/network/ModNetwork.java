@@ -26,6 +26,7 @@ import com.seraphina.ninecun_lingtai.common.network.packet.SetLightFlightPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SetMeditationStatePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SubmitAptitudePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncCultivationInfoPacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.SyncDefenseResourcePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncLightFlightPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncMeditationStatePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncPlayerValueControlSettingsPacket;
@@ -37,6 +38,7 @@ import com.seraphina.ninecun_lingtai.common.player.PlayerLightFlightData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerValueControlData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerSwordFlightData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerCultivationInfo;
+import com.seraphina.ninecun_lingtai.common.player.PlayerDefenseResourceData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerImprintedTechniqueData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerTechniqueData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerTechniqueProficiencyData;
@@ -56,7 +58,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public final class ModNetwork {
-    private static final String PROTOCOL_VERSION = "18";
+    private static final String PROTOCOL_VERSION = "19";
     private static final SimpleChannel CHANNEL = NetworkRegistry.ChannelBuilder
             .named(ResourceLocation.fromNamespaceAndPath(ModMain.MOD_ID, "main"))
             .networkProtocolVersion(() -> PROTOCOL_VERSION)
@@ -304,6 +306,15 @@ public final class ModNetwork {
                 .decoder(TriggerBodyShieldPacket::decode)
                 .consumerMainThread(TriggerBodyShieldPacket::handle)
                 .add();
+        CHANNEL.messageBuilder(
+                        SyncDefenseResourcePacket.class,
+                        nextPacketId++,
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(SyncDefenseResourcePacket::encode)
+                .decoder(SyncDefenseResourcePacket::decode)
+                .consumerMainThread(SyncDefenseResourcePacket::handle)
+                .add();
     }
 
     /** 把玩家当前的御剑状态广播给所有追踪者与其本人。 */
@@ -412,6 +423,13 @@ public final class ModNetwork {
         CHANNEL.send(
                 PacketDistributor.PLAYER.with(() -> player),
                 new SyncCultivationInfoPacket(PlayerCultivationInfo.capture(player))
+        );
+    }
+
+    public static void sendDefenseResource(ServerPlayer player) {
+        CHANNEL.send(
+                PacketDistributor.PLAYER.with(() -> player),
+                new SyncDefenseResourcePacket(PlayerDefenseResourceData.capture(player))
         );
     }
 

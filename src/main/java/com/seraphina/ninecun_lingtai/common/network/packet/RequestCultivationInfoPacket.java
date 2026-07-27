@@ -27,6 +27,7 @@ public final class RequestCultivationInfoPacket {
         ServerPlayer player = contextSupplier.get().getSender();
         if (player != null) {
             ModNetwork.sendCultivationInfo(player);
+            ModNetwork.sendDefenseResource(player);
         }
     }
 }

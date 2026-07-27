@@ -10,6 +10,7 @@ import com.seraphina.ninecun_lingtai.client.inventorytab.CultivationInfoTabRegis
 import com.seraphina.ninecun_lingtai.client.inventorytab.PlayerValueControlTabRegistrar;
 import com.seraphina.ninecun_lingtai.client.inventorytab.TechniqueLibraryTabRegistrar;
 import com.seraphina.ninecun_lingtai.client.render.AptitudeFormationShader;
+import com.seraphina.ninecun_lingtai.client.render.DefenseBarShader;
 import com.seraphina.ninecun_lingtai.client.render.ElementFlowShader;
 import com.seraphina.ninecun_lingtai.client.render.SoulConstellationShader;
 import com.seraphina.ninecun_lingtai.client.render.SpiritualEnergyShader;
@@ -46,6 +47,10 @@ public final class ClientModEventHandler {
     private static final ResourceLocation TECHNIQUE_CLOUD_SHADER = ResourceLocation.fromNamespaceAndPath(
             ModMain.MOD_ID,
             "technique_cloud"
+    );
+    private static final ResourceLocation DEFENSE_BAR_SHADER = ResourceLocation.fromNamespaceAndPath(
+            ModMain.MOD_ID,
+            "defense_bar"
     );
 
     private ClientModEventHandler() {
@@ -111,6 +116,14 @@ public final class ClientModEventHandler {
                         DefaultVertexFormat.POSITION_COLOR_TEX
                 ),
                 TechniqueCloudShader::setTechniqueCloudShader
+        );
+        event.registerShader(
+                new ShaderInstance(
+                        event.getResourceProvider(),
+                        DEFENSE_BAR_SHADER,
+                        DefaultVertexFormat.POSITION_COLOR_TEX
+                ),
+                DefenseBarShader::setDefenseBarShader
         );
     }
 }

@@ -2,6 +2,7 @@ package com.seraphina.ninecun_lingtai.common.network.packet;
 
 import com.seraphina.ninecun_lingtai.api.aptitude.SoulStrength;
 import com.seraphina.ninecun_lingtai.api.aptitude.SpiritualRoot;
+import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import com.seraphina.ninecun_lingtai.common.player.PlayerAptitudeData;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
@@ -33,6 +34,8 @@ public record SubmitAptitudePacket(int elementMask, float lengthInches, int illu
         Optional<SoulStrength> soulStrength = SoulStrength.fromIlluminatedStars(packet.illuminatedSoulStars);
         if (spiritualRoot.isPresent() && soulStrength.isPresent()) {
             PlayerAptitudeData.setAptitude(player, spiritualRoot.get(), soulStrength.get());
+            ModNetwork.sendCultivationInfo(player);
+            ModNetwork.sendDefenseResource(player);
         }
     }
 }

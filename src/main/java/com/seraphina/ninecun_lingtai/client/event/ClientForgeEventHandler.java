@@ -4,6 +4,7 @@ import com.seraphina.ninecun_lingtai.ModMain;
 import com.seraphina.ninecun_lingtai.client.player.ClientBodyShieldManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientCultivationFeedbackManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientCultivationInfoManager;
+import com.seraphina.ninecun_lingtai.client.player.ClientDefenseResourceManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientLightFlightManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientMeditationManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientPlayerValueControlManager;
@@ -12,6 +13,7 @@ import com.seraphina.ninecun_lingtai.client.player.ClientSwordFlightManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientTechniqueManager;
 import com.seraphina.ninecun_lingtai.client.screen.ClientAptitudeScreenManager;
 import com.seraphina.ninecun_lingtai.client.utility.BodyShieldRenderUtility;
+import com.seraphina.ninecun_lingtai.client.utility.DefenseBarRenderUtility;
 import com.seraphina.ninecun_lingtai.client.utility.SpiritualEnergyRenderUtility;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.Input;
@@ -19,6 +21,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.client.event.MovementInputUpdateEvent;
+import net.minecraftforge.client.event.RenderGuiOverlayEvent;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.client.event.ViewportEvent;
 import net.minecraftforge.event.TickEvent;
@@ -91,6 +94,11 @@ public final class ClientForgeEventHandler {
     }
 
     @SubscribeEvent
+    public static void onRenderGuiOverlay(RenderGuiOverlayEvent.Post event) {
+        DefenseBarRenderUtility.render(event);
+    }
+
+    @SubscribeEvent
     public static void onEntityLeaveLevel(EntityLeaveLevelEvent event) {
         if (event.getLevel().isClientSide && event.getEntity() instanceof net.minecraft.world.entity.player.Player player) {
             ClientMeditationManager.removePlayer(player.getUUID());
@@ -117,6 +125,7 @@ public final class ClientForgeEventHandler {
         ClientSwordFlightManager.reset();
         ClientLightFlightManager.reset();
         ClientBodyShieldManager.reset();
+        ClientDefenseResourceManager.reset();
         ClientCultivationFeedbackManager.reset();
         ClientPlayerValueControlManager.reset();
     }

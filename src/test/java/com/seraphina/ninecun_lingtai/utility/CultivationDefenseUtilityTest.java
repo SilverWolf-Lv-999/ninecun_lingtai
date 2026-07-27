@@ -5,6 +5,7 @@ import com.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
 import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
+import java.util.OptionalInt;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -84,5 +85,56 @@ class CultivationDefenseUtilityTest {
                 Optional.of(new CultivationStage(CultivationRealm.NASCENT_SOUL, 9)),
                 4.0D
         ).isPresent());
+    }
+
+    @Test
+    void calculatesDefenseResourceMaximumsByRealmAndLayer() {
+        assertEquals(0, CultivationDefenseUtility.getMaximumDefenseResource(Optional.empty()));
+        assertEquals(0, CultivationDefenseUtility.getMaximumDefenseResource(
+                new CultivationStage(CultivationRealm.FOUNDATION_ESTABLISHMENT, 9)
+        ));
+        assertEquals(500, CultivationDefenseUtility.getMaximumDefenseResource(
+                new CultivationStage(CultivationRealm.GOLDEN_CORE, 1)
+        ));
+        assertEquals(1300, CultivationDefenseUtility.getMaximumDefenseResource(
+                new CultivationStage(CultivationRealm.GOLDEN_CORE, 9)
+        ));
+        assertEquals(100, CultivationDefenseUtility.getMaximumDefenseResource(
+                new CultivationStage(CultivationRealm.NASCENT_SOUL, 1)
+        ));
+        assertEquals(2500, CultivationDefenseUtility.getMaximumDefenseResource(
+                new CultivationStage(CultivationRealm.NASCENT_SOUL, 9)
+        ));
+        assertEquals(50, CultivationDefenseUtility.getMaximumDefenseResource(
+                new CultivationStage(CultivationRealm.SPIRIT_TRANSFORMATION, 1)
+        ));
+        assertEquals(3550, CultivationDefenseUtility.getMaximumDefenseResource(
+                new CultivationStage(CultivationRealm.SPIRIT_TRANSFORMATION, 2)
+        ));
+        assertEquals(34050, CultivationDefenseUtility.getMaximumDefenseResource(
+                new CultivationStage(CultivationRealm.DAO_INTEGRATION, 1)
+        ));
+    }
+
+    @Test
+    void highDamageImmunityCostChangesByRealm() {
+        assertEquals(OptionalInt.of(250), CultivationDefenseUtility.getHighDamageImmunityCost(
+                new CultivationStage(CultivationRealm.GOLDEN_CORE, 1)
+        ));
+        assertEquals(OptionalInt.of(10), CultivationDefenseUtility.getHighDamageImmunityCost(
+                new CultivationStage(CultivationRealm.NASCENT_SOUL, 1)
+        ));
+        assertEquals(OptionalInt.of(1), CultivationDefenseUtility.getHighDamageImmunityCost(
+                new CultivationStage(CultivationRealm.SPIRIT_TRANSFORMATION, 1)
+        ));
+        assertTrue(CultivationDefenseUtility.getHighDamageImmunityCost(
+                new CultivationStage(CultivationRealm.DAO_INTEGRATION, 1)
+        ).isEmpty());
+        assertTrue(CultivationDefenseUtility.isFullyImmuneToHighDamage(
+                new CultivationStage(CultivationRealm.DAO_INTEGRATION, 1)
+        ));
+        assertFalse(CultivationDefenseUtility.isFullyImmuneToHighDamage(
+                new CultivationStage(CultivationRealm.SPIRIT_TRANSFORMATION, 9)
+        ));
     }
 }

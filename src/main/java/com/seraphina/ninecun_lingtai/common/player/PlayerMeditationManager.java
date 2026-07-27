@@ -273,6 +273,9 @@ public final class PlayerMeditationManager {
                         .append(" 踏入" + CultivationUtility.getDisplayName(stage)),
                 false
         );
+        PlayerDefenseResourceData.refillToMaximum(player);
+        ModNetwork.sendCultivationInfo(player);
+        ModNetwork.sendDefenseResource(player);
     }
 
     private static void grantProficiency(ServerPlayer player, MeditationSession session) {
