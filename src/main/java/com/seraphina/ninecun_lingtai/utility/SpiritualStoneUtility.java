@@ -38,6 +38,10 @@ public final class SpiritualStoneUtility {
         return isSpiritualStone(itemStack) && getRemainingEnergy(itemStack) > DEPLETED_EPSILON;
     }
 
+    public static boolean isUsableForCultivation(ItemStack itemStack) {
+        return itemStack.getCount() == 1 && hasRemainingEnergy(itemStack);
+    }
+
     public static SpiritualStoneGrade getGrade(ItemStack itemStack) {
         if (!isSpiritualStone(itemStack) || !itemStack.hasTag()) {
             return SpiritualStoneGrade.HUMAN;

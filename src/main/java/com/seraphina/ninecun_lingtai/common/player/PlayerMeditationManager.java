@@ -370,11 +370,11 @@ public final class PlayerMeditationManager {
 
     private static Optional<ItemStack> getHeldUsableSpiritualStone(ServerPlayer player) {
         ItemStack mainHandItem = player.getMainHandItem();
-        if (SpiritualStoneUtility.hasRemainingEnergy(mainHandItem)) {
+        if (SpiritualStoneUtility.isUsableForCultivation(mainHandItem)) {
             return Optional.of(mainHandItem);
         }
         ItemStack offhandItem = player.getOffhandItem();
-        if (SpiritualStoneUtility.hasRemainingEnergy(offhandItem)) {
+        if (SpiritualStoneUtility.isUsableForCultivation(offhandItem)) {
             return Optional.of(offhandItem);
         }
         return Optional.empty();

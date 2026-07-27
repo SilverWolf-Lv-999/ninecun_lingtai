@@ -23,7 +23,7 @@ public final class ModItems {
 
     public static final RegistryObject<Item> SPIRITUAL_STONE = ITEMS.register(
             "spiritual_stone",
-            () -> new SpiritualStoneItem(new Item.Properties().stacksTo(1))
+            () -> new SpiritualStoneItem(new Item.Properties().stacksTo(64))
     );
 
     public static final RegistryObject<Item> SPIRITUAL_STONE_ORE = ITEMS.register(
