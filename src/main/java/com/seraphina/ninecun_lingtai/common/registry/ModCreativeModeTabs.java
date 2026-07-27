@@ -2,6 +2,7 @@ package com.seraphina.ninecun_lingtai.common.registry;
 
 import com.seraphina.ninecun_lingtai.ModMain;
 import com.seraphina.ninecun_lingtai.common.item.TechniqueCreativeTabCache;
+import com.seraphina.ninecun_lingtai.utility.SpiritualStoneUtility;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
@@ -23,7 +24,7 @@ public final class ModCreativeModeTabs {
                     .displayItems((parameters, output) -> {
                         output.accept(ModItems.SPIRITUAL_STONE_ORE.get());
                         output.accept(ModItems.DEEPSLATE_SPIRITUAL_STONE_ORE.get());
-                        output.accept(ModItems.SPIRITUAL_STONE.get());
+                        output.acceptAll(SpiritualStoneUtility.getCreativeItemStacks());
                         output.acceptAll(TechniqueCreativeTabCache.getItemStacks());
                     })
                     .build()

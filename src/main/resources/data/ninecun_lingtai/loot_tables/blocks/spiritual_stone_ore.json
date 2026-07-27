@@ -29,7 +29,50 @@
         {
           "type": "minecraft:item",
           "name": "ninecun_lingtai:spiritual_stone",
+          "weight": 82,
           "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{\"ninecun_lingtai:spiritual_stone_grade\":\"human\",\"ninecun_lingtai:spiritual_stone_energy\":400.0d}"
+            },
+            {
+              "function": "minecraft:apply_bonus",
+              "enchantment": "minecraft:fortune",
+              "formula": "minecraft:ore_drops"
+            },
+            {
+              "function": "minecraft:explosion_decay"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "ninecun_lingtai:spiritual_stone",
+          "weight": 16,
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{\"ninecun_lingtai:spiritual_stone_grade\":\"earth\",\"ninecun_lingtai:spiritual_stone_energy\":5200.0d}"
+            },
+            {
+              "function": "minecraft:apply_bonus",
+              "enchantment": "minecraft:fortune",
+              "formula": "minecraft:ore_drops"
+            },
+            {
+              "function": "minecraft:explosion_decay"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "ninecun_lingtai:spiritual_stone",
+          "weight": 2,
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{\"ninecun_lingtai:spiritual_stone_grade\":\"heaven\",\"ninecun_lingtai:spiritual_stone_energy\":10000.0d}"
+            },
             {
               "function": "minecraft:apply_bonus",
               "enchantment": "minecraft:fortune",

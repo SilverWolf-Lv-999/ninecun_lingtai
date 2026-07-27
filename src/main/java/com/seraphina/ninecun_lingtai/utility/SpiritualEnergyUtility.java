@@ -49,6 +49,16 @@ public final class SpiritualEnergyUtility {
         return Map.copyOf(absorptionRates);
     }
 
+    public static Map<ElementType, Double> createUniversalCultivationAbsorptionRates(SpiritualRoot spiritualRoot) {
+        Set<ElementType> independentRootElements = SpiritualRootUtility.getIndependentRootElements(spiritualRoot);
+        double rate = spiritualRoot.quality() / independentRootElements.size();
+        EnumMap<ElementType, Double> absorptionRates = new EnumMap<>(ElementType.class);
+        for (ElementType element : independentRootElements) {
+            absorptionRates.put(element, rate);
+        }
+        return Map.copyOf(absorptionRates);
+    }
+
     public static double getMultiElementInteractionMultiplier(
             ElementType absorbedElement,
             Set<ElementType> spiritualRootElements

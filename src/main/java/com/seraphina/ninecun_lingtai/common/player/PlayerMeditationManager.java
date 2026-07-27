@@ -13,11 +13,12 @@ import com.seraphina.ninecun_lingtai.common.data.TechniqueManager;
 import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import com.seraphina.ninecun_lingtai.utility.CultivationUtility;
 import com.seraphina.ninecun_lingtai.utility.SpiritualEnergyUtility;
-import com.seraphina.ninecun_lingtai.utility.SpiritualRootUtility;
+import com.seraphina.ninecun_lingtai.utility.SpiritualStoneUtility;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
@@ -137,17 +138,13 @@ public final class PlayerMeditationManager {
 
     public static void syncState(ServerPlayer recipient, ServerPlayer trackedPlayer) {
         boolean meditating = isMeditating(trackedPlayer);
-        MeditationAbsorptionProfile absorptionProfile = meditating
-                ? calculateAbsorptionProfile(trackedPlayer)
-                : MeditationAbsorptionProfile.EMPTY;
+        MeditationSyncData syncData = createMeditationSyncData(trackedPlayer, meditating);
         ModNetwork.sendMeditationState(
                 recipient,
                 trackedPlayer.getUUID(),
                 meditating,
-                meditating
-                        ? ElementEnvironmentManager.INSTANCE.getFiveElementValues(trackedPlayer)
-                        : FiveElementValues.EMPTY,
-                absorptionProfile.movementAffinities(),
+                syncData.environmentValues(),
+                syncData.absorptionProfile().movementAffinities(),
                 getRealmLevel(trackedPlayer)
         );
     }
@@ -224,6 +221,12 @@ public final class PlayerMeditationManager {
     }
 
     private static void absorbSpiritualEnergy(ServerPlayer player, double breathingMultiplier) {
+        Optional<ItemStack> spiritualStone = getHeldUsableSpiritualStone(player);
+        if (spiritualStone.isPresent()) {
+            absorbHeldSpiritualStoneEnergy(player, spiritualStone.get(), breathingMultiplier);
+            return;
+        }
+
         MeditationAbsorptionProfile absorptionProfile = calculateAbsorptionProfile(player);
         if (absorptionProfile.absorptionRates().isEmpty()) {
             return;
@@ -233,6 +236,50 @@ public final class PlayerMeditationManager {
                 * getRealmAbsorptionMultiplier(player);
         for (Map.Entry<ElementType, Double> entry : absorptionProfile.absorptionRates().entrySet()) {
             PlayerSpiritualEnergyData.addEnergy(player, entry.getKey(), baseAbsorption * entry.getValue());
+        }
+        tryAdvanceLayer(player);
+    }
+
+    private static void absorbHeldSpiritualStoneEnergy(
+            ServerPlayer player,
+            ItemStack spiritualStone,
+            double breathingMultiplier
+    ) {
+        Optional<SpiritualRoot> spiritualRootOptional = PlayerAptitudeData.getSpiritualRoot(player);
+        if (spiritualRootOptional.isEmpty()) {
+            return;
+        }
+
+        Map<ElementType, Double> absorptionRates = SpiritualEnergyUtility.createUniversalCultivationAbsorptionRates(
+                spiritualRootOptional.get()
+        );
+        if (absorptionRates.isEmpty()) {
+            return;
+        }
+
+        double baseAbsorption = CommonConfig.MEDITATION_BASE_ABSORPTION_PER_SECOND.get()
+                * breathingMultiplier
+                * getRealmAbsorptionMultiplier(player)
+                * SpiritualStoneUtility.getAbsorptionMultiplier(spiritualStone);
+        double requestedEnergy = absorptionRates.values().stream()
+                .mapToDouble(rate -> baseAbsorption * rate)
+                .sum();
+        if (requestedEnergy <= 0.0D) {
+            return;
+        }
+
+        double drainedEnergy = SpiritualStoneUtility.drainEnergy(spiritualStone, requestedEnergy);
+        if (drainedEnergy <= 0.0D) {
+            return;
+        }
+
+        double absorptionRatio = drainedEnergy / requestedEnergy;
+        for (Map.Entry<ElementType, Double> entry : absorptionRates.entrySet()) {
+            PlayerSpiritualEnergyData.addEnergy(
+                    player,
+                    entry.getKey(),
+                    baseAbsorption * entry.getValue() * absorptionRatio
+            );
         }
         tryAdvanceLayer(player);
     }
@@ -321,33 +368,55 @@ public final class PlayerMeditationManager {
         );
     }
 
+    private static Optional<ItemStack> getHeldUsableSpiritualStone(ServerPlayer player) {
+        ItemStack mainHandItem = player.getMainHandItem();
+        if (SpiritualStoneUtility.hasRemainingEnergy(mainHandItem)) {
+            return Optional.of(mainHandItem);
+        }
+        ItemStack offhandItem = player.getOffhandItem();
+        if (SpiritualStoneUtility.hasRemainingEnergy(offhandItem)) {
+            return Optional.of(offhandItem);
+        }
+        return Optional.empty();
+    }
+
+    private static MeditationSyncData createMeditationSyncData(ServerPlayer player, boolean meditating) {
+        if (!meditating || isAbsorbingFromHeldSpiritualStone(player)) {
+            return MeditationSyncData.EMPTY;
+        }
+        return new MeditationSyncData(
+                ElementEnvironmentManager.INSTANCE.getFiveElementValues(player),
+                calculateAbsorptionProfile(player)
+        );
+    }
+
+    private static boolean isAbsorbingFromHeldSpiritualStone(ServerPlayer player) {
+        MeditationSession session = MEDITATING_PLAYERS.get(player.getUUID());
+        if (session == null || session.techniqueId() == null || getHeldUsableSpiritualStone(player).isEmpty()) {
+            return false;
+        }
+        return getBreathingAbsorptionMultiplier(player, session.techniqueId()) > 0.0D;
+    }
+
     private static void syncSelfState(ServerPlayer player, boolean meditating) {
-        MeditationAbsorptionProfile absorptionProfile = meditating
-                ? calculateAbsorptionProfile(player)
-                : MeditationAbsorptionProfile.EMPTY;
+        MeditationSyncData syncData = createMeditationSyncData(player, meditating);
         ModNetwork.sendMeditationState(
                 player,
                 player.getUUID(),
                 meditating,
-                meditating
-                        ? ElementEnvironmentManager.INSTANCE.getFiveElementValues(player)
-                        : FiveElementValues.EMPTY,
-                absorptionProfile.movementAffinities(),
+                syncData.environmentValues(),
+                syncData.absorptionProfile().movementAffinities(),
                 getRealmLevel(player)
         );
     }
 
     private static void syncStateToTrackingAndSelf(ServerPlayer player, boolean meditating) {
-        MeditationAbsorptionProfile absorptionProfile = meditating
-                ? calculateAbsorptionProfile(player)
-                : MeditationAbsorptionProfile.EMPTY;
+        MeditationSyncData syncData = createMeditationSyncData(player, meditating);
         ModNetwork.sendMeditationStateToTrackingAndSelf(
                 player,
                 meditating,
-                meditating
-                        ? ElementEnvironmentManager.INSTANCE.getFiveElementValues(player)
-                        : FiveElementValues.EMPTY,
-                absorptionProfile.movementAffinities(),
+                syncData.environmentValues(),
+                syncData.absorptionProfile().movementAffinities(),
                 getRealmLevel(player)
         );
     }
@@ -396,6 +465,16 @@ public final class PlayerMeditationManager {
         private void addGainedProficiency(long amount) {
             this.gainedProficiency += Math.max(0L, amount);
         }
+    }
+
+    private record MeditationSyncData(
+            FiveElementValues environmentValues,
+            MeditationAbsorptionProfile absorptionProfile
+    ) {
+        private static final MeditationSyncData EMPTY = new MeditationSyncData(
+                FiveElementValues.EMPTY,
+                MeditationAbsorptionProfile.EMPTY
+        );
     }
 
     private record MeditationRotation(float yRot, float xRot, float yHeadRot, float yBodyRot) {

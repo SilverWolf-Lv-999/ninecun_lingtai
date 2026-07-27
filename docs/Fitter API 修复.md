@@ -9,6 +9,9 @@ Filters API 的分类数据只保存 `Item`，刷新创意栏时会用 `new Item
 - 基础物品：`ninecun_lingtai:jade_slip`
 - 复杂 NBT 变体来源：`TechniqueCreativeTabCache.getItemStacks()`
 - 结果：当“功法”分类启用并显示空白玉简时，自动补入所有带功法 NBT 的玉简。
+- 基础物品：`ninecun_lingtai:spiritual_stone`
+- 复杂 NBT 变体来源：`SpiritualStoneUtility.getCreativeItemStacks()`
+- 结果：当“材料”分类启用并显示普通灵石时，自动补入人品、地品、天品灵石。
 
 行为约束：
 

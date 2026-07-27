@@ -1,6 +1,7 @@
 package com.seraphina.ninecun_lingtai.common.registry;
 
 import com.seraphina.ninecun_lingtai.ModMain;
+import com.seraphina.ninecun_lingtai.common.item.SpiritualStoneItem;
 import com.seraphina.ninecun_lingtai.common.item.TechniqueItem;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -22,7 +23,7 @@ public final class ModItems {
 
     public static final RegistryObject<Item> SPIRITUAL_STONE = ITEMS.register(
             "spiritual_stone",
-            () -> new Item(new Item.Properties())
+            () -> new SpiritualStoneItem(new Item.Properties().stacksTo(1))
     );
 
     public static final RegistryObject<Item> SPIRITUAL_STONE_ORE = ITEMS.register(

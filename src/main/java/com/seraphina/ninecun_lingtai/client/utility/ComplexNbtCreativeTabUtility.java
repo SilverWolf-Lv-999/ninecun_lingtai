@@ -3,6 +3,7 @@ package com.seraphina.ninecun_lingtai.client.utility;
 import com.seraphina.ninecun_lingtai.common.item.TechniqueCreativeTabCache;
 import com.seraphina.ninecun_lingtai.common.registry.ModCreativeModeTabs;
 import com.seraphina.ninecun_lingtai.common.registry.ModItems;
+import com.seraphina.ninecun_lingtai.utility.SpiritualStoneUtility;
 import net.minecraft.core.NonNullList;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
@@ -15,6 +16,7 @@ import java.util.function.Supplier;
 
 public final class ComplexNbtCreativeTabUtility {
     private static final List<ComplexNbtItemProvider> COMPLEX_NBT_ITEM_PROVIDERS = List.of(
+            new ComplexNbtItemProvider(ModItems.SPIRITUAL_STONE::get, SpiritualStoneUtility::getCreativeItemStacks),
             new ComplexNbtItemProvider(ModItems.JADE_SLIP::get, TechniqueCreativeTabCache::getItemStacks)
     );
 

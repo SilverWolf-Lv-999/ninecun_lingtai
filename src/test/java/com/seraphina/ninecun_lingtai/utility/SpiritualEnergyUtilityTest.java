@@ -76,4 +76,30 @@ class SpiritualEnergyUtilityTest {
                 )
         );
     }
+
+    @Test
+    void universalEnergySplitsAcrossIndependentRootPools() {
+        SpiritualRoot spiritualRoot = new SpiritualRoot(
+                Set.of(ElementType.METAL, ElementType.WATER),
+                9.0F
+        );
+
+        assertEquals(
+                Map.of(
+                        ElementType.METAL, 0.5D,
+                        ElementType.WATER, 0.5D
+                ),
+                SpiritualEnergyUtility.createUniversalCultivationAbsorptionRates(spiritualRoot)
+        );
+    }
+
+    @Test
+    void universalEnergyFeedsChaosRootsAsChaosEnergy() {
+        SpiritualRoot spiritualRoot = new SpiritualRoot(SpiritualRoot.SELECTABLE_ELEMENTS, 9.0F);
+
+        assertEquals(
+                Map.of(ElementType.CHAOS, 1.0D),
+                SpiritualEnergyUtility.createUniversalCultivationAbsorptionRates(spiritualRoot)
+        );
+    }
 }
