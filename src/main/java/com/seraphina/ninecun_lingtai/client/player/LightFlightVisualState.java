@@ -1,5 +1,6 @@
 package com.seraphina.ninecun_lingtai.client.player;
 
+import com.seraphina.ninecun_lingtai.common.flight.LightFlightStyle;
 import net.minecraft.util.Mth;
 
 public final class LightFlightVisualState {
@@ -7,6 +8,7 @@ public final class LightFlightVisualState {
     private static final float BOOST_FADE_IN_STEP = 0.35F;
     private static final float BOOST_FADE_OUT_STEP = 0.20F;
 
+    private LightFlightStyle style;
     private int color;
     private boolean flying;
     private boolean boosting;
@@ -15,7 +17,8 @@ public final class LightFlightVisualState {
     private float previousBoostVisibility;
     private float boostVisibility;
 
-    public LightFlightVisualState(int color, boolean boosting) {
+    public LightFlightVisualState(LightFlightStyle style, int color, boolean boosting) {
+        this.style = style == null ? LightFlightStyle.LIGHT : style;
         this.color = color;
         this.flying = true;
         this.boosting = boosting;
@@ -27,7 +30,8 @@ public final class LightFlightVisualState {
         }
     }
 
-    public void update(int color, boolean boosting) {
+    public void update(LightFlightStyle style, int color, boolean boosting) {
+        this.style = style == null ? LightFlightStyle.LIGHT : style;
         this.color = color;
         this.flying = true;
         this.boosting = boosting;
@@ -64,6 +68,10 @@ public final class LightFlightVisualState {
 
     public int color() {
         return this.color;
+    }
+
+    public LightFlightStyle style() {
+        return this.style;
     }
 
     public float visibility(float partialTick) {

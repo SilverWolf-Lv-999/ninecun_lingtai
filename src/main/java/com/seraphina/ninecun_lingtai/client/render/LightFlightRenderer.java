@@ -10,6 +10,7 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import com.seraphina.ninecun_lingtai.ModMain;
 import com.seraphina.ninecun_lingtai.client.player.ClientLightFlightManager;
 import com.seraphina.ninecun_lingtai.client.player.LightFlightVisualState;
+import com.seraphina.ninecun_lingtai.common.flight.LightFlightStyle;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
@@ -34,6 +35,9 @@ public final class LightFlightRenderer {
         Player player = event.getEntity();
         LightFlightVisualState visualState = ClientLightFlightManager.getVisualState(player.getUUID());
         if (visualState == null) {
+            return;
+        }
+        if (visualState.style() != LightFlightStyle.LIGHT) {
             return;
         }
         float visibility = visualState.visibility(event.getPartialTick());

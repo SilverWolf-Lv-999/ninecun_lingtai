@@ -1,6 +1,7 @@
 package com.seraphina.ninecun_lingtai.common.player;
 
 import com.seraphina.ninecun_lingtai.ModMain;
+import com.seraphina.ninecun_lingtai.common.flight.LightFlightStyle;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.entity.player.Player;
@@ -8,6 +9,7 @@ import net.minecraft.world.entity.player.Player;
 public final class PlayerLightFlightData {
     private static final String LIGHT_FLIGHT_KEY = ModMain.MOD_ID + ":light_flight";
     private static final String FLYING_KEY = "flying";
+    private static final String STYLE_KEY = "style";
     private static final String BOOST_UNTIL_TICK_KEY = "boost_until_tick";
     private static final String NEXT_BOOST_TICK_KEY = "next_boost_tick";
 
@@ -20,9 +22,10 @@ public final class PlayerLightFlightData {
                 && persistentData.getCompound(LIGHT_FLIGHT_KEY).getBoolean(FLYING_KEY);
     }
 
-    public static void start(Player player) {
+    public static void start(Player player, LightFlightStyle style) {
         CompoundTag lightFlightData = getOrCreateData(player);
         lightFlightData.putBoolean(FLYING_KEY, true);
+        putStyle(lightFlightData, style);
         player.getPersistentData().put(LIGHT_FLIGHT_KEY, lightFlightData);
     }
 
@@ -33,6 +36,9 @@ public final class PlayerLightFlightData {
     public static void setBoost(Player player, long boostUntilTick, long nextBoostTick) {
         CompoundTag lightFlightData = getOrCreateData(player);
         lightFlightData.putBoolean(FLYING_KEY, true);
+        if (!lightFlightData.contains(STYLE_KEY, Tag.TAG_STRING)) {
+            putStyle(lightFlightData, getStyle(player));
+        }
         lightFlightData.putLong(BOOST_UNTIL_TICK_KEY, Math.max(0L, boostUntilTick));
         lightFlightData.putLong(NEXT_BOOST_TICK_KEY, Math.max(0L, nextBoostTick));
         player.getPersistentData().put(LIGHT_FLIGHT_KEY, lightFlightData);
@@ -53,6 +59,26 @@ public final class PlayerLightFlightData {
 
     public static boolean canBoost(Player player, long gameTime) {
         return isFlying(player) && getNextBoostTick(player) <= gameTime;
+    }
+
+    public static LightFlightStyle getStyle(Player player) {
+        CompoundTag persistentData = player.getPersistentData();
+        if (!persistentData.contains(LIGHT_FLIGHT_KEY, Tag.TAG_COMPOUND)) {
+            return LightFlightStyle.LIGHT;
+        }
+        CompoundTag lightFlightData = persistentData.getCompound(LIGHT_FLIGHT_KEY);
+        return lightFlightData.contains(STYLE_KEY, Tag.TAG_STRING)
+                ? LightFlightStyle.fromSerializedName(lightFlightData.getString(STYLE_KEY))
+                : LightFlightStyle.LIGHT;
+    }
+
+    public static void setStyle(Player player, LightFlightStyle style) {
+        if (!isFlying(player)) {
+            return;
+        }
+        CompoundTag lightFlightData = getOrCreateData(player);
+        putStyle(lightFlightData, style);
+        player.getPersistentData().put(LIGHT_FLIGHT_KEY, lightFlightData);
     }
 
     public static long getBoostUntilTick(Player player) {
@@ -82,5 +108,10 @@ public final class PlayerLightFlightData {
         return persistentData.contains(LIGHT_FLIGHT_KEY, Tag.TAG_COMPOUND)
                 ? persistentData.getCompound(LIGHT_FLIGHT_KEY)
                 : new CompoundTag();
+    }
+
+    private static void putStyle(CompoundTag lightFlightData, LightFlightStyle style) {
+        LightFlightStyle sanitizedStyle = style == null ? LightFlightStyle.LIGHT : style;
+        lightFlightData.putString(STYLE_KEY, sanitizedStyle.getSerializedName());
     }
 }

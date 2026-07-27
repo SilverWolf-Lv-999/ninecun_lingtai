@@ -238,8 +238,8 @@ public final class SwordFlightManager {
         );
     }
 
-    /** 遁光等高阶能力需要以圆满御剑术为基准，但不要求玩家实际学会御剑术。 */
-    public static float getPerfectionFlightSpeed(ServerPlayer player) {
+    /** 遁光、踏空等高阶能力使用的同境界御剑默认基准；不读取背包里的御剑速度调节。 */
+    public static float getDefaultFlightSpeed(ServerPlayer player) {
         CultivationStage stage = CultivationApi.getStage(player)
                 .orElse(new CultivationStage(CultivationRealm.FOUNDATION_ESTABLISHMENT, 1));
         return getFlightSpeed(
@@ -247,6 +247,12 @@ public final class SwordFlightManager {
                 TechniqueMasteryStage.PERFECTION.getRequiredProficiency(),
                 TechniqueMasteryStage.PERFECTION.getEfficiency()
         );
+    }
+
+    /** @deprecated Use {@link #getDefaultFlightSpeed(ServerPlayer)} for new flight-style baselines. */
+    @Deprecated
+    public static float getPerfectionFlightSpeed(ServerPlayer player) {
+        return getDefaultFlightSpeed(player);
     }
 
     private static float applyFlightSpeedControl(ServerPlayer player, float flightSpeed) {

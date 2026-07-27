@@ -1,6 +1,7 @@
 package com.seraphina.ninecun_lingtai.client.player;
 
 import com.seraphina.ninecun_lingtai.client.animation.LightFlightAnimationManager;
+import com.seraphina.ninecun_lingtai.common.flight.LightFlightStyle;
 import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import com.seraphina.ninecun_lingtai.common.network.packet.BoostLightFlightPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SetLightFlightPacket;
@@ -77,19 +78,31 @@ public final class ClientLightFlightManager {
                 || !isFlying(player.getUUID())) {
             return;
         }
+        LightFlightVisualState visualState = VISUAL_STATES.get(player.getUUID());
+        if (visualState == null || visualState.style() != LightFlightStyle.LIGHT) {
+            return;
+        }
         setBoosting(player.getUUID(), true);
         ModNetwork.sendToServer(BoostLightFlightPacket.INSTANCE);
     }
 
-    public static void setFlying(UUID playerId, boolean flying, int color, boolean boosting) {
+    public static void setFlying(
+            UUID playerId,
+            boolean flying,
+            int color,
+            boolean boosting,
+            LightFlightStyle style
+    ) {
+        LightFlightStyle sanitizedStyle = style == null ? LightFlightStyle.LIGHT : style;
+        boolean effectiveBoosting = sanitizedStyle == LightFlightStyle.LIGHT && boosting;
         if (flying) {
             VISUAL_STATES.compute(
                     playerId,
                     (id, visualState) -> {
                         if (visualState == null) {
-                            return new LightFlightVisualState(color, boosting);
+                            return new LightFlightVisualState(sanitizedStyle, color, effectiveBoosting);
                         }
-                        visualState.update(color, boosting);
+                        visualState.update(sanitizedStyle, color, effectiveBoosting);
                         return visualState;
                     }
             );
@@ -99,7 +112,7 @@ public final class ClientLightFlightManager {
                 visualState.stopFlying();
             }
         }
-        LightFlightAnimationManager.setFlying(playerId, flying);
+        LightFlightAnimationManager.setFlying(playerId, flying, sanitizedStyle);
     }
 
     public static boolean isFlying(UUID playerId) {
@@ -121,6 +134,11 @@ public final class ClientLightFlightManager {
         return Collections.unmodifiableMap(VISUAL_STATES);
     }
 
+    public static LightFlightStyle getStyle(UUID playerId) {
+        LightFlightVisualState visualState = VISUAL_STATES.get(playerId);
+        return visualState == null ? LightFlightStyle.LIGHT : visualState.style();
+    }
+
     public static double getFovMultiplier(float partialTick) {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player == null) {
@@ -128,6 +146,9 @@ public final class ClientLightFlightManager {
         }
         LightFlightVisualState visualState = VISUAL_STATES.get(player.getUUID());
         if (visualState == null) {
+            return 1.0D;
+        }
+        if (visualState.style() != LightFlightStyle.LIGHT) {
             return 1.0D;
         }
         float boostVisibility = visualState.boostVisibility(partialTick);
@@ -140,21 +161,25 @@ public final class ClientLightFlightManager {
 
     public static void removePlayer(UUID playerId) {
         VISUAL_STATES.remove(playerId);
-        LightFlightAnimationManager.setFlying(playerId, false);
+        LightFlightAnimationManager.setFlying(playerId, false, LightFlightStyle.LIGHT);
     }
 
     public static void reset() {
-        VISUAL_STATES.keySet().forEach(playerId -> LightFlightAnimationManager.setFlying(playerId, false));
+        VISUAL_STATES.keySet().forEach(
+                playerId -> LightFlightAnimationManager.setFlying(playerId, false, LightFlightStyle.LIGHT)
+        );
         VISUAL_STATES.clear();
         lastJumpPressTime = 0L;
     }
 
     private static void requestFlying(LocalPlayer player, boolean flying) {
+        LightFlightStyle style = getPredictedStyle(player.getUUID());
         setFlying(
                 player.getUUID(),
                 flying,
                 getVisualStateColor(player.getUUID()),
-                false
+                false,
+                style
         );
         ModNetwork.sendToServer(new SetLightFlightPacket(flying));
     }
@@ -167,8 +192,23 @@ public final class ClientLightFlightManager {
     private static void setBoosting(UUID playerId, boolean boosting) {
         LightFlightVisualState visualState = VISUAL_STATES.get(playerId);
         if (visualState != null) {
-            visualState.update(visualState.color(), boosting);
+            visualState.update(
+                    visualState.style(),
+                    visualState.color(),
+                    visualState.style() == LightFlightStyle.LIGHT && boosting
+            );
         }
+    }
+
+    private static LightFlightStyle getPredictedStyle(UUID playerId) {
+        LightFlightVisualState visualState = VISUAL_STATES.get(playerId);
+        if (visualState != null) {
+            return visualState.style();
+        }
+        return ClientCultivationInfoManager.getCultivationInfo()
+                .flatMap(cultivationInfo -> cultivationInfo.cultivationStage())
+                .flatMap(stage -> LightFlightStyle.forRealm(stage.realm()))
+                .orElse(LightFlightStyle.AIR_WALKING);
     }
 
     private static void enforceFlightPose(Player player) {

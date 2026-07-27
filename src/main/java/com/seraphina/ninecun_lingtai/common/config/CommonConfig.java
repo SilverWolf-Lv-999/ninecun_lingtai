@@ -115,7 +115,7 @@ public final class CommonConfig {
 
         BUILDER.push("lightFlight");
         LIGHT_FLIGHT_SPEED_MULTIPLIER = BUILDER
-                .comment("Light-flight speed multiplier against perfected sword flight")
+                .comment("Golden-core light-flight speed multiplier against the default sword-flight baseline")
                 .defineInRange("speedMultiplier", 1.3D, MINIMUM_MULTIPLIER, MAXIMUM_MULTIPLIER);
         LIGHT_FLIGHT_BOOST_MULTIPLIER = BUILDER
                 .comment("Temporary light-flight boost multiplier")

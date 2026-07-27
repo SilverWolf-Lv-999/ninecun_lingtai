@@ -25,7 +25,7 @@ public final class PlayerValueControlUnlockUtility {
                     player,
                     SwordFlightManager.TECHNIQUE_ID
             );
-            case LIGHT_FLIGHT_SPEED -> isInRealm(player, CultivationRealm.GOLDEN_CORE);
+            case LIGHT_FLIGHT_SPEED -> hasReachedRealm(player, CultivationRealm.GOLDEN_CORE);
         };
     }
 
@@ -75,9 +75,4 @@ public final class PlayerValueControlUnlockUtility {
                 .orElse(false);
     }
 
-    private static boolean isInRealm(Player player, CultivationRealm realm) {
-        return CultivationApi.getStage(player)
-                .map(stage -> stage.realm() == realm)
-                .orElse(false);
-    }
 }

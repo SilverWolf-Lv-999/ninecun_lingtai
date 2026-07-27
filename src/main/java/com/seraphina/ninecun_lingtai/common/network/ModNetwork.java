@@ -54,7 +54,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public final class ModNetwork {
-    private static final String PROTOCOL_VERSION = "16";
+    private static final String PROTOCOL_VERSION = "17";
     private static final SimpleChannel CHANNEL = NetworkRegistry.ChannelBuilder
             .named(ResourceLocation.fromNamespaceAndPath(ModMain.MOD_ID, "main"))
             .networkProtocolVersion(() -> PROTOCOL_VERSION)
@@ -327,7 +327,8 @@ public final class ModNetwork {
                         player.getUUID(),
                         PlayerLightFlightData.isFlying(player),
                         LightFlightManager.getLightColor(player),
-                        LightFlightManager.isBoosting(player)
+                        LightFlightManager.isBoosting(player),
+                        LightFlightManager.getFlightStyle(player)
                 )
         );
     }
@@ -340,7 +341,8 @@ public final class ModNetwork {
                         subject.getUUID(),
                         PlayerLightFlightData.isFlying(subject),
                         LightFlightManager.getLightColor(subject),
-                        LightFlightManager.isBoosting(subject)
+                        LightFlightManager.isBoosting(subject),
+                        LightFlightManager.getFlightStyle(subject)
                 )
         );
     }

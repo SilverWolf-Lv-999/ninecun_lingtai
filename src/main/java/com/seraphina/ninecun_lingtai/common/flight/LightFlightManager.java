@@ -2,7 +2,6 @@ package com.seraphina.ninecun_lingtai.common.flight;
 
 import com.seraphina.ninecun_lingtai.api.aptitude.SpiritualRootApi;
 import com.seraphina.ninecun_lingtai.api.cultivation.CultivationApi;
-import com.seraphina.ninecun_lingtai.api.cultivation.CultivationRealm;
 import com.seraphina.ninecun_lingtai.common.config.CommonConfig;
 import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import com.seraphina.ninecun_lingtai.common.player.PlayerLightFlightData;
@@ -19,9 +18,12 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 
+import java.util.Optional;
+
 public final class LightFlightManager {
     private static final float BASE_FLYING_SPEED = 0.05F;
     private static final float MAXIMUM_LIGHT_FLYING_SPEED = 1300.0F;
+    private static final double AIR_WALKING_SPEED_MULTIPLIER = 2.3D;
     private static final int ENERGY_CONSUMPTION_INTERVAL_TICKS = 20;
 
     private LightFlightManager() {
@@ -40,26 +42,21 @@ public final class LightFlightManager {
             syncState(player);
             return;
         }
-        if (!canUseLightFlight(player)) {
-            sendActionBar(player, "只有金丹期可身化遁光");
+        Optional<LightFlightStyle> availableStyle = getAvailableStyle(player);
+        if (availableStyle.isEmpty()) {
+            sendActionBar(player, "金丹期方可身化遁光，元婴及以上可踏空而行");
             syncState(player);
             return;
         }
+        LightFlightStyle style = availableStyle.get();
         if (PlayerSwordFlightData.isFlying(player)) {
             SwordFlightManager.dismount(player);
         }
-        PlayerLightFlightData.start(player);
+        PlayerLightFlightData.start(player, style);
         applyFlightAbilities(player);
         player.fallDistance = 0.0F;
-        player.level().playSound(
-                null,
-                player.blockPosition(),
-                SoundEvents.BEACON_ACTIVATE,
-                SoundSource.PLAYERS,
-                0.7F,
-                1.35F
-        );
-        sendActionBar(player, "金丹流转，身化遁光");
+        playStartSound(player, style);
+        sendActionBar(player, getStartMessage(style));
         syncState(player);
     }
 
@@ -68,6 +65,7 @@ public final class LightFlightManager {
             syncState(player);
             return;
         }
+        LightFlightStyle style = PlayerLightFlightData.getStyle(player);
         PlayerLightFlightData.stop(player);
         if (!player.isCreative() && !player.isSpectator()) {
             player.getAbilities().mayfly = false;
@@ -76,20 +74,17 @@ public final class LightFlightManager {
         player.getAbilities().setFlyingSpeed(BASE_FLYING_SPEED);
         player.onUpdateAbilities();
         player.fallDistance = 0.0F;
-        player.level().playSound(
-                null,
-                player.blockPosition(),
-                SoundEvents.BEACON_DEACTIVATE,
-                SoundSource.PLAYERS,
-                0.7F,
-                1.15F
-        );
-        sendActionBar(player, "遁光敛去");
+        playStopSound(player, style);
+        sendActionBar(player, getStopMessage(style));
         syncState(player);
     }
 
     public static void requestBoost(ServerPlayer player) {
         if (!PlayerLightFlightData.isFlying(player)) {
+            return;
+        }
+        if (getFlightStyle(player) != LightFlightStyle.LIGHT) {
+            syncState(player);
             return;
         }
         long gameTime = player.level().getGameTime();
@@ -124,21 +119,24 @@ public final class LightFlightManager {
             stop(player);
             return;
         }
+        boolean styleChanged = synchronizeStyleWithRealm(player);
         long gameTime = player.level().getGameTime();
         boolean boostExpired = PlayerLightFlightData.getBoostUntilTick(player) > 0L
-                && !PlayerLightFlightData.isBoosting(player, gameTime);
+                && (PlayerLightFlightData.getStyle(player) != LightFlightStyle.LIGHT
+                || !PlayerLightFlightData.isBoosting(player, gameTime));
         if (boostExpired) {
             PlayerLightFlightData.clearBoost(player);
         }
         if (!player.isCreative() && player.tickCount % ENERGY_CONSUMPTION_INTERVAL_TICKS == 0) {
             double energyCost = CommonConfig.LIGHT_FLIGHT_ENERGY_COST_PER_SECOND.get();
             if (energyCost > 0.0D && PlayerSpiritualEnergyData.consumeEnergyAny(player, energyCost) == null) {
+                LightFlightStyle style = PlayerLightFlightData.getStyle(player);
                 stop(player);
-                sendActionBar(player, "灵气不继，遁光散去");
+                sendActionBar(player, getEnergyStopMessage(style));
                 return;
             }
         }
-        if (applyFlightAbilities(player) || boostExpired) {
+        if (applyFlightAbilities(player) || boostExpired || styleChanged) {
             syncState(player);
         }
     }
@@ -152,19 +150,23 @@ public final class LightFlightManager {
             stop(player);
             return;
         }
+        synchronizeStyleWithRealm(player);
         applyFlightAbilities(player);
         syncState(player);
     }
 
     public static float getFlightSpeed(ServerPlayer player) {
         long gameTime = player.level().getGameTime();
-        double multiplier = CommonConfig.LIGHT_FLIGHT_SPEED_MULTIPLIER.get();
-        if (PlayerLightFlightData.isBoosting(player, gameTime)) {
+        LightFlightStyle style = getFlightStyle(player);
+        double multiplier = style == LightFlightStyle.AIR_WALKING
+                ? AIR_WALKING_SPEED_MULTIPLIER
+                : CommonConfig.LIGHT_FLIGHT_SPEED_MULTIPLIER.get();
+        if (style == LightFlightStyle.LIGHT && PlayerLightFlightData.isBoosting(player, gameTime)) {
             multiplier *= CommonConfig.LIGHT_FLIGHT_BOOST_MULTIPLIER.get();
         }
         return (float) Mth.clamp(
                 PlayerValueControlUtility.applyApplication(
-                        SwordFlightManager.getPerfectionFlightSpeed(player) * multiplier,
+                        SwordFlightManager.getDefaultFlightSpeed(player) * multiplier,
                         PlayerValueControlUnlockUtility.getEffectiveApplication(
                                 player,
                                 PlayerValueControlType.LIGHT_FLIGHT_SPEED
@@ -185,7 +187,12 @@ public final class LightFlightManager {
     }
 
     public static boolean isBoosting(ServerPlayer player) {
-        return PlayerLightFlightData.isBoosting(player, player.level().getGameTime());
+        return getFlightStyle(player) == LightFlightStyle.LIGHT
+                && PlayerLightFlightData.isBoosting(player, player.level().getGameTime());
+    }
+
+    public static LightFlightStyle getFlightStyle(ServerPlayer player) {
+        return getAvailableStyle(player).orElse(PlayerLightFlightData.getStyle(player));
     }
 
     public static int getLightColor(ServerPlayer player) {
@@ -216,9 +223,72 @@ public final class LightFlightManager {
         if (!player.isAlive() || player.isSpectator()) {
             return false;
         }
-        return CultivationApi.getStage(player)
-                .map(stage -> stage.realm() == CultivationRealm.GOLDEN_CORE)
-                .orElse(false);
+        return getAvailableStyle(player).isPresent();
+    }
+
+    private static Optional<LightFlightStyle> getAvailableStyle(ServerPlayer player) {
+        if (!player.isAlive() || player.isSpectator()) {
+            return Optional.empty();
+        }
+        return CultivationApi.getStage(player).flatMap(stage -> LightFlightStyle.forRealm(stage.realm()));
+    }
+
+    private static boolean synchronizeStyleWithRealm(ServerPlayer player) {
+        Optional<LightFlightStyle> availableStyle = getAvailableStyle(player);
+        if (availableStyle.isEmpty()) {
+            return false;
+        }
+        LightFlightStyle style = availableStyle.get();
+        if (PlayerLightFlightData.getStyle(player) == style) {
+            return false;
+        }
+        PlayerLightFlightData.setStyle(player, style);
+        if (style != LightFlightStyle.LIGHT) {
+            PlayerLightFlightData.clearBoost(player);
+        }
+        return true;
+    }
+
+    private static void playStartSound(ServerPlayer player, LightFlightStyle style) {
+        if (style != LightFlightStyle.LIGHT) {
+            return;
+        }
+        player.level().playSound(
+                null,
+                player.blockPosition(),
+                SoundEvents.BEACON_ACTIVATE,
+                SoundSource.PLAYERS,
+                0.7F,
+                1.35F
+        );
+    }
+
+    private static void playStopSound(ServerPlayer player, LightFlightStyle style) {
+        if (style != LightFlightStyle.LIGHT) {
+            return;
+        }
+        player.level().playSound(
+                null,
+                player.blockPosition(),
+                SoundEvents.BEACON_DEACTIVATE,
+                SoundSource.PLAYERS,
+                0.7F,
+                1.15F
+        );
+    }
+
+    private static String getStartMessage(LightFlightStyle style) {
+        return style == LightFlightStyle.AIR_WALKING
+                ? "元婴御虚，踏空而行"
+                : "金丹流转，身化遁光";
+    }
+
+    private static String getStopMessage(LightFlightStyle style) {
+        return style == LightFlightStyle.AIR_WALKING ? "踏空止息" : "遁光敛去";
+    }
+
+    private static String getEnergyStopMessage(LightFlightStyle style) {
+        return style == LightFlightStyle.AIR_WALKING ? "灵气不继，踏空难续" : "灵气不继，遁光散去";
     }
 
     private static void syncState(ServerPlayer player) {

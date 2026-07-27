@@ -1,6 +1,7 @@
 package com.seraphina.ninecun_lingtai.common.network.packet;
 
 import com.seraphina.ninecun_lingtai.client.player.ClientLightFlightManager;
+import com.seraphina.ninecun_lingtai.common.flight.LightFlightStyle;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
@@ -13,13 +14,15 @@ public record SyncLightFlightPacket(
         UUID playerId,
         boolean flying,
         int color,
-        boolean boosting
+        boolean boosting,
+        LightFlightStyle style
 ) {
     public static void encode(SyncLightFlightPacket packet, FriendlyByteBuf buffer) {
         buffer.writeUUID(packet.playerId);
         buffer.writeBoolean(packet.flying);
         buffer.writeVarInt(packet.color);
         buffer.writeBoolean(packet.boosting);
+        buffer.writeVarInt(packet.style.ordinal());
     }
 
     public static SyncLightFlightPacket decode(FriendlyByteBuf buffer) {
@@ -27,7 +30,8 @@ public record SyncLightFlightPacket(
                 buffer.readUUID(),
                 buffer.readBoolean(),
                 buffer.readVarInt(),
-                buffer.readBoolean()
+                buffer.readBoolean(),
+                LightFlightStyle.fromOrdinal(buffer.readVarInt())
         );
     }
 
@@ -38,7 +42,8 @@ public record SyncLightFlightPacket(
                         packet.playerId,
                         packet.flying,
                         packet.color,
-                        packet.boosting
+                        packet.boosting,
+                        packet.style
                 )
         );
     }
