@@ -3,6 +3,7 @@ package com.seraphina.ninecun_lingtai.common.registry;
 import com.seraphina.ninecun_lingtai.ModMain;
 import com.seraphina.ninecun_lingtai.api.spell.Spell;
 import com.seraphina.ninecun_lingtai.common.spell.FireballSpell;
+import com.seraphina.ninecun_lingtai.common.spell.ShrinkEarthSpell;
 import com.seraphina.ninecun_lingtai.common.spell.SwiftWindSpell;
 import com.seraphina.ninecun_lingtai.common.spell.SwordFlightSpell;
 import net.minecraft.core.Registry;
@@ -43,6 +44,11 @@ public final class ModSpells {
     public static final RegistryObject<Spell> SWORD_FLIGHT = SPELLS.register(
             "sword_flight",
             SwordFlightSpell::new
+    );
+
+    public static final RegistryObject<Spell> SHRINK_EARTH = SPELLS.register(
+            "shrink_earth",
+            ShrinkEarthSpell::new
     );
 
     private ModSpells() {

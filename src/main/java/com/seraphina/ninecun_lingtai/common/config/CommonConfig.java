@@ -29,6 +29,7 @@ public final class CommonConfig {
     public static final ForgeConfigSpec.DoubleValue LIGHT_FLIGHT_SPEED_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue LIGHT_FLIGHT_BOOST_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue LIGHT_FLIGHT_ENERGY_COST_PER_SECOND;
+    public static final ForgeConfigSpec.DoubleValue SHRINK_EARTH_ENERGY_COST_PER_SECOND;
     public static final ForgeConfigSpec.IntValue LIGHT_FLIGHT_BOOST_DURATION_TICKS;
     public static final ForgeConfigSpec.IntValue LIGHT_FLIGHT_BOOST_COOLDOWN_TICKS;
     public static final ForgeConfigSpec.IntValue MORTAL_PLAYER_LIFESPAN_YEARS;
@@ -134,6 +135,17 @@ public final class CommonConfig {
         LIGHT_FLIGHT_BOOST_COOLDOWN_TICKS = BUILDER
                 .comment("Cooldown between light-flight boosts, in ticks")
                 .defineInRange("boostCooldownTicks", 40, 1, 1200);
+        BUILDER.pop();
+
+        BUILDER.push("shrinkEarth");
+        SHRINK_EARTH_ENERGY_COST_PER_SECOND = BUILDER
+                .comment("Spiritual energy consumed per second while shrink-earth is active")
+                .defineInRange(
+                        "energyCostPerSecond",
+                        1.0D,
+                        MINIMUM_MULTIPLIER,
+                        MAXIMUM_BASE_ABSORPTION_PER_SECOND
+                );
         BUILDER.pop();
 
         BUILDER.push("lifespan");

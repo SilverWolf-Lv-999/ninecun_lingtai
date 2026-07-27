@@ -21,6 +21,7 @@ import com.seraphina.ninecun_lingtai.common.network.packet.RequestCultivationInf
 import com.seraphina.ninecun_lingtai.common.network.packet.RequestPlayerValueControlSettingsPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.RequestTechniqueLibraryPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SelectSpellPacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.SetShrinkEarthPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SetPlayerValueControlSettingsPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SetLightFlightPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SetMeditationStatePacket;
@@ -30,11 +31,13 @@ import com.seraphina.ninecun_lingtai.common.network.packet.SyncDefenseResourcePa
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncLightFlightPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncMeditationStatePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncPlayerValueControlSettingsPacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.SyncShrinkEarthPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncSwordFlightPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncTechniqueLibraryPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.TriggerBodyShieldPacket;
 import com.seraphina.ninecun_lingtai.common.flight.LightFlightManager;
 import com.seraphina.ninecun_lingtai.common.player.PlayerLightFlightData;
+import com.seraphina.ninecun_lingtai.common.player.PlayerShrinkEarthData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerValueControlData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerSwordFlightData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerCultivationInfo;
@@ -58,7 +61,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public final class ModNetwork {
-    private static final String PROTOCOL_VERSION = "19";
+    private static final String PROTOCOL_VERSION = "20";
     private static final SimpleChannel CHANNEL = NetworkRegistry.ChannelBuilder
             .named(ResourceLocation.fromNamespaceAndPath(ModMain.MOD_ID, "main"))
             .networkProtocolVersion(() -> PROTOCOL_VERSION)
@@ -262,6 +265,24 @@ public final class ModNetwork {
                 .consumerMainThread(BoostLightFlightPacket::handle)
                 .add();
         CHANNEL.messageBuilder(
+                        SetShrinkEarthPacket.class,
+                        nextPacketId++,
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(SetShrinkEarthPacket::encode)
+                .decoder(SetShrinkEarthPacket::decode)
+                .consumerMainThread(SetShrinkEarthPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        SyncShrinkEarthPacket.class,
+                        nextPacketId++,
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(SyncShrinkEarthPacket::encode)
+                .decoder(SyncShrinkEarthPacket::decode)
+                .consumerMainThread(SyncShrinkEarthPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
                         SyncLightFlightPacket.class,
                         nextPacketId++,
                         NetworkDirection.PLAY_TO_CLIENT
@@ -315,6 +336,30 @@ public final class ModNetwork {
                 .decoder(SyncDefenseResourcePacket::decode)
                 .consumerMainThread(SyncDefenseResourcePacket::handle)
                 .add();
+    }
+
+    /** 把玩家当前的缩地状态广播给所有追踪者与其本人。 */
+    public static void sendShrinkEarthState(ServerPlayer player) {
+        CHANNEL.send(
+                PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> player),
+                new SyncShrinkEarthPacket(
+                        player.getUUID(),
+                        PlayerShrinkEarthData.isActive(player),
+                        PlayerShrinkEarthData.getCompressionScale(player)
+                )
+        );
+    }
+
+    /** 把某玩家的缩地状态单发给一名观察者。 */
+    public static void sendShrinkEarthStateTo(ServerPlayer recipient, ServerPlayer subject) {
+        CHANNEL.send(
+                PacketDistributor.PLAYER.with(() -> recipient),
+                new SyncShrinkEarthPacket(
+                        subject.getUUID(),
+                        PlayerShrinkEarthData.isActive(subject),
+                        PlayerShrinkEarthData.getCompressionScale(subject)
+                )
+        );
     }
 
     /** 把玩家当前的御剑状态广播给所有追踪者与其本人。 */

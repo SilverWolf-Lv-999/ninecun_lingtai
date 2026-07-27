@@ -1,0 +1,43 @@
+{
+  "name": "缩地成寸",
+  "description": "折叠天地距离，一步踏过百里的六品实用法术。元婴方可修习，不拘灵根。",
+  "content": "所谓缩地，并非真将山河揉碎，而是以元婴神识钉住自身一寸灵台，再以灵力牵引脚下地脉，使远近之距在眼中折叠。行功之时，先令元婴内照泥丸，神识外放成圆，罩住前路；再由丹田引灵力下沉涌泉，贴地铺开，与地气相接。眼前世界会骤然收束，十格、五十格、百格乃至三百格皆可被折作一格。修士踏出一步，身形随心意掠过被折叠的距离，落点仍须有实地承载，若前路隔墙断崖，缩地之势便会止于可立之处。此术最忌神识散乱，见路不明而强行踏步，轻则灵力空耗，重则撞入险地。故初学者当先短距试步，待心、眼、足与地脉相合，方能咫尺天涯一念往返。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "spell": {
+    "id": "ninecun_lingtai:shrink_earth",
+    "category": "utility",
+    "grade": 6,
+    "base_cost": 2.0,
+    "cost_elements": []
+  },
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "nascent_soul",
+      "layer": 1
+    }
+  },
+  "comprehension": {
+    "minimum_learning_score": 75,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "以元婴神识钉住灵台折叠远近之距",
+      "灵力由丹田下沉涌泉贴地铺开接续地气",
+      "入门十格归一格小成五十格归一格大成百格归一格圆满三百格归一格",
+      "一步踏出身形随心意掠过折叠距离",
+      "落点须可立前路阻隔则止于可立之处"
+    ],
+    "grading_criteria": [
+      "说明缩地不是破坏地形，而是以神识与灵力折叠距离感与行步距离",
+      "理解元婴神识内照泥丸、外罩前路的必要性",
+      "明白灵力下沉涌泉并与地气相接，方能承载步法",
+      "准确说出四个熟练阶段对应的压缩比例",
+      "知晓落点必须安全，墙体、断崖或险地会截断缩地之势"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 75
+      }
+    ]
+  }
+}

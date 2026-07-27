@@ -8,6 +8,7 @@ import com.seraphina.ninecun_lingtai.client.player.ClientDefenseResourceManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientLightFlightManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientMeditationManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientPlayerValueControlManager;
+import com.seraphina.ninecun_lingtai.client.player.ClientShrinkEarthManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientSpellManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientSwordFlightManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientTechniqueManager;
@@ -43,12 +44,14 @@ public final class ClientForgeEventHandler {
             ClientSpellManager.tick();
             ClientSwordFlightManager.tick();
             ClientLightFlightManager.tick();
+            ClientShrinkEarthManager.tick();
             ClientBodyShieldManager.tick();
         }
     }
 
     @SubscribeEvent
     public static void onKeyInput(InputEvent.Key event) {
+        ClientShrinkEarthManager.onKeyInput(event.getKey(), event.getAction());
         if (event.getAction() == GLFW.GLFW_PRESS
                 && (event.getKey() == GLFW.GLFW_KEY_LEFT_SHIFT || event.getKey() == GLFW.GLFW_KEY_RIGHT_SHIFT)) {
             if (ClientMeditationManager.isLocalPlayerMeditating()) {
@@ -104,6 +107,7 @@ public final class ClientForgeEventHandler {
             ClientMeditationManager.removePlayer(player.getUUID());
             ClientSwordFlightManager.removePlayer(player.getUUID());
             ClientLightFlightManager.removePlayer(player.getUUID());
+            ClientShrinkEarthManager.removePlayer(player.getUUID());
         }
         if (event.getLevel().isClientSide) {
             ClientBodyShieldManager.removeEntity(event.getEntity().getId());
@@ -124,6 +128,7 @@ public final class ClientForgeEventHandler {
         ClientSpellManager.reset();
         ClientSwordFlightManager.reset();
         ClientLightFlightManager.reset();
+        ClientShrinkEarthManager.reset();
         ClientBodyShieldManager.reset();
         ClientDefenseResourceManager.reset();
         ClientCultivationFeedbackManager.reset();
