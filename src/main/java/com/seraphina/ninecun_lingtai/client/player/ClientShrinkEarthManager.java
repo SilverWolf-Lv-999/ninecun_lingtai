@@ -5,9 +5,12 @@ import com.seraphina.ninecun_lingtai.common.network.packet.SetShrinkEarthPacket;
 import com.seraphina.ninecun_lingtai.utility.ShrinkEarthUtility;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.Vec3;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -72,12 +75,33 @@ public final class ClientShrinkEarthManager {
         return player != null && isActive(player.getUUID());
     }
 
-    public static float getLocalDepthRenderScale() {
+    public static float getLocalWorldRenderScale() {
+        return ShrinkEarthUtility.getWorldRenderScale(getLocalCompressionScale());
+    }
+
+    public static float getLocalWorldRenderScale(double horizontalDistance) {
+        return ShrinkEarthUtility.getWorldRenderScale(
+                getLocalCompressionScale(),
+                horizontalDistance,
+                getLocalFullCompressionDistance()
+        );
+    }
+
+    public static int getLocalCompressionScale() {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player == null) {
-            return 1.0F;
+            return 1;
         }
-        return ShrinkEarthUtility.getDepthRenderScale(ACTIVE_PLAYERS.getOrDefault(player.getUUID(), 1));
+        return ACTIVE_PLAYERS.getOrDefault(player.getUUID(), 1);
+    }
+
+    public static Optional<Vec3> getLocalCompressionCenter() {
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player == null || !isActive(player.getUUID())) {
+            return Optional.empty();
+        }
+        BlockPos supportingBlockPos = player.getOnPos();
+        return Optional.of(Vec3.atCenterOf(supportingBlockPos));
     }
 
     public static void removePlayer(UUID playerId) {
@@ -113,5 +137,13 @@ public final class ClientShrinkEarthManager {
         boolean altDown = GLFW.glfwGetKey(window, GLFW.GLFW_KEY_LEFT_ALT) == GLFW.GLFW_PRESS
                 || GLFW.glfwGetKey(window, GLFW.GLFW_KEY_RIGHT_ALT) == GLFW.GLFW_PRESS;
         return controlDown && altDown;
+    }
+
+    private static double getLocalFullCompressionDistance() {
+        Minecraft minecraft = Minecraft.getInstance();
+        return Math.max(
+                ShrinkEarthUtility.UNCHANGED_WORLD_RENDER_RADIUS + 1.0D,
+                minecraft.options.getEffectiveRenderDistance() * 16.0D
+        );
     }
 }

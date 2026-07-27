@@ -12,6 +12,7 @@
     "client.CameraMixin",
     "client.CreativeModeInventoryScreenFiltersMixin",
     "client.GameRendererMixin",
+    "client.LevelRendererMixin",
     "client.LightTextureMixin",
     "client.MouseHandlerMixin"
   ],
