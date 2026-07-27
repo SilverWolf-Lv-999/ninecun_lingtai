@@ -1,0 +1,26 @@
+{
+  "ninecun_lingtai:ninecun_lingtai": {
+    "blocks": {
+      "title": "方块",
+      "icon": "ninecun_lingtai:spiritual_stone_ore",
+      "items": [
+        "ninecun_lingtai:spiritual_stone_ore",
+        "ninecun_lingtai:deepslate_spiritual_stone_ore"
+      ]
+    },
+    "materials": {
+      "title": "材料",
+      "icon": "ninecun_lingtai:spiritual_stone",
+      "items": [
+        "ninecun_lingtai:spiritual_stone"
+      ]
+    },
+    "techniques": {
+      "title": "功法",
+      "icon": "ninecun_lingtai:jade_slip",
+      "items": [
+        "ninecun_lingtai:jade_slip"
+      ]
+    }
+  }
+}

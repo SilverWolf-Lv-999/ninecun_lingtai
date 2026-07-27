@@ -20,9 +20,12 @@ public final class ModCreativeModeTabs {
             () -> CreativeModeTab.builder()
                     .title(Component.translatable("itemGroup.ninecun_lingtai"))
                     .icon(() -> ModItems.JADE_SLIP.get().getDefaultInstance())
-                    .displayItems((parameters, output) -> output.acceptAll(
-                            TechniqueCreativeTabCache.getItemStacks()
-                    ))
+                    .displayItems((parameters, output) -> {
+                        output.accept(ModItems.SPIRITUAL_STONE_ORE.get());
+                        output.accept(ModItems.DEEPSLATE_SPIRITUAL_STONE_ORE.get());
+                        output.accept(ModItems.SPIRITUAL_STONE.get());
+                        output.acceptAll(TechniqueCreativeTabCache.getItemStacks());
+                    })
                     .build()
     );
 

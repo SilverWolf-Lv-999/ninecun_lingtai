@@ -1,0 +1,6 @@
+{
+  "type": "forge:add_features",
+  "biomes": "#minecraft:is_overworld",
+  "features": "ninecun_lingtai:spiritual_stone_ore",
+  "step": "underground_ores"
+}

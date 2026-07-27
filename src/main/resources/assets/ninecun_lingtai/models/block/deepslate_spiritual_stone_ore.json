@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "ninecun_lingtai:block/deepslate_spiritual_stone_ore"
+  }
+}

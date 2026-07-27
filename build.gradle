@@ -138,6 +138,7 @@ repositories {
     maven { url = 'https://maven.theillusivec4.top/' }
     maven { url = 'https://maven.kosmx.dev/' }
     maven { url = 'https://api.modrinth.com/maven' }
+    maven { url = 'https://maven.ziyuesinicization.site/releases/' }
     maven { url = 'https://www.cursemaven.com' }
     maven { url = 'https://maven.blamejared.com/' }
     maven { url = 'https://maven.izzel.io/releases/' }
@@ -161,7 +162,9 @@ dependencies {
     implementation fg.deobf("top.theillusivec4.curios:curios-forge:${curios_version}")
     implementation fg.deobf("dev.kosmx.player-anim:player-animation-lib-forge:${player_animator_version}")
     implementation fg.deobf("curse.maven:inventory-tabs-forge-716101:${inventory_tabs_version}")
-    implementation fg.deobf("maven.modrinth:filters-api:${filters_api_version}")
+    implementation(fg.deobf("ziyue.filters:filters-forge:${filters_api_version}")) {
+        exclude group: 'net.minecraftforge'
+    }
 
     compileOnly fg.deobf("maven.modrinth:jade:${jade_version}")
     runtimeOnly fg.deobf("maven.modrinth:jade:${jade_version}")

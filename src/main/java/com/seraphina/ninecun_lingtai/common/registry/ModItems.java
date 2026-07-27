@@ -2,6 +2,7 @@ package com.seraphina.ninecun_lingtai.common.registry;
 
 import com.seraphina.ninecun_lingtai.ModMain;
 import com.seraphina.ninecun_lingtai.common.item.TechniqueItem;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
@@ -17,6 +18,21 @@ public final class ModItems {
     public static final RegistryObject<Item> JADE_SLIP = ITEMS.register(
             "jade_slip",
             () -> new TechniqueItem(new Item.Properties().stacksTo(1))
+    );
+
+    public static final RegistryObject<Item> SPIRITUAL_STONE = ITEMS.register(
+            "spiritual_stone",
+            () -> new Item(new Item.Properties())
+    );
+
+    public static final RegistryObject<Item> SPIRITUAL_STONE_ORE = ITEMS.register(
+            "spiritual_stone_ore",
+            () -> new BlockItem(ModBlocks.SPIRITUAL_STONE_ORE.get(), new Item.Properties())
+    );
+
+    public static final RegistryObject<Item> DEEPSLATE_SPIRITUAL_STONE_ORE = ITEMS.register(
+            "deepslate_spiritual_stone_ore",
+            () -> new BlockItem(ModBlocks.DEEPSLATE_SPIRITUAL_STONE_ORE.get(), new Item.Properties())
     );
 
     private ModItems() {

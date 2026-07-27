@@ -10,6 +10,7 @@
   ],
   "client": [
     "client.CameraMixin",
+    "client.CreativeModeInventoryScreenFiltersMixin",
     "client.GameRendererMixin",
     "client.LightTextureMixin",
     "client.MouseHandlerMixin"
