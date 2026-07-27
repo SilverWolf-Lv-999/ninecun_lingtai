@@ -31,6 +31,7 @@ import com.seraphina.ninecun_lingtai.common.network.packet.SyncMeditationStatePa
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncPlayerValueControlSettingsPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncSwordFlightPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncTechniqueLibraryPacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.TriggerBodyShieldPacket;
 import com.seraphina.ninecun_lingtai.common.flight.LightFlightManager;
 import com.seraphina.ninecun_lingtai.common.player.PlayerLightFlightData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerValueControlData;
@@ -43,6 +44,7 @@ import com.seraphina.ninecun_lingtai.utility.PlayerValueControlUnlockUtility;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.InteractionHand;
 import net.minecraftforge.network.NetworkDirection;
 import net.minecraftforge.network.NetworkRegistry;
@@ -54,7 +56,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public final class ModNetwork {
-    private static final String PROTOCOL_VERSION = "17";
+    private static final String PROTOCOL_VERSION = "18";
     private static final SimpleChannel CHANNEL = NetworkRegistry.ChannelBuilder
             .named(ResourceLocation.fromNamespaceAndPath(ModMain.MOD_ID, "main"))
             .networkProtocolVersion(() -> PROTOCOL_VERSION)
@@ -293,6 +295,15 @@ public final class ModNetwork {
                 .decoder(SyncPlayerValueControlSettingsPacket::decode)
                 .consumerMainThread(SyncPlayerValueControlSettingsPacket::handle)
                 .add();
+        CHANNEL.messageBuilder(
+                        TriggerBodyShieldPacket.class,
+                        nextPacketId++,
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(TriggerBodyShieldPacket::encode)
+                .decoder(TriggerBodyShieldPacket::decode)
+                .consumerMainThread(TriggerBodyShieldPacket::handle)
+                .add();
     }
 
     /** 把玩家当前的御剑状态广播给所有追踪者与其本人。 */
@@ -344,6 +355,13 @@ public final class ModNetwork {
                         LightFlightManager.isBoosting(subject),
                         LightFlightManager.getFlightStyle(subject)
                 )
+        );
+    }
+
+    public static void sendBodyShield(LivingEntity entity) {
+        CHANNEL.send(
+                PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> entity),
+                new TriggerBodyShieldPacket(entity.getId())
         );
     }
 
