@@ -2,8 +2,9 @@ package com.seraphina.ninecun_lingtai.client.event;
 
 import com.seraphina.ninecun_lingtai.ModMain;
 import com.seraphina.ninecun_lingtai.client.player.ClientCultivationFeedbackManager;
-import com.seraphina.ninecun_lingtai.client.player.ClientMeditationManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientCultivationInfoManager;
+import com.seraphina.ninecun_lingtai.client.player.ClientLightFlightManager;
+import com.seraphina.ninecun_lingtai.client.player.ClientMeditationManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientSpellManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientSwordFlightManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientTechniqueManager;
@@ -16,6 +17,7 @@ import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.client.event.MovementInputUpdateEvent;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
+import net.minecraftforge.client.event.ViewportEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -34,6 +36,7 @@ public final class ClientForgeEventHandler {
             ClientMeditationManager.tick();
             ClientSpellManager.tick();
             ClientSwordFlightManager.tick();
+            ClientLightFlightManager.tick();
         }
     }
 
@@ -47,6 +50,13 @@ public final class ClientForgeEventHandler {
             if (Minecraft.getInstance().screen == null) {
                 ClientSwordFlightManager.onShiftPressed();
             }
+        }
+        if (event.getAction() == GLFW.GLFW_PRESS && event.getKey() == GLFW.GLFW_KEY_SPACE) {
+            ClientLightFlightManager.onJumpPressed();
+        }
+        if (event.getAction() == GLFW.GLFW_PRESS
+                && (event.getKey() == GLFW.GLFW_KEY_LEFT_CONTROL || event.getKey() == GLFW.GLFW_KEY_RIGHT_CONTROL)) {
+            ClientLightFlightManager.onControlPressed();
         }
     }
 
@@ -80,7 +90,13 @@ public final class ClientForgeEventHandler {
         if (event.getLevel().isClientSide && event.getEntity() instanceof net.minecraft.world.entity.player.Player player) {
             ClientMeditationManager.removePlayer(player.getUUID());
             ClientSwordFlightManager.removePlayer(player.getUUID());
+            ClientLightFlightManager.removePlayer(player.getUUID());
         }
+    }
+
+    @SubscribeEvent
+    public static void onComputeFov(ViewportEvent.ComputeFov event) {
+        event.setFOV(event.getFOV() * ClientLightFlightManager.getFovMultiplier((float) event.getPartialTick()));
     }
 
     @SubscribeEvent
@@ -91,6 +107,7 @@ public final class ClientForgeEventHandler {
         ClientMeditationManager.reset();
         ClientSpellManager.reset();
         ClientSwordFlightManager.reset();
+        ClientLightFlightManager.reset();
         ClientCultivationFeedbackManager.reset();
     }
 }

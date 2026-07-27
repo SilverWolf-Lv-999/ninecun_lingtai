@@ -214,15 +214,34 @@ public final class SwordFlightManager {
     public static float getFlightSpeed(ServerPlayer player) {
         CultivationStage stage = CultivationApi.getStage(player)
                 .orElse(new CultivationStage(CultivationRealm.FOUNDATION_ESTABLISHMENT, 1));
-        int realmsAboveFoundation = Math.max(
-                0,
-                stage.realm().ordinal() - CultivationRealm.FOUNDATION_ESTABLISHMENT.ordinal()
-        );
         long proficiency = PlayerTechniqueProficiencyData.get(player, TECHNIQUE_ID);
         double masteryEfficiency = PlayerTechniqueData.getTechnique(player, TECHNIQUE_ID)
                 .flatMap(progress -> TechniqueMasteryStage.fromMastery(progress.mastery()))
                 .orElse(TechniqueMasteryStage.ENTRY)
                 .getEfficiency();
+        return getFlightSpeed(stage, proficiency, masteryEfficiency);
+    }
+
+    /** 遁光等高阶能力需要以圆满御剑术为基准，但不要求玩家实际学会御剑术。 */
+    public static float getPerfectionFlightSpeed(ServerPlayer player) {
+        CultivationStage stage = CultivationApi.getStage(player)
+                .orElse(new CultivationStage(CultivationRealm.FOUNDATION_ESTABLISHMENT, 1));
+        return getFlightSpeed(
+                stage,
+                TechniqueMasteryStage.PERFECTION.getRequiredProficiency(),
+                TechniqueMasteryStage.PERFECTION.getEfficiency()
+        );
+    }
+
+    private static float getFlightSpeed(
+            CultivationStage stage,
+            long proficiency,
+            double masteryEfficiency
+    ) {
+        int realmsAboveFoundation = Math.max(
+                0,
+                stage.realm().ordinal() - CultivationRealm.FOUNDATION_ESTABLISHMENT.ordinal()
+        );
         double realmFactor = Math.pow(REALM_SPEED_RATIO, realmsAboveFoundation);
         double layerFactor = Math.pow(LAYER_SPEED_RATIO, stage.layer() - 1);
         double proficiencyFactor = Math.pow(

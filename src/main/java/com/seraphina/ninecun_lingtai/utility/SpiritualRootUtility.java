@@ -97,6 +97,12 @@ public final class SpiritualRootUtility {
         return ColorUtility.mix(elementColors);
     }
 
+    public static int getSpiritualRootGlowColor(Set<ElementType> elements) {
+        return isChaos(elements)
+                ? getElementColor(ElementType.CHAOS)
+                : getSpiritualRootColor(elements);
+    }
+
     public static boolean isChaos(Set<ElementType> elements) {
         return elements.size() == SpiritualRoot.SELECTABLE_ELEMENTS.size()
                 && elements.containsAll(SpiritualRoot.SELECTABLE_ELEMENTS);

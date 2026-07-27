@@ -7,6 +7,7 @@ import com.seraphina.ninecun_lingtai.api.technique.TechniqueClientData;
 import com.seraphina.ninecun_lingtai.api.technique.TechniqueProgress;
 import com.seraphina.ninecun_lingtai.common.data.TechniqueManager;
 import com.seraphina.ninecun_lingtai.common.network.packet.BreakthroughRequestPacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.BoostLightFlightPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.CastSpellPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.CultivationFeedbackPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.DismountSwordFlightPacket;
@@ -19,12 +20,16 @@ import com.seraphina.ninecun_lingtai.common.network.packet.OpenTechniqueScreenPa
 import com.seraphina.ninecun_lingtai.common.network.packet.RequestCultivationInfoPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.RequestTechniqueLibraryPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SelectSpellPacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.SetLightFlightPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SetMeditationStatePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SubmitAptitudePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncCultivationInfoPacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.SyncLightFlightPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncMeditationStatePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncSwordFlightPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncTechniqueLibraryPacket;
+import com.seraphina.ninecun_lingtai.common.flight.LightFlightManager;
+import com.seraphina.ninecun_lingtai.common.player.PlayerLightFlightData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerSwordFlightData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerCultivationInfo;
 import com.seraphina.ninecun_lingtai.common.player.PlayerImprintedTechniqueData;
@@ -44,7 +49,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public final class ModNetwork {
-    private static final String PROTOCOL_VERSION = "13";
+    private static final String PROTOCOL_VERSION = "14";
     private static final SimpleChannel CHANNEL = NetworkRegistry.ChannelBuilder
             .named(ResourceLocation.fromNamespaceAndPath(ModMain.MOD_ID, "main"))
             .networkProtocolVersion(() -> PROTOCOL_VERSION)
@@ -229,6 +234,33 @@ public final class ModNetwork {
                 .decoder(DismountSwordFlightPacket::decode)
                 .consumerMainThread(DismountSwordFlightPacket::handle)
                 .add();
+        CHANNEL.messageBuilder(
+                        SetLightFlightPacket.class,
+                        nextPacketId++,
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(SetLightFlightPacket::encode)
+                .decoder(SetLightFlightPacket::decode)
+                .consumerMainThread(SetLightFlightPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        BoostLightFlightPacket.class,
+                        nextPacketId++,
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(BoostLightFlightPacket::encode)
+                .decoder(BoostLightFlightPacket::decode)
+                .consumerMainThread(BoostLightFlightPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        SyncLightFlightPacket.class,
+                        nextPacketId++,
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(SyncLightFlightPacket::encode)
+                .decoder(SyncLightFlightPacket::decode)
+                .consumerMainThread(SyncLightFlightPacket::handle)
+                .add();
     }
 
     /** 把玩家当前的御剑状态广播给所有追踪者与其本人。 */
@@ -251,6 +283,32 @@ public final class ModNetwork {
                         subject.getUUID(),
                         PlayerSwordFlightData.isFlying(subject),
                         PlayerSwordFlightData.getSword(subject)
+                )
+        );
+    }
+
+    /** 把玩家当前的遁光状态广播给所有追踪者与其本人。 */
+    public static void sendLightFlightState(ServerPlayer player) {
+        CHANNEL.send(
+                PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> player),
+                new SyncLightFlightPacket(
+                        player.getUUID(),
+                        PlayerLightFlightData.isFlying(player),
+                        LightFlightManager.getLightColor(player),
+                        LightFlightManager.isBoosting(player)
+                )
+        );
+    }
+
+    /** 把某玩家的遁光状态单发给一名观察者。 */
+    public static void sendLightFlightStateTo(ServerPlayer recipient, ServerPlayer subject) {
+        CHANNEL.send(
+                PacketDistributor.PLAYER.with(() -> recipient),
+                new SyncLightFlightPacket(
+                        subject.getUUID(),
+                        PlayerLightFlightData.isFlying(subject),
+                        LightFlightManager.getLightColor(subject),
+                        LightFlightManager.isBoosting(subject)
                 )
         );
     }

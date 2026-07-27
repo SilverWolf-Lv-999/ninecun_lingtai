@@ -26,6 +26,11 @@ public final class CommonConfig {
     public static final ForgeConfigSpec.DoubleValue MEDITATION_GENERATED_BY_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue MEDITATION_OVERCOMES_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue MEDITATION_OVERCOME_BY_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue LIGHT_FLIGHT_SPEED_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue LIGHT_FLIGHT_BOOST_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue LIGHT_FLIGHT_ENERGY_COST_PER_SECOND;
+    public static final ForgeConfigSpec.IntValue LIGHT_FLIGHT_BOOST_DURATION_TICKS;
+    public static final ForgeConfigSpec.IntValue LIGHT_FLIGHT_BOOST_COOLDOWN_TICKS;
     public static final ForgeConfigSpec.IntValue MORTAL_PLAYER_LIFESPAN_YEARS;
     public static final ForgeConfigSpec.IntValue QI_REFINING_LIFESPAN_YEARS;
     public static final ForgeConfigSpec.IntValue FOUNDATION_ESTABLISHMENT_LIFESPAN_YEARS;
@@ -106,6 +111,29 @@ public final class CommonConfig {
         MEDITATION_OVERCOME_BY_MULTIPLIER = BUILDER
                 .comment("Absorption multiplier when another element in a multi-element root overcomes the incoming element")
                 .defineInRange("overcomeByMultiplier", 0.65D, MINIMUM_MULTIPLIER, MAXIMUM_MULTIPLIER);
+        BUILDER.pop();
+
+        BUILDER.push("lightFlight");
+        LIGHT_FLIGHT_SPEED_MULTIPLIER = BUILDER
+                .comment("Light-flight speed multiplier against perfected sword flight")
+                .defineInRange("speedMultiplier", 1.3D, MINIMUM_MULTIPLIER, MAXIMUM_MULTIPLIER);
+        LIGHT_FLIGHT_BOOST_MULTIPLIER = BUILDER
+                .comment("Temporary light-flight boost multiplier")
+                .defineInRange("boostMultiplier", 1.5D, MINIMUM_MULTIPLIER, MAXIMUM_MULTIPLIER);
+        LIGHT_FLIGHT_ENERGY_COST_PER_SECOND = BUILDER
+                .comment("Spiritual energy consumed per second while light-flying")
+                .defineInRange(
+                        "energyCostPerSecond",
+                        0.5D,
+                        MINIMUM_MULTIPLIER,
+                        MAXIMUM_BASE_ABSORPTION_PER_SECOND
+                );
+        LIGHT_FLIGHT_BOOST_DURATION_TICKS = BUILDER
+                .comment("Duration of the temporary light-flight boost, in ticks")
+                .defineInRange("boostDurationTicks", 14, 1, 200);
+        LIGHT_FLIGHT_BOOST_COOLDOWN_TICKS = BUILDER
+                .comment("Cooldown between light-flight boosts, in ticks")
+                .defineInRange("boostCooldownTicks", 40, 1, 1200);
         BUILDER.pop();
 
         BUILDER.push("lifespan");
