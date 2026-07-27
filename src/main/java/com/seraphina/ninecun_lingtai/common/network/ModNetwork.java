@@ -18,23 +18,28 @@ import com.seraphina.ninecun_lingtai.common.network.packet.OpenAptitudeScreenPac
 import com.seraphina.ninecun_lingtai.common.network.packet.OpenTechniqueImprintScreenPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.OpenTechniqueScreenPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.RequestCultivationInfoPacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.RequestPlayerValueControlSettingsPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.RequestTechniqueLibraryPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SelectSpellPacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.SetPlayerValueControlSettingsPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SetLightFlightPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SetMeditationStatePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SubmitAptitudePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncCultivationInfoPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncLightFlightPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncMeditationStatePacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.SyncPlayerValueControlSettingsPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncSwordFlightPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncTechniqueLibraryPacket;
 import com.seraphina.ninecun_lingtai.common.flight.LightFlightManager;
 import com.seraphina.ninecun_lingtai.common.player.PlayerLightFlightData;
+import com.seraphina.ninecun_lingtai.common.player.PlayerValueControlData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerSwordFlightData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerCultivationInfo;
 import com.seraphina.ninecun_lingtai.common.player.PlayerImprintedTechniqueData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerTechniqueData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerTechniqueProficiencyData;
+import com.seraphina.ninecun_lingtai.utility.PlayerValueControlUnlockUtility;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -49,7 +54,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public final class ModNetwork {
-    private static final String PROTOCOL_VERSION = "14";
+    private static final String PROTOCOL_VERSION = "16";
     private static final SimpleChannel CHANNEL = NetworkRegistry.ChannelBuilder
             .named(ResourceLocation.fromNamespaceAndPath(ModMain.MOD_ID, "main"))
             .networkProtocolVersion(() -> PROTOCOL_VERSION)
@@ -261,6 +266,33 @@ public final class ModNetwork {
                 .decoder(SyncLightFlightPacket::decode)
                 .consumerMainThread(SyncLightFlightPacket::handle)
                 .add();
+        CHANNEL.messageBuilder(
+                        RequestPlayerValueControlSettingsPacket.class,
+                        nextPacketId++,
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(RequestPlayerValueControlSettingsPacket::encode)
+                .decoder(RequestPlayerValueControlSettingsPacket::decode)
+                .consumerMainThread(RequestPlayerValueControlSettingsPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        SetPlayerValueControlSettingsPacket.class,
+                        nextPacketId++,
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(SetPlayerValueControlSettingsPacket::encode)
+                .decoder(SetPlayerValueControlSettingsPacket::decode)
+                .consumerMainThread(SetPlayerValueControlSettingsPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        SyncPlayerValueControlSettingsPacket.class,
+                        nextPacketId++,
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(SyncPlayerValueControlSettingsPacket::encode)
+                .decoder(SyncPlayerValueControlSettingsPacket::decode)
+                .consumerMainThread(SyncPlayerValueControlSettingsPacket::handle)
+                .add();
     }
 
     /** 把玩家当前的御剑状态广播给所有追踪者与其本人。 */
@@ -360,6 +392,16 @@ public final class ModNetwork {
         CHANNEL.send(
                 PacketDistributor.PLAYER.with(() -> player),
                 new SyncCultivationInfoPacket(PlayerCultivationInfo.capture(player))
+        );
+    }
+
+    public static void sendPlayerValueControlSettings(ServerPlayer player) {
+        CHANNEL.send(
+                PacketDistributor.PLAYER.with(() -> player),
+                new SyncPlayerValueControlSettingsPacket(
+                        PlayerValueControlData.getSettings(player),
+                        PlayerValueControlUnlockUtility.getUnlockedTypes(player)
+                )
         );
     }
 

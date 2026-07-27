@@ -7,6 +7,7 @@ import com.seraphina.ninecun_lingtai.client.animation.MeditationAnimationManager
 import com.seraphina.ninecun_lingtai.client.config.ClientConfigScreenRegistrar;
 import com.seraphina.ninecun_lingtai.client.input.ModKeyMappings;
 import com.seraphina.ninecun_lingtai.client.inventorytab.CultivationInfoTabRegistrar;
+import com.seraphina.ninecun_lingtai.client.inventorytab.PlayerValueControlTabRegistrar;
 import com.seraphina.ninecun_lingtai.client.inventorytab.TechniqueLibraryTabRegistrar;
 import com.seraphina.ninecun_lingtai.client.render.AptitudeFormationShader;
 import com.seraphina.ninecun_lingtai.client.render.ElementFlowShader;
@@ -58,6 +59,7 @@ public final class ClientModEventHandler {
             LightFlightAnimationManager.register();
             CultivationInfoTabRegistrar.register();
             TechniqueLibraryTabRegistrar.register();
+            PlayerValueControlTabRegistrar.register();
         });
     }
 

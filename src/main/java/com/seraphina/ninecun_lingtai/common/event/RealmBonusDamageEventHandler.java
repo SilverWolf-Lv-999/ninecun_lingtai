@@ -8,9 +8,13 @@ import com.seraphina.ninecun_lingtai.api.element.ElementType;
 import com.seraphina.ninecun_lingtai.api.element.ElementalPower;
 import com.seraphina.ninecun_lingtai.common.creature.CreatureCultivationData;
 import com.seraphina.ninecun_lingtai.common.data.ElementEnvironmentManager;
+import com.seraphina.ninecun_lingtai.common.player.PlayerValueControlType;
 import com.seraphina.ninecun_lingtai.utility.ElementDamageUtility;
+import com.seraphina.ninecun_lingtai.utility.PlayerValueControlUtility;
+import com.seraphina.ninecun_lingtai.utility.PlayerValueControlUnlockUtility;
 import com.seraphina.ninecun_lingtai.utility.RealmBonusDamageUtility;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -38,6 +42,15 @@ public final class RealmBonusDamageEventHandler {
         }
 
         double bonusDamage = RealmBonusDamageUtility.getBonusDamage(stage.get());
+        if (attacker instanceof Player player) {
+            bonusDamage = PlayerValueControlUtility.applyApplication(
+                    bonusDamage,
+                    PlayerValueControlUnlockUtility.getEffectiveApplication(
+                            player,
+                            PlayerValueControlType.ATTACK_DAMAGE
+                    )
+            );
+        }
         if (bonusDamage <= 0.0D) {
             return;
         }

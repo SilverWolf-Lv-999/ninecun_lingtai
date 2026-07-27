@@ -9,6 +9,7 @@ import com.seraphina.ninecun_lingtai.common.player.PlayerSelectedSpellData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerSpiritualEnergyData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerTechniqueData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerTechniqueProficiencyData;
+import com.seraphina.ninecun_lingtai.common.player.PlayerValueControlData;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -33,6 +34,7 @@ public final class PlayerAptitudeEventHandler {
         PlayerImprintedTechniqueData.copy(event.getOriginal(), event.getEntity());
         PlayerTechniqueProficiencyData.copy(event.getOriginal(), event.getEntity());
         PlayerSelectedSpellData.copy(event.getOriginal(), event.getEntity());
+        PlayerValueControlData.copy(event.getOriginal(), event.getEntity());
     }
 
     @SubscribeEvent

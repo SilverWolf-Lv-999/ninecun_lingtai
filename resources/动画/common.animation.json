@@ -1,0 +1,19 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"animation.model.new": {
+			"loop": true
+		},
+		"animation.model.fly": {
+			"loop": "hold_on_last_frame",
+			"bones": {
+				"right_arm": {
+					"rotation": [13.9043, 5.6844, -21.8064]
+				},
+				"left_arm": {
+					"rotation": [13.9043, -5.6844, 21.8064]
+				}
+			}
+		}
+	}
+}

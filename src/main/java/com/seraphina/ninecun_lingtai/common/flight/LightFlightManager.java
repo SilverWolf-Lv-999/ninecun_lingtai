@@ -8,7 +8,10 @@ import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import com.seraphina.ninecun_lingtai.common.player.PlayerLightFlightData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerSpiritualEnergyData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerSwordFlightData;
+import com.seraphina.ninecun_lingtai.common.player.PlayerValueControlType;
 import com.seraphina.ninecun_lingtai.common.spell.SwordFlightManager;
+import com.seraphina.ninecun_lingtai.utility.PlayerValueControlUtility;
+import com.seraphina.ninecun_lingtai.utility.PlayerValueControlUnlockUtility;
 import com.seraphina.ninecun_lingtai.utility.SpiritualRootUtility;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -160,10 +163,25 @@ public final class LightFlightManager {
             multiplier *= CommonConfig.LIGHT_FLIGHT_BOOST_MULTIPLIER.get();
         }
         return (float) Mth.clamp(
-                SwordFlightManager.getPerfectionFlightSpeed(player) * multiplier,
+                PlayerValueControlUtility.applyApplication(
+                        SwordFlightManager.getPerfectionFlightSpeed(player) * multiplier,
+                        PlayerValueControlUnlockUtility.getEffectiveApplication(
+                                player,
+                                PlayerValueControlType.LIGHT_FLIGHT_SPEED
+                        )
+                ),
                 BASE_FLYING_SPEED,
                 MAXIMUM_LIGHT_FLYING_SPEED
         );
+    }
+
+    public static void refreshFlightSpeed(ServerPlayer player) {
+        if (!PlayerLightFlightData.isFlying(player)) {
+            return;
+        }
+        if (applyFlightAbilities(player)) {
+            syncState(player);
+        }
     }
 
     public static boolean isBoosting(ServerPlayer player) {

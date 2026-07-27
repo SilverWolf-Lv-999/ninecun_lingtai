@@ -11,6 +11,9 @@ import com.seraphina.ninecun_lingtai.common.player.PlayerSwordFlightData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerTechniqueData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerTechniqueManager;
 import com.seraphina.ninecun_lingtai.common.player.PlayerTechniqueProficiencyData;
+import com.seraphina.ninecun_lingtai.common.player.PlayerValueControlType;
+import com.seraphina.ninecun_lingtai.utility.PlayerValueControlUtility;
+import com.seraphina.ninecun_lingtai.utility.PlayerValueControlUnlockUtility;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -167,6 +170,16 @@ public final class SwordFlightManager {
         }
     }
 
+    public static void refreshFlightSpeed(ServerPlayer player) {
+        if (!PlayerSwordFlightData.isFlying(player)) {
+            return;
+        }
+        player.getAbilities().mayfly = true;
+        player.getAbilities().flying = true;
+        player.getAbilities().setFlyingSpeed(getFlightSpeed(player));
+        player.onUpdateAbilities();
+    }
+
     /**
      * 剑被锁在登剑时的槽位：被移动则移回原位，彻底消失（损毁等）则返回 false。
      * 以剑的种类匹配，耐久变化不影响锁定。
@@ -219,7 +232,10 @@ public final class SwordFlightManager {
                 .flatMap(progress -> TechniqueMasteryStage.fromMastery(progress.mastery()))
                 .orElse(TechniqueMasteryStage.ENTRY)
                 .getEfficiency();
-        return getFlightSpeed(stage, proficiency, masteryEfficiency);
+        return applyFlightSpeedControl(
+                player,
+                getFlightSpeed(stage, proficiency, masteryEfficiency)
+        );
     }
 
     /** 遁光等高阶能力需要以圆满御剑术为基准，但不要求玩家实际学会御剑术。 */
@@ -230,6 +246,20 @@ public final class SwordFlightManager {
                 stage,
                 TechniqueMasteryStage.PERFECTION.getRequiredProficiency(),
                 TechniqueMasteryStage.PERFECTION.getEfficiency()
+        );
+    }
+
+    private static float applyFlightSpeedControl(ServerPlayer player, float flightSpeed) {
+        return (float) Mth.clamp(
+                PlayerValueControlUtility.applyApplication(
+                        flightSpeed,
+                        PlayerValueControlUnlockUtility.getEffectiveApplication(
+                                player,
+                                PlayerValueControlType.SWORD_FLIGHT_SPEED
+                        )
+                ),
+                BASE_FLYING_SPEED,
+                MAXIMUM_FLYING_SPEED
         );
     }
 
