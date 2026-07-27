@@ -26,6 +26,7 @@ import com.seraphina.ninecun_lingtai.common.network.packet.SetPlayerValueControl
 import com.seraphina.ninecun_lingtai.common.network.packet.SetLightFlightPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SetMeditationStatePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SubmitAptitudePacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.SmoothShrinkEarthTeleportPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncCultivationInfoPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncDefenseResourcePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncLightFlightPacket;
@@ -51,6 +52,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.NetworkDirection;
 import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.PacketDistributor;
@@ -61,7 +63,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public final class ModNetwork {
-    private static final String PROTOCOL_VERSION = "20";
+    private static final String PROTOCOL_VERSION = "21";
     private static final SimpleChannel CHANNEL = NetworkRegistry.ChannelBuilder
             .named(ResourceLocation.fromNamespaceAndPath(ModMain.MOD_ID, "main"))
             .networkProtocolVersion(() -> PROTOCOL_VERSION)
@@ -283,6 +285,15 @@ public final class ModNetwork {
                 .consumerMainThread(SyncShrinkEarthPacket::handle)
                 .add();
         CHANNEL.messageBuilder(
+                        SmoothShrinkEarthTeleportPacket.class,
+                        nextPacketId++,
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(SmoothShrinkEarthTeleportPacket::encode)
+                .decoder(SmoothShrinkEarthTeleportPacket::decode)
+                .consumerMainThread(SmoothShrinkEarthTeleportPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
                         SyncLightFlightPacket.class,
                         nextPacketId++,
                         NetworkDirection.PLAY_TO_CLIENT
@@ -359,6 +370,13 @@ public final class ModNetwork {
                         PlayerShrinkEarthData.isActive(subject),
                         PlayerShrinkEarthData.getCompressionScale(subject)
                 )
+        );
+    }
+
+    public static void sendShrinkEarthTeleport(ServerPlayer player, Vec3 from, Vec3 to) {
+        CHANNEL.send(
+                PacketDistributor.PLAYER.with(() -> player),
+                new SmoothShrinkEarthTeleportPacket(from, to)
         );
     }
 

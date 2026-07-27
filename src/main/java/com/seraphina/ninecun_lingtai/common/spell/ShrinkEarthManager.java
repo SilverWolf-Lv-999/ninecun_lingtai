@@ -17,16 +17,19 @@ import com.seraphina.ninecun_lingtai.common.player.PlayerTechniqueManager;
 import com.seraphina.ninecun_lingtai.utility.CultivationUtility;
 import com.seraphina.ninecun_lingtai.utility.ShrinkEarthUtility;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.util.Mth;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
 import java.util.Optional;
 
@@ -44,8 +47,8 @@ public final class ShrinkEarthManager {
     private static final double MINIMUM_MOVEMENT_DISTANCE_SQR =
             MINIMUM_MOVEMENT_DISTANCE * MINIMUM_MOVEMENT_DISTANCE;
     private static final double MAXIMUM_RAW_MOVEMENT_DISTANCE = 1.25D;
-    private static final int DESTINATION_SEARCH_UP_BLOCKS = 4;
-    private static final int DESTINATION_SEARCH_DOWN_BLOCKS = 12;
+    private static final int DESTINATION_VERTICAL_SEARCH_BLOCKS = 10;
+    private static final double DESTINATION_VERTICAL_EPSILON = 1.0E-5D;
 
     private ShrinkEarthManager() {
     }
@@ -201,75 +204,59 @@ public final class ShrinkEarthManager {
                 0.0D,
                 rawMovement.z * (compressionScale - 1)
         );
-        Vec3 clippedTarget = clipHorizontalPath(player, currentPosition, currentPosition.add(extraMovement));
-        Optional<Vec3> safeDestination = findSafeDestination(player, clippedTarget);
+        Optional<Vec3> safeDestination = findHighestSafeDestination(player, currentPosition.add(extraMovement));
         if (safeDestination.isEmpty()
                 || horizontalDistanceSqr(safeDestination.get(), currentPosition) < MINIMUM_MOVEMENT_DISTANCE_SQR) {
             PlayerShrinkEarthData.setLastPosition(player, currentPosition);
             return;
         }
         Vec3 destination = safeDestination.get();
+        ModNetwork.sendShrinkEarthTeleport(player, currentPosition, destination);
         player.teleportTo(destination.x, destination.y, destination.z);
         player.fallDistance = 0.0F;
         player.setDeltaMovement(0.0D, Math.min(0.0D, player.getDeltaMovement().y), 0.0D);
         PlayerShrinkEarthData.setLastPosition(player, player.position());
     }
 
-    private static Vec3 clipHorizontalPath(ServerPlayer player, Vec3 from, Vec3 to) {
-        Vec3 horizontalPath = new Vec3(to.x - from.x, 0.0D, to.z - from.z);
-        if (horizontalPath.lengthSqr() < 1.0E-8D) {
-            return to;
-        }
-        Vec3 direction = horizontalPath.normalize();
-        double backoff = player.getBbWidth() * 0.5D + 0.15D;
-        Vec3 result = to;
-        double resultDistance = horizontalDistanceSqr(from, to);
-        double[] heights = {0.1D, player.getBbHeight() * 0.5D, player.getEyeHeight()};
-        for (double height : heights) {
-            Vec3 start = from.add(0.0D, height, 0.0D);
-            Vec3 end = to.add(0.0D, height, 0.0D);
-            HitResult hit = player.level().clip(new ClipContext(
-                    start,
-                    end,
-                    ClipContext.Block.COLLIDER,
-                    ClipContext.Fluid.NONE,
-                    player
-            ));
-            if (hit.getType() == HitResult.Type.MISS) {
-                continue;
-            }
-            Vec3 candidate = hit.getLocation().subtract(direction.scale(backoff));
-            double candidateDistance = horizontalDistanceSqr(from, candidate);
-            if (candidateDistance < resultDistance) {
-                result = new Vec3(candidate.x, to.y, candidate.z);
-                resultDistance = candidateDistance;
-            }
-        }
-        return result;
-    }
-
-    private static Optional<Vec3> findSafeDestination(ServerPlayer player, Vec3 target) {
+    private static Optional<Vec3> findHighestSafeDestination(ServerPlayer player, Vec3 target) {
         Level level = player.level();
         if (!level.hasChunkAt(BlockPos.containing(target))) {
             return Optional.empty();
         }
-        Vec3 bestSupportedDestination = null;
-        double bestSupportedOffset = Double.MAX_VALUE;
-        for (int offset = -DESTINATION_SEARCH_DOWN_BLOCKS; offset <= DESTINATION_SEARCH_UP_BLOCKS; offset++) {
-            Vec3 candidate = new Vec3(target.x, target.y + offset, target.z);
-            AABB candidateBox = player.getBoundingBox().move(candidate.subtract(player.position()));
-            if (!level.noCollision(player, candidateBox)) {
+        double minimumY = Math.max(level.getMinBuildHeight(), player.getY() - DESTINATION_VERTICAL_SEARCH_BLOCKS);
+        double maximumY = Math.min(
+                level.getMaxBuildHeight() - player.getBbHeight(),
+                player.getY() + DESTINATION_VERTICAL_SEARCH_BLOCKS
+        );
+        int targetX = Mth.floor(target.x);
+        int targetZ = Mth.floor(target.z);
+        int highestBlockY = Math.min(level.getMaxBuildHeight() - 1, Mth.floor(maximumY));
+        int lowestBlockY = Math.max(level.getMinBuildHeight(), Mth.floor(minimumY) - 1);
+        CollisionContext collisionContext = CollisionContext.of(player);
+        BlockPos.MutableBlockPos blockPos = new BlockPos.MutableBlockPos();
+        for (int y = highestBlockY; y >= lowestBlockY; y--) {
+            blockPos.set(targetX, y, targetZ);
+            BlockState blockState = level.getBlockState(blockPos);
+            VoxelShape collisionShape = blockState.getCollisionShape(level, blockPos, collisionContext);
+            if (collisionShape.isEmpty()) {
                 continue;
             }
-            if (hasSupportingCollision(level, player, candidateBox)) {
-                double offsetDistance = Math.abs(offset);
-                if (offsetDistance < bestSupportedOffset) {
-                    bestSupportedDestination = candidate;
-                    bestSupportedOffset = offsetDistance;
-                }
+            double destinationY = y + collisionShape.max(Direction.Axis.Y);
+            if (destinationY < minimumY - DESTINATION_VERTICAL_EPSILON
+                    || destinationY > maximumY + DESTINATION_VERTICAL_EPSILON) {
+                continue;
+            }
+            Vec3 candidate = new Vec3(target.x, destinationY, target.z);
+            if (isSafeDestination(level, player, candidate)) {
+                return Optional.of(candidate);
             }
         }
-        return Optional.ofNullable(bestSupportedDestination);
+        return Optional.empty();
+    }
+
+    private static boolean isSafeDestination(Level level, ServerPlayer player, Vec3 candidate) {
+        AABB candidateBox = player.getBoundingBox().move(candidate.subtract(player.position()));
+        return level.noCollision(player, candidateBox) && hasSupportingCollision(level, player, candidateBox);
     }
 
     private static boolean hasSupportingCollision(Level level, ServerPlayer player, AABB candidateBox) {
