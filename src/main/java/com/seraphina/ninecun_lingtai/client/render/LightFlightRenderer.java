@@ -1,6 +1,5 @@
 package com.seraphina.ninecun_lingtai.client.render;
 
-import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.BufferUploader;
@@ -22,17 +21,16 @@ import org.joml.Matrix4f;
 
 @Mod.EventBusSubscriber(modid = ModMain.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class LightFlightRenderer {
-    private static final int DISK_SEGMENTS = 36;
-    private static final float BASE_RADIUS = 1.16F;
+    private static final int LATITUDE_SEGMENTS = 14;
+    private static final int LONGITUDE_SEGMENTS = 28;
+    private static final float BASE_RADIUS = 1.08F;
     private static final float BOOST_RADIUS_BONUS = 0.26F;
-    private static final float CENTER_ALPHA = 0.34F;
-    private static final float EDGE_ALPHA = 0.02F;
 
     private LightFlightRenderer() {
     }
 
     @SubscribeEvent
-    public static void onRenderPlayer(RenderPlayerEvent.Post event) {
+    public static void onRenderPlayer(RenderPlayerEvent.Pre event) {
         Player player = event.getEntity();
         LightFlightVisualState visualState = ClientLightFlightManager.getVisualState(player.getUUID());
         if (visualState == null) {
@@ -46,126 +44,105 @@ public final class LightFlightRenderer {
         float boostVisibility = visualState.boostVisibility(event.getPartialTick());
         float pulse = 0.5F + 0.5F * Mth.sin((player.tickCount + event.getPartialTick()) * 0.32F);
         float radius = BASE_RADIUS + boostVisibility * BOOST_RADIUS_BONUS + pulse * 0.045F;
-        float alphaScale = visibility * (1.0F + boostVisibility * 0.45F);
+        int color = blendColor(visualState.color(), 0xFFFFFF, 0.16F + boostVisibility * 0.12F);
 
         PoseStack poseStack = event.getPoseStack();
         poseStack.pushPose();
         poseStack.translate(0.0F, player.getBbHeight() * 0.52F, 0.0F);
 
-        RenderSystem.enableBlend();
-        RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE);
-        RenderSystem.depthMask(false);
+        RenderSystem.disableBlend();
+        RenderSystem.depthMask(true);
         RenderSystem.disableCull();
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
 
         BufferBuilder bufferBuilder = Tesselator.getInstance().getBuilder();
         bufferBuilder.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR);
         Matrix4f matrix = poseStack.last().pose();
-        appendDisk(bufferBuilder, matrix, Plane.XY, radius, visualState.color(), alphaScale);
-        appendDisk(bufferBuilder, matrix, Plane.XZ, radius * 0.92F, visualState.color(), alphaScale * 0.72F);
-        appendDisk(bufferBuilder, matrix, Plane.YZ, radius, visualState.color(), alphaScale);
-        appendDisk(bufferBuilder, matrix, Plane.DIAGONAL, radius * 1.04F, visualState.color(), alphaScale * 0.8F);
+        appendLightSphere(bufferBuilder, matrix, radius, color);
         BufferUploader.drawWithShader(bufferBuilder.end());
 
         RenderSystem.enableCull();
-        RenderSystem.depthMask(true);
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.disableBlend();
         poseStack.popPose();
+        event.setCanceled(true);
     }
 
-    private static void appendDisk(
+    private static void appendLightSphere(
             BufferBuilder bufferBuilder,
             Matrix4f matrix,
-            Plane plane,
             float radius,
-            int color,
-            float alphaScale
+            int color
     ) {
-        int red = color >> 16 & 0xFF;
-        int green = color >> 8 & 0xFF;
-        int blue = color & 0xFF;
-        int centerAlpha = alphaChannel(CENTER_ALPHA * alphaScale);
-        int edgeAlpha = alphaChannel(EDGE_ALPHA * alphaScale);
-        for (int segment = 0; segment < DISK_SEGMENTS; segment++) {
-            float angle = (float) (Math.PI * 2.0D * segment / DISK_SEGMENTS);
-            float nextAngle = (float) (Math.PI * 2.0D * (segment + 1) / DISK_SEGMENTS);
-            vertex(bufferBuilder, matrix, plane, 0.0F, 0.0F, red, green, blue, centerAlpha);
-            vertex(
+        for (int latitude = 0; latitude < LATITUDE_SEGMENTS; latitude++) {
+            float theta = (float) (Math.PI * latitude / LATITUDE_SEGMENTS);
+            float nextTheta = (float) (Math.PI * (latitude + 1) / LATITUDE_SEGMENTS);
+            for (int longitude = 0; longitude < LONGITUDE_SEGMENTS; longitude++) {
+                float phi = (float) (Math.PI * 2.0D * longitude / LONGITUDE_SEGMENTS);
+                float nextPhi = (float) (Math.PI * 2.0D * (longitude + 1) / LONGITUDE_SEGMENTS);
+                appendTriangle(
                     bufferBuilder,
                     matrix,
-                    plane,
-                    Mth.cos(angle) * radius,
-                    Mth.sin(angle) * radius,
-                    red,
-                    green,
-                    blue,
-                    edgeAlpha
-            );
-            vertex(
+                    spherePoint(theta, phi, radius),
+                    spherePoint(nextTheta, phi, radius),
+                    spherePoint(nextTheta, nextPhi, radius),
+                    shadeColor(color, theta)
+                );
+                appendTriangle(
                     bufferBuilder,
                     matrix,
-                    plane,
-                    Mth.cos(nextAngle) * radius,
-                    Mth.sin(nextAngle) * radius,
-                    red,
-                    green,
-                    blue,
-                    edgeAlpha
-            );
+                    spherePoint(theta, phi, radius),
+                    spherePoint(nextTheta, nextPhi, radius),
+                    spherePoint(theta, nextPhi, radius),
+                    shadeColor(color, theta)
+                );
+            }
         }
     }
 
-    private static void vertex(
+    private static void appendTriangle(
             BufferBuilder bufferBuilder,
             Matrix4f matrix,
-            Plane plane,
-            float u,
-            float v,
-            int red,
-            int green,
-            int blue,
-            int alpha
+            SpherePoint first,
+            SpherePoint second,
+            SpherePoint third,
+            int color
     ) {
-        float x;
-        float y;
-        float z;
-        switch (plane) {
-            case XY -> {
-                x = u;
-                y = v;
-                z = 0.0F;
-            }
-            case XZ -> {
-                x = u;
-                y = 0.0F;
-                z = v;
-            }
-            case YZ -> {
-                x = 0.0F;
-                y = v;
-                z = u;
-            }
-            case DIAGONAL -> {
-                x = u * 0.7071F;
-                y = v;
-                z = u * 0.7071F;
-            }
-            default -> throw new IncompatibleClassChangeError();
-        }
-        bufferBuilder.vertex(matrix, x, y, z)
-                .color(red, green, blue, alpha)
+        vertex(bufferBuilder, matrix, first, color);
+        vertex(bufferBuilder, matrix, second, color);
+        vertex(bufferBuilder, matrix, third, color);
+    }
+
+    private static SpherePoint spherePoint(float theta, float phi, float radius) {
+        float sinTheta = Mth.sin(theta);
+        return new SpherePoint(
+                Mth.cos(phi) * sinTheta * radius,
+                Mth.cos(theta) * radius,
+                Mth.sin(phi) * sinTheta * radius
+        );
+    }
+
+    private static void vertex(BufferBuilder bufferBuilder, Matrix4f matrix, SpherePoint point, int color) {
+        bufferBuilder.vertex(matrix, point.x(), point.y(), point.z())
+                .color(color >> 16 & 0xFF, color >> 8 & 0xFF, color & 0xFF, 255)
                 .endVertex();
     }
 
-    private static int alphaChannel(float alpha) {
-        return Mth.clamp(Math.round(alpha * 255.0F), 0, 255);
+    private static int shadeColor(int color, float theta) {
+        float topLight = 0.22F * Math.max(0.0F, Mth.cos(theta - 0.45F));
+        return blendColor(color, 0xFFFFFF, topLight);
     }
 
-    private enum Plane {
-        XY,
-        XZ,
-        YZ,
-        DIAGONAL
+    private static int blendColor(int color, int targetColor, float amount) {
+        float clampedAmount = Mth.clamp(amount, 0.0F, 1.0F);
+        int red = blendChannel(color >> 16 & 0xFF, targetColor >> 16 & 0xFF, clampedAmount);
+        int green = blendChannel(color >> 8 & 0xFF, targetColor >> 8 & 0xFF, clampedAmount);
+        int blue = blendChannel(color & 0xFF, targetColor & 0xFF, clampedAmount);
+        return red << 16 | green << 8 | blue;
+    }
+
+    private static int blendChannel(int color, int targetColor, float amount) {
+        return Mth.clamp(Math.round(Mth.lerp(amount, color, targetColor)), 0, 255);
+    }
+
+    private record SpherePoint(float x, float y, float z) {
     }
 }

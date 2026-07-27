@@ -3,7 +3,6 @@ package com.seraphina.ninecun_lingtai.common.flight;
 import com.seraphina.ninecun_lingtai.api.aptitude.SpiritualRootApi;
 import com.seraphina.ninecun_lingtai.api.cultivation.CultivationApi;
 import com.seraphina.ninecun_lingtai.api.cultivation.CultivationRealm;
-import com.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
 import com.seraphina.ninecun_lingtai.common.config.CommonConfig;
 import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import com.seraphina.ninecun_lingtai.common.player.PlayerLightFlightData;
@@ -21,8 +20,6 @@ public final class LightFlightManager {
     private static final float BASE_FLYING_SPEED = 0.05F;
     private static final float MAXIMUM_LIGHT_FLYING_SPEED = 1300.0F;
     private static final int ENERGY_CONSUMPTION_INTERVAL_TICKS = 20;
-    private static final int GOLDEN_CORE_STRENGTH =
-            CultivationRealm.GOLDEN_CORE.ordinal() * CultivationStage.MAXIMUM_LAYER + 1;
 
     private LightFlightManager() {
     }
@@ -41,7 +38,7 @@ public final class LightFlightManager {
             return;
         }
         if (!canUseLightFlight(player)) {
-            sendActionBar(player, "未结金丹，肉身尚不可化作遁光");
+            sendActionBar(player, "只有金丹期可身化遁光");
             syncState(player);
             return;
         }
@@ -202,8 +199,8 @@ public final class LightFlightManager {
             return false;
         }
         return CultivationApi.getStage(player)
-                .map(stage -> stage.realm().ordinal() * CultivationStage.MAXIMUM_LAYER + stage.layer())
-                .orElse(0) >= GOLDEN_CORE_STRENGTH;
+                .map(stage -> stage.realm() == CultivationRealm.GOLDEN_CORE)
+                .orElse(false);
     }
 
     private static void syncState(ServerPlayer player) {
