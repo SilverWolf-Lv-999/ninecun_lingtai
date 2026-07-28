@@ -4,9 +4,9 @@ import com.seraphina.ninecun_lingtai.ModMain;
 import com.seraphina.ninecun_lingtai.api.cultivation.CultivationRealm;
 import com.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
 import com.seraphina.ninecun_lingtai.common.creature.CreatureCultivationData;
+import com.seraphina.ninecun_lingtai.common.defense.EntityDefenseResourceData;
 import com.seraphina.ninecun_lingtai.common.entity.spell.DefenseSpellGuardianEntity;
 import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
-import com.seraphina.ninecun_lingtai.common.player.PlayerDefenseResourceData;
 import com.seraphina.ninecun_lingtai.common.registry.ModDamageTypes;
 import com.seraphina.ninecun_lingtai.utility.CultivationCombatUtility;
 import com.seraphina.ninecun_lingtai.utility.CultivationDefenseUtility;
@@ -124,8 +124,8 @@ public final class CultivationDefenseEventHandler {
         }
 
         event.setCanceled(true);
+        EntityDefenseResourceData.deplete(defender);
         if (defender instanceof ServerPlayer player) {
-            PlayerDefenseResourceData.deplete(player);
             ModNetwork.sendDefenseResource(player);
         }
 
@@ -146,29 +146,34 @@ public final class CultivationDefenseEventHandler {
             LivingEntity defender,
             CultivationStage defenderStage
     ) {
-        if (!(defender instanceof ServerPlayer player)
-                || !CultivationDefenseUtility.isHighDamageCommandAttack(event.getSource(), event.getAmount())) {
+        if (!CultivationDefenseUtility.isHighDamageCommandAttack(event.getSource(), event.getAmount())) {
             return false;
         }
         if (CultivationDefenseUtility.isFullyImmuneToHighDamage(defenderStage)) {
             event.setCanceled(true);
-            ModNetwork.sendDefenseResource(player);
+            syncPlayerDefenseResource(defender);
             return true;
         }
         OptionalInt immunityCost = CultivationDefenseUtility.getHighDamageImmunityCost(defenderStage);
         if (immunityCost.isEmpty()) {
             return false;
         }
-        if (!PlayerDefenseResourceData.consume(player, immunityCost.getAsInt())) {
-            PlayerDefenseResourceData.clampToStage(player);
-            ModNetwork.sendDefenseResource(player);
+        if (!EntityDefenseResourceData.consume(defender, immunityCost.getAsInt())) {
+            EntityDefenseResourceData.clampToStage(defender);
+            syncPlayerDefenseResource(defender);
             return false;
         }
         event.setCanceled(true);
-        ModNetwork.sendDefenseResource(player);
+        syncPlayerDefenseResource(defender);
         if (defenderStage.realm() == CultivationRealm.GOLDEN_CORE) {
-            ModNetwork.sendBodyShield(player);
+            ModNetwork.sendBodyShield(defender);
         }
         return true;
+    }
+
+    private static void syncPlayerDefenseResource(LivingEntity entity) {
+        if (entity instanceof ServerPlayer player) {
+            ModNetwork.sendDefenseResource(player);
+        }
     }
 }

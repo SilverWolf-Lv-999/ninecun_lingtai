@@ -24,6 +24,7 @@ public final class DebugCommand {
                 .then(SpiritualEnergyDebugCommand.create())
                 .then(MeditationDebugCommand.create())
                 .then(LifespanDebugCommand.create())
+                .then(CreatureDebugCommand.create())
                 .then(TechniqueDebugCommand.create());
     }
 
@@ -48,10 +49,13 @@ public final class DebugCommand {
                 "§elifespan§r：查询、设置、增减年龄，或触发寿终、重置寿元"
         ), false);
         commandSource.sendSuccess(() -> Component.literal(
+                "§ecreature§r：查看并调整非玩家生物的境界、灵根、寿元与境界防御"
+        ), false);
+        commandSource.sendSuccess(() -> Component.literal(
                 "§etechnique§r：查询、列出、授予、遗忘功法，或调整理解度、境界、熟练度"
         ), false);
         commandSource.sendSuccess(() -> Component.literal(
-                "参数支持 @s、玩家名、@a；元素与境界支持英文 ID 或中文名（中文候选会自动加引号）。"
+                "玩家参数支持 @s、玩家名、@a；生物参数支持 @e 选择器；元素与境界支持英文 ID 或中文名。"
         ), false);
         return Command.SINGLE_SUCCESS;
     }

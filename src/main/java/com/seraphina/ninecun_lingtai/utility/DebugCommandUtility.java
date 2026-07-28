@@ -16,8 +16,12 @@ import com.seraphina.ninecun_lingtai.common.player.PlayerDefenseResourceData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerSpiritualEnergyData;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -41,6 +45,9 @@ public final class DebugCommandUtility {
     );
     private static final DynamicCommandExceptionType INVALID_ROOT_ELEMENTS = new DynamicCommandExceptionType(
             value -> Component.literal("无效灵根元素：" + value)
+    );
+    private static final DynamicCommandExceptionType NOT_CREATURE = new DynamicCommandExceptionType(
+            value -> Component.literal("目标不是可调试的非玩家生物：" + value)
     );
     private static final Map<String, ElementType> ELEMENT_ALIASES = createElementAliases();
     private static final Map<String, CultivationRealm> REALM_ALIASES = createRealmAliases();
@@ -74,6 +81,32 @@ public final class DebugCommandUtility {
             throw UNKNOWN_REALM.create(realmName);
         }
         return realm;
+    }
+
+    public static LivingEntity getCreature(
+            CommandContext<CommandSourceStack> context,
+            String argumentName
+    ) throws CommandSyntaxException {
+        Entity entity = EntityArgument.getEntity(context, argumentName);
+        if (!(entity instanceof LivingEntity livingEntity) || entity instanceof Player) {
+            throw NOT_CREATURE.create(entity.getDisplayName().getString());
+        }
+        return livingEntity;
+    }
+
+    public static List<LivingEntity> getCreatures(
+            CommandContext<CommandSourceStack> context,
+            String argumentName
+    ) throws CommandSyntaxException {
+        Collection<? extends Entity> entities = EntityArgument.getEntities(context, argumentName);
+        List<LivingEntity> creatures = new ArrayList<>(entities.size());
+        for (Entity entity : entities) {
+            if (!(entity instanceof LivingEntity livingEntity) || entity instanceof Player) {
+                throw NOT_CREATURE.create(entity.getDisplayName().getString());
+            }
+            creatures.add(livingEntity);
+        }
+        return List.copyOf(creatures);
     }
 
     public static Set<ElementType> getSpiritualRootElements(
@@ -147,6 +180,12 @@ public final class DebugCommandUtility {
     public static String getPlayerNames(Collection<ServerPlayer> players) {
         return players.stream()
                 .map(player -> player.getGameProfile().getName())
+                .collect(Collectors.joining("、"));
+    }
+
+    public static String getCreatureNames(Collection<? extends LivingEntity> creatures) {
+        return creatures.stream()
+                .map(creature -> creature.getDisplayName().getString() + "[" + creature.getStringUUID() + "]")
                 .collect(Collectors.joining("、"));
     }
 

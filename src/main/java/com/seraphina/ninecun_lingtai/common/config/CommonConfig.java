@@ -60,6 +60,7 @@ public final class CommonConfig {
     public static final ForgeConfigSpec.IntValue GOLDEN_CORE_LIFESPAN_YEARS;
     public static final ForgeConfigSpec.IntValue NASCENT_SOUL_LIFESPAN_YEARS;
     public static final ForgeConfigSpec.IntValue DEFAULT_CREATURE_LIFESPAN_YEARS;
+    public static final ForgeConfigSpec.IntValue BOSS_CREATURE_LIFESPAN_YEARS;
     public static final ForgeConfigSpec.DoubleValue CREATURE_CULTIVATOR_CHANCE;
     public static final ForgeConfigSpec.EnumValue<AiProvider> AI_PROVIDER;
     public static final ForgeConfigSpec.ConfigValue<String> AI_API_KEY;
@@ -300,6 +301,11 @@ public final class CommonConfig {
                 "defaultCreatureYears",
                 30,
                 "Maximum lifespan in years for non-undead creatures"
+        );
+        BOSS_CREATURE_LIFESPAN_YEARS = defineLifespanYears(
+                "bossCreatureYears",
+                1000,
+                "Base maximum lifespan for boss-level creatures such as Wardens, Withers, and Ender Dragons"
         );
         BUILDER.pop();
 

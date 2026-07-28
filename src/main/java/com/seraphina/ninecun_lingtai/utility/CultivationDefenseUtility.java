@@ -3,9 +3,8 @@ package com.seraphina.ninecun_lingtai.utility;
 import com.seraphina.ninecun_lingtai.api.cultivation.CultivationRealm;
 import com.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
 import com.seraphina.ninecun_lingtai.common.creature.CreatureCultivationData;
+import com.seraphina.ninecun_lingtai.common.defense.EntityDefenseResourceData;
 import com.seraphina.ninecun_lingtai.common.player.DefenseResourceType;
-import com.seraphina.ninecun_lingtai.common.player.PlayerCultivationData;
-import com.seraphina.ninecun_lingtai.common.player.PlayerDefenseResourceData;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.Entity;
@@ -141,8 +140,8 @@ public final class CultivationDefenseUtility {
                 && currentResource > 0;
     }
 
-    public static boolean hasActivePlayerDefense(Player player) {
-        Optional<CultivationStage> stage = PlayerCultivationData.getStage(player);
+    public static boolean hasActiveDefense(LivingEntity entity) {
+        Optional<CultivationStage> stage = CreatureCultivationData.getStage(entity);
         if (stage.isEmpty()) {
             return false;
         }
@@ -150,8 +149,12 @@ public final class CultivationDefenseUtility {
         return isActiveDefense(
                 stage,
                 resourceType,
-                PlayerDefenseResourceData.getCurrent(player)
+                EntityDefenseResourceData.getCurrent(entity)
         );
+    }
+
+    public static boolean hasActivePlayerDefense(Player player) {
+        return hasActiveDefense(player);
     }
 
     public static float getHealth(LivingEntity entity) {
@@ -159,7 +162,7 @@ public final class CultivationDefenseUtility {
     }
 
     public static float getProtectedHealth(LivingEntity entity, float original) {
-        return entity instanceof Player player && hasActivePlayerDefense(player)
+        return hasActiveDefense(entity)
                 ? PROTECTED_HEALTH
                 : original;
     }
@@ -169,7 +172,7 @@ public final class CultivationDefenseUtility {
     }
 
     public static boolean getProtectedAlive(Entity entity, boolean original) {
-        return entity instanceof Player player && hasActivePlayerDefense(player)
+        return entity instanceof LivingEntity livingEntity && hasActiveDefense(livingEntity)
                 ? true
                 : original;
     }
@@ -179,7 +182,7 @@ public final class CultivationDefenseUtility {
     }
 
     public static boolean getProtectedDeadOrDying(LivingEntity entity, boolean original) {
-        return entity instanceof Player player && hasActivePlayerDefense(player)
+        return hasActiveDefense(entity)
                 ? false
                 : original;
     }

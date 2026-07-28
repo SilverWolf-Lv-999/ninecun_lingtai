@@ -38,4 +38,11 @@ class LifespanUtilityTest {
         assertTrue(lifespan.expired());
         assertEquals(0L, lifespan.remainingTicks());
     }
+
+    @Test
+    void creatureCultivationRaisesLifespanWithoutReducingLongLivedBosses() {
+        assertEquals(120, LifespanUtility.getEffectiveMaximumLifespanYears(30, 120, false));
+        assertEquals(1000, LifespanUtility.getEffectiveMaximumLifespanYears(1000, 500, false));
+        assertEquals(0, LifespanUtility.getEffectiveMaximumLifespanYears(1000, 0, true));
+    }
 }

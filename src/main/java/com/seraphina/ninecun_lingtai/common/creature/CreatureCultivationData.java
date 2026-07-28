@@ -65,6 +65,14 @@ public final class CreatureCultivationData {
         entity.getPersistentData().put(CULTIVATION_KEY, stageData);
     }
 
+    public static void clearStage(LivingEntity entity) {
+        if (entity instanceof Player player) {
+            PlayerCultivationData.clearStage(player);
+            return;
+        }
+        entity.getPersistentData().remove(CULTIVATION_KEY);
+    }
+
     public static Optional<SpiritualRoot> getSpiritualRoot(LivingEntity entity) {
         if (entity instanceof Player player) {
             return PlayerAptitudeData.getSpiritualRoot(player);
@@ -93,6 +101,14 @@ public final class CreatureCultivationData {
         spiritualRootData.putInt(ELEMENT_MASK_KEY, spiritualRoot.getElementMask());
         spiritualRootData.putFloat(LENGTH_INCHES_KEY, spiritualRoot.lengthInches());
         entity.getPersistentData().put(SPIRITUAL_ROOT_KEY, spiritualRootData);
+    }
+
+    public static void clearSpiritualRoot(LivingEntity entity) {
+        if (entity instanceof Player player) {
+            PlayerAptitudeData.clearSpiritualRoot(player);
+            return;
+        }
+        entity.getPersistentData().remove(SPIRITUAL_ROOT_KEY);
     }
 
     public static boolean isSpawnRollDone(LivingEntity entity) {

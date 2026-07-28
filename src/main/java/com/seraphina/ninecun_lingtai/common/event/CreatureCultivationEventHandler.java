@@ -5,6 +5,7 @@ import com.seraphina.ninecun_lingtai.common.config.CommonConfig;
 import com.seraphina.ninecun_lingtai.common.creature.CreatureCultivationData;
 import com.seraphina.ninecun_lingtai.common.creature.CreatureCultivationGoalInstaller;
 import com.seraphina.ninecun_lingtai.utility.CreatureCultivationUtility;
+import com.seraphina.ninecun_lingtai.utility.CultivationDefenseUtility;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Mob;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
@@ -32,6 +33,8 @@ public final class CreatureCultivationEventHandler {
         }
         CreatureCultivationData.setStage(mob, CreatureCultivationUtility.rollSpawnStage(random));
         CreatureCultivationData.setSpiritualRoot(mob, CreatureCultivationUtility.rollSpawnSpiritualRoot(random));
+        CultivationDefenseUtility.syncMaxHealthModifier(mob);
+        mob.setHealth(mob.getMaxHealth());
         CreatureCultivationGoalInstaller.install(mob);
     }
 
