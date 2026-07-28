@@ -175,6 +175,8 @@ dependencies {
 //    runtimeOnly fg.deobf("icyllis.modernui:ModernUI-Forge:${modern_ui_version}")
     runtimeOnly fg.deobf("com.sk89q.worldedit:worldedit-forge-mc1.20:${worldedit_version}")
     runtimeOnly fg.deobf("maven.modrinth:in-game-account-switcher:${in_game_account_switcher_version}")
+    runtimeOnly fg.deobf("maven.modrinth:5PkY7RJI:${rts_building_version}")
+    runtimeOnly fg.deobf("maven.modrinth:DYtfQEYj:${effortless_building_version}")
     minecraftLibrary("com.sk89q.worldedit:worldedit-core:${worldedit_version}") {
         exclude group: 'com.google.guava', module: 'guava'
         exclude group: 'com.google.code.gson', module: 'gson'
