@@ -1,0 +1,19 @@
+{
+  "name": "离火护法灯",
+  "description": "召一盏飞行灯灵挡敌灼敌的三品防御法术。",
+  "content": "聚火行灵力为芯，以心念作灯罩，凝成一盏悬空离火灯灵。灯灵游弋于修士与敌手之间，主动承接敌意；近身触灯者会受余焰灼烧。水势可灭灯，木气却可添薪。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "spell": {"id": "ninecun_lingtai:fire_guardian", "category": "combat", "grade": 3, "base_cost": 5.0},
+  "compatible_elements": ["fire"],
+  "requirements": {
+    "minimum_cultivation": {"realm": "qi_refining", "layer": 3},
+    "required_elements": ["fire"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 65,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": ["火气为芯心念为罩", "灯灵飞行护主", "触灯受灼"],
+    "grading_criteria": ["说明灯灵如何吸引远近敌手", "理解水灭火与木生火"],
+    "mastery_levels": [{"id": "ninecun_lingtai:entry", "minimum_score": 65}]
+  }
+}

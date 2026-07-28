@@ -18,6 +18,24 @@ public final class CommonConfig {
     public static final ForgeConfigSpec.DoubleValue NATURAL_RESTRAINT_ADVANTAGE;
     public static final ForgeConfigSpec.DoubleValue CHAOS_ENHANCEMENT_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue CHAOS_SUPPRESSED_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue DEFENSE_SPELL_RESTRAINS_ATTACK_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue DEFENSE_SPELL_ATTACK_GENERATES_DEFENSE_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue DEFENSE_SPELL_DEFENSE_GENERATES_ATTACK_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue DEFENSE_SPELL_ATTACK_RESTRAINS_DEFENSE_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue DEFENSE_SPELL_YIN_YANG_BALANCE_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue DEFENSE_SPELL_CHAOS_ATTACK_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue DEFENSE_SPELL_FIVE_ELEMENT_CYCLE_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue DEFENSE_SPELL_CHAOS_DEFENSE_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue METAL_BODY_SHIELD_POINTS_PER_STRENGTH;
+    public static final ForgeConfigSpec.DoubleValue WOOD_GUARDIAN_POINTS_PER_STRENGTH;
+    public static final ForgeConfigSpec.DoubleValue WATER_BODY_SHIELD_POINTS_PER_STRENGTH;
+    public static final ForgeConfigSpec.DoubleValue FIRE_GUARDIAN_POINTS_PER_STRENGTH;
+    public static final ForgeConfigSpec.DoubleValue EARTH_GUARDIAN_POINTS_PER_STRENGTH;
+    public static final ForgeConfigSpec.DoubleValue YIN_YANG_BODY_SHIELD_POINTS_PER_STRENGTH;
+    public static final ForgeConfigSpec.DoubleValue FIVE_ELEMENT_BODY_SHIELD_POINTS_PER_STRENGTH;
+    public static final ForgeConfigSpec.DoubleValue CHAOS_BODY_SHIELD_POINTS_PER_STRENGTH;
+    public static final ForgeConfigSpec.DoubleValue COMPOSITE_BODY_SHIELD_POINTS_PER_STRENGTH;
+    public static final ForgeConfigSpec.DoubleValue FOUR_PHASE_GUARDIAN_POINTS_PER_STRENGTH;
     public static final ForgeConfigSpec.DoubleValue REALM_BONUS_BASE_DAMAGE;
     public static final ForgeConfigSpec.DoubleValue REALM_BONUS_LAYER_GROWTH;
     public static final ForgeConfigSpec.DoubleValue MEDITATION_BASE_ABSORPTION_PER_SECOND;
@@ -70,6 +88,79 @@ public final class CommonConfig {
         CHAOS_SUPPRESSED_MULTIPLIER = BUILDER
                 .comment("Damage multiplier when another element attacks a chaos target")
                 .defineInRange("chaosSuppressedMultiplier", 0.25D, MINIMUM_MULTIPLIER, MAXIMUM_MULTIPLIER);
+        BUILDER.pop();
+
+        BUILDER.push("defenseSpells");
+        DEFENSE_SPELL_RESTRAINS_ATTACK_MULTIPLIER = defineDefenseSpellMultiplier(
+                "defenseRestrainsAttackMultiplier",
+                0.60D,
+                "Defense point cost when the spell element restrains the incoming element"
+        );
+        DEFENSE_SPELL_ATTACK_GENERATES_DEFENSE_MULTIPLIER = defineDefenseSpellMultiplier(
+                "attackGeneratesDefenseMultiplier",
+                0.75D,
+                "Defense point cost when the incoming element generates the spell element"
+        );
+        DEFENSE_SPELL_DEFENSE_GENERATES_ATTACK_MULTIPLIER = defineDefenseSpellMultiplier(
+                "defenseGeneratesAttackMultiplier",
+                1.25D,
+                "Defense point cost when the spell element generates the incoming element"
+        );
+        DEFENSE_SPELL_ATTACK_RESTRAINS_DEFENSE_MULTIPLIER = defineDefenseSpellMultiplier(
+                "attackRestrainsDefenseMultiplier",
+                1.50D,
+                "Defense point cost when the incoming element restrains the spell element"
+        );
+        DEFENSE_SPELL_YIN_YANG_BALANCE_MULTIPLIER = defineDefenseSpellMultiplier(
+                "yinYangBalanceMultiplier",
+                0.85D,
+                "Defense point cost for five-element damage balanced by a yin-yang spell"
+        );
+        DEFENSE_SPELL_CHAOS_ATTACK_MULTIPLIER = defineDefenseSpellMultiplier(
+                "chaosAttackMultiplier",
+                2.0D,
+                "Defense point cost when chaos damage strikes a non-chaos defense spell"
+        );
+        DEFENSE_SPELL_FIVE_ELEMENT_CYCLE_MULTIPLIER = defineDefenseSpellMultiplier(
+                "fiveElementCycleMultiplier",
+                0.70D,
+                "Defense point cost for five-element damage against the five-element cycle spell"
+        );
+        DEFENSE_SPELL_CHAOS_DEFENSE_MULTIPLIER = defineDefenseSpellMultiplier(
+                "chaosDefenseMultiplier",
+                0.50D,
+                "Defense point cost for non-chaos elemental damage against a chaos defense spell"
+        );
+        METAL_BODY_SHIELD_POINTS_PER_STRENGTH = defineDefenseSpellPoints(
+                "metalBodyShieldPointsPerStrength", 16.0D
+        );
+        WOOD_GUARDIAN_POINTS_PER_STRENGTH = defineDefenseSpellPoints(
+                "woodGuardianPointsPerStrength", 12.0D
+        );
+        WATER_BODY_SHIELD_POINTS_PER_STRENGTH = defineDefenseSpellPoints(
+                "waterBodyShieldPointsPerStrength", 13.0D
+        );
+        FIRE_GUARDIAN_POINTS_PER_STRENGTH = defineDefenseSpellPoints(
+                "fireGuardianPointsPerStrength", 11.0D
+        );
+        EARTH_GUARDIAN_POINTS_PER_STRENGTH = defineDefenseSpellPoints(
+                "earthGuardianPointsPerStrength", 18.0D
+        );
+        YIN_YANG_BODY_SHIELD_POINTS_PER_STRENGTH = defineDefenseSpellPoints(
+                "yinYangBodyShieldPointsPerStrength", 10.0D
+        );
+        FIVE_ELEMENT_BODY_SHIELD_POINTS_PER_STRENGTH = defineDefenseSpellPoints(
+                "fiveElementBodyShieldPointsPerStrength", 14.0D
+        );
+        CHAOS_BODY_SHIELD_POINTS_PER_STRENGTH = defineDefenseSpellPoints(
+                "chaosBodyShieldPointsPerStrength", 8.0D
+        );
+        COMPOSITE_BODY_SHIELD_POINTS_PER_STRENGTH = defineDefenseSpellPoints(
+                "compositeBodyShieldPointsPerStrength", 11.0D
+        );
+        FOUR_PHASE_GUARDIAN_POINTS_PER_STRENGTH = defineDefenseSpellPoints(
+                "fourPhaseGuardianPointsPerStrength", 14.0D
+        );
         BUILDER.pop();
 
         BUILDER.push("realmBonusDamage");
@@ -214,6 +305,20 @@ public final class CommonConfig {
     }
 
     private CommonConfig() {
+    }
+
+    private static ForgeConfigSpec.DoubleValue defineDefenseSpellMultiplier(
+            String name,
+            double defaultValue,
+            String comment
+    ) {
+        return BUILDER.comment(comment)
+                .defineInRange(name, defaultValue, MINIMUM_MULTIPLIER, MAXIMUM_MULTIPLIER);
+    }
+
+    private static ForgeConfigSpec.DoubleValue defineDefenseSpellPoints(String name, double defaultValue) {
+        return BUILDER.comment("Base defense points gained per cultivation strength before mastery scaling")
+                .defineInRange(name, defaultValue, 0.1D, MAXIMUM_BASE_ABSORPTION_PER_SECOND);
     }
 
     private static ForgeConfigSpec.IntValue defineLifespanYears(

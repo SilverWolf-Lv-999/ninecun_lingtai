@@ -1,0 +1,19 @@
+{
+  "name": "合元灵幕",
+  "description": "仅供二种及以上多灵根修士使用的三品复合防御法术。",
+  "content": "不独尊一行，而将自身诸根灵力分缕织成复相灵幕。每一缕各守其性，来攻落下时共同分摊，护御耗损取诸根关系之平均，故适合属性杂驳的战局。单灵根无第二缕灵力交织，不能成幕。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "spell": {"id": "ninecun_lingtai:composite_body_shield", "category": "combat", "grade": 3, "base_cost": 5.0, "cost_elements": []},
+  "compatible_elements": ["metal", "wood", "water", "fire", "earth", "yin_yang"],
+  "requirements": {
+    "minimum_cultivation": {"realm": "qi_refining", "layer": 4},
+    "minimum_spiritual_root_elements": 2
+  },
+  "comprehension": {
+    "minimum_learning_score": 66,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": ["诸根灵力分缕", "复相交织成幕", "共同分摊耗损"],
+    "grading_criteria": ["说明多种灵力如何共同织幕", "理解单灵根不能成幕的原因"],
+    "mastery_levels": [{"id": "ninecun_lingtai:entry", "minimum_score": 66}]
+  }
+}

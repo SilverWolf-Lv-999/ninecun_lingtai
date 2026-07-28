@@ -10,6 +10,9 @@ import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.seraphina.ninecun_lingtai.client.player.BodyShieldVisualState;
 import com.seraphina.ninecun_lingtai.client.player.ClientBodyShieldManager;
+import com.seraphina.ninecun_lingtai.client.player.ClientDefenseSpellManager;
+import com.seraphina.ninecun_lingtai.common.player.DefenseSpellSnapshot;
+import com.seraphina.ninecun_lingtai.utility.DefenseSpellUtility;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
@@ -38,7 +41,9 @@ public final class BodyShieldRenderUtility {
             return;
         }
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.level == null || ClientBodyShieldManager.getVisualStates().isEmpty()) {
+        if (minecraft.level == null
+                || (ClientBodyShieldManager.getVisualStates().isEmpty()
+                && ClientDefenseSpellManager.getBodyShields().isEmpty())) {
             return;
         }
 
@@ -71,6 +76,22 @@ public final class BodyShieldRenderUtility {
                     event.getPartialTick()
             );
         }
+        for (Map.Entry<Integer, DefenseSpellSnapshot> entry
+                : ClientDefenseSpellManager.getBodyShields().entrySet()) {
+            Entity entity = minecraft.level.getEntity(entry.getKey());
+            if (!(entity instanceof LivingEntity livingEntity)
+                    || livingEntity.distanceToSqr(cameraPosition) > MAXIMUM_RENDER_DISTANCE_SQUARED) {
+                continue;
+            }
+            DefenseSpellSnapshot snapshot = entry.getValue();
+            renderShield(
+                    poseStack.last().pose(),
+                    livingEntity,
+                    0.55F + (float) snapshot.ratio() * 0.45F,
+                    DefenseSpellUtility.getColor(snapshot.kind(), snapshot.elementMask()),
+                    event.getPartialTick()
+            );
+        }
 
         RenderSystem.depthMask(true);
         RenderSystem.enableCull();
@@ -89,6 +110,16 @@ public final class BodyShieldRenderUtility {
         if (visibility <= 0.0F) {
             return;
         }
+        renderShield(matrix, entity, visibility, 0xFFFFFF, partialTick);
+    }
+
+    private static void renderShield(
+            Matrix4f matrix,
+            LivingEntity entity,
+            float visibility,
+            int color,
+            float partialTick
+    ) {
         float pulse = 0.5F + 0.5F * Mth.sin((entity.tickCount + partialTick) * 0.55F);
         float horizontalRadius = entity.getBbWidth() * (WIDTH_RADIUS_MULTIPLIER + pulse * 0.025F);
         float verticalRadius = entity.getBbHeight() * HEIGHT_RADIUS_MULTIPLIER;
@@ -101,7 +132,7 @@ public final class BodyShieldRenderUtility {
         int alpha = Mth.clamp(Math.round(BASE_ALPHA * visibility * 255.0F), 0, 255);
         BufferBuilder bufferBuilder = Tesselator.getInstance().getBuilder();
         bufferBuilder.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR);
-        appendEllipsoid(bufferBuilder, matrix, position, horizontalRadius, verticalRadius, alpha);
+        appendEllipsoid(bufferBuilder, matrix, position, horizontalRadius, verticalRadius, color, alpha);
         BufferUploader.drawWithShader(bufferBuilder.end());
     }
 
@@ -111,6 +142,7 @@ public final class BodyShieldRenderUtility {
             Vec3 center,
             float horizontalRadius,
             float verticalRadius,
+            int color,
             int alpha
     ) {
         for (int latitude = 0; latitude < LATITUDE_SEGMENTS; latitude++) {
@@ -125,6 +157,7 @@ public final class BodyShieldRenderUtility {
                         ellipsoidPoint(center, theta, phi, horizontalRadius, verticalRadius),
                         ellipsoidPoint(center, nextTheta, phi, horizontalRadius, verticalRadius),
                         ellipsoidPoint(center, nextTheta, nextPhi, horizontalRadius, verticalRadius),
+                        color,
                         alpha
                 );
                 appendTriangle(
@@ -133,6 +166,7 @@ public final class BodyShieldRenderUtility {
                         ellipsoidPoint(center, theta, phi, horizontalRadius, verticalRadius),
                         ellipsoidPoint(center, nextTheta, nextPhi, horizontalRadius, verticalRadius),
                         ellipsoidPoint(center, theta, nextPhi, horizontalRadius, verticalRadius),
+                        color,
                         alpha
                 );
             }
@@ -160,16 +194,17 @@ public final class BodyShieldRenderUtility {
             Vec3 first,
             Vec3 second,
             Vec3 third,
+            int color,
             int alpha
     ) {
-        vertex(bufferBuilder, matrix, first, alpha);
-        vertex(bufferBuilder, matrix, second, alpha);
-        vertex(bufferBuilder, matrix, third, alpha);
+        vertex(bufferBuilder, matrix, first, color, alpha);
+        vertex(bufferBuilder, matrix, second, color, alpha);
+        vertex(bufferBuilder, matrix, third, color, alpha);
     }
 
-    private static void vertex(BufferBuilder bufferBuilder, Matrix4f matrix, Vec3 point, int alpha) {
+    private static void vertex(BufferBuilder bufferBuilder, Matrix4f matrix, Vec3 point, int color, int alpha) {
         bufferBuilder.vertex(matrix, (float) point.x, (float) point.y, (float) point.z)
-                .color(255, 255, 255, alpha)
+                .color(color >> 16 & 0xFF, color >> 8 & 0xFF, color & 0xFF, alpha)
                 .endVertex();
     }
 }

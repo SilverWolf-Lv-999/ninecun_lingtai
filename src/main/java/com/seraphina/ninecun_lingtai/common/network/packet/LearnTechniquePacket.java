@@ -200,6 +200,7 @@ public record LearnTechniquePacket(ResourceLocation techniqueId, String understa
     private static Component createRequirementFailureText(TechniqueRequirementFailure failure) {
         return switch (failure.type()) {
             case SPIRITUAL_ROOT -> Component.translatable("requirement.ninecun_lingtai.spiritual_root");
+            case SPIRITUAL_ROOT_COUNT -> createSpiritualRootCountFailureText(failure.detail());
             case COMPATIBLE_ELEMENT -> Component.translatable("requirement.ninecun_lingtai.compatible_element");
             case REQUIRED_ELEMENT -> Component.translatable("requirement.ninecun_lingtai.required_element");
             case CULTIVATION_STAGE -> Component.translatable(
@@ -215,6 +216,32 @@ public record LearnTechniquePacket(ResourceLocation techniqueId, String understa
                     formatTechniqueDetail(failure.detail())
             );
         };
+    }
+
+    private static Component createSpiritualRootCountFailureText(String detail) {
+        String[] bounds = detail.split(":", -1);
+        if (bounds.length != 2) {
+            return Component.translatable("requirement.ninecun_lingtai.spiritual_root_count", detail);
+        }
+        int minimum;
+        int maximum;
+        try {
+            minimum = Integer.parseInt(bounds[0]);
+            maximum = Integer.parseInt(bounds[1]);
+        } catch (NumberFormatException exception) {
+            return Component.translatable("requirement.ninecun_lingtai.spiritual_root_count", detail);
+        }
+        if (minimum > 0 && maximum > 0 && minimum == maximum) {
+            return Component.translatable("requirement.ninecun_lingtai.spiritual_root_count_exact", minimum);
+        }
+        if (maximum > 0) {
+            return Component.translatable(
+                    "requirement.ninecun_lingtai.spiritual_root_count_range",
+                    minimum,
+                    maximum
+            );
+        }
+        return Component.translatable("requirement.ninecun_lingtai.spiritual_root_count_minimum", minimum);
     }
 
     private static String formatStageDetail(String detail) {

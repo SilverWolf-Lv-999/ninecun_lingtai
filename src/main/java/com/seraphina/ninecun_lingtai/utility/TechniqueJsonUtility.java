@@ -136,12 +136,24 @@ public final class TechniqueJsonUtility {
                 requirementsJson,
                 "required_techniques"
         );
+        int minimumSpiritualRootElements = GsonHelper.getAsInt(
+                requirementsJson,
+                "minimum_spiritual_root_elements",
+                0
+        );
+        int maximumSpiritualRootElements = GsonHelper.getAsInt(
+                requirementsJson,
+                "maximum_spiritual_root_elements",
+                0
+        );
         try {
             return new TechniqueRequirements(
                     minimumCultivation,
                     minimumSoulStrength,
                     requiredElements,
-                    requiredTechniques
+                    requiredTechniques,
+                    minimumSpiritualRootElements,
+                    maximumSpiritualRootElements
             );
         } catch (IllegalArgumentException exception) {
             throw new JsonParseException(exception.getMessage(), exception);

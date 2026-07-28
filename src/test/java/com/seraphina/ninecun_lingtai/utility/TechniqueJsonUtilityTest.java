@@ -31,6 +31,8 @@ class TechniqueJsonUtilityTest {
                   "requirements": {
                     "minimum_cultivation": {"realm": "qi_refining", "layer": 3},
                     "minimum_soul_strength": 2,
+                    "minimum_spiritual_root_elements": 2,
+                    "maximum_spiritual_root_elements": 4,
                     "required_elements": ["wood"],
                     "required_techniques": ["ninecun_lingtai:basic_breathing"]
                   },
@@ -56,6 +58,8 @@ class TechniqueJsonUtilityTest {
         assertEquals(CultivationRealm.QI_REFINING, technique.requirements().minimumCultivation().orElseThrow().realm());
         assertEquals(3, technique.requirements().minimumCultivation().orElseThrow().layer());
         assertEquals(2, technique.requirements().minimumSoulStrength());
+        assertEquals(2, technique.requirements().minimumSpiritualRootElements());
+        assertEquals(4, technique.requirements().maximumSpiritualRootElements());
         assertEquals(ResourceLocation.fromNamespaceAndPath("ninecun_lingtai", "minor_mastery"),
                 technique.comprehension().getMastery(100).orElseThrow());
         assertEquals(1.15D, technique.effects().get(0).parameters().get("multiplier").getAsDouble());
@@ -113,6 +117,26 @@ class TechniqueJsonUtilityTest {
                             "mastery_levels": [
                               {"id": "test:proficient", "minimum_score": 80}
                             ]
+                          }
+                        }
+                        """)
+        ));
+    }
+
+    @Test
+    void rejectsInvertedSpiritualRootElementRange() {
+        assertThrows(JsonParseException.class, () -> TechniqueJsonUtility.parse(
+                TECHNIQUE_ID,
+                JsonParser.parseString("""
+                        {
+                          "name": "错误复合法",
+                          "content": "内容",
+                          "requirements": {
+                            "minimum_spiritual_root_elements": 4,
+                            "maximum_spiritual_root_elements": 3
+                          },
+                          "comprehension": {
+                            "minimum_learning_score": 60
                           }
                         }
                         """)

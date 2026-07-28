@@ -1,0 +1,19 @@
+{
+  "name": "庚金护体罡",
+  "description": "凝庚金薄罡贴体护身，克木而畏火的二品防御法术。",
+  "content": "引金行灵力出肺宫，沿周身皮膜铺成薄如蝉翼的庚金罡层。罡气须密而不断，受击时以整层分担一点，方可使木攻难入、土力相生；若火势熔金，则罡层耗损尤剧。近身攻势被完整挡下时，可借金铁震鸣震退来敌。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "spell": {"id": "ninecun_lingtai:metal_body_shield", "category": "combat", "grade": 2, "base_cost": 4.0},
+  "compatible_elements": ["metal"],
+  "requirements": {
+    "minimum_cultivation": {"realm": "qi_refining", "layer": 2},
+    "required_elements": ["metal"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 62,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": ["金气铺于皮膜", "罡层密而不断", "金克木而火克金"],
+    "grading_criteria": ["说明护体罡的行气位置", "理解五行生克会改变罡气耗损"],
+    "mastery_levels": [{"id": "ninecun_lingtai:entry", "minimum_score": 62}]
+  }
+}

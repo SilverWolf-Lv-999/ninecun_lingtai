@@ -4,6 +4,7 @@ import com.seraphina.ninecun_lingtai.ModMain;
 import com.seraphina.ninecun_lingtai.api.cultivation.CultivationRealm;
 import com.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
 import com.seraphina.ninecun_lingtai.common.creature.CreatureCultivationData;
+import com.seraphina.ninecun_lingtai.common.entity.spell.DefenseSpellGuardianEntity;
 import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import com.seraphina.ninecun_lingtai.common.player.PlayerDefenseResourceData;
 import com.seraphina.ninecun_lingtai.common.registry.ModDamageTypes;
@@ -14,6 +15,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
@@ -94,6 +96,23 @@ public final class CultivationDefenseEventHandler {
             LivingAttackEvent event,
             LivingEntity defender
     ) {
+        if (defender instanceof DefenseSpellGuardianEntity guardian
+                && event.getSource().getEntity() instanceof LivingEntity guardianAttacker) {
+            Optional<ServerPlayer> owner = guardian.getOwnerPlayer();
+            if (owner.isPresent()
+                    && CultivationCombatUtility.canInstantlyKillLowerRealmCultivator(
+                    CreatureCultivationData.getStage(guardianAttacker),
+                    CreatureCultivationData.getStage(owner.get())
+            )) {
+                event.setCanceled(true);
+                if (guardianAttacker instanceof Mob mob) {
+                    mob.setTarget(owner.get());
+                }
+                owner.get().hurt(event.getSource(), event.getAmount());
+                return true;
+            }
+            return false;
+        }
         if (event.getSource().is(ModDamageTypes.REALM_EXECUTION)
                 || !(event.getSource().getEntity() instanceof LivingEntity attacker)
                 || attacker == defender

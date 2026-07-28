@@ -32,6 +32,7 @@ import com.seraphina.ninecun_lingtai.common.network.packet.SubmitAptitudePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SmoothShrinkEarthTeleportPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncCultivationInfoPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncDefenseResourcePacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.SyncDefenseSpellStatePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncLightFlightPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncMeditationStatePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncPossessionPacket;
@@ -49,6 +50,7 @@ import com.seraphina.ninecun_lingtai.common.player.PlayerSwordFlightData;
 import com.seraphina.ninecun_lingtai.common.player.DefenseResourceSnapshot;
 import com.seraphina.ninecun_lingtai.common.player.PlayerCultivationInfo;
 import com.seraphina.ninecun_lingtai.common.player.PlayerDefenseResourceData;
+import com.seraphina.ninecun_lingtai.common.player.PlayerDefenseSpellData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerImprintedTechniqueData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerSoulRoamingManager;
 import com.seraphina.ninecun_lingtai.common.player.PlayerTechniqueData;
@@ -73,7 +75,7 @@ import java.util.Set;
 import java.util.UUID;
 
 public final class ModNetwork {
-    private static final String PROTOCOL_VERSION = "24";
+    private static final String PROTOCOL_VERSION = "25";
     private static final SimpleChannel CHANNEL = NetworkRegistry.ChannelBuilder
             .named(ResourceLocation.fromNamespaceAndPath(ModMain.MOD_ID, "main"))
             .networkProtocolVersion(() -> PROTOCOL_VERSION)
@@ -358,6 +360,15 @@ public final class ModNetwork {
                 .consumerMainThread(SyncDefenseResourcePacket::handle)
                 .add();
         CHANNEL.messageBuilder(
+                        SyncDefenseSpellStatePacket.class,
+                        nextPacketId++,
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(SyncDefenseSpellStatePacket::encode)
+                .decoder(SyncDefenseSpellStatePacket::decode)
+                .consumerMainThread(SyncDefenseSpellStatePacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
                         StartSoulRoamingPacket.class,
                         nextPacketId++,
                         NetworkDirection.PLAY_TO_SERVER
@@ -492,6 +503,20 @@ public final class ModNetwork {
                 PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> entity),
                 new TriggerBodyShieldPacket(entity.getId())
         );
+    }
+
+    public static void sendDefenseSpellState(ServerPlayer subject) {
+        SyncDefenseSpellStatePacket packet = PlayerDefenseSpellData.getBodyShield(subject)
+                .map(snapshot -> SyncDefenseSpellStatePacket.of(subject.getId(), snapshot))
+                .orElseGet(() -> SyncDefenseSpellStatePacket.empty(subject.getId()));
+        CHANNEL.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> subject), packet);
+    }
+
+    public static void sendDefenseSpellStateTo(ServerPlayer recipient, ServerPlayer subject) {
+        SyncDefenseSpellStatePacket packet = PlayerDefenseSpellData.getBodyShield(subject)
+                .map(snapshot -> SyncDefenseSpellStatePacket.of(subject.getId(), snapshot))
+                .orElseGet(() -> SyncDefenseSpellStatePacket.empty(subject.getId()));
+        CHANNEL.send(PacketDistributor.PLAYER.with(() -> recipient), packet);
     }
 
     public static void sendAptitudeScreenRequest(ServerPlayer player) {

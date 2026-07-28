@@ -2,6 +2,7 @@ package com.seraphina.ninecun_lingtai.common.registry;
 
 import com.seraphina.ninecun_lingtai.ModMain;
 import com.seraphina.ninecun_lingtai.common.entity.SoulEntity;
+import com.seraphina.ninecun_lingtai.common.entity.spell.DefenseSpellGuardianEntity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -24,6 +25,17 @@ public final class ModEntityTypes {
                     .updateInterval(1)
                     .build("soul_entity")
     );
+
+    public static final RegistryObject<EntityType<DefenseSpellGuardianEntity>> DEFENSE_SPELL_GUARDIAN =
+            ENTITY_TYPES.register(
+                    "defense_spell_guardian",
+                    () -> EntityType.Builder
+                            .of(DefenseSpellGuardianEntity::new, MobCategory.MISC)
+                            .sized(0.9F, 1.8F)
+                            .clientTrackingRange(64)
+                            .updateInterval(1)
+                            .build("defense_spell_guardian")
+            );
 
     private ModEntityTypes() {
     }

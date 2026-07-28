@@ -1,0 +1,19 @@
+{
+  "name": "两仪衡界",
+  "description": "以阴阳平衡五行偏盛的四品防御法术。",
+  "content": "分阴阳灵力为黑白二仪，首尾衔接，贴体轮转成界。五行之攻入界后，盛者引向衰处，偏者归于中和，故不显五行弱点；然而维持平衡耗神，其基础护御不及专精一行，且混沌不可由阴阳调和。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "spell": {"id": "ninecun_lingtai:yin_yang_body_shield", "category": "combat", "grade": 4, "base_cost": 6.0},
+  "compatible_elements": ["yin_yang"],
+  "requirements": {
+    "minimum_cultivation": {"realm": "qi_refining", "layer": 5},
+    "required_elements": ["yin_yang"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 68,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": ["黑白二仪轮转", "盛衰相济", "只平衡五行不平衡混沌"],
+    "grading_criteria": ["说明阴阳如何调和五行", "知晓均衡与基础护御较低的代价"],
+    "mastery_levels": [{"id": "ninecun_lingtai:entry", "minimum_score": 68}]
+  }
+}

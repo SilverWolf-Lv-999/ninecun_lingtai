@@ -1,0 +1,19 @@
+{
+  "name": "玄水流光衣",
+  "description": "以流动水膜卸力熄火的二品防御法术。",
+  "content": "引水行灵力沿经络漫出体表，使其周流不息，如透明流光贴身成衣。来力落在水衣上，不与之硬争，而以流转之势层层卸去；火势可由玄水熄灭，土力沉浊则最易令水衣崩散。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "spell": {"id": "ninecun_lingtai:water_body_shield", "category": "combat", "grade": 2, "base_cost": 4.0},
+  "compatible_elements": ["water"],
+  "requirements": {
+    "minimum_cultivation": {"realm": "qi_refining", "layer": 2},
+    "required_elements": ["water"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 62,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": ["水膜周流不息", "以流转卸力", "水克火而土克水"],
+    "grading_criteria": ["说明玄水流光衣如何卸力", "理解其能熄灭普通火焰"],
+    "mastery_levels": [{"id": "ninecun_lingtai:entry", "minimum_score": 62}]
+  }
+}

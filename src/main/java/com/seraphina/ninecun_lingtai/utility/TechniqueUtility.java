@@ -32,15 +32,20 @@ public final class TechniqueUtility {
         TechniqueRequirements requirements = technique.requirements();
         Optional<SpiritualRoot> spiritualRoot = PlayerAptitudeData.getSpiritualRoot(player);
         boolean requiresSpiritualRoot = !technique.compatibleElements().isEmpty()
-                || !requirements.requiredElements().isEmpty();
+                || !requirements.requiredElements().isEmpty()
+                || requirements.minimumSpiritualRootElements() > 0
+                || requirements.maximumSpiritualRootElements() > 0;
         if (requiresSpiritualRoot && spiritualRoot.isEmpty()) {
             failures.add(new TechniqueRequirementFailure(
                     TechniqueRequirementType.SPIRITUAL_ROOT,
                     "missing"
             ));
-        } else if (spiritualRoot.isPresent() && !spiritualRoot.get().isChaos()) {
-            checkCompatibleElements(spiritualRoot.get(), technique, failures);
+        } else if (spiritualRoot.isPresent()) {
+            if (!spiritualRoot.get().isChaos()) {
+                checkCompatibleElements(spiritualRoot.get(), technique, failures);
+            }
             checkRequiredElements(spiritualRoot.get(), requirements, failures);
+            checkSpiritualRootElementCount(spiritualRoot.get(), requirements, failures);
         }
 
         requirements.minimumCultivation().ifPresent(minimumStage -> {
@@ -118,12 +123,31 @@ public final class TechniqueUtility {
             List<TechniqueRequirementFailure> failures
     ) {
         for (ElementType requiredElement : requirements.requiredElements()) {
-            if (!spiritualRoot.elements().contains(requiredElement)) {
+            boolean present = requiredElement == ElementType.CHAOS
+                    ? spiritualRoot.isChaos()
+                    : spiritualRoot.elements().contains(requiredElement);
+            if (!present) {
                 failures.add(new TechniqueRequirementFailure(
                         TechniqueRequirementType.REQUIRED_ELEMENT,
                         requiredElement.getSerializedName()
                 ));
             }
+        }
+    }
+
+    private static void checkSpiritualRootElementCount(
+            SpiritualRoot spiritualRoot,
+            TechniqueRequirements requirements,
+            List<TechniqueRequirementFailure> failures
+    ) {
+        int elementCount = spiritualRoot.elements().size();
+        int minimum = requirements.minimumSpiritualRootElements();
+        int maximum = requirements.maximumSpiritualRootElements();
+        if ((minimum > 0 && elementCount < minimum) || (maximum > 0 && elementCount > maximum)) {
+            failures.add(new TechniqueRequirementFailure(
+                    TechniqueRequirementType.SPIRITUAL_ROOT_COUNT,
+                    minimum + ":" + maximum
+            ));
         }
     }
 

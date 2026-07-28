@@ -1,0 +1,21 @@
+{
+  "name": "五行轮转界",
+  "description": "五行灵根专属、以相生轮转消磨五行攻势的五品防御法术。",
+  "content": "五气同时出于五脏，在体外依木火土金水之序结成五重轮环。来攻属五行者，不与其正冲，而引入相生长链，令其势在轮转中层层消磨。此术须恰具金木水火土五行，掺入阴阳则轮序另变，不再是纯粹五行灵根之法。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "spell": {"id": "ninecun_lingtai:five_element_cycle", "category": "combat", "grade": 5, "base_cost": 7.0, "cost_elements": ["metal", "wood", "water", "fire", "earth"]},
+  "compatible_elements": ["metal", "wood", "water", "fire", "earth"],
+  "requirements": {
+    "minimum_cultivation": {"realm": "foundation_establishment", "layer": 1},
+    "required_elements": ["metal", "wood", "water", "fire", "earth"],
+    "minimum_spiritual_root_elements": 5,
+    "maximum_spiritual_root_elements": 5
+  },
+  "comprehension": {
+    "minimum_learning_score": 72,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": ["五气同时出宫", "依相生次序结环", "攻势在轮转中消磨"],
+    "grading_criteria": ["准确说明五行相生轮序", "理解此术为何专属于纯五行灵根"],
+    "mastery_levels": [{"id": "ninecun_lingtai:entry", "minimum_score": 72}]
+  }
+}

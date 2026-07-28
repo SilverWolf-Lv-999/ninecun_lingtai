@@ -1,0 +1,19 @@
+{
+  "name": "戊土镇岳傀",
+  "description": "唤土石力士镇守身前的三品防御法术。",
+  "content": "沉土行灵力入涌泉，与脚下地气相接，拔起一尊戊土镇岳傀。傀儡重如山根，护御点数最厚，能在广大范围内夺取敌意，惟行动迟缓；木根穿土是其大忌，火气则能生土助稳。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "spell": {"id": "ninecun_lingtai:earth_guardian", "category": "combat", "grade": 3, "base_cost": 5.0},
+  "compatible_elements": ["earth"],
+  "requirements": {
+    "minimum_cultivation": {"realm": "qi_refining", "layer": 3},
+    "required_elements": ["earth"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 65,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": ["灵力下接地气", "土傀镇守身前", "厚重而迟缓"],
+    "grading_criteria": ["说明镇岳傀为何坚厚", "理解木克土与火生土"],
+    "mastery_levels": [{"id": "ninecun_lingtai:entry", "minimum_score": 65}]
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "青木替命身",
+  "description": "凝木灵替身吸引敌手，离战后可自复的二品防御法术。",
+  "content": "以木行灵力拟自身轮廓，在身侧结成青木替身。替身不以杀伐为务，只承来攻并牵引敌意；每逢受击，藤气缠住来敌片刻。战意平息后，木气可缓缓抽芽复原，惟火与混沌会截断生机。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "spell": {"id": "ninecun_lingtai:wood_guardian", "category": "combat", "grade": 2, "base_cost": 4.0},
+  "compatible_elements": ["wood"],
+  "requirements": {
+    "minimum_cultivation": {"realm": "qi_refining", "layer": 2},
+    "required_elements": ["wood"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 62,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": ["木气拟形", "替身承伤引敌", "脱战复原"],
+    "grading_criteria": ["说明替身的护主而非攻伐之用", "理解火与混沌会断绝恢复"],
+    "mastery_levels": [{"id": "ninecun_lingtai:entry", "minimum_score": 62}]
+  }
+}

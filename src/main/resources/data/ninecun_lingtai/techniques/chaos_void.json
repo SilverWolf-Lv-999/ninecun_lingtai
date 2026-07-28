@@ -1,0 +1,21 @@
+{
+  "name": "混沌无相壁",
+  "description": "混沌灵根专属、消融诸相的七品防御法术。",
+  "content": "六根之气尽归未分之初，在体表凝成无色无相之壁。金木水火土与阴阳之攻入壁，属性先被消融，再以纯粹力道冲击壁身，故耗损极少；唯混沌同源，不能以无相化无相。此壁根基点数较低，胜在对诸相的绝对压制。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "spell": {"id": "ninecun_lingtai:chaos_void", "category": "combat", "grade": 7, "base_cost": 8.0, "cost_elements": []},
+  "requirements": {
+    "minimum_cultivation": {"realm": "golden_core", "layer": 1},
+    "minimum_soul_strength": 3,
+    "required_elements": ["chaos"],
+    "minimum_spiritual_root_elements": 6,
+    "maximum_spiritual_root_elements": 6
+  },
+  "comprehension": {
+    "minimum_learning_score": 78,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": ["六气归于未分", "先消融属性再承力", "同源混沌不可消融"],
+    "grading_criteria": ["说明无相壁压制诸属性的原理", "理解低根基与强克制之间的取舍"],
+    "mastery_levels": [{"id": "ninecun_lingtai:entry", "minimum_score": 78}]
+  }
+}

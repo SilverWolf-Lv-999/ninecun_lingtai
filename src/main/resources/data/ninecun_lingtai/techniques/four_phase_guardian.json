@@ -1,0 +1,19 @@
+{
+  "name": "四象守御阵",
+  "description": "仅供四种及以上多灵根修士使用的五品召唤防御法术。",
+  "content": "择自身诸根中四道灵性，分镇前后左右，结成随身四象阵灵。阵灵承接敌意时，会从现有诸根中轮换最能克制来攻的一相迎击，故比平均分摊的合元灵幕更善应变。少于四根则四方有缺，阵势不能闭合。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "spell": {"id": "ninecun_lingtai:four_phase_guardian", "category": "combat", "grade": 5, "base_cost": 7.0, "cost_elements": []},
+  "compatible_elements": ["metal", "wood", "water", "fire", "earth", "yin_yang"],
+  "requirements": {
+    "minimum_cultivation": {"realm": "foundation_establishment", "layer": 3},
+    "minimum_spiritual_root_elements": 4
+  },
+  "comprehension": {
+    "minimum_learning_score": 73,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": ["四灵分镇四方", "阵灵吸引敌意", "轮换最合适的一相迎击"],
+    "grading_criteria": ["说明四象阵为何要求至少四根", "理解阵灵按来攻属性轮换防御"],
+    "mastery_levels": [{"id": "ninecun_lingtai:entry", "minimum_score": 73}]
+  }
+}

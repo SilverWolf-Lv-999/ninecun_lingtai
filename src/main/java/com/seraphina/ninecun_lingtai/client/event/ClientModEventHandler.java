@@ -11,6 +11,7 @@ import com.seraphina.ninecun_lingtai.client.inventorytab.PlayerValueControlTabRe
 import com.seraphina.ninecun_lingtai.client.inventorytab.TechniqueLibraryTabRegistrar;
 import com.seraphina.ninecun_lingtai.client.render.AptitudeFormationShader;
 import com.seraphina.ninecun_lingtai.client.render.DefenseBarShader;
+import com.seraphina.ninecun_lingtai.client.render.DefenseSpellGuardianRenderer;
 import com.seraphina.ninecun_lingtai.client.render.ElementFlowShader;
 import com.seraphina.ninecun_lingtai.client.render.SoulConstellationShader;
 import com.seraphina.ninecun_lingtai.client.render.SoulRenderer;
@@ -81,6 +82,10 @@ public final class ClientModEventHandler {
     @SubscribeEvent
     public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(ModEntityTypes.SOUL_ENTITY.get(), SoulRenderer::new);
+        event.registerEntityRenderer(
+                ModEntityTypes.DEFENSE_SPELL_GUARDIAN.get(),
+                DefenseSpellGuardianRenderer::new
+        );
     }
 
     @SubscribeEvent
