@@ -10,6 +10,7 @@ import com.seraphina.ninecun_lingtai.common.data.DamageElementManager;
 import com.seraphina.ninecun_lingtai.common.entity.spell.DefenseSpellGuardianEntity;
 import com.seraphina.ninecun_lingtai.common.player.PlayerAptitudeData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerDefenseSpellData;
+import com.seraphina.ninecun_lingtai.common.player.PlayerSpiritualEnergyData;
 import com.seraphina.ninecun_lingtai.common.registry.ModDamageTypes;
 import com.seraphina.ninecun_lingtai.common.registry.ModEntityTypes;
 import com.seraphina.ninecun_lingtai.common.spell.defense.DefenseSpellKind;
@@ -62,6 +63,44 @@ public final class DefenseSpellUtility {
                         * Math.max(1, context.cultivationStrength())
                         * context.powerEfficiency()
         );
+    }
+
+    public static int getDurationTicks(SpellCastContext context) {
+        return Math.max(
+                20,
+                (int) Math.round(CommonConfig.DEFENSE_SPELL_DURATION_TICKS.get() * context.powerEfficiency())
+        );
+    }
+
+    public static double repairWithSpiritualEnergy(
+            ServerPlayer player,
+            DefenseSpellKind kind,
+            int elementMask,
+            double currentPoints,
+            double maximumPoints
+    ) {
+        double missingPoints = maximumPoints - currentPoints;
+        if (missingPoints <= 1.0E-6D) {
+            return 0.0D;
+        }
+        double requestedRepair = Math.min(
+                missingPoints,
+                maximumPoints * CommonConfig.DEFENSE_SPELL_REPAIR_PERCENT_PER_SECOND.get() / 100.0D
+        );
+        if (requestedRepair <= 0.0D || player.isCreative()) {
+            return player.isCreative() ? requestedRepair : 0.0D;
+        }
+        double energyPerPoint = CommonConfig.DEFENSE_SPELL_REPAIR_ENERGY_PER_POINT.get();
+        if (energyPerPoint <= 0.0D) {
+            return requestedRepair;
+        }
+        double requestedEnergy = requestedRepair * energyPerPoint;
+        double consumedEnergy = PlayerSpiritualEnergyData.consumeEnergyUpTo(
+                player,
+                getRepairElements(kind, elementMask),
+                requestedEnergy
+        );
+        return requestedRepair * Math.min(1.0D, consumedEnergy / requestedEnergy);
     }
 
     public static Optional<ElementType> getAttackElement(DamageSource source) {
@@ -135,7 +174,13 @@ public final class DefenseSpellUtility {
         int elementMask = PlayerAptitudeData.getSpiritualRoot(player)
                 .map(SpiritualRoot::getElementMask)
                 .orElse(0);
-        guardian.initialize(player, kind, getMaximumPoints(kind, context), elementMask);
+        guardian.initialize(
+                player,
+                kind,
+                getMaximumPoints(kind, context),
+                elementMask,
+                getDurationTicks(context)
+        );
         guardian.moveTo(player.getX(), player.getY(), player.getZ(), player.getYRot(), 0.0F);
         if (!player.serverLevel().addFreshEntity(guardian)) {
             return false;
@@ -143,6 +188,17 @@ public final class DefenseSpellUtility {
         PlayerDefenseSpellData.setGuardian(player, kind, guardian.getUUID());
         redirectTargetsToGuardian(player, guardian);
         return true;
+    }
+
+    public static Set<ElementType> getRepairElements(DefenseSpellKind kind, int elementMask) {
+        Optional<ElementType> fixedElement = kind.getFixedElement();
+        if (fixedElement.isPresent()) {
+            return Set.of(fixedElement.get());
+        }
+        if (kind == DefenseSpellKind.FIVE_ELEMENT_CYCLE) {
+            return Set.copyOf(ElementType.FIVE_ELEMENTS);
+        }
+        return getElements(elementMask);
     }
 
     public static Optional<DefenseSpellGuardianEntity> getGuardian(ServerPlayer player) {

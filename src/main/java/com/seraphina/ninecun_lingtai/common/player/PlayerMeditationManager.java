@@ -133,6 +133,7 @@ public final class PlayerMeditationManager {
             double breathingMultiplier = getBreathingAbsorptionMultiplier(player, session.techniqueId());
             if (breathingMultiplier > 0.0D) {
                 absorbSpiritualEnergy(player, breathingMultiplier);
+                ModNetwork.sendCultivationInfo(player);
             }
             repairDefenseResource(player);
             syncStateToTrackingAndSelf(player, true);

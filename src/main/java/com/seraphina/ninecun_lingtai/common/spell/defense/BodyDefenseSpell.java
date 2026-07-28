@@ -29,7 +29,13 @@ public final class BodyDefenseSpell extends Spell {
                 .map(root -> root.getElementMask())
                 .orElse(0);
         double maximum = DefenseSpellUtility.getMaximumPoints(this.kind, context);
-        PlayerDefenseSpellData.setBodyShield(player, this.kind, maximum, elementMask);
+        PlayerDefenseSpellData.setBodyShield(
+                player,
+                this.kind,
+                maximum,
+                elementMask,
+                DefenseSpellUtility.getDurationTicks(context)
+        );
         ModNetwork.sendDefenseSpellState(player);
         return true;
     }

@@ -9,6 +9,7 @@ import com.seraphina.ninecun_lingtai.client.input.ModKeyMappings;
 import com.seraphina.ninecun_lingtai.client.inventorytab.CultivationInfoTabRegistrar;
 import com.seraphina.ninecun_lingtai.client.inventorytab.PlayerValueControlTabRegistrar;
 import com.seraphina.ninecun_lingtai.client.inventorytab.TechniqueLibraryTabRegistrar;
+import com.seraphina.ninecun_lingtai.client.model.BodyDefenseSpellModel;
 import com.seraphina.ninecun_lingtai.client.render.AptitudeFormationShader;
 import com.seraphina.ninecun_lingtai.client.render.DefenseBarShader;
 import com.seraphina.ninecun_lingtai.client.render.DefenseSpellGuardianRenderer;
@@ -17,7 +18,10 @@ import com.seraphina.ninecun_lingtai.client.render.SoulConstellationShader;
 import com.seraphina.ninecun_lingtai.client.render.SoulRenderer;
 import com.seraphina.ninecun_lingtai.client.render.SpiritualEnergyShader;
 import com.seraphina.ninecun_lingtai.client.render.TechniqueCloudShader;
+import com.seraphina.ninecun_lingtai.client.render.layer.BodyDefenseSpellLayer;
 import com.seraphina.ninecun_lingtai.common.registry.ModEntityTypes;
+import net.minecraft.client.model.geom.ModelLayerLocation;
+import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
@@ -32,6 +36,14 @@ import java.io.IOException;
 
 @Mod.EventBusSubscriber(modid = ModMain.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public final class ClientModEventHandler {
+    private static final ModelLayerLocation BODY_DEFENSE_SPELL_MODEL = new ModelLayerLocation(
+            ResourceLocation.fromNamespaceAndPath(ModMain.MOD_ID, "body_defense_spell"),
+            "default"
+    );
+    private static final ModelLayerLocation SLIM_BODY_DEFENSE_SPELL_MODEL = new ModelLayerLocation(
+            ResourceLocation.fromNamespaceAndPath(ModMain.MOD_ID, "body_defense_spell"),
+            "slim"
+    );
     private static final ResourceLocation ELEMENT_FLOW_SHADER = ResourceLocation.fromNamespaceAndPath(
             ModMain.MOD_ID,
             "element_flow"
@@ -86,6 +98,36 @@ public final class ClientModEventHandler {
                 ModEntityTypes.DEFENSE_SPELL_GUARDIAN.get(),
                 DefenseSpellGuardianRenderer::new
         );
+    }
+
+    @SubscribeEvent
+    public static void onRegisterLayerDefinitions(EntityRenderersEvent.RegisterLayerDefinitions event) {
+        event.registerLayerDefinition(
+                BODY_DEFENSE_SPELL_MODEL,
+                () -> BodyDefenseSpellModel.createLayerDefinition(false)
+        );
+        event.registerLayerDefinition(
+                SLIM_BODY_DEFENSE_SPELL_MODEL,
+                () -> BodyDefenseSpellModel.createLayerDefinition(true)
+        );
+    }
+
+    @SubscribeEvent
+    public static void onAddLayers(EntityRenderersEvent.AddLayers event) {
+        for (String skinName : event.getSkins()) {
+            PlayerRenderer playerRenderer = event.getPlayerSkin(skinName);
+            if (playerRenderer == null) {
+                continue;
+            }
+            boolean slim = "slim".equals(skinName);
+            ModelLayerLocation modelLayer = slim
+                    ? SLIM_BODY_DEFENSE_SPELL_MODEL
+                    : BODY_DEFENSE_SPELL_MODEL;
+            playerRenderer.addLayer(new BodyDefenseSpellLayer(
+                    playerRenderer,
+                    new BodyDefenseSpellModel(event.getEntityModels().bakeLayer(modelLayer), slim)
+            ));
+        }
     }
 
     @SubscribeEvent

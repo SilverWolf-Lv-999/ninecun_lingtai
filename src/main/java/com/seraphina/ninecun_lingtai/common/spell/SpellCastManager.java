@@ -9,12 +9,14 @@ import com.seraphina.ninecun_lingtai.api.technique.TechniqueDefinition;
 import com.seraphina.ninecun_lingtai.api.technique.TechniqueMasteryStage;
 import com.seraphina.ninecun_lingtai.api.technique.TechniqueSpell;
 import com.seraphina.ninecun_lingtai.common.data.TechniqueManager;
+import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import com.seraphina.ninecun_lingtai.common.player.PlayerSelectedSpellData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerSpiritualEnergyData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerTechniqueData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerTechniqueManager;
 import com.seraphina.ninecun_lingtai.common.registry.ModSpells;
 import com.seraphina.ninecun_lingtai.utility.SpiritualRootUtility;
+import com.seraphina.ninecun_lingtai.utility.ChineseNumberUtility;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -130,11 +132,13 @@ public final class SpellCastManager {
                     PlayerSpiritualEnergyData.addEnergy(player, element, cost);
                 }
             }
+            ModNetwork.sendCultivationInfo(player);
             sendActionBar(player, "施法未成，灵力已归丹田");
             return;
         }
         // 法术亦是功法，愈用愈纯熟；阶段晋升由共用逻辑负责播报。
         PlayerTechniqueManager.addProficiency(player, technique.id(), PROFICIENCY_PER_CAST);
+        ModNetwork.sendCultivationInfo(player);
         sendActionBar(player, String.format(
                 "施展《%s》（%s），耗去%s",
                 technique.name(),
@@ -168,10 +172,7 @@ public final class SpellCastManager {
     }
 
     private static String formatCost(double cost) {
-        long roundedCost = Math.round(cost);
-        return Math.abs(cost - roundedCost) < 1.0E-6D
-                ? Long.toString(roundedCost)
-                : String.format("%.1f", cost);
+        return ChineseNumberUtility.toCompactChinese(cost, 1);
     }
 
     private static void sendActionBar(ServerPlayer player, String message) {

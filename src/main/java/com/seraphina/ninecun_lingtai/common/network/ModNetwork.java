@@ -6,6 +6,7 @@ import com.seraphina.ninecun_lingtai.api.technique.LearnedTechniqueClientData;
 import com.seraphina.ninecun_lingtai.api.technique.TechniqueClientData;
 import com.seraphina.ninecun_lingtai.api.technique.TechniqueProgress;
 import com.seraphina.ninecun_lingtai.common.data.TechniqueManager;
+import com.seraphina.ninecun_lingtai.common.entity.spell.DefenseSpellGuardianEntity;
 import com.seraphina.ninecun_lingtai.common.network.packet.BreakthroughRequestPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.BoostLightFlightPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.CastSpellPacket;
@@ -48,6 +49,7 @@ import com.seraphina.ninecun_lingtai.common.player.PlayerShrinkEarthData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerValueControlData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerSwordFlightData;
 import com.seraphina.ninecun_lingtai.common.player.DefenseResourceSnapshot;
+import com.seraphina.ninecun_lingtai.common.player.DefenseSpellSnapshot;
 import com.seraphina.ninecun_lingtai.common.player.PlayerCultivationInfo;
 import com.seraphina.ninecun_lingtai.common.player.PlayerDefenseResourceData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerDefenseSpellData;
@@ -58,6 +60,7 @@ import com.seraphina.ninecun_lingtai.common.player.PlayerTechniqueProficiencyDat
 import com.seraphina.ninecun_lingtai.common.player.PossessionSyncData;
 import com.seraphina.ninecun_lingtai.common.player.SoulRoamingSyncData;
 import com.seraphina.ninecun_lingtai.utility.PlayerValueControlUnlockUtility;
+import com.seraphina.ninecun_lingtai.utility.DefenseSpellUtility;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -71,11 +74,12 @@ import net.minecraftforge.network.simple.SimpleChannel;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
 public final class ModNetwork {
-    private static final String PROTOCOL_VERSION = "25";
+    private static final String PROTOCOL_VERSION = "26";
     private static final SimpleChannel CHANNEL = NetworkRegistry.ChannelBuilder
             .named(ResourceLocation.fromNamespaceAndPath(ModMain.MOD_ID, "main"))
             .networkProtocolVersion(() -> PROTOCOL_VERSION)
@@ -506,17 +510,20 @@ public final class ModNetwork {
     }
 
     public static void sendDefenseSpellState(ServerPlayer subject) {
-        SyncDefenseSpellStatePacket packet = PlayerDefenseSpellData.getBodyShield(subject)
-                .map(snapshot -> SyncDefenseSpellStatePacket.of(subject.getId(), snapshot))
-                .orElseGet(() -> SyncDefenseSpellStatePacket.empty(subject.getId()));
+        SyncDefenseSpellStatePacket packet = createDefenseSpellStatePacket(subject);
         CHANNEL.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> subject), packet);
     }
 
     public static void sendDefenseSpellStateTo(ServerPlayer recipient, ServerPlayer subject) {
-        SyncDefenseSpellStatePacket packet = PlayerDefenseSpellData.getBodyShield(subject)
-                .map(snapshot -> SyncDefenseSpellStatePacket.of(subject.getId(), snapshot))
-                .orElseGet(() -> SyncDefenseSpellStatePacket.empty(subject.getId()));
+        SyncDefenseSpellStatePacket packet = createDefenseSpellStatePacket(subject);
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> recipient), packet);
+    }
+
+    private static SyncDefenseSpellStatePacket createDefenseSpellStatePacket(ServerPlayer subject) {
+        Optional<DefenseSpellSnapshot> bodyShield = PlayerDefenseSpellData.getBodyShield(subject);
+        Optional<DefenseSpellSnapshot> guardian = DefenseSpellUtility.getGuardian(subject)
+                .map(DefenseSpellGuardianEntity::createSnapshot);
+        return new SyncDefenseSpellStatePacket(subject.getId(), bodyShield, guardian);
     }
 
     public static void sendAptitudeScreenRequest(ServerPlayer player) {

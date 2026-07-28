@@ -61,4 +61,12 @@ class ChineseNumberUtilityTest {
                 ChineseNumberUtility.toCompactChinese(BigInteger.valueOf(-12_345L))
         );
     }
+
+    @Test
+    void formatsDefenseSpellDurationsWithoutArabicDigits() {
+        assertEquals("零秒", ChineseNumberUtility.formatDurationTicks(0));
+        assertEquals("一秒", ChineseNumberUtility.formatDurationTicks(1));
+        assertEquals("一分五秒", ChineseNumberUtility.formatDurationTicks(1_300));
+        assertEquals("一时一分一秒", ChineseNumberUtility.formatDurationTicks(73_220));
+    }
 }

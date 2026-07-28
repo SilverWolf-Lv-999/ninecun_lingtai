@@ -74,6 +74,10 @@ public final class DefenseSpellEventHandler {
 
     @SubscribeEvent
     public static void onLivingTick(LivingEvent.LivingTickEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player && !player.level().isClientSide) {
+            tickBodyShield(player);
+            return;
+        }
         if (!(event.getEntity() instanceof Mob mob)
                 || mob.level().isClientSide
                 || mob.tickCount % 5 != 0
@@ -163,6 +167,12 @@ public final class DefenseSpellEventHandler {
         double incomingDamage = event.getAmount();
         double pointCost = incomingDamage * multiplier;
         double consumed = PlayerDefenseSpellData.consumeBodyShield(player, pointCost);
+        if (consumed > FULL_BLOCK_EPSILON) {
+            PlayerDefenseSpellData.recordBodyShieldHit(
+                    player,
+                    attackElement.filter(element -> element == ElementType.CHAOS).isPresent()
+            );
+        }
         double absorbedDamage = consumed / multiplier;
         double remainingDamage = Math.max(0.0D, incomingDamage - absorbedDamage);
         boolean fullyBlocked = remainingDamage <= FULL_BLOCK_EPSILON;
@@ -199,6 +209,7 @@ public final class DefenseSpellEventHandler {
         guardian.consumePoints(event.getAmount() * Math.max(multiplier, 0.0D));
         applyGuardianHitEffect(guardian, event.getSource().getEntity());
         ModNetwork.sendBodyShield(guardian);
+        guardian.getOwnerPlayer().ifPresent(ModNetwork::sendDefenseSpellState);
         event.setCanceled(true);
         if (guardian.getCurrentPoints() <= FULL_BLOCK_EPSILON) {
             guardian.discard();
@@ -222,6 +233,34 @@ public final class DefenseSpellEventHandler {
                     player.getZ() - attacker.getZ()
             );
         }
+    }
+
+    private static void tickBodyShield(ServerPlayer player) {
+        if (PlayerDefenseSpellData.getBodyShield(player).isEmpty()) {
+            return;
+        }
+        if (!PlayerDefenseSpellData.tickBodyShield(player)) {
+            ModNetwork.sendDefenseSpellState(player);
+            return;
+        }
+        if (player.tickCount % 20 != 0) {
+            return;
+        }
+        Optional<DefenseSpellSnapshot> snapshotOptional = PlayerDefenseSpellData.getBodyShield(player);
+        if (snapshotOptional.isPresent() && PlayerDefenseSpellData.canRepairBodyShield(player)) {
+            DefenseSpellSnapshot snapshot = snapshotOptional.get();
+            double repaired = DefenseSpellUtility.repairWithSpiritualEnergy(
+                    player,
+                    snapshot.kind(),
+                    snapshot.elementMask(),
+                    snapshot.current(),
+                    snapshot.maximum()
+            );
+            if (PlayerDefenseSpellData.repairBodyShield(player, repaired) > 0.0D) {
+                ModNetwork.sendCultivationInfo(player);
+            }
+        }
+        ModNetwork.sendDefenseSpellState(player);
     }
 
     private static void applyGuardianHitEffect(DefenseSpellGuardianEntity guardian, Entity attackerEntity) {

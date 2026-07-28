@@ -18,6 +18,8 @@ import com.seraphina.ninecun_lingtai.client.player.ClientTechniqueManager;
 import com.seraphina.ninecun_lingtai.client.screen.ClientAptitudeScreenManager;
 import com.seraphina.ninecun_lingtai.client.utility.BodyShieldRenderUtility;
 import com.seraphina.ninecun_lingtai.client.utility.DefenseBarRenderUtility;
+import com.seraphina.ninecun_lingtai.client.utility.DefenseSpellHudRenderUtility;
+import com.seraphina.ninecun_lingtai.client.utility.SpiritualEnergyHudRenderUtility;
 import com.seraphina.ninecun_lingtai.client.utility.SpiritualEnergyRenderUtility;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.Input;
@@ -50,6 +52,7 @@ public final class ClientForgeEventHandler {
             ClientLightFlightManager.tick();
             ClientShrinkEarthManager.tick();
             ClientBodyShieldManager.tick();
+            ClientDefenseSpellManager.tick();
             ClientSoulRoamingManager.tick();
         }
     }
@@ -125,6 +128,8 @@ public final class ClientForgeEventHandler {
     @SubscribeEvent
     public static void onRenderGuiOverlay(RenderGuiOverlayEvent.Post event) {
         DefenseBarRenderUtility.render(event);
+        DefenseSpellHudRenderUtility.render(event);
+        SpiritualEnergyHudRenderUtility.render(event);
         ClientSoulRoamingManager.renderBodyArrow(event);
     }
 

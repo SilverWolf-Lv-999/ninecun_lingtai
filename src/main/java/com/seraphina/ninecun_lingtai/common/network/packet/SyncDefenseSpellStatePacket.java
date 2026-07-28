@@ -3,49 +3,40 @@ package com.seraphina.ninecun_lingtai.common.network.packet;
 import com.seraphina.ninecun_lingtai.client.player.ClientDefenseSpellManager;
 import com.seraphina.ninecun_lingtai.common.player.DefenseSpellSnapshot;
 import com.seraphina.ninecun_lingtai.common.spell.defense.DefenseSpellKind;
+import com.seraphina.ninecun_lingtai.common.spell.defense.DefenseSpellShape;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
 
+import java.util.Optional;
 import java.util.function.Supplier;
 
 public record SyncDefenseSpellStatePacket(
         int entityId,
-        int kindIndex,
-        double current,
-        double maximum,
-        int elementMask
+        Optional<DefenseSpellSnapshot> bodyShield,
+        Optional<DefenseSpellSnapshot> guardian
 ) {
-    public static SyncDefenseSpellStatePacket empty(int entityId) {
-        return new SyncDefenseSpellStatePacket(entityId, -1, 0.0D, 0.0D, 0);
+    public SyncDefenseSpellStatePacket {
+        bodyShield = bodyShield == null ? Optional.empty() : bodyShield;
+        guardian = guardian == null ? Optional.empty() : guardian;
     }
 
-    public static SyncDefenseSpellStatePacket of(int entityId, DefenseSpellSnapshot snapshot) {
-        return new SyncDefenseSpellStatePacket(
-                entityId,
-                snapshot.kind().ordinal(),
-                snapshot.current(),
-                snapshot.maximum(),
-                snapshot.elementMask()
-        );
+    public static SyncDefenseSpellStatePacket empty(int entityId) {
+        return new SyncDefenseSpellStatePacket(entityId, Optional.empty(), Optional.empty());
     }
 
     public static void encode(SyncDefenseSpellStatePacket packet, FriendlyByteBuf buffer) {
         buffer.writeVarInt(packet.entityId);
-        buffer.writeVarInt(packet.kindIndex + 1);
-        buffer.writeDouble(packet.current);
-        buffer.writeDouble(packet.maximum);
-        buffer.writeInt(packet.elementMask);
+        writeSnapshot(buffer, packet.bodyShield);
+        writeSnapshot(buffer, packet.guardian);
     }
 
     public static SyncDefenseSpellStatePacket decode(FriendlyByteBuf buffer) {
         return new SyncDefenseSpellStatePacket(
                 buffer.readVarInt(),
-                buffer.readVarInt() - 1,
-                buffer.readDouble(),
-                buffer.readDouble(),
-                buffer.readInt()
+                readSnapshot(buffer, DefenseSpellShape.BODY_SHIELD),
+                readSnapshot(buffer, DefenseSpellShape.GUARDIAN)
         );
     }
 
@@ -54,23 +45,57 @@ public record SyncDefenseSpellStatePacket(
             Supplier<NetworkEvent.Context> contextSupplier
     ) {
         DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
-            DefenseSpellKind[] kinds = DefenseSpellKind.values();
-            if (packet.kindIndex < 0
-                    || packet.kindIndex >= kinds.length
-                    || packet.maximum <= 0.0D
-                    || packet.current <= 0.0D) {
-                ClientDefenseSpellManager.accept(packet.entityId, null);
-                return;
-            }
             ClientDefenseSpellManager.accept(
                     packet.entityId,
-                    new DefenseSpellSnapshot(
-                            kinds[packet.kindIndex],
-                            packet.current,
-                            packet.maximum,
-                            packet.elementMask
-                    )
+                    packet.bodyShield.orElse(null),
+                    packet.guardian.orElse(null)
             );
         });
+    }
+
+    private static void writeSnapshot(
+            FriendlyByteBuf buffer,
+            Optional<DefenseSpellSnapshot> snapshotOptional
+    ) {
+        buffer.writeBoolean(snapshotOptional.isPresent());
+        snapshotOptional.ifPresent(snapshot -> {
+            buffer.writeVarInt(snapshot.kind().ordinal());
+            buffer.writeDouble(snapshot.current());
+            buffer.writeDouble(snapshot.maximum());
+            buffer.writeInt(snapshot.elementMask());
+            buffer.writeVarInt(snapshot.remainingTicks());
+        });
+    }
+
+    private static Optional<DefenseSpellSnapshot> readSnapshot(
+            FriendlyByteBuf buffer,
+            DefenseSpellShape expectedShape
+    ) {
+        if (!buffer.readBoolean()) {
+            return Optional.empty();
+        }
+        int kindIndex = buffer.readVarInt();
+        double current = buffer.readDouble();
+        double maximum = buffer.readDouble();
+        int elementMask = buffer.readInt();
+        int remainingTicks = buffer.readVarInt();
+        DefenseSpellKind[] kinds = DefenseSpellKind.values();
+        if (kindIndex < 0
+                || kindIndex >= kinds.length
+                || kinds[kindIndex].getShape() != expectedShape
+                || !Double.isFinite(current)
+                || !Double.isFinite(maximum)
+                || current <= 0.0D
+                || maximum <= 0.0D
+                || remainingTicks <= 0) {
+            return Optional.empty();
+        }
+        return Optional.of(new DefenseSpellSnapshot(
+                kinds[kindIndex],
+                current,
+                maximum,
+                elementMask,
+                remainingTicks
+        ));
     }
 }

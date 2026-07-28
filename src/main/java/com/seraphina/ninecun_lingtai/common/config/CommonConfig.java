@@ -36,6 +36,9 @@ public final class CommonConfig {
     public static final ForgeConfigSpec.DoubleValue CHAOS_BODY_SHIELD_POINTS_PER_STRENGTH;
     public static final ForgeConfigSpec.DoubleValue COMPOSITE_BODY_SHIELD_POINTS_PER_STRENGTH;
     public static final ForgeConfigSpec.DoubleValue FOUR_PHASE_GUARDIAN_POINTS_PER_STRENGTH;
+    public static final ForgeConfigSpec.IntValue DEFENSE_SPELL_DURATION_TICKS;
+    public static final ForgeConfigSpec.DoubleValue DEFENSE_SPELL_REPAIR_PERCENT_PER_SECOND;
+    public static final ForgeConfigSpec.DoubleValue DEFENSE_SPELL_REPAIR_ENERGY_PER_POINT;
     public static final ForgeConfigSpec.DoubleValue REALM_BONUS_BASE_DAMAGE;
     public static final ForgeConfigSpec.DoubleValue REALM_BONUS_LAYER_GROWTH;
     public static final ForgeConfigSpec.DoubleValue MEDITATION_BASE_ABSORPTION_PER_SECOND;
@@ -161,6 +164,25 @@ public final class CommonConfig {
         FOUR_PHASE_GUARDIAN_POINTS_PER_STRENGTH = defineDefenseSpellPoints(
                 "fourPhaseGuardianPointsPerStrength", 14.0D
         );
+        DEFENSE_SPELL_DURATION_TICKS = BUILDER
+                .comment("Base defense spell duration in ticks before mastery scaling")
+                .defineInRange("durationTicks", 6000, 20, 72000);
+        DEFENSE_SPELL_REPAIR_PERCENT_PER_SECOND = BUILDER
+                .comment("Percentage of maximum defense points repaired per second while spiritual energy is available")
+                .defineInRange(
+                        "repairPercentPerSecond",
+                        2.0D,
+                        MINIMUM_MULTIPLIER,
+                        MAXIMUM_MULTIPLIER
+                );
+        DEFENSE_SPELL_REPAIR_ENERGY_PER_POINT = BUILDER
+                .comment("Spiritual energy consumed for each defense point repaired")
+                .defineInRange(
+                        "repairEnergyPerPoint",
+                        0.1D,
+                        MINIMUM_MULTIPLIER,
+                        MAXIMUM_BASE_ABSORPTION_PER_SECOND
+                );
         BUILDER.pop();
 
         BUILDER.push("realmBonusDamage");

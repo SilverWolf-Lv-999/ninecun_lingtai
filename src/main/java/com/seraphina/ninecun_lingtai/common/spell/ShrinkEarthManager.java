@@ -177,7 +177,14 @@ public final class ShrinkEarthManager {
             return true;
         }
         double energyCost = CommonConfig.SHRINK_EARTH_ENERGY_COST_PER_SECOND.get();
-        return energyCost <= 0.0D || PlayerSpiritualEnergyData.consumeEnergyAny(player, energyCost) != null;
+        if (energyCost <= 0.0D) {
+            return true;
+        }
+        if (PlayerSpiritualEnergyData.consumeEnergyAny(player, energyCost) == null) {
+            return false;
+        }
+        ModNetwork.sendCultivationInfo(player);
+        return true;
     }
 
     private static void moveThroughCompressedWorld(ServerPlayer player, int compressionScale) {

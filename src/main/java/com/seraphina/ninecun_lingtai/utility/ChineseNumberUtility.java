@@ -103,6 +103,27 @@ public final class ChineseNumberUtility {
         return toCompactChinese(BigDecimal.valueOf(value), maximumFractionDigits);
     }
 
+    public static String formatDurationTicks(long ticks) {
+        long totalSeconds = Math.max(0L, (ticks + 19L) / 20L);
+        if (totalSeconds == 0L) {
+            return "零秒";
+        }
+        long hours = totalSeconds / 3600L;
+        long minutes = totalSeconds % 3600L / 60L;
+        long seconds = totalSeconds % 60L;
+        StringBuilder formattedDuration = new StringBuilder();
+        if (hours > 0L) {
+            formattedDuration.append(toChineseInteger(hours)).append("时");
+        }
+        if (minutes > 0L) {
+            formattedDuration.append(toChineseInteger(minutes)).append("分");
+        }
+        if (seconds > 0L) {
+            formattedDuration.append(toChineseInteger(seconds)).append("秒");
+        }
+        return formattedDuration.toString();
+    }
+
     public static String toChineseDecimal(double value, int maximumFractionDigits) {
         if (!Double.isFinite(value)) {
             throw new IllegalArgumentException("Chinese decimal value must be finite");

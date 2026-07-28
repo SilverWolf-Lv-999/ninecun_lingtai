@@ -1,9 +1,12 @@
 package com.seraphina.ninecun_lingtai.common.entity.spell;
 
 import com.seraphina.ninecun_lingtai.api.element.ElementType;
+import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
+import com.seraphina.ninecun_lingtai.common.player.DefenseSpellSnapshot;
 import com.seraphina.ninecun_lingtai.common.player.PlayerDefenseSpellData;
 import com.seraphina.ninecun_lingtai.common.spell.defense.DefenseSpellKind;
 import com.seraphina.ninecun_lingtai.common.spell.defense.DefenseSpellShape;
+import com.seraphina.ninecun_lingtai.utility.DefenseSpellUtility;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
@@ -31,6 +34,7 @@ public final class DefenseSpellGuardianEntity extends PathfinderMob {
     private static final String CURRENT_POINTS_KEY = "CurrentPoints";
     private static final String MAXIMUM_POINTS_KEY = "MaximumPoints";
     private static final String ELEMENT_MASK_KEY = "ElementMask";
+    private static final String REMAINING_TICKS_KEY = "RemainingTicks";
     private static final String LAST_HURT_TICK_KEY = "LastHurtTick";
     private static final String RECOVERY_DISABLED_UNTIL_KEY = "RecoveryDisabledUntil";
 
@@ -54,6 +58,10 @@ public final class DefenseSpellGuardianEntity extends PathfinderMob {
             DefenseSpellGuardianEntity.class,
             EntityDataSerializers.INT
     );
+    private static final EntityDataAccessor<Integer> REMAINING_TICKS = SynchedEntityData.defineId(
+            DefenseSpellGuardianEntity.class,
+            EntityDataSerializers.INT
+    );
 
     private int lastHurtTick;
     private int recoveryDisabledUntil;
@@ -72,7 +80,13 @@ public final class DefenseSpellGuardianEntity extends PathfinderMob {
                 .add(Attributes.KNOCKBACK_RESISTANCE, 1.0D);
     }
 
-    public void initialize(ServerPlayer owner, DefenseSpellKind kind, double maximumPoints, int elementMask) {
+    public void initialize(
+            ServerPlayer owner,
+            DefenseSpellKind kind,
+            double maximumPoints,
+            int elementMask,
+            int durationTicks
+    ) {
         if (kind.getShape() != DefenseSpellShape.GUARDIAN) {
             throw new IllegalArgumentException("Defense spell guardian requires a guardian kind");
         }
@@ -81,6 +95,7 @@ public final class DefenseSpellGuardianEntity extends PathfinderMob {
         this.entityData.set(MAXIMUM_POINTS, (float) maximumPoints);
         this.entityData.set(CURRENT_POINTS, (float) maximumPoints);
         this.entityData.set(ELEMENT_MASK, elementMask);
+        this.entityData.set(REMAINING_TICKS, durationTicks);
         this.lastHurtTick = this.tickCount;
         updateMovementMode(kind);
         this.setCustomName(Component.literal(kind.getChineseName()));
@@ -119,6 +134,20 @@ public final class DefenseSpellGuardianEntity extends PathfinderMob {
         return this.entityData.get(ELEMENT_MASK);
     }
 
+    public int getRemainingTicks() {
+        return this.entityData.get(REMAINING_TICKS);
+    }
+
+    public DefenseSpellSnapshot createSnapshot() {
+        return new DefenseSpellSnapshot(
+                getSpellKind(),
+                getCurrentPoints(),
+                getMaximumPoints(),
+                getElementMask(),
+                getRemainingTicks()
+        );
+    }
+
     public double consumePoints(double amount) {
         if (amount <= 0.0D) {
             return 0.0D;
@@ -143,6 +172,7 @@ public final class DefenseSpellGuardianEntity extends PathfinderMob {
         this.entityData.define(CURRENT_POINTS, 0.0F);
         this.entityData.define(MAXIMUM_POINTS, 1.0F);
         this.entityData.define(ELEMENT_MASK, 0);
+        this.entityData.define(REMAINING_TICKS, 1);
     }
 
     @Override
@@ -159,8 +189,17 @@ public final class DefenseSpellGuardianEntity extends PathfinderMob {
             return;
         }
         ServerPlayer owner = ownerOptional.get();
+        int remainingTicks = getRemainingTicks() - 1;
+        if (remainingTicks <= 0) {
+            this.discard();
+            return;
+        }
+        this.entityData.set(REMAINING_TICKS, remainingTicks);
         followOwner(owner, kind);
-        recoverWoodGuardian(kind);
+        if (this.tickCount % 20 == 0) {
+            repairWithSpiritualEnergy(owner, kind);
+            ModNetwork.sendDefenseSpellState(owner);
+        }
     }
 
     @Override
@@ -198,7 +237,10 @@ public final class DefenseSpellGuardianEntity extends PathfinderMob {
     @Override
     public void remove(RemovalReason reason) {
         if (!this.level().isClientSide) {
-            getOwnerPlayer().ifPresent(owner -> PlayerDefenseSpellData.clearGuardian(owner, this.getUUID()));
+            getOwnerPlayer().ifPresent(owner -> {
+                PlayerDefenseSpellData.clearGuardian(owner, this.getUUID());
+                ModNetwork.sendDefenseSpellState(owner);
+            });
         }
         super.remove(reason);
     }
@@ -211,6 +253,7 @@ public final class DefenseSpellGuardianEntity extends PathfinderMob {
         compoundTag.putDouble(CURRENT_POINTS_KEY, getCurrentPoints());
         compoundTag.putDouble(MAXIMUM_POINTS_KEY, getMaximumPoints());
         compoundTag.putInt(ELEMENT_MASK_KEY, getElementMask());
+        compoundTag.putInt(REMAINING_TICKS_KEY, getRemainingTicks());
         compoundTag.putInt(LAST_HURT_TICK_KEY, this.lastHurtTick);
         compoundTag.putInt(RECOVERY_DISABLED_UNTIL_KEY, this.recoveryDisabledUntil);
     }
@@ -232,6 +275,7 @@ public final class DefenseSpellGuardianEntity extends PathfinderMob {
                 maximum
         ));
         this.entityData.set(ELEMENT_MASK, compoundTag.getInt(ELEMENT_MASK_KEY));
+        this.entityData.set(REMAINING_TICKS, Math.max(1, compoundTag.getInt(REMAINING_TICKS_KEY)));
         this.lastHurtTick = compoundTag.getInt(LAST_HURT_TICK_KEY);
         this.recoveryDisabledUntil = compoundTag.getInt(RECOVERY_DISABLED_UNTIL_KEY);
         this.setPersistenceRequired();
@@ -278,14 +322,23 @@ public final class DefenseSpellGuardianEntity extends PathfinderMob {
         }
     }
 
-    private void recoverWoodGuardian(DefenseSpellKind kind) {
-        if (kind != DefenseSpellKind.WOOD_GUARDIAN
-                || this.tickCount < this.recoveryDisabledUntil
-                || this.tickCount - this.lastHurtTick < 100
-                || this.tickCount % 20 != 0
+    private void repairWithSpiritualEnergy(ServerPlayer owner, DefenseSpellKind kind) {
+        if (this.tickCount < this.recoveryDisabledUntil
+                || this.tickCount - this.lastHurtTick < 20
                 || getCurrentPoints() >= getMaximumPoints()) {
             return;
         }
-        setCurrentPoints(Math.min(getMaximumPoints(), getCurrentPoints() + getMaximumPoints() * 0.05D));
+        double repaired = DefenseSpellUtility.repairWithSpiritualEnergy(
+                owner,
+                kind,
+                getElementMask(),
+                getCurrentPoints(),
+                getMaximumPoints()
+        );
+        if (repaired <= 0.0D) {
+            return;
+        }
+        setCurrentPoints(Math.min(getMaximumPoints(), getCurrentPoints() + repaired));
+        ModNetwork.sendCultivationInfo(owner);
     }
 }

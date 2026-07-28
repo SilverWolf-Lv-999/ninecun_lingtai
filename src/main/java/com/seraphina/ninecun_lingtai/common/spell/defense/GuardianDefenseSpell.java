@@ -2,6 +2,7 @@ package com.seraphina.ninecun_lingtai.common.spell.defense;
 
 import com.seraphina.ninecun_lingtai.api.spell.Spell;
 import com.seraphina.ninecun_lingtai.api.spell.SpellCastContext;
+import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import com.seraphina.ninecun_lingtai.utility.DefenseSpellUtility;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -22,6 +23,10 @@ public final class GuardianDefenseSpell extends Spell {
             player.displayClientMessage(Component.literal("当前灵根无法维持《" + this.kind.getChineseName() + "》"), true);
             return false;
         }
-        return DefenseSpellUtility.summonGuardian(player, this.kind, context);
+        boolean summoned = DefenseSpellUtility.summonGuardian(player, this.kind, context);
+        if (summoned) {
+            ModNetwork.sendDefenseSpellState(player);
+        }
+        return summoned;
     }
 }

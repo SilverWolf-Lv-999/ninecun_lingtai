@@ -129,11 +129,14 @@ public final class LightFlightManager {
         }
         if (!player.isCreative() && player.tickCount % ENERGY_CONSUMPTION_INTERVAL_TICKS == 0) {
             double energyCost = CommonConfig.LIGHT_FLIGHT_ENERGY_COST_PER_SECOND.get();
-            if (energyCost > 0.0D && PlayerSpiritualEnergyData.consumeEnergyAny(player, energyCost) == null) {
-                LightFlightStyle style = PlayerLightFlightData.getStyle(player);
-                stop(player);
-                sendActionBar(player, getEnergyStopMessage(style));
-                return;
+            if (energyCost > 0.0D) {
+                if (PlayerSpiritualEnergyData.consumeEnergyAny(player, energyCost) == null) {
+                    LightFlightStyle style = PlayerLightFlightData.getStyle(player);
+                    stop(player);
+                    sendActionBar(player, getEnergyStopMessage(style));
+                    return;
+                }
+                ModNetwork.sendCultivationInfo(player);
             }
         }
         if (applyFlightAbilities(player) || boostExpired || styleChanged) {

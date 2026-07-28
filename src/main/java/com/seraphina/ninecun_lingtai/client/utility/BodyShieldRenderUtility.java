@@ -84,6 +84,9 @@ public final class BodyShieldRenderUtility {
                 continue;
             }
             DefenseSpellSnapshot snapshot = entry.getValue();
+            if (DefenseSpellRenderUtility.usesPlayerModelLayer(snapshot.kind())) {
+                continue;
+            }
             renderShield(
                     poseStack.last().pose(),
                     livingEntity,

@@ -102,10 +102,18 @@ public final class PlayerSpiritualEnergyData {
      * 返回实际扣取的分布（用于施法失败时退还）；灵力总量不足时不扣取任何灵力并返回 null。
      */
     public static Map<ElementType, Double> consumeEnergyAny(Player player, double amount) {
+        return consumeEnergyAny(player, getAllEnergy(player).keySet(), amount);
+    }
+
+    public static Map<ElementType, Double> consumeEnergyAny(
+            Player player,
+            Set<ElementType> eligibleElements,
+            double amount
+    ) {
         if (!Double.isFinite(amount) || amount <= 0.0D) {
             return null;
         }
-        Map<ElementType, Double> currentEnergy = getAllEnergy(player);
+        Map<ElementType, Double> currentEnergy = getEligibleEnergy(player, eligibleElements);
         double totalEnergy = currentEnergy.values().stream().mapToDouble(Double::doubleValue).sum();
         if (totalEnergy < amount) {
             return null;
@@ -133,6 +141,29 @@ public final class PlayerSpiritualEnergyData {
             setEnergy(player, entry.getKey(), currentEnergy.get(entry.getKey()) - entry.getValue());
         }
         return Collections.unmodifiableMap(consumed);
+    }
+
+    public static double consumeEnergyUpTo(
+            Player player,
+            Set<ElementType> eligibleElements,
+            double maximumAmount
+    ) {
+        if (!Double.isFinite(maximumAmount) || maximumAmount <= 0.0D) {
+            return 0.0D;
+        }
+        Map<ElementType, Double> currentEnergy = getEligibleEnergy(player, eligibleElements);
+        double remaining = maximumAmount;
+        double consumed = 0.0D;
+        for (Map.Entry<ElementType, Double> entry : currentEnergy.entrySet()) {
+            if (remaining <= 1.0E-9D) {
+                break;
+            }
+            double drained = Math.min(entry.getValue(), remaining);
+            setEnergy(player, entry.getKey(), entry.getValue() - drained);
+            remaining -= drained;
+            consumed += drained;
+        }
+        return consumed;
     }
 
     public static boolean consumeEnergy(Player player, Set<ElementType> elements, double amount) {
@@ -168,5 +199,23 @@ public final class PlayerSpiritualEnergyData {
                     sourceData.getCompound(SPIRITUAL_ENERGY_KEY).copy()
             );
         }
+    }
+
+    private static Map<ElementType, Double> getEligibleEnergy(
+            Player player,
+            Set<ElementType> eligibleElements
+    ) {
+        EnumMap<ElementType, Double> energyValues = new EnumMap<>(ElementType.class);
+        if (eligibleElements == null || eligibleElements.isEmpty()) {
+            energyValues.putAll(getAllEnergy(player));
+            return energyValues;
+        }
+        for (ElementType element : eligibleElements) {
+            double energy = getEnergy(player, element);
+            if (energy > 0.0D) {
+                energyValues.put(element, energy);
+            }
+        }
+        return energyValues;
     }
 }
