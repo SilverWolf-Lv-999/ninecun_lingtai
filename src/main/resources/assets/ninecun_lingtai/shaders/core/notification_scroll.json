@@ -1,0 +1,59 @@
+{
+  "blend": {
+    "func": "add",
+    "srcrgb": "srcalpha",
+    "dstrgb": "1-srcalpha"
+  },
+  "vertex": "ninecun_lingtai:notification_scroll",
+  "fragment": "ninecun_lingtai:notification_scroll",
+  "attributes": [
+    "Position",
+    "Color",
+    "UV0"
+  ],
+  "samplers": [],
+  "uniforms": [
+    {
+      "name": "ModelViewMat",
+      "type": "matrix4x4",
+      "count": 16,
+      "values": [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
+    },
+    {
+      "name": "ProjMat",
+      "type": "matrix4x4",
+      "count": 16,
+      "values": [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
+    },
+    {
+      "name": "PanelSize",
+      "type": "float",
+      "count": 2,
+      "values": [256.0, 112.0]
+    },
+    {
+      "name": "SlatCount",
+      "type": "float",
+      "count": 1,
+      "values": [8.0]
+    },
+    {
+      "name": "ViewAngleDegrees",
+      "type": "float",
+      "count": 1,
+      "values": [80.0]
+    },
+    {
+      "name": "UnrollProgress",
+      "type": "float",
+      "count": 1,
+      "values": [1.0]
+    },
+    {
+      "name": "Opacity",
+      "type": "float",
+      "count": 1,
+      "values": [1.0]
+    }
+  ]
+}

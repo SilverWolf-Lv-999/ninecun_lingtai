@@ -31,6 +31,7 @@ import com.seraphina.ninecun_lingtai.common.network.packet.SetLightFlightPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SetMeditationStatePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SubmitAptitudePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SmoothShrinkEarthTeleportPacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.ShowNotificationPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncCultivationInfoPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncDefenseResourcePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncDefenseSpellStatePacket;
@@ -79,7 +80,7 @@ import java.util.Set;
 import java.util.UUID;
 
 public final class ModNetwork {
-    private static final String PROTOCOL_VERSION = "26";
+    private static final String PROTOCOL_VERSION = "27";
     private static final SimpleChannel CHANNEL = NetworkRegistry.ChannelBuilder
             .named(ResourceLocation.fromNamespaceAndPath(ModMain.MOD_ID, "main"))
             .networkProtocolVersion(() -> PROTOCOL_VERSION)
@@ -227,6 +228,15 @@ public final class ModNetwork {
                 .encoder(CultivationFeedbackPacket::encode)
                 .decoder(CultivationFeedbackPacket::decode)
                 .consumerMainThread(CultivationFeedbackPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        ShowNotificationPacket.class,
+                        nextPacketId++,
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(ShowNotificationPacket::encode)
+                .decoder(ShowNotificationPacket::decode)
+                .consumerMainThread(ShowNotificationPacket::handle)
                 .add();
         CHANNEL.messageBuilder(
                         SelectSpellPacket.class,
@@ -633,6 +643,18 @@ public final class ModNetwork {
         CHANNEL.send(
                 PacketDistributor.PLAYER.with(() -> player),
                 new CultivationFeedbackPacket(success, message)
+        );
+    }
+
+    public static void sendNotification(
+            ServerPlayer player,
+            Component title,
+            Component content,
+            int durationTicks
+    ) {
+        CHANNEL.send(
+                PacketDistributor.PLAYER.with(() -> player),
+                new ShowNotificationPacket(title, content, durationTicks)
         );
     }
 

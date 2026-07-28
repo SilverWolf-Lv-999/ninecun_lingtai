@@ -25,7 +25,8 @@ public final class DebugCommand {
                 .then(MeditationDebugCommand.create())
                 .then(LifespanDebugCommand.create())
                 .then(CreatureDebugCommand.create())
-                .then(TechniqueDebugCommand.create());
+                .then(TechniqueDebugCommand.create())
+                .then(NotificationDebugCommand.create());
     }
 
     private static int showHelp(CommandSourceStack commandSource) {
@@ -53,6 +54,9 @@ public final class DebugCommand {
         ), false);
         commandSource.sendSuccess(() -> Component.literal(
                 "§etechnique§r：查询、列出、授予、遗忘功法，或调整理解度、境界、熟练度"
+        ), false);
+        commandSource.sendSuccess(() -> Component.literal(
+                "§enotification§r：向指定玩家发送竹卷通知"
         ), false);
         commandSource.sendSuccess(() -> Component.literal(
                 "玩家参数支持 @s、玩家名、@a；生物参数支持 @e 选择器；元素与境界支持英文 ID 或中文名。"

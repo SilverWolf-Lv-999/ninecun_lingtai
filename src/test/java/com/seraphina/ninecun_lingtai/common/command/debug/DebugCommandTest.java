@@ -20,6 +20,7 @@ class DebugCommandTest {
         assertNotNull(debugCommand.getChild("lifespan"));
         assertNotNull(debugCommand.getChild("creature"));
         assertNotNull(debugCommand.getChild("technique"));
+        assertNotNull(debugCommand.getChild("notification"));
     }
 
     @Test
@@ -48,5 +49,6 @@ class DebugCommandTest {
         assertNotNull(debugCommand.getChild("technique").getChild("mastery"));
         assertNotNull(debugCommand.getChild("technique").getChild("proficiency"));
         assertNotNull(debugCommand.getChild("technique").getChild("forget"));
+        assertNotNull(debugCommand.getChild("notification").getChild("targets"));
     }
 }

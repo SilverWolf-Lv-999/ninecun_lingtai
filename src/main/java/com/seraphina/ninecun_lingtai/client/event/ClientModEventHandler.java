@@ -14,6 +14,7 @@ import com.seraphina.ninecun_lingtai.client.render.AptitudeFormationShader;
 import com.seraphina.ninecun_lingtai.client.render.DefenseBarShader;
 import com.seraphina.ninecun_lingtai.client.render.DefenseSpellGuardianRenderer;
 import com.seraphina.ninecun_lingtai.client.render.ElementFlowShader;
+import com.seraphina.ninecun_lingtai.client.render.NotificationScrollShader;
 import com.seraphina.ninecun_lingtai.client.render.SoulConstellationShader;
 import com.seraphina.ninecun_lingtai.client.render.SoulRenderer;
 import com.seraphina.ninecun_lingtai.client.render.SpiritualEnergyShader;
@@ -67,6 +68,10 @@ public final class ClientModEventHandler {
     private static final ResourceLocation DEFENSE_BAR_SHADER = ResourceLocation.fromNamespaceAndPath(
             ModMain.MOD_ID,
             "defense_bar"
+    );
+    private static final ResourceLocation NOTIFICATION_SCROLL_SHADER = ResourceLocation.fromNamespaceAndPath(
+            ModMain.MOD_ID,
+            "notification_scroll"
     );
 
     private ClientModEventHandler() {
@@ -179,6 +184,14 @@ public final class ClientModEventHandler {
                         DefaultVertexFormat.POSITION_COLOR_TEX
                 ),
                 DefenseBarShader::setDefenseBarShader
+        );
+        event.registerShader(
+                new ShaderInstance(
+                        event.getResourceProvider(),
+                        NOTIFICATION_SCROLL_SHADER,
+                        DefaultVertexFormat.POSITION_COLOR_TEX
+                ),
+                NotificationScrollShader::setNotificationScrollShader
         );
     }
 }

@@ -2,6 +2,7 @@ package com.seraphina.ninecun_lingtai.client.event;
 
 import com.seraphina.ninecun_lingtai.ModMain;
 import com.seraphina.ninecun_lingtai.client.player.ClientBodyShieldManager;
+import com.seraphina.ninecun_lingtai.client.notification.ClientNotificationManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientCultivationFeedbackManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientCultivationInfoManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientDefenseResourceManager;
@@ -19,6 +20,7 @@ import com.seraphina.ninecun_lingtai.client.screen.ClientAptitudeScreenManager;
 import com.seraphina.ninecun_lingtai.client.utility.BodyShieldRenderUtility;
 import com.seraphina.ninecun_lingtai.client.utility.DefenseBarRenderUtility;
 import com.seraphina.ninecun_lingtai.client.utility.DefenseSpellHudRenderUtility;
+import com.seraphina.ninecun_lingtai.client.utility.NotificationRenderUtility;
 import com.seraphina.ninecun_lingtai.client.utility.SpiritualEnergyHudRenderUtility;
 import com.seraphina.ninecun_lingtai.client.utility.SpiritualEnergyRenderUtility;
 import net.minecraft.client.Minecraft;
@@ -54,6 +56,7 @@ public final class ClientForgeEventHandler {
             ClientBodyShieldManager.tick();
             ClientDefenseSpellManager.tick();
             ClientSoulRoamingManager.tick();
+            ClientNotificationManager.tick();
         }
     }
 
@@ -131,6 +134,7 @@ public final class ClientForgeEventHandler {
         DefenseSpellHudRenderUtility.render(event);
         SpiritualEnergyHudRenderUtility.render(event);
         ClientSoulRoamingManager.renderBodyArrow(event);
+        NotificationRenderUtility.render(event);
     }
 
     @SubscribeEvent
@@ -169,5 +173,6 @@ public final class ClientForgeEventHandler {
         ClientPlayerValueControlManager.reset();
         ClientSoulRoamingManager.reset();
         ClientPossessionManager.reset();
+        ClientNotificationManager.reset();
     }
 }
