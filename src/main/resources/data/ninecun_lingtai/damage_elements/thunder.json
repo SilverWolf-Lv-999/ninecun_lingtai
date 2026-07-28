@@ -1,7 +1,8 @@
 {
   "damage_types": [
     "minecraft:lightning_bolt",
-    "minecraft:sonic_boom"
+    "minecraft:sonic_boom",
+    "ninecun_lingtai:realm_execution"
   ],
   "element": "thunder",
   "strength": 1.75

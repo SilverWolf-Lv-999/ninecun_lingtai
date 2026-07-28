@@ -48,6 +48,20 @@ public final class CommonConfig {
     public static final ForgeConfigSpec.DoubleValue MEDITATION_GENERATED_BY_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue MEDITATION_OVERCOMES_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue MEDITATION_OVERCOME_BY_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue TRIBULATION_ROOT_QUALITY_WEIGHT;
+    public static final ForgeConfigSpec.DoubleValue TRIBULATION_SOUL_QUALITY_WEIGHT;
+    public static final ForgeConfigSpec.DoubleValue TRIBULATION_FOUR_NINE_THRESHOLD;
+    public static final ForgeConfigSpec.DoubleValue TRIBULATION_BASE_RADIUS;
+    public static final ForgeConfigSpec.DoubleValue TRIBULATION_APTITUDE_RADIUS_BONUS;
+    public static final ForgeConfigSpec.DoubleValue TRIBULATION_BASE_DAMAGE;
+    public static final ForgeConfigSpec.DoubleValue TRIBULATION_STRIKE_GROWTH;
+    public static final ForgeConfigSpec.DoubleValue TRIBULATION_MINIMUM_DAMAGE_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue TRIBULATION_APTITUDE_DAMAGE_BONUS;
+    public static final ForgeConfigSpec.IntValue TRIBULATION_PREPARATION_TICKS;
+    public static final ForgeConfigSpec.IntValue TRIBULATION_STRIKE_INTERVAL_TICKS;
+    public static final ForgeConfigSpec.IntValue TRIBULATION_LIGHTNING_LIFETIME_TICKS;
+    public static final ForgeConfigSpec.IntValue TRIBULATION_PROMOTION_DELAY_TICKS;
+    public static final ForgeConfigSpec.IntValue TRIBULATION_DISSIPATION_TICKS;
     public static final ForgeConfigSpec.DoubleValue LIGHT_FLIGHT_SPEED_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue LIGHT_FLIGHT_BOOST_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue LIGHT_FLIGHT_ENERGY_COST_PER_SECOND;
@@ -235,6 +249,51 @@ public final class CommonConfig {
         MEDITATION_OVERCOME_BY_MULTIPLIER = BUILDER
                 .comment("Absorption multiplier when another element in a multi-element root overcomes the incoming element")
                 .defineInRange("overcomeByMultiplier", 0.65D, MINIMUM_MULTIPLIER, MAXIMUM_MULTIPLIER);
+        BUILDER.pop();
+
+        BUILDER.push("tribulation");
+        TRIBULATION_ROOT_QUALITY_WEIGHT = BUILDER
+                .comment("Weight of spiritual-root quality when selecting a heavenly tribulation")
+                .defineInRange("rootQualityWeight", 0.55D, 0.0D, 1.0D);
+        TRIBULATION_SOUL_QUALITY_WEIGHT = BUILDER
+                .comment("Weight of soul-strength quality when selecting a heavenly tribulation")
+                .defineInRange("soulQualityWeight", 0.45D, 0.0D, 1.0D);
+        TRIBULATION_FOUR_NINE_THRESHOLD = BUILDER
+                .comment("Minimum combined aptitude quality required for the four-nine tribulation")
+                .defineInRange("fourNineThreshold", 0.70D, 0.0D, 1.0D);
+        TRIBULATION_BASE_RADIUS = BUILDER
+                .comment("Base radius of a tribulation in blocks")
+                .defineInRange("baseRadius", 30.0D, 1.0D, 256.0D);
+        TRIBULATION_APTITUDE_RADIUS_BONUS = BUILDER
+                .comment("Additional tribulation radius granted by perfect aptitude")
+                .defineInRange("aptitudeRadiusBonus", 30.0D, 0.0D, 256.0D);
+        TRIBULATION_BASE_DAMAGE = BUILDER
+                .comment("Base damage of the first tribulation lightning strike")
+                .defineInRange("baseDamage", 6.0D, 0.1D, MAXIMUM_BASE_ABSORPTION_PER_SECOND);
+        TRIBULATION_STRIKE_GROWTH = BUILDER
+                .comment("Damage growth applied to every subsequent lightning strike")
+                .defineInRange("strikeGrowth", 0.08D, 0.0D, MAXIMUM_MULTIPLIER);
+        TRIBULATION_MINIMUM_DAMAGE_MULTIPLIER = BUILDER
+                .comment("Damage multiplier for the weakest aptitude")
+                .defineInRange("minimumDamageMultiplier", 0.8D, 0.0D, MAXIMUM_MULTIPLIER);
+        TRIBULATION_APTITUDE_DAMAGE_BONUS = BUILDER
+                .comment("Additional damage multiplier granted by perfect aptitude")
+                .defineInRange("aptitudeDamageBonus", 0.7D, 0.0D, MAXIMUM_MULTIPLIER);
+        TRIBULATION_PREPARATION_TICKS = BUILDER
+                .comment("Time spent gathering the tribulation clouds")
+                .defineInRange("preparationTicks", 200, 1, 72000);
+        TRIBULATION_STRIKE_INTERVAL_TICKS = BUILDER
+                .comment("Time between successive tribulation lightning strikes")
+                .defineInRange("strikeIntervalTicks", 30, 1, 72000);
+        TRIBULATION_LIGHTNING_LIFETIME_TICKS = BUILDER
+                .comment("How long a custom tribulation lightning strike remains visible and damaging")
+                .defineInRange("lightningLifetimeTicks", 60, 1, 72000);
+        TRIBULATION_PROMOTION_DELAY_TICKS = BUILDER
+                .comment("Delay after surviving the final strike before promotion")
+                .defineInRange("promotionDelayTicks", 100, 1, 72000);
+        TRIBULATION_DISSIPATION_TICKS = BUILDER
+                .comment("Time for the tribulation clouds to dissipate after promotion")
+                .defineInRange("dissipationTicks", 100, 1, 72000);
         BUILDER.pop();
 
         BUILDER.push("lightFlight");

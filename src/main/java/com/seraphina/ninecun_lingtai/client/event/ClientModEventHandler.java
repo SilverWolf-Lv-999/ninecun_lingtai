@@ -19,6 +19,8 @@ import com.seraphina.ninecun_lingtai.client.render.SoulConstellationShader;
 import com.seraphina.ninecun_lingtai.client.render.SoulRenderer;
 import com.seraphina.ninecun_lingtai.client.render.SpiritualEnergyShader;
 import com.seraphina.ninecun_lingtai.client.render.TechniqueCloudShader;
+import com.seraphina.ninecun_lingtai.client.render.ThunderTribulationRenderer;
+import com.seraphina.ninecun_lingtai.client.render.TribulationCloudShader;
 import com.seraphina.ninecun_lingtai.client.render.layer.BodyDefenseSpellLayer;
 import com.seraphina.ninecun_lingtai.common.registry.ModEntityTypes;
 import net.minecraft.client.model.geom.ModelLayerLocation;
@@ -73,6 +75,10 @@ public final class ClientModEventHandler {
             ModMain.MOD_ID,
             "notification_scroll"
     );
+    private static final ResourceLocation TRIBULATION_CLOUD_SHADER = ResourceLocation.fromNamespaceAndPath(
+            ModMain.MOD_ID,
+            "tribulation_cloud"
+    );
 
     private ClientModEventHandler() {
     }
@@ -102,6 +108,10 @@ public final class ClientModEventHandler {
         event.registerEntityRenderer(
                 ModEntityTypes.DEFENSE_SPELL_GUARDIAN.get(),
                 DefenseSpellGuardianRenderer::new
+        );
+        event.registerEntityRenderer(
+                ModEntityTypes.THUNDER_TRIBULATION.get(),
+                ThunderTribulationRenderer::new
         );
     }
 
@@ -192,6 +202,14 @@ public final class ClientModEventHandler {
                         DefaultVertexFormat.POSITION_COLOR_TEX
                 ),
                 NotificationScrollShader::setNotificationScrollShader
+        );
+        event.registerShader(
+                new ShaderInstance(
+                        event.getResourceProvider(),
+                        TRIBULATION_CLOUD_SHADER,
+                        DefaultVertexFormat.POSITION_COLOR_TEX
+                ),
+                TribulationCloudShader::setTribulationCloudShader
         );
     }
 }

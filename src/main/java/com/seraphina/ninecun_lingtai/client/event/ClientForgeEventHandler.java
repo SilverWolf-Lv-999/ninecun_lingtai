@@ -12,6 +12,7 @@ import com.seraphina.ninecun_lingtai.client.player.ClientMeditationManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientPlayerValueControlManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientPossessionManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientShrinkEarthManager;
+import com.seraphina.ninecun_lingtai.client.tribulation.ClientTribulationManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientSoulRoamingManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientSpellManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientSwordFlightManager;
@@ -20,6 +21,7 @@ import com.seraphina.ninecun_lingtai.client.screen.ClientAptitudeScreenManager;
 import com.seraphina.ninecun_lingtai.client.utility.BodyShieldRenderUtility;
 import com.seraphina.ninecun_lingtai.client.utility.DefenseBarRenderUtility;
 import com.seraphina.ninecun_lingtai.client.utility.DefenseSpellHudRenderUtility;
+import com.seraphina.ninecun_lingtai.client.utility.TribulationCloudRenderUtility;
 import com.seraphina.ninecun_lingtai.client.utility.NotificationRenderUtility;
 import com.seraphina.ninecun_lingtai.client.utility.SpiritualEnergyHudRenderUtility;
 import com.seraphina.ninecun_lingtai.client.utility.SpiritualEnergyRenderUtility;
@@ -57,6 +59,7 @@ public final class ClientForgeEventHandler {
             ClientDefenseSpellManager.tick();
             ClientSoulRoamingManager.tick();
             ClientNotificationManager.tick();
+            ClientTribulationManager.tick();
         }
     }
 
@@ -134,6 +137,7 @@ public final class ClientForgeEventHandler {
         DefenseSpellHudRenderUtility.render(event);
         SpiritualEnergyHudRenderUtility.render(event);
         ClientSoulRoamingManager.renderBodyArrow(event);
+        TribulationCloudRenderUtility.render(event);
         NotificationRenderUtility.render(event);
     }
 
@@ -174,5 +178,6 @@ public final class ClientForgeEventHandler {
         ClientSoulRoamingManager.reset();
         ClientPossessionManager.reset();
         ClientNotificationManager.reset();
+        ClientTribulationManager.reset();
     }
 }

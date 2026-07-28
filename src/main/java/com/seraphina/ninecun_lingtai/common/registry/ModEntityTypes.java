@@ -3,6 +3,7 @@ package com.seraphina.ninecun_lingtai.common.registry;
 import com.seraphina.ninecun_lingtai.ModMain;
 import com.seraphina.ninecun_lingtai.common.entity.SoulEntity;
 import com.seraphina.ninecun_lingtai.common.entity.spell.DefenseSpellGuardianEntity;
+import com.seraphina.ninecun_lingtai.common.entity.tribulation.ThunderTribulationEntity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -35,6 +36,17 @@ public final class ModEntityTypes {
                             .clientTrackingRange(64)
                             .updateInterval(1)
                             .build("defense_spell_guardian")
+                    );
+
+    public static final RegistryObject<EntityType<ThunderTribulationEntity>> THUNDER_TRIBULATION =
+            ENTITY_TYPES.register(
+                    "thunder_tribulation",
+                    () -> EntityType.Builder
+                            .of(ThunderTribulationEntity::new, MobCategory.MISC)
+                            .sized(0.4F, 0.4F)
+                            .clientTrackingRange(128)
+                            .updateInterval(1)
+                            .build("thunder_tribulation")
             );
 
     private ModEntityTypes() {

@@ -7,6 +7,7 @@ import com.seraphina.ninecun_lingtai.common.player.PlayerCultivationData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerCultivationManager;
 import com.seraphina.ninecun_lingtai.common.player.PlayerDefenseResourceData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerSoulRoamingManager;
+import com.seraphina.ninecun_lingtai.common.tribulation.TribulationManager;
 import com.seraphina.ninecun_lingtai.utility.ChineseNumberUtility;
 import com.seraphina.ninecun_lingtai.utility.CultivationUtility;
 import net.minecraft.network.FriendlyByteBuf;
@@ -40,6 +41,11 @@ public final class BreakthroughRequestPacket {
             return;
         }
         if (PlayerSoulRoamingManager.isSoulRoaming(player)) {
+            return;
+        }
+        TribulationManager.StartResult tribulationResult = TribulationManager.request(player);
+        if (tribulationResult != TribulationManager.StartResult.NOT_REQUIRED) {
+            handleTribulationResult(player, tribulationResult);
             return;
         }
         Optional<CultivationStage> previousStage = PlayerCultivationData.getStage(player);
@@ -86,6 +92,44 @@ public final class BreakthroughRequestPacket {
         }
         ModNetwork.sendCultivationInfo(player);
         ModNetwork.sendDefenseResource(player);
+    }
+
+    private static void handleTribulationResult(
+            ServerPlayer player,
+            TribulationManager.StartResult result
+    ) {
+        switch (result) {
+            case STARTED -> {
+                ModNetwork.sendCultivationFeedback(
+                        player,
+                        true,
+                        Component.literal("金丹天劫已起，请守住道心，渡过三九或四九雷劫。")
+                );
+                ModNetwork.sendCultivationInfo(player);
+            }
+            case ALREADY_ACTIVE -> ModNetwork.sendCultivationFeedback(
+                    player,
+                    false,
+                    Component.literal("天劫正在进行，不可再次引动。")
+            );
+            case NO_APTITUDE -> ModNetwork.sendCultivationFeedback(
+                    player,
+                    false,
+                    Component.translatable("message.ninecun_lingtai.breakthrough_no_root")
+            );
+            case INSUFFICIENT_SPIRITUAL_ENERGY -> ModNetwork.sendCultivationFeedback(
+                    player,
+                    false,
+                    Component.translatable("message.ninecun_lingtai.breakthrough_insufficient_energy")
+            );
+            case CANNOT_MEDITATE -> ModNetwork.sendCultivationFeedback(
+                    player,
+                    false,
+                    Component.literal("当前状态无法凝神渡劫。")
+            );
+            case NOT_REQUIRED -> {
+            }
+        }
     }
 
     private static String getRequiredEnergyText(Optional<CultivationStage> currentStage) {

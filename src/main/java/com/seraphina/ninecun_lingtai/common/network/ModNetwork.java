@@ -43,6 +43,7 @@ import com.seraphina.ninecun_lingtai.common.network.packet.SyncShrinkEarthPacket
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncSoulRoamingPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncSwordFlightPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncTechniqueLibraryPacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.SyncTribulationStatePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.TriggerBodyShieldPacket;
 import com.seraphina.ninecun_lingtai.common.flight.LightFlightManager;
 import com.seraphina.ninecun_lingtai.common.player.PlayerLightFlightData;
@@ -129,6 +130,15 @@ public final class ModNetwork {
                 .encoder(SyncMeditationStatePacket::encode)
                 .decoder(SyncMeditationStatePacket::decode)
                 .consumerMainThread(SyncMeditationStatePacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        SyncTribulationStatePacket.class,
+                        nextPacketId++,
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(SyncTribulationStatePacket::encode)
+                .decoder(SyncTribulationStatePacket::decode)
+                .consumerMainThread(SyncTribulationStatePacket::handle)
                 .add();
         CHANNEL.messageBuilder(
                         RequestCultivationInfoPacket.class,
@@ -576,6 +586,51 @@ public final class ModNetwork {
                         movementAffinities,
                         realmLevel
                 )
+        );
+    }
+
+    public static void sendTribulationState(
+            ServerPlayer player,
+            com.seraphina.ninecun_lingtai.common.tribulation.TribulationSession session
+    ) {
+        sendTribulationState(player, session, true);
+    }
+
+    public static void sendTribulationState(
+            ServerPlayer player,
+            com.seraphina.ninecun_lingtai.common.tribulation.TribulationSession session,
+            boolean active
+    ) {
+        SyncTribulationStatePacket packet = createTribulationStatePacket(session, active);
+        CHANNEL.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> player), packet);
+    }
+
+    public static void sendTribulationStateTo(
+            ServerPlayer recipient,
+            com.seraphina.ninecun_lingtai.common.tribulation.TribulationSession session
+    ) {
+        CHANNEL.send(
+                PacketDistributor.PLAYER.with(() -> recipient),
+                createTribulationStatePacket(session, true)
+        );
+    }
+
+    private static SyncTribulationStatePacket createTribulationStatePacket(
+            com.seraphina.ninecun_lingtai.common.tribulation.TribulationSession session,
+            boolean active
+    ) {
+        return new SyncTribulationStatePacket(
+                session.playerId(),
+                active,
+                session.phase().ordinal(),
+                session.phaseRemainingTicks(),
+                session.type().strikeCount(),
+                session.completedStrikes(),
+                session.center().x,
+                session.center().y,
+                session.center().z,
+                (float) session.radius(),
+                (float) session.type().strengthMultiplier()
         );
     }
 

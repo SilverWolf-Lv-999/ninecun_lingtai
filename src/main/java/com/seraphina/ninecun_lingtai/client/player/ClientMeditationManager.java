@@ -4,6 +4,7 @@ import com.seraphina.ninecun_lingtai.api.element.FiveElementValues;
 import com.seraphina.ninecun_lingtai.client.animation.MeditationAnimationManager;
 import com.seraphina.ninecun_lingtai.client.input.ModKeyMappings;
 import com.seraphina.ninecun_lingtai.client.screen.CultivationScreen;
+import com.seraphina.ninecun_lingtai.client.tribulation.ClientTribulationManager;
 import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import com.seraphina.ninecun_lingtai.common.network.packet.SetMeditationStatePacket;
 import net.minecraft.client.Minecraft;
@@ -33,6 +34,7 @@ public final class ClientMeditationManager {
         while (ModKeyMappings.MEDITATION.consumeClick()) {
             if (player != null
                     && minecraft.screen == null
+                    && !ClientTribulationManager.isLocalPlayerInTribulation()
                     && !ClientSoulRoamingManager.isLocalPlayerSoulRoaming()) {
                 minecraft.setScreen(new CultivationScreen());
             }

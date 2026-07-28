@@ -190,12 +190,12 @@ public final class DefenseSpellEventHandler {
             LivingHurtEvent event,
             DefenseSpellGuardianEntity guardian
     ) {
-        if (event.getSource().is(ModDamageTypes.REALM_EXECUTION)
-                || event.getSource().is(DamageTypes.GENERIC_KILL)
+        if (event.getSource().is(DamageTypes.GENERIC_KILL)
                 || event.getSource().is(DamageTypes.FELL_OUT_OF_WORLD)) {
             return;
         }
-        if (!(event.getSource().getEntity() instanceof LivingEntity)) {
+        if (!event.getSource().is(ModDamageTypes.REALM_EXECUTION)
+                && !(event.getSource().getEntity() instanceof LivingEntity)) {
             event.setCanceled(true);
             return;
         }

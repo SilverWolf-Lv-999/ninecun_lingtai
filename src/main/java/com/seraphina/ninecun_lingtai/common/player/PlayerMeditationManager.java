@@ -11,6 +11,7 @@ import com.seraphina.ninecun_lingtai.common.config.CommonConfig;
 import com.seraphina.ninecun_lingtai.common.data.ElementEnvironmentManager;
 import com.seraphina.ninecun_lingtai.common.data.TechniqueManager;
 import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
+import com.seraphina.ninecun_lingtai.common.tribulation.TribulationManager;
 import com.seraphina.ninecun_lingtai.utility.CultivationDefenseUtility;
 import com.seraphina.ninecun_lingtai.utility.CultivationUtility;
 import com.seraphina.ninecun_lingtai.utility.SpiritualEnergyUtility;
@@ -42,6 +43,9 @@ public final class PlayerMeditationManager {
     }
 
     public static boolean startMeditating(ServerPlayer player, @Nullable ResourceLocation techniqueId) {
+        if (TribulationManager.isInTribulation(player)) {
+            return startTribulationMeditating(player);
+        }
         if (techniqueId != null && !canCultivateTechnique(player, techniqueId)) {
             player.displayClientMessage(
                     Component.translatable("message.ninecun_lingtai.technique_not_learned"),
@@ -75,7 +79,40 @@ public final class PlayerMeditationManager {
         return true;
     }
 
+    public static boolean startTribulationMeditating(ServerPlayer player) {
+        MeditationSession existingSession = MEDITATING_PLAYERS.get(player.getUUID());
+        if (existingSession != null) {
+            existingSession.setTechnique(null);
+            syncStateToTrackingAndSelf(player, true);
+            return true;
+        }
+        if (!player.isAlive() || player.isSpectator() || player.isPassenger() || player.isSleeping()) {
+            return false;
+        }
+        MEDITATING_PLAYERS.put(
+                player.getUUID(),
+                new MeditationSession(MeditationRotation.capture(player), null)
+        );
+        player.stopUsingItem();
+        stopMovement(player);
+        lockRotation(player);
+        syncStateToTrackingAndSelf(player, true);
+        return true;
+    }
+
     public static void stopMeditating(ServerPlayer player) {
+        if (TribulationManager.isInTribulation(player)) {
+            syncStateToTrackingAndSelf(player, true);
+            return;
+        }
+        stopMeditatingInternal(player);
+    }
+
+    public static void finishTribulationMeditating(ServerPlayer player) {
+        stopMeditatingInternal(player);
+    }
+
+    private static void stopMeditatingInternal(ServerPlayer player) {
         MeditationSession session = MEDITATING_PLAYERS.remove(player.getUUID());
         if (session != null
                 && session.techniqueId() != null
@@ -116,6 +153,12 @@ public final class PlayerMeditationManager {
         player.stopUsingItem();
         stopMovement(player);
         lockRotation(player);
+        if (TribulationManager.isInTribulation(player)) {
+            if (player.tickCount % ABSORPTION_INTERVAL_TICKS == 0) {
+                syncStateToTrackingAndSelf(player, true);
+            }
+            return;
+        }
         if (session.techniqueId() == null) {
             // Realm cultivation is impossible without a breathing technique guiding the qi.
             if (player.tickCount % ABSORPTION_INTERVAL_TICKS == 0) {
@@ -395,7 +438,9 @@ public final class PlayerMeditationManager {
     }
 
     private static MeditationSyncData createMeditationSyncData(ServerPlayer player, boolean meditating) {
-        if (!meditating || isAbsorbingFromHeldSpiritualStone(player)) {
+        if (!meditating
+                || TribulationManager.isInTribulation(player)
+                || isAbsorbingFromHeldSpiritualStone(player)) {
             return MeditationSyncData.EMPTY;
         }
         return new MeditationSyncData(

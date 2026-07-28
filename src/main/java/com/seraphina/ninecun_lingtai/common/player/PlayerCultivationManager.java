@@ -65,27 +65,38 @@ public final class PlayerCultivationManager {
         );
     }
 
+    public static boolean hasEnoughEnergyForTarget(Player player, CultivationStage targetStage) {
+        Optional<SpiritualRoot> spiritualRoot = PlayerAptitudeData.getSpiritualRoot(player);
+        if (spiritualRoot.isEmpty()) {
+            return false;
+        }
+        return CultivationUtility.areAllSpiritualRootsComplete(
+                targetStage,
+                spiritualRoot.get(),
+                PlayerSpiritualEnergyData.getAllEnergy(player)
+        );
+    }
+
+    public static boolean consumeEnergyForTarget(Player player, CultivationStage targetStage) {
+        Optional<SpiritualRoot> spiritualRoot = PlayerAptitudeData.getSpiritualRoot(player);
+        if (spiritualRoot.isEmpty() || !hasEnoughEnergyForTarget(player, targetStage)) {
+            return false;
+        }
+        Set<ElementType> rootElements = SpiritualRootUtility.getIndependentRootElements(spiritualRoot.get());
+        return PlayerSpiritualEnergyData.consumeEnergy(
+                player,
+                rootElements,
+                CultivationUtility.getRequiredSpiritualEnergy(targetStage).doubleValue()
+        );
+    }
+
     private static BreakthroughResult tryReachStage(Player player, CultivationStage targetStage) {
         Optional<SpiritualRoot> spiritualRoot = PlayerAptitudeData.getSpiritualRoot(player);
         if (spiritualRoot.isEmpty()) {
             return BreakthroughResult.NO_SPIRITUAL_ROOT;
         }
 
-        BigInteger requiredSpiritualEnergy = CultivationUtility.getRequiredSpiritualEnergy(targetStage);
-        Set<ElementType> rootElements = SpiritualRootUtility.getIndependentRootElements(spiritualRoot.get());
-        Map<ElementType, Double> spiritualEnergy = PlayerSpiritualEnergyData.getAllEnergy(player);
-        if (!CultivationUtility.areAllSpiritualRootsComplete(
-                targetStage,
-                spiritualRoot.get(),
-                spiritualEnergy
-        )) {
-            return BreakthroughResult.INSUFFICIENT_SPIRITUAL_ENERGY;
-        }
-        if (!PlayerSpiritualEnergyData.consumeEnergy(
-                player,
-                rootElements,
-                requiredSpiritualEnergy.doubleValue()
-        )) {
+        if (!consumeEnergyForTarget(player, targetStage)) {
             return BreakthroughResult.INSUFFICIENT_SPIRITUAL_ENERGY;
         }
 

@@ -1,5 +1,6 @@
 package com.seraphina.ninecun_lingtai.client.player;
 
+import com.seraphina.ninecun_lingtai.client.tribulation.ClientTribulationManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.BufferUploader;
@@ -157,21 +158,24 @@ public final class ClientSoulRoamingManager {
     }
 
     public static float getCameraYRot(Entity cameraEntity, float partialTick) {
-        return isSoulCameraEntity(cameraEntity)
+        float baseRotation = isSoulCameraEntity(cameraEntity)
                 ? soulYRot
                 : ClientMeditationCameraManager.getCameraYRot(cameraEntity, partialTick);
+        return ClientTribulationManager.applyCameraYRot(cameraEntity, baseRotation, partialTick);
     }
 
     public static float getCameraXRot(Entity cameraEntity, float partialTick) {
-        return isSoulCameraEntity(cameraEntity)
+        float baseRotation = isSoulCameraEntity(cameraEntity)
                 ? soulXRot
                 : ClientMeditationCameraManager.getCameraXRot(cameraEntity, partialTick);
+        return ClientTribulationManager.applyCameraXRot(cameraEntity, baseRotation, partialTick);
     }
 
     public static Vec3 getCameraViewVector(Entity cameraEntity, float partialTick) {
-        return isSoulCameraEntity(cameraEntity)
+        Vec3 baseVector = isSoulCameraEntity(cameraEntity)
                 ? Vec3.directionFromRotation(soulXRot, soulYRot)
                 : ClientMeditationCameraManager.getCameraViewVector(cameraEntity, partialTick);
+        return ClientTribulationManager.applyCameraViewVector(cameraEntity, baseVector, partialTick);
     }
 
     public static HitResult pick(Entity cameraEntity, double hitDistance, float partialTick, boolean hitFluids) {

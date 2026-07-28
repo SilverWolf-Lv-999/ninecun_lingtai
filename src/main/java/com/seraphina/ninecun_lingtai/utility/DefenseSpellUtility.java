@@ -142,8 +142,10 @@ public final class DefenseSpellUtility {
     }
 
     public static boolean canBodyShieldBlock(DefenseSpellKind kind, DamageSource source) {
-        if (source.is(ModDamageTypes.REALM_EXECUTION)
-                || source.is(DamageTypes.FALL)
+        if (source.is(ModDamageTypes.REALM_EXECUTION)) {
+            return true;
+        }
+        if (source.is(DamageTypes.FALL)
                 || source.is(DamageTypes.STALAGMITE)
                 || source.is(DamageTypes.FLY_INTO_WALL)
                 || source.is(DamageTypes.DROWN)
