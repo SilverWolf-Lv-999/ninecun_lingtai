@@ -6,7 +6,12 @@
   "refmap": "ninecun_lingtai.refmap.json",
   "mixins": [
     "common.ChatFormattingMixin",
-    "common.StyleMixin"
+    "common.StyleMixin",
+    "common.food.FoodDataMixin",
+    "common.food.PlayerMixin",
+    "common.health.EntityMixin",
+    "common.health.LivingEntityMixin",
+    "common.health.ServerPlayerMixin"
   ],
   "client": [
     "client.CameraMixin",
@@ -17,7 +22,9 @@
     "client.LivingEntityRendererMixin",
     "client.LightTextureMixin",
     "client.AbstractClientPlayerMixin",
-    "client.MouseHandlerMixin"
+    "client.MouseHandlerMixin",
+    "client.food.PlayerFoodMixin",
+    "client.health.LocalPlayerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

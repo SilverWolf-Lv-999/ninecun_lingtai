@@ -45,6 +45,16 @@ public final class PlayerDefenseResourceData {
         getOrInitializeCurrent(player, maximum);
     }
 
+    public static int getCurrent(Player player) {
+        Optional<CultivationStage> stage = PlayerCultivationData.getStage(player);
+        int maximum = CultivationDefenseUtility.getMaximumDefenseResource(stage);
+        if (maximum <= 0) {
+            clear(player);
+            return 0;
+        }
+        return getOrInitializeCurrent(player, maximum);
+    }
+
     public static void refillToMaximum(Player player) {
         int maximum = CultivationDefenseUtility.getMaximumDefenseResource(PlayerCultivationData.getStage(player));
         if (maximum <= 0) {

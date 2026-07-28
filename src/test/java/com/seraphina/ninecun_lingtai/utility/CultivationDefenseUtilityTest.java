@@ -2,6 +2,7 @@ package com.seraphina.ninecun_lingtai.utility;
 
 import com.seraphina.ninecun_lingtai.api.cultivation.CultivationRealm;
 import com.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
+import com.seraphina.ninecun_lingtai.common.player.DefenseResourceType;
 import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
@@ -135,6 +136,38 @@ class CultivationDefenseUtilityTest {
         ));
         assertFalse(CultivationDefenseUtility.isFullyImmuneToHighDamage(
                 new CultivationStage(CultivationRealm.SPIRIT_TRANSFORMATION, 9)
+        ));
+    }
+
+    @Test
+    void defenseIsActiveOnlyForMatchingUnbrokenResource() {
+        CultivationStage goldenCore = new CultivationStage(CultivationRealm.GOLDEN_CORE, 1);
+        CultivationStage nascentSoul = new CultivationStage(CultivationRealm.NASCENT_SOUL, 1);
+
+        assertTrue(CultivationDefenseUtility.isActiveDefense(
+                Optional.of(goldenCore),
+                DefenseResourceType.BODY_WIND,
+                1
+        ));
+        assertTrue(CultivationDefenseUtility.isActiveDefense(
+                Optional.of(nascentSoul),
+                DefenseResourceType.SPIRITUAL_POWER,
+                1
+        ));
+        assertFalse(CultivationDefenseUtility.isActiveDefense(
+                Optional.of(goldenCore),
+                DefenseResourceType.BODY_WIND,
+                0
+        ));
+        assertFalse(CultivationDefenseUtility.isActiveDefense(
+                Optional.of(goldenCore),
+                DefenseResourceType.SPIRITUAL_POWER,
+                1
+        ));
+        assertFalse(CultivationDefenseUtility.isActiveDefense(
+                Optional.empty(),
+                DefenseResourceType.BODY_WIND,
+                1
         ));
     }
 }

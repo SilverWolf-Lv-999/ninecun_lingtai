@@ -4,12 +4,16 @@ import com.seraphina.ninecun_lingtai.api.cultivation.CultivationRealm;
 import com.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
 import com.seraphina.ninecun_lingtai.common.creature.CreatureCultivationData;
 import com.seraphina.ninecun_lingtai.common.player.DefenseResourceType;
+import com.seraphina.ninecun_lingtai.common.player.PlayerCultivationData;
+import com.seraphina.ninecun_lingtai.common.player.PlayerDefenseResourceData;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.Optional;
@@ -17,6 +21,7 @@ import java.util.OptionalInt;
 import java.util.UUID;
 
 public final class CultivationDefenseUtility {
+    private static final float PROTECTED_HEALTH = 20.0F;
     private static final UUID MAX_HEALTH_MODIFIER_ID = UUID.fromString("2b467160-8bb5-43f2-9a76-78dcde68bcb5");
     private static final String MAX_HEALTH_MODIFIER_NAME = "Ninecun Lingtai cultivation health";
     private static final double QI_REFINING_HEALTH_PER_LAYER = 1.0D;
@@ -123,6 +128,60 @@ public final class CultivationDefenseUtility {
             return DefenseResourceType.DAO;
         }
         return DefenseResourceType.NONE;
+    }
+
+    public static boolean isActiveDefense(
+            Optional<CultivationStage> stage,
+            DefenseResourceType resourceType,
+            int currentResource
+    ) {
+        return stage.isPresent()
+                && getDefenseResourceType(stage.get()) == resourceType
+                && resourceType != DefenseResourceType.NONE
+                && currentResource > 0;
+    }
+
+    public static boolean hasActivePlayerDefense(Player player) {
+        Optional<CultivationStage> stage = PlayerCultivationData.getStage(player);
+        if (stage.isEmpty()) {
+            return false;
+        }
+        DefenseResourceType resourceType = getDefenseResourceType(stage.get());
+        return isActiveDefense(
+                stage,
+                resourceType,
+                PlayerDefenseResourceData.getCurrent(player)
+        );
+    }
+
+    public static float getHealth(LivingEntity entity) {
+        return getProtectedHealth(entity, entity.getHealth());
+    }
+
+    public static float getProtectedHealth(LivingEntity entity, float original) {
+        return entity instanceof Player player && hasActivePlayerDefense(player)
+                ? PROTECTED_HEALTH
+                : original;
+    }
+
+    public static boolean isAlive(Entity entity) {
+        return getProtectedAlive(entity, entity.isAlive());
+    }
+
+    public static boolean getProtectedAlive(Entity entity, boolean original) {
+        return entity instanceof Player player && hasActivePlayerDefense(player)
+                ? true
+                : original;
+    }
+
+    public static boolean isDeadOrDying(LivingEntity entity) {
+        return getProtectedDeadOrDying(entity, entity.isDeadOrDying());
+    }
+
+    public static boolean getProtectedDeadOrDying(LivingEntity entity, boolean original) {
+        return entity instanceof Player player && hasActivePlayerDefense(player)
+                ? false
+                : original;
     }
 
     public static int getMaximumDefenseResource(Optional<CultivationStage> stage) {
