@@ -12,7 +12,7 @@ import java.util.Objects;
  * @param technique           施展所依据的功法定义
  * @param spellData           功法中的法术数据（品级、基础消耗等）
  * @param masteryStage        施法者对此功法的掌握阶段（入门／小成／大成／圆满）
- * @param powerEfficiency     掌握阶段能发挥的威力比例（入门五成，圆满十成）
+ * @param powerEfficiency     熟练度发挥率与灵根资质相乘后的威力比例
  * @param cultivationStrength 修为强度（境界序号 × 9 + 层数，练气一层为 1）
  */
 public record SpellCastContext(

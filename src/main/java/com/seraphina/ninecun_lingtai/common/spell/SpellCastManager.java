@@ -12,11 +12,14 @@ import com.seraphina.ninecun_lingtai.common.data.TechniqueManager;
 import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import com.seraphina.ninecun_lingtai.common.player.PlayerSelectedSpellData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerSpiritualEnergyData;
+import com.seraphina.ninecun_lingtai.common.player.PlayerAptitudeData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerTechniqueData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerTechniqueManager;
+import com.seraphina.ninecun_lingtai.common.player.PlayerTechniqueProficiencyData;
 import com.seraphina.ninecun_lingtai.common.registry.ModSpells;
-import com.seraphina.ninecun_lingtai.utility.SpiritualRootUtility;
 import com.seraphina.ninecun_lingtai.utility.ChineseNumberUtility;
+import com.seraphina.ninecun_lingtai.utility.SpellPowerUtility;
+import com.seraphina.ninecun_lingtai.utility.SpiritualRootUtility;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -87,6 +90,10 @@ public final class SpellCastManager {
             sendActionBar(player, "《" + technique.name() + "》玄机晦涩，此方天地暂无法回应");
             return;
         }
+        if (spell.cancelIfActive(player)) {
+            sendActionBar(player, "已解除《" + technique.name() + "》");
+            return;
+        }
         Optional<CultivationStage> stage = CultivationApi.getStage(player);
         if (stage.isEmpty()) {
             sendActionBar(player, "凡人之躯，无法驱动灵力施法");
@@ -115,11 +122,17 @@ public final class SpellCastManager {
         TechniqueMasteryStage masteryStage = PlayerTechniqueData.getTechnique(player, technique.id())
                 .flatMap(progress -> TechniqueMasteryStage.fromMastery(progress.mastery()))
                 .orElse(TechniqueMasteryStage.ENTRY);
+        long proficiency = PlayerTechniqueProficiencyData.get(player, technique.id());
+        double powerEfficiency = SpellPowerUtility.getPowerEfficiency(
+                masteryStage,
+                proficiency,
+                PlayerAptitudeData.getSpiritualRoot(player)
+        );
         SpellCastContext context = new SpellCastContext(
                 technique,
                 spellData,
                 masteryStage,
-                masteryStage.getEfficiency(),
+                powerEfficiency,
                 getCultivationStrength(stage.get())
         );
         if (!spell.cast(player, context)) {

@@ -16,7 +16,7 @@ public final class SwiftWindSpell extends Spell {
 
     @Override
     public boolean cast(ServerPlayer player, SpellCastContext context) {
-        // 每进一个大境界，御风的身法便快上一分；掌握不足则难以尽展其妙。
+        // 每进一个大境界，御风的身法便快上一分；熟练度与灵根资质决定发挥程度。
         int realmIndex = (context.cultivationStrength() - 1) / CultivationStage.MAXIMUM_LAYER;
         int amplifier = (int) Math.round(
                 Math.min(MAXIMUM_AMPLIFIER, realmIndex) * context.powerEfficiency()

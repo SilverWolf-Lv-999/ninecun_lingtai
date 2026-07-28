@@ -13,7 +13,7 @@ public final class FireballSpell extends Spell {
     @Override
     public boolean cast(ServerPlayer player, SpellCastContext context) {
         Vec3 lookDirection = player.getLookAngle();
-        // 掌握越深，火球去势越疾：入门五成力道，圆满十成。
+        // 熟练度越深、灵根资质越好，火球去势越疾。
         Vec3 acceleration = lookDirection.scale(0.5D + 0.5D * context.powerEfficiency());
         SmallFireball fireball = new SmallFireball(
                 player.level(),

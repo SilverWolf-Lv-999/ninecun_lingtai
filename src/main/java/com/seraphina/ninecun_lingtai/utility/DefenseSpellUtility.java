@@ -59,8 +59,8 @@ public final class DefenseSpellUtility {
     public static double getMaximumPoints(DefenseSpellKind kind, SpellCastContext context) {
         return Math.max(
                 1.0D,
-                kind.getPointsPerCultivationStrength()
-                        * Math.max(1, context.cultivationStrength())
+                kind.getBasePoints()
+                        * SpellPowerUtility.getCultivationPower(context.cultivationStrength())
                         * context.powerEfficiency()
         );
     }

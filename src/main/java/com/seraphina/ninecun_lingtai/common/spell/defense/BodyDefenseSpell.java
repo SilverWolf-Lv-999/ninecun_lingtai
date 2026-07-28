@@ -20,6 +20,18 @@ public final class BodyDefenseSpell extends Spell {
     }
 
     @Override
+    public boolean cancelIfActive(ServerPlayer player) {
+        if (PlayerDefenseSpellData.getBodyShield(player)
+                .filter(snapshot -> snapshot.kind() == this.kind)
+                .isEmpty()) {
+            return false;
+        }
+        PlayerDefenseSpellData.clearBodyShield(player);
+        ModNetwork.sendDefenseSpellState(player);
+        return true;
+    }
+
+    @Override
     public boolean cast(ServerPlayer player, SpellCastContext context) {
         if (!DefenseSpellUtility.canUse(player, this.kind)) {
             player.displayClientMessage(Component.literal("当前灵根无法维持《" + this.kind.getChineseName() + "》"), true);

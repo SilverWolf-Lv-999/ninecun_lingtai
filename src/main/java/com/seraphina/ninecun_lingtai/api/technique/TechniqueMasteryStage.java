@@ -55,9 +55,10 @@ public enum TechniqueMasteryStage {
     }
 
     /**
-     * Fraction of a technique's full power available at this stage — entry unlocks half of it,
-     * perfection all of it. Breathing techniques scale absorption speed by this; spells scale
-     * their effect strength by it.
+     * Fraction of a technique's full power guaranteed by this stage — entry unlocks half of it,
+     * perfection all of it. Breathing techniques scale absorption speed by this; spell power
+     * uses it as the minimum proficiency efficiency before applying continuous proficiency and
+     * aptitude scaling.
      */
     public double getEfficiency() {
         return this.efficiency;

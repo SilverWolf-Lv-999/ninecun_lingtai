@@ -58,7 +58,8 @@ public enum DefenseSpellKind {
         return Optional.ofNullable(this.fixedElement);
     }
 
-    public double getPointsPerCultivationStrength() {
+    /** 练气一层、圆满熟练度、九寸灵根时的基础防御点数。 */
+    public double getBasePoints() {
         ForgeConfigSpec.DoubleValue value = switch (this) {
             case METAL_BODY_SHIELD -> CommonConfig.METAL_BODY_SHIELD_POINTS_PER_STRENGTH;
             case WOOD_GUARDIAN -> CommonConfig.WOOD_GUARDIAN_POINTS_PER_STRENGTH;
