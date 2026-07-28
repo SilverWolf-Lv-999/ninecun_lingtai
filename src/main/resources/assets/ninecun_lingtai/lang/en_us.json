@@ -164,6 +164,8 @@
   "screen.ninecun_lingtai.config.field.chaos_suppressed_multiplier.tooltip": "Damage multiplier when another element attacks a chaos target.",
   "screen.ninecun_lingtai.config.field.meditation_base_absorption_per_second": "Base absorption per second",
   "screen.ninecun_lingtai.config.field.meditation_base_absorption_per_second.tooltip": "Base spiritual energy absorbed per second before root quality, environment, and element relations.",
+  "screen.ninecun_lingtai.config.field.meditation_defense_resource_repair_percent_per_second": "Defense resource repair per second",
+  "screen.ninecun_lingtai.config.field.meditation_defense_resource_repair_percent_per_second.tooltip": "Percentage of maximum body wind, spiritual power, or dao repaired each second while meditating.",
   "screen.ninecun_lingtai.config.field.meditation_generates_multiplier": "Generates multiplier",
   "screen.ninecun_lingtai.config.field.meditation_generates_multiplier.tooltip": "Used when the incoming element generates another element in a multi-element root.",
   "screen.ninecun_lingtai.config.field.meditation_generated_by_multiplier": "Generated-by multiplier",
@@ -184,5 +186,7 @@
   "screen.ninecun_lingtai.config.cancel": "Cancel",
   "screen.ninecun_lingtai.config.save": "Save",
   "screen.ninecun_lingtai.config.error.invalid_number": "%s must be a number from %s to %s",
-  "screen.ninecun_lingtai.config.error.save_failed": "Could not save the configuration; check file permissions"
+  "screen.ninecun_lingtai.config.error.save_failed": "Could not save the configuration; check file permissions",
+  "death.attack.ninecun_lingtai.realm_execution": "%1$s was erased in a single strike by %2$s across the mortal-divine divide",
+  "death.attack.ninecun_lingtai.realm_execution.item": "%1$s was erased in a single strike by %2$s using %3$s across the mortal-divine divide"
 }

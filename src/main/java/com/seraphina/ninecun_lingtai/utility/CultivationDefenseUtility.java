@@ -203,6 +203,23 @@ public final class CultivationDefenseUtility {
         return 0;
     }
 
+    public static int getDefenseResourceRepairAmount(
+            Optional<CultivationStage> stage,
+            double percentPerSecond
+    ) {
+        if (!Double.isFinite(percentPerSecond) || percentPerSecond <= 0.0D) {
+            return 0;
+        }
+        int maximum = getMaximumDefenseResource(stage);
+        if (maximum <= 0) {
+            return 0;
+        }
+        return Math.min(
+                maximum,
+                Math.max(1, (int) Math.ceil(maximum * percentPerSecond / 100.0D))
+        );
+    }
+
     public static boolean isHighDamageCommandAttack(DamageSource damageSource, float amount) {
         return damageSource.is(DamageTypes.GENERIC_KILL) || amount >= HIGH_DAMAGE_COMMAND_THRESHOLD;
     }

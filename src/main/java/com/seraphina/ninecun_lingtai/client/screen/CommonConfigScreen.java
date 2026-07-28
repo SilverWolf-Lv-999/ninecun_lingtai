@@ -80,6 +80,12 @@ public final class CommonConfigScreen extends Screen {
                     CommonConfig.MAXIMUM_BASE_ABSORPTION_PER_SECOND
             ),
             new DoubleConfigEntry(
+                    "meditation_defense_resource_repair_percent_per_second",
+                    CommonConfig.MEDITATION_DEFENSE_RESOURCE_REPAIR_PERCENT_PER_SECOND,
+                    CommonConfig.MINIMUM_MULTIPLIER,
+                    CommonConfig.MAXIMUM_MULTIPLIER
+            ),
+            new DoubleConfigEntry(
                     "meditation_generates_multiplier",
                     CommonConfig.MEDITATION_GENERATES_MULTIPLIER,
                     CommonConfig.MINIMUM_MULTIPLIER,

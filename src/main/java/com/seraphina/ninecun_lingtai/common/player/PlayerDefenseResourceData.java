@@ -55,6 +55,27 @@ public final class PlayerDefenseResourceData {
         return getOrInitializeCurrent(player, maximum);
     }
 
+    public static int repair(Player player, int amount) {
+        if (amount <= 0) {
+            return 0;
+        }
+        int maximum = CultivationDefenseUtility.getMaximumDefenseResource(PlayerCultivationData.getStage(player));
+        if (maximum <= 0) {
+            clear(player);
+            return 0;
+        }
+        int current = getOrInitializeCurrent(player, maximum);
+        int repaired = (int) Math.min(
+                (long) maximum - current,
+                (long) amount
+        );
+        if (repaired <= 0) {
+            return 0;
+        }
+        setCurrent(player, current + repaired);
+        return repaired;
+    }
+
     public static void refillToMaximum(Player player) {
         int maximum = CultivationDefenseUtility.getMaximumDefenseResource(PlayerCultivationData.getStage(player));
         if (maximum <= 0) {
@@ -79,6 +100,15 @@ public final class PlayerDefenseResourceData {
         }
         setCurrent(player, current - amount);
         return true;
+    }
+
+    public static void deplete(Player player) {
+        int maximum = CultivationDefenseUtility.getMaximumDefenseResource(PlayerCultivationData.getStage(player));
+        if (maximum <= 0) {
+            clear(player);
+            return;
+        }
+        setCurrent(player, 0);
     }
 
     public static void copy(Player sourcePlayer, Player targetPlayer) {

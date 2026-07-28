@@ -11,6 +11,7 @@ import com.seraphina.ninecun_lingtai.common.config.CommonConfig;
 import com.seraphina.ninecun_lingtai.common.data.ElementEnvironmentManager;
 import com.seraphina.ninecun_lingtai.common.data.TechniqueManager;
 import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
+import com.seraphina.ninecun_lingtai.utility.CultivationDefenseUtility;
 import com.seraphina.ninecun_lingtai.utility.CultivationUtility;
 import com.seraphina.ninecun_lingtai.utility.SpiritualEnergyUtility;
 import com.seraphina.ninecun_lingtai.utility.SpiritualStoneUtility;
@@ -118,6 +119,7 @@ public final class PlayerMeditationManager {
         if (session.techniqueId() == null) {
             // Realm cultivation is impossible without a breathing technique guiding the qi.
             if (player.tickCount % ABSORPTION_INTERVAL_TICKS == 0) {
+                repairDefenseResource(player);
                 remindBreathingTechniqueRequired(player);
                 syncStateToTrackingAndSelf(player, true);
             }
@@ -132,6 +134,7 @@ public final class PlayerMeditationManager {
             if (breathingMultiplier > 0.0D) {
                 absorbSpiritualEnergy(player, breathingMultiplier);
             }
+            repairDefenseResource(player);
             syncStateToTrackingAndSelf(player, true);
         }
     }
@@ -306,6 +309,16 @@ public final class PlayerMeditationManager {
                 Component.translatable("message.ninecun_lingtai.breathing_technique_required"),
                 true
         );
+    }
+
+    private static void repairDefenseResource(ServerPlayer player) {
+        int repairAmount = CultivationDefenseUtility.getDefenseResourceRepairAmount(
+                PlayerCultivationData.getStage(player),
+                CommonConfig.MEDITATION_DEFENSE_RESOURCE_REPAIR_PERCENT_PER_SECOND.get()
+        );
+        if (PlayerDefenseResourceData.repair(player, repairAmount) > 0) {
+            ModNetwork.sendDefenseResource(player);
+        }
     }
 
     private static void tryAdvanceLayer(ServerPlayer player) {

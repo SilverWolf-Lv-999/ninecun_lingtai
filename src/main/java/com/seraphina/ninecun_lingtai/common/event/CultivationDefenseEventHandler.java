@@ -6,8 +6,12 @@ import com.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
 import com.seraphina.ninecun_lingtai.common.creature.CreatureCultivationData;
 import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import com.seraphina.ninecun_lingtai.common.player.PlayerDefenseResourceData;
+import com.seraphina.ninecun_lingtai.common.registry.ModDamageTypes;
+import com.seraphina.ninecun_lingtai.utility.CultivationCombatUtility;
 import com.seraphina.ninecun_lingtai.utility.CultivationDefenseUtility;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
@@ -51,6 +55,10 @@ public final class CultivationDefenseEventHandler {
             return;
         }
 
+        if (tryInstantlyKillLowerRealmCultivator(event, defender)) {
+            return;
+        }
+
         Optional<CultivationStage> defenderStage = CreatureCultivationData.getStage(defender);
         if (defenderStage.isEmpty()) {
             return;
@@ -80,6 +88,38 @@ public final class CultivationDefenseEventHandler {
         if (defensiveReaction.showsBodyShield()) {
             ModNetwork.sendBodyShield(defender);
         }
+    }
+
+    private static boolean tryInstantlyKillLowerRealmCultivator(
+            LivingAttackEvent event,
+            LivingEntity defender
+    ) {
+        if (event.getSource().is(ModDamageTypes.REALM_EXECUTION)
+                || !(event.getSource().getEntity() instanceof LivingEntity attacker)
+                || attacker == defender
+                || !CultivationCombatUtility.canInstantlyKillLowerRealmCultivator(
+                        CreatureCultivationData.getStage(attacker),
+                        CreatureCultivationData.getStage(defender)
+                )) {
+            return false;
+        }
+
+        event.setCanceled(true);
+        if (defender instanceof ServerPlayer player) {
+            PlayerDefenseResourceData.deplete(player);
+            ModNetwork.sendDefenseResource(player);
+        }
+
+        DamageSource executionSource = new DamageSource(
+                defender.level()
+                        .registryAccess()
+                        .registryOrThrow(Registries.DAMAGE_TYPE)
+                        .getHolderOrThrow(ModDamageTypes.REALM_EXECUTION),
+                event.getSource().getDirectEntity(),
+                attacker
+        );
+        defender.hurt(executionSource, Float.MAX_VALUE);
+        return true;
     }
 
     private static boolean tryBlockHighDamageCommandAttack(

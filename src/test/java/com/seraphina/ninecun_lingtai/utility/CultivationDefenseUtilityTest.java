@@ -170,4 +170,29 @@ class CultivationDefenseUtilityTest {
                 1
         ));
     }
+
+    @Test
+    void calculatesMeditationDefenseResourceRepairAmounts() {
+        assertEquals(5, CultivationDefenseUtility.getDefenseResourceRepairAmount(
+                Optional.of(new CultivationStage(CultivationRealm.GOLDEN_CORE, 1)),
+                1.0D
+        ));
+        assertEquals(1, CultivationDefenseUtility.getDefenseResourceRepairAmount(
+                Optional.of(new CultivationStage(CultivationRealm.NASCENT_SOUL, 1)),
+                0.1D
+        ));
+        assertEquals(341, CultivationDefenseUtility.getDefenseResourceRepairAmount(
+                Optional.of(new CultivationStage(CultivationRealm.DAO_INTEGRATION, 1)),
+                1.0D
+        ));
+        assertEquals(50, CultivationDefenseUtility.getDefenseResourceRepairAmount(
+                Optional.of(new CultivationStage(CultivationRealm.SPIRIT_TRANSFORMATION, 1)),
+                100.0D
+        ));
+        assertEquals(0, CultivationDefenseUtility.getDefenseResourceRepairAmount(Optional.empty(), 1.0D));
+        assertEquals(0, CultivationDefenseUtility.getDefenseResourceRepairAmount(
+                Optional.of(new CultivationStage(CultivationRealm.GOLDEN_CORE, 1)),
+                0.0D
+        ));
+    }
 }
