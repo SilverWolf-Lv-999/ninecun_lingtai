@@ -18,6 +18,7 @@ import com.seraphina.ninecun_lingtai.common.player.PlayerTechniqueManager;
 import com.seraphina.ninecun_lingtai.common.player.PlayerTechniqueProficiencyData;
 import com.seraphina.ninecun_lingtai.common.registry.ModSpells;
 import com.seraphina.ninecun_lingtai.utility.ChineseNumberUtility;
+import com.seraphina.ninecun_lingtai.utility.SpellCostUtility;
 import com.seraphina.ninecun_lingtai.utility.SpellPowerUtility;
 import com.seraphina.ninecun_lingtai.utility.SpiritualRootUtility;
 import net.minecraft.network.chat.Component;
@@ -30,7 +31,7 @@ import java.util.stream.Collectors;
 
 /**
  * 服务端施法入口。法术是一门带 {@code spell} 块的功法：须先参悟（学会）方可择定与施展，
- * 每次施展消耗与品级、修为成正比的灵力，并像修炼一样积累这门功法的熟练度。
+ * 每次施展消耗随品级与本次实际威力共同增长，并像修炼一样积累这门功法的熟练度。
  */
 public final class SpellCastManager {
     private static final long PROFICIENCY_PER_CAST = 1L;
@@ -99,7 +100,21 @@ public final class SpellCastManager {
             sendActionBar(player, "凡人之躯，无法驱动灵力施法");
             return;
         }
-        double cost = getSpiritualEnergyCost(spellData, stage.get());
+        TechniqueMasteryStage masteryStage = PlayerTechniqueData.getTechnique(player, technique.id())
+                .flatMap(progress -> TechniqueMasteryStage.fromMastery(progress.mastery()))
+                .orElse(TechniqueMasteryStage.ENTRY);
+        long proficiency = PlayerTechniqueProficiencyData.get(player, technique.id());
+        double powerEfficiency = SpellPowerUtility.getPowerEfficiency(
+                masteryStage,
+                proficiency,
+                PlayerAptitudeData.getSpiritualRoot(player)
+        );
+        int cultivationStrength = getCultivationStrength(stage.get());
+        double cost = SpellCostUtility.getSpiritualEnergyCost(
+                spellData,
+                cultivationStrength,
+                powerEfficiency
+        );
         Map<ElementType, Double> anyElementConsumption = null;
         if (spellData.consumesAnyElement()) {
             anyElementConsumption = PlayerSpiritualEnergyData.consumeEnergyAny(player, cost);
@@ -119,21 +134,12 @@ public final class SpellCastManager {
             ));
             return;
         }
-        TechniqueMasteryStage masteryStage = PlayerTechniqueData.getTechnique(player, technique.id())
-                .flatMap(progress -> TechniqueMasteryStage.fromMastery(progress.mastery()))
-                .orElse(TechniqueMasteryStage.ENTRY);
-        long proficiency = PlayerTechniqueProficiencyData.get(player, technique.id());
-        double powerEfficiency = SpellPowerUtility.getPowerEfficiency(
-                masteryStage,
-                proficiency,
-                PlayerAptitudeData.getSpiritualRoot(player)
-        );
         SpellCastContext context = new SpellCastContext(
                 technique,
                 spellData,
                 masteryStage,
                 powerEfficiency,
-                getCultivationStrength(stage.get())
+                cultivationStrength
         );
         if (!spell.cast(player, context)) {
             if (anyElementConsumption != null) {
@@ -158,15 +164,6 @@ public final class SpellCastManager {
                 masteryStage.getChineseName(),
                 describeCost(spellData, cost)
         ));
-    }
-
-    /**
-     * 灵力消耗与法术品级、修为强度成正比。
-     */
-    public static double getSpiritualEnergyCost(TechniqueSpell spellData, CultivationStage stage) {
-        return spellData.baseCost()
-                * spellData.grade().getCostMultiplier()
-                * getCultivationStrength(stage);
     }
 
     public static int getCultivationStrength(CultivationStage stage) {

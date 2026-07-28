@@ -10,8 +10,7 @@
     "common.food.FoodDataMixin",
     "common.food.PlayerMixin",
     "common.health.EntityMixin",
-    "common.health.LivingEntityMixin",
-    "common.health.ServerPlayerMixin"
+    "common.health.LivingEntityMixin"
   ],
   "client": [
     "client.CameraMixin",
@@ -23,8 +22,7 @@
     "client.LightTextureMixin",
     "client.AbstractClientPlayerMixin",
     "client.MouseHandlerMixin",
-    "client.food.PlayerFoodMixin",
-    "client.health.LocalPlayerMixin"
+    "client.food.PlayerFoodMixin"
   ],
   "injectors": {
     "defaultRequire": 1

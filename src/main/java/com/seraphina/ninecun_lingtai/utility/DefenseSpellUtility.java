@@ -60,8 +60,10 @@ public final class DefenseSpellUtility {
         return Math.max(
                 1.0D,
                 kind.getBasePoints()
-                        * SpellPowerUtility.getCultivationPower(context.cultivationStrength())
-                        * context.powerEfficiency()
+                        * SpellPowerUtility.getPowerMultiplier(
+                                context.cultivationStrength(),
+                                context.powerEfficiency()
+                        )
         );
     }
 

@@ -41,6 +41,17 @@ public final class SpellPowerUtility {
     }
 
     /**
+     * 本次施法相对练气一层基础威力的总倍率。
+     * 境界、熟练度与灵根资质统一汇入此倍率，法术效果与灵力消耗共用同一结果。
+     */
+    public static double getPowerMultiplier(int cultivationStrength, double powerEfficiency) {
+        if (!Double.isFinite(powerEfficiency) || powerEfficiency < 0.0D) {
+            throw new IllegalArgumentException("powerEfficiency must be a non-negative finite number");
+        }
+        return getCultivationPower(cultivationStrength) * powerEfficiency;
+    }
+
+    /**
      * 练气一层为一倍；每跨一个大境界提升六倍，同境界内每升一层提升一成二。
      */
     public static double getCultivationPower(int cultivationStrength) {

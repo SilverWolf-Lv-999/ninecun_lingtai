@@ -14,7 +14,9 @@ import java.util.Set;
  * {@code spellId} references the functional implementation registered in the spell registry
  * (ModSpells, via DeferredRegister), which supplies the actual in-world behaviour.
  *
- * <p>{@code costElements} 为空表示此法术不挑灵气属性，施展时从修士现有的任意灵力中扣取。
+ * <p>{@code baseCost} 表示练气一层、圆满熟练度、九寸灵根时的一品基础消耗；实际施法时还会
+ * 乘以法术品级与本次威力倍率。{@code costElements} 为空表示此法术不挑灵气属性，施展时从
+ * 修士现有的任意灵力中扣取。
  */
 public record TechniqueSpell(
         ResourceLocation spellId,
