@@ -47,6 +47,18 @@ public final class CultivationUtility {
         return nextStage.map(CultivationUtility::getRequiredSpiritualEnergy);
     }
 
+    /**
+     * Returns the spiritual-energy amount required by the next target stage. At the final stage
+     * of a realm this is the manual realm-breakthrough requirement; at the final realm it is the
+     * current stage requirement.
+     */
+    public static BigInteger getMaximumAbsorbableSpiritualEnergy(Optional<CultivationStage> currentStage) {
+        return getNextRequiredSpiritualEnergy(currentStage)
+                .orElseGet(() -> currentStage
+                        .map(CultivationUtility::getRequiredSpiritualEnergy)
+                        .orElse(BigInteger.ZERO));
+    }
+
     public static boolean areAllSpiritualRootsComplete(
             CultivationStage targetStage,
             SpiritualRoot spiritualRoot,

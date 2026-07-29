@@ -25,6 +25,7 @@ import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
 import java.math.BigInteger;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -211,8 +212,7 @@ public final class PlayerMeditationManager {
      */
     public static double getRealmAbsorptionMultiplier(Player player) {
         Optional<CultivationStage> stage = PlayerCultivationData.getStage(player);
-        BigInteger nextRequirement = CultivationUtility.getNextRequiredSpiritualEnergy(stage)
-                .orElseGet(() -> CultivationUtility.getRequiredSpiritualEnergy(stage.orElseThrow()));
+        BigInteger nextRequirement = CultivationUtility.getMaximumAbsorbableSpiritualEnergy(stage);
         double requirementScale = Math.max(
                 1.0D,
                 nextRequirement.doubleValue()
@@ -281,10 +281,17 @@ public final class PlayerMeditationManager {
         double baseAbsorption = CommonConfig.MEDITATION_BASE_ABSORPTION_PER_SECOND.get()
                 * breathingMultiplier
                 * getRealmAbsorptionMultiplier(player);
-        for (Map.Entry<ElementType, Double> entry : absorptionProfile.absorptionRates().entrySet()) {
-            PlayerSpiritualEnergyData.addEnergy(player, entry.getKey(), baseAbsorption * entry.getValue());
+        Map<ElementType, Double> absorbableEnergy = calculateAbsorbableEnergy(
+                player,
+                absorptionProfile.absorptionRates(),
+                baseAbsorption
+        );
+        for (Map.Entry<ElementType, Double> entry : absorbableEnergy.entrySet()) {
+            PlayerSpiritualEnergyData.addEnergy(player, entry.getKey(), entry.getValue());
         }
-        tryAdvanceLayer(player);
+        if (!absorbableEnergy.isEmpty()) {
+            tryAdvanceLayer(player);
+        }
     }
 
     private static void absorbHeldSpiritualStoneEnergy(
@@ -308,8 +315,13 @@ public final class PlayerMeditationManager {
                 * breathingMultiplier
                 * getRealmAbsorptionMultiplier(player)
                 * SpiritualStoneUtility.getAbsorptionMultiplier(spiritualStone);
-        double requestedEnergy = absorptionRates.values().stream()
-                .mapToDouble(rate -> baseAbsorption * rate)
+        Map<ElementType, Double> absorbableEnergy = calculateAbsorbableEnergy(
+                player,
+                absorptionRates,
+                baseAbsorption
+        );
+        double requestedEnergy = absorbableEnergy.values().stream()
+                .mapToDouble(Double::doubleValue)
                 .sum();
         if (requestedEnergy <= 0.0D) {
             return;
@@ -320,15 +332,43 @@ public final class PlayerMeditationManager {
             return;
         }
 
-        double absorptionRatio = drainedEnergy / requestedEnergy;
-        for (Map.Entry<ElementType, Double> entry : absorptionRates.entrySet()) {
+        double absorptionRatio = Math.min(1.0D, drainedEnergy / requestedEnergy);
+        for (Map.Entry<ElementType, Double> entry : absorbableEnergy.entrySet()) {
             PlayerSpiritualEnergyData.addEnergy(
                     player,
                     entry.getKey(),
-                    baseAbsorption * entry.getValue() * absorptionRatio
+                    entry.getValue() * absorptionRatio
             );
         }
         tryAdvanceLayer(player);
+    }
+
+    private static Map<ElementType, Double> calculateAbsorbableEnergy(
+            ServerPlayer player,
+            Map<ElementType, Double> absorptionRates,
+            double baseAbsorption
+    ) {
+        double maximumEnergy = CultivationUtility.getMaximumAbsorbableSpiritualEnergy(
+                PlayerCultivationData.getStage(player)
+        ).doubleValue();
+        if (!Double.isFinite(maximumEnergy) || maximumEnergy <= 0.0D
+                || !Double.isFinite(baseAbsorption) || baseAbsorption <= 0.0D) {
+            return Map.of();
+        }
+
+        EnumMap<ElementType, Double> absorbableEnergy = new EnumMap<>(ElementType.class);
+        for (Map.Entry<ElementType, Double> entry : absorptionRates.entrySet()) {
+            double requestedEnergy = baseAbsorption * entry.getValue();
+            if (!Double.isFinite(requestedEnergy) || requestedEnergy <= 0.0D) {
+                continue;
+            }
+            double remainingCapacity = maximumEnergy
+                    - PlayerSpiritualEnergyData.getEnergy(player, entry.getKey());
+            if (remainingCapacity > 0.0D) {
+                absorbableEnergy.put(entry.getKey(), Math.min(requestedEnergy, remainingCapacity));
+            }
+        }
+        return Map.copyOf(absorbableEnergy);
     }
 
     /**

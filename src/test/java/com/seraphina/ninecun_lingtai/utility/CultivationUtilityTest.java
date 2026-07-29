@@ -41,6 +41,30 @@ class CultivationUtilityTest {
     }
 
     @Test
+    void usesTheNextTargetRequirementAsTheAbsorptionLimit() {
+        assertEquals(
+                BigInteger.valueOf(35L),
+                CultivationUtility.getMaximumAbsorbableSpiritualEnergy(
+                        Optional.of(new CultivationStage(CultivationRealm.QI_REFINING, 1))
+                )
+        );
+        assertEquals(
+                BigInteger.valueOf(3860L),
+                CultivationUtility.getMaximumAbsorbableSpiritualEnergy(
+                        Optional.of(new CultivationStage(CultivationRealm.QI_REFINING, 9))
+                )
+        );
+        assertEquals(
+                CultivationUtility.getRequiredSpiritualEnergy(
+                        new CultivationStage(CultivationRealm.IMMORTAL, CultivationStage.MAXIMUM_LAYER)
+                ),
+                CultivationUtility.getMaximumAbsorbableSpiritualEnergy(
+                        Optional.of(new CultivationStage(CultivationRealm.IMMORTAL, 9))
+                )
+        );
+    }
+
+    @Test
     void calculatesBreakthroughCostForEveryIndependentRoot() {
         CultivationStage firstStage = CultivationStage.first();
         SpiritualRoot singleRoot = new SpiritualRoot(Set.of(ElementType.METAL), 9.0F);
