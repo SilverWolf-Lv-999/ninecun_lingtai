@@ -19,11 +19,14 @@ import com.seraphina.ninecun_lingtai.client.render.SoulConstellationShader;
 import com.seraphina.ninecun_lingtai.client.render.SoulRenderer;
 import com.seraphina.ninecun_lingtai.client.render.SpiritualEnergyShader;
 import com.seraphina.ninecun_lingtai.client.render.TechniqueCloudShader;
-import com.seraphina.ninecun_lingtai.client.render.ThunderTribulationRenderer;
 import com.seraphina.ninecun_lingtai.client.render.TribulationCloudShader;
 import com.seraphina.ninecun_lingtai.client.render.layer.BodyDefenseSpellLayer;
+import com.seraphina.ninecun_lingtai.common.entity.tribulation.ThunderTribulationEntity;
 import com.seraphina.ninecun_lingtai.common.registry.ModEntityTypes;
 import net.minecraft.client.model.geom.ModelLayerLocation;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.entity.LightningBoltRenderer;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
@@ -111,8 +114,15 @@ public final class ClientModEventHandler {
         );
         event.registerEntityRenderer(
                 ModEntityTypes.THUNDER_TRIBULATION.get(),
-                ThunderTribulationRenderer::new
+                ClientModEventHandler::createVanillaLightningRenderer
         );
+    }
+
+    @SuppressWarnings("unchecked")
+    private static EntityRenderer<ThunderTribulationEntity> createVanillaLightningRenderer(
+            EntityRendererProvider.Context context
+    ) {
+        return (EntityRenderer<ThunderTribulationEntity>) (EntityRenderer<?>) new LightningBoltRenderer(context);
     }
 
     @SubscribeEvent

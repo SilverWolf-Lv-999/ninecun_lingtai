@@ -37,15 +37,20 @@ public final class ClientTribulationManager {
                 && Minecraft.getInstance().screen instanceof CultivationScreen) {
             Minecraft.getInstance().setScreen(null);
         }
-        STATES.put(packet.playerId(), new ClientTribulationState(
-                packet.phase(),
-                packet.phaseRemainingTicks(),
-                packet.totalStrikes(),
-                packet.completedStrikes(),
-                new Vec3(packet.centerX(), packet.centerY(), packet.centerZ()),
-                packet.radius(),
-                packet.intensity()
-        ));
+        ClientTribulationState state = STATES.get(packet.playerId());
+        if (state == null) {
+            STATES.put(packet.playerId(), new ClientTribulationState(
+                    packet.phase(),
+                    packet.phaseRemainingTicks(),
+                    packet.totalStrikes(),
+                    packet.completedStrikes(),
+                    new Vec3(packet.centerX(), packet.centerY(), packet.centerZ()),
+                    packet.radius(),
+                    packet.intensity()
+            ));
+            return;
+        }
+        state.update(packet);
     }
 
     public static float getLocalDarkness(float partialTick) {
@@ -68,16 +73,17 @@ public final class ClientTribulationManager {
     }
 
     public static float getCloudIntensity(ClientTribulationState state, float partialTick) {
+        float remainingTicks = Math.max(0.0F, state.phaseRemainingTicks - partialTick);
         return switch (state.phase) {
             case PREPARING -> 1.0F - Mth.clamp(
-                    (state.phaseRemainingTicks - partialTick) / (float) PREPARATION_TICKS,
+                    remainingTicks / (float) PREPARATION_TICKS,
                     0.0F,
                     1.0F
             );
             case STRIKING -> 1.0F;
             case AFTERMATH -> 0.92F;
             case DISSIPATING -> Mth.clamp(
-                    (state.phaseRemainingTicks + partialTick) / (float) DISSIPATION_TICKS,
+                    remainingTicks / (float) DISSIPATION_TICKS,
                     0.0F,
                     1.0F
             );
@@ -153,13 +159,13 @@ public final class ClientTribulationManager {
     }
 
     public static final class ClientTribulationState {
-        private final TribulationPhase phase;
-        private final int phaseRemainingTicks;
-        private final int totalStrikes;
-        private final int completedStrikes;
-        private final Vec3 center;
-        private final float radius;
-        private final float intensity;
+        private TribulationPhase phase;
+        private float phaseRemainingTicks;
+        private int totalStrikes;
+        private int completedStrikes;
+        private Vec3 center;
+        private float radius;
+        private float intensity;
         private final net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> dimension;
 
         private ClientTribulationState(
@@ -184,6 +190,28 @@ public final class ClientTribulationManager {
         }
 
         private void tick() {
+            this.phaseRemainingTicks = Math.max(0.0F, this.phaseRemainingTicks - 1.0F);
+        }
+
+        private void update(SyncTribulationStatePacket packet) {
+            TribulationPhase packetPhase = packet.phase();
+            if (this.phase != packetPhase) {
+                this.phaseRemainingTicks = packet.phaseRemainingTicks();
+            } else {
+                // Correct network drift gradually so the cloud animation never jumps when
+                // the server sends its periodic authoritative state.
+                this.phaseRemainingTicks = Mth.lerp(
+                        0.40F,
+                        this.phaseRemainingTicks,
+                        packet.phaseRemainingTicks()
+                );
+            }
+            this.phase = packetPhase;
+            this.totalStrikes = packet.totalStrikes();
+            this.completedStrikes = packet.completedStrikes();
+            this.center = new Vec3(packet.centerX(), packet.centerY(), packet.centerZ());
+            this.radius = packet.radius();
+            this.intensity = packet.intensity();
         }
 
         public Vec3 center() {
@@ -195,7 +223,7 @@ public final class ClientTribulationManager {
         }
 
         public int phaseRemainingTicks() {
-            return this.phaseRemainingTicks;
+            return (int) Math.ceil(this.phaseRemainingTicks);
         }
 
         public int completedStrikes() {

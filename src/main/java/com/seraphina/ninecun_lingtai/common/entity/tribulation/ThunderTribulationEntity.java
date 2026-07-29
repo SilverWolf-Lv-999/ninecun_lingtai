@@ -14,8 +14,8 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
@@ -24,7 +24,11 @@ import net.minecraftforge.network.NetworkHooks;
 import java.util.Optional;
 import java.util.UUID;
 
-public final class ThunderTribulationEntity extends Entity {
+/**
+ * A damage-aware tribulation strike that is also a vanilla LightningBolt.
+ * The inherited client renderer is intentionally used without a custom visual renderer.
+ */
+public final class ThunderTribulationEntity extends LightningBolt {
     private static final String OWNER_UUID_KEY = "OwnerUuid";
     private static final String STRIKE_INDEX_KEY = "StrikeIndex";
     private static final String DAMAGE_KEY = "Damage";
@@ -102,7 +106,10 @@ public final class ThunderTribulationEntity extends Entity {
 
     @Override
     public void tick() {
-        super.tick();
+        // LightningBolt.tick() applies vanilla fire and thunder-hit behavior. The tribulation
+        // owns its damage and lifetime, so run the common entity tick only and let the vanilla
+        // LightningBoltRenderer handle the client appearance.
+        this.baseTick();
         this.setNoGravity(true);
         this.noPhysics = true;
         if (this.level().isClientSide) {

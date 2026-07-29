@@ -177,12 +177,17 @@ public final class TribulationManager {
     }
 
     private static void spawnCloudParticles(ServerPlayer player, TribulationSession session) {
-        if (player.tickCount % 4 != 0) {
-            return;
-        }
         ServerLevel level = player.serverLevel();
         float intensity = switch (session.phase()) {
-            case PREPARING -> 0.55F;
+            case PREPARING -> {
+                float progress = 1.0F - Mth.clamp(
+                        session.phaseRemainingTicks()
+                                / (float) Math.max(1, CommonConfig.TRIBULATION_PREPARATION_TICKS.get()),
+                        0.0F,
+                        1.0F
+                );
+                yield 0.12F + progress * 0.88F;
+            }
             case STRIKING -> 1.0F;
             case AFTERMATH -> 0.90F;
             case DISSIPATING -> Mth.clamp(
@@ -201,7 +206,7 @@ public final class TribulationManager {
                 session.center().x,
                 session.center().y + 11.0D,
                 session.center().z,
-                Math.max(12, Math.round(24.0F * intensity)),
+                Math.max(3, Math.round(6.0F * intensity)),
                 radius * 0.62D,
                 1.6D,
                 radius * 0.62D,
@@ -212,7 +217,7 @@ public final class TribulationManager {
                 session.center().x,
                 session.center().y + 12.0D,
                 session.center().z,
-                Math.max(8, Math.round(16.0F * intensity)),
+                Math.max(2, Math.round(4.0F * intensity)),
                 radius * 0.55D,
                 1.2D,
                 radius * 0.55D,

@@ -69,7 +69,13 @@ public final class TribulationCloudRenderUtility {
             }
             float intensity = ClientTribulationManager.getCloudIntensity(state, event.getPartialTick());
             if (intensity > 0.001F) {
-                renderCloudShell(matrix, state.center(), state.radius(), intensity);
+                renderCloudShell(
+                        matrix,
+                        state.center(),
+                        state.radius(),
+                        intensity,
+                        minecraft.level.getGameTime() + event.getPartialTick()
+                );
             }
         }
 
@@ -84,16 +90,22 @@ public final class TribulationCloudRenderUtility {
             Matrix4f matrix,
             Vec3 center,
             float radius,
-            float intensity
+            float intensity,
+            float animationTime
     ) {
         BufferBuilder bufferBuilder = Tesselator.getInstance().getBuilder();
         bufferBuilder.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR);
 
         for (int layer = 0; layer < 3; layer++) {
-            float layerScale = 0.76F + layer * 0.13F;
+            float pulse = 0.97F + Mth.sin(animationTime * 0.045F + layer * 1.8F) * 0.03F;
+            float layerScale = (0.76F + layer * 0.13F) * pulse;
             float horizontalRadius = radius * layerScale;
             float verticalRadius = 7.0F + layer * 1.5F;
-            Vec3 cloudCenter = center.add(0.0D, 11.0D + layer * 0.7D, 0.0D);
+            Vec3 cloudCenter = center.add(
+                    Mth.sin(animationTime * 0.018F + layer * 2.1F) * 1.4D,
+                    11.0D + layer * 0.7D + Mth.cos(animationTime * 0.022F + layer) * 0.35D,
+                    Mth.cos(animationTime * 0.016F + layer * 1.4F) * 1.4D
+            );
             int color = layer == 0 ? 0x1C2745 : layer == 1 ? 0x111A32 : 0x0A1024;
             int alpha = Mth.clamp(
                     Math.round(intensity * (layer == 0 ? 76.0F : layer == 1 ? 58.0F : 42.0F)),
