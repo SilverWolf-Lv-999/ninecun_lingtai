@@ -93,6 +93,29 @@ public final class PlayerSpiritualEnergyData {
         player.getPersistentData().remove(SPIRITUAL_ENERGY_KEY);
     }
 
+    /**
+     * Retains the requested fraction of every stored spiritual-energy pool.
+     * A ratio of zero clears all energy, while a ratio of one leaves it unchanged.
+     */
+    public static void retainEnergyRatio(Player player, double retainedRatio) {
+        if (!Double.isFinite(retainedRatio)) {
+            return;
+        }
+        if (retainedRatio <= 0.0D) {
+            clearAllEnergy(player);
+            return;
+        }
+        if (retainedRatio >= 1.0D) {
+            return;
+        }
+        for (ElementType element : ElementType.values()) {
+            double energy = getEnergy(player, element);
+            if (energy > 0.0D) {
+                setEnergy(player, element, energy * retainedRatio);
+            }
+        }
+    }
+
     public static boolean consumeEnergy(Player player, ElementType element, double amount) {
         return consumeEnergy(player, Set.of(element), amount);
     }

@@ -66,7 +66,7 @@ minecraft {
     // However, it must be at "META-INF/accesstransformer.cfg" in the final mod jar to be loaded by Forge.
     // This default location is a best practice to automatically put the file in the right place in the final jar.
     // See https://docs.minecraftforge.net/en/latest/advanced/accesstransformers/ for more information.
-    // accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
+    accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
 
     // Default run configurations.
     // These can be tweaked, removed, or duplicated as needed.
@@ -220,6 +220,16 @@ dependencies {
     runtimeOnly fg.deobf("maven.modrinth:in-game-account-switcher:${in_game_account_switcher_version}")
     runtimeOnly fg.deobf("maven.modrinth:5PkY7RJI:${rts_building_version}")
     runtimeOnly fg.deobf("maven.modrinth:DYtfQEYj:${effortless_building_version}")
+
+    // Development helper mod for distant terrain rendering.
+    runtimeOnly fg.deobf("maven.modrinth:uCdwusMi:${distant_horizons_version}")
+    runtimeOnly fg.deobf("maven.modrinth:NNAgCjsB:${entityculling_version}")
+    runtimeOnly fg.deobf("maven.modrinth:nmDcB62a:${modernfix_version}")
+    runtimeOnly fg.deobf("maven.modrinth:5ZwdcRci:${immediately_fast_version}")
+    runtimeOnly fg.deobf("maven.modrinth:fALzjamp:${chunky_version}")
+    runtimeOnly fg.deobf("maven.modrinth:RSeLon5O:${particle_core_version}")
+    runtimeOnly fg.deobf("maven.modrinth:hYykXjDp:${fzzy_config_version}")
+    runtimeOnly fg.deobf("maven.modrinth:ordsPcFz:${kotlin_for_forge_version}")
     minecraftLibrary("com.sk89q.worldedit:worldedit-core:${worldedit_version}") {
         exclude group: 'com.google.guava', module: 'guava'
         exclude group: 'com.google.code.gson', module: 'gson'

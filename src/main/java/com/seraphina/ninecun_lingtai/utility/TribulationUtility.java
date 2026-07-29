@@ -5,6 +5,7 @@ import com.seraphina.ninecun_lingtai.api.aptitude.SpiritualRoot;
 import com.seraphina.ninecun_lingtai.common.config.CommonConfig;
 import com.seraphina.ninecun_lingtai.common.tribulation.TribulationType;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.LivingEntity;
 
 public final class TribulationUtility {
     private TribulationUtility() {
@@ -63,5 +64,11 @@ public final class TribulationUtility {
                 0.8D,
                 4.0D
         );
+    }
+
+    public static void noHurtDelay(LivingEntity livingEntity) {
+        livingEntity.hurtTime = 10;
+        livingEntity.invulnerableTime = 0;
+        livingEntity.invulnerableDuration = 0;
     }
 }

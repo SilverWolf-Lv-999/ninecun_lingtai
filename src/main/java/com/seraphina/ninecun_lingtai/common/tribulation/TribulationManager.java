@@ -12,6 +12,7 @@ import com.seraphina.ninecun_lingtai.common.player.PlayerCultivationData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerCultivationManager;
 import com.seraphina.ninecun_lingtai.common.player.PlayerDefenseResourceData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerMeditationManager;
+import com.seraphina.ninecun_lingtai.common.player.PlayerSpiritualEnergyData;
 import com.seraphina.ninecun_lingtai.utility.NotificationUtility;
 import com.seraphina.ninecun_lingtai.utility.TribulationUtility;
 import net.minecraft.core.particles.ParticleTypes;
@@ -31,6 +32,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public final class TribulationManager {
+    private static final double TRIBULATION_REMAINING_SPIRITUAL_ENERGY_RATIO = 0.01D;
     private static final Map<UUID, TribulationSession> SESSIONS = new HashMap<>();
 
     private TribulationManager() {
@@ -74,6 +76,10 @@ public final class TribulationManager {
             PlayerMeditationManager.finishTribulationMeditating(player);
             return StartResult.INSUFFICIENT_SPIRITUAL_ENERGY;
         }
+        PlayerSpiritualEnergyData.retainEnergyRatio(
+                player,
+                TRIBULATION_REMAINING_SPIRITUAL_ENERGY_RATIO
+        );
         NotificationUtility.send(
                 player,
                 Component.literal(type.chineseName()),

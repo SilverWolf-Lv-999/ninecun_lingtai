@@ -4,6 +4,7 @@ import com.seraphina.ninecun_lingtai.common.registry.ModDamageTypes;
 import com.seraphina.ninecun_lingtai.common.config.CommonConfig;
 import com.seraphina.ninecun_lingtai.common.entity.spell.DefenseSpellGuardianEntity;
 import com.seraphina.ninecun_lingtai.utility.DefenseSpellUtility;
+import com.seraphina.ninecun_lingtai.utility.TribulationUtility;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -121,8 +122,7 @@ public final class ThunderTribulationEntity extends LightningBolt {
             return;
         }
         this.entityData.set(REMAINING_TICKS, remainingTicks);
-        if ((this.tickCount == 1 || this.tickCount % 10 == 0)
-                && this.level() instanceof ServerLevel serverLevel) {
+        if (this.level() instanceof ServerLevel serverLevel) {
             this.damageNearbyLivingEntities(serverLevel);
         }
     }
@@ -174,7 +174,7 @@ public final class ThunderTribulationEntity extends LightningBolt {
                 this,
                 this
         );
-        float pulseDamage = this.getDamage() / 6.0F;
+        float pulseDamage = this.getDamage();
         ServerPlayer owner = this.getOwnerUuid()
                 .map(serverLevel::getPlayerByUUID)
                 .filter(ServerPlayer.class::isInstance)
@@ -200,11 +200,19 @@ public final class ThunderTribulationEntity extends LightningBolt {
             float damage
     ) {
         if (livingEntity instanceof ServerPlayer player) {
-            DefenseSpellUtility.getGuardian(player)
-                    .map(guardian -> guardian.hurt(damageSource, damage))
-                    .orElseGet(() -> livingEntity.hurt(damageSource, damage));
+            DefenseSpellUtility.getGuardian(player).ifPresentOrElse(
+                    guardian -> {
+                        TribulationUtility.noHurtDelay(guardian);
+                        guardian.hurt(damageSource, damage);
+                    },
+                    () -> {
+                        TribulationUtility.noHurtDelay(player);
+                        player.hurt(damageSource, damage);
+                    }
+            );
             return;
         }
+        TribulationUtility.noHurtDelay(livingEntity);
         livingEntity.hurt(damageSource, damage);
     }
 }
