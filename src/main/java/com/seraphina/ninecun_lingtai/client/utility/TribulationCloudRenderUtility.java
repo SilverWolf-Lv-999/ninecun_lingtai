@@ -1,19 +1,23 @@
 package com.seraphina.ninecun_lingtai.client.utility;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.BufferUploader;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import com.seraphina.ninecun_lingtai.client.render.TribulationCloudShader;
 import com.seraphina.ninecun_lingtai.client.tribulation.ClientTribulationManager;
+import com.seraphina.ninecun_lingtai.client.tribulation.ClientTribulationManager.ClientTribulationState;
+import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.util.Mth;
 import net.minecraftforge.client.event.RenderGuiOverlayEvent;
+import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
 public final class TribulationCloudRenderUtility {
@@ -29,35 +33,135 @@ public final class TribulationCloudRenderUtility {
         if (minecraft.options.hideGui || alpha <= 0.001F) {
             return;
         }
-        ShaderInstance shaderInstance = TribulationCloudShader.getTribulationCloudShader();
-        if (shaderInstance == null) {
-            drawFallback(event, alpha);
+        drawFallback(event, alpha);
+    }
+
+    public static void renderWorld(RenderLevelStageEvent event) {
+        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES) {
             return;
         }
-        int width = event.getWindow().getGuiScaledWidth();
-        int height = event.getWindow().getGuiScaledHeight();
-        event.getGuiGraphics().flush();
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.disableCull();
-        RenderSystem.setShader(() -> shaderInstance);
-        shaderInstance.safeGetUniform("CloudTime").set(
-                (minecraft.level == null ? 0L : minecraft.level.getGameTime()) / 20.0F
-        );
-        shaderInstance.safeGetUniform("CloudProgress").set(Mth.clamp(alpha, 0.0F, 1.0F));
-        shaderInstance.safeGetUniform("ScreenSize").set((float) width, (float) height);
-        shaderInstance.safeGetUniform("Darkness").set(Mth.clamp(alpha, 0.0F, 1.0F));
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.level == null || ClientTribulationManager.getStates().isEmpty()) {
+            return;
+        }
 
-        Matrix4f matrix = event.getGuiGraphics().pose().last().pose();
-        BufferBuilder bufferBuilder = Tesselator.getInstance().getBuilder();
-        bufferBuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR_TEX);
-        vertex(bufferBuilder, matrix, 0.0F, 0.0F, 0.0F, 0.0F, alpha);
-        vertex(bufferBuilder, matrix, 0.0F, height, 0.0F, 0.0F, alpha);
-        vertex(bufferBuilder, matrix, width, height, 1.0F, 1.0F, alpha);
-        vertex(bufferBuilder, matrix, width, 0.0F, 1.0F, 0.0F, alpha);
-        BufferUploader.drawWithShader(bufferBuilder.end());
+        Camera camera = event.getCamera();
+        Vec3 cameraPosition = camera.getPosition();
+        PoseStack poseStack = event.getPoseStack();
+        poseStack.pushPose();
+        poseStack.translate(-cameraPosition.x, -cameraPosition.y, -cameraPosition.z);
+
+        RenderSystem.enableBlend();
+        RenderSystem.blendFunc(
+                GlStateManager.SourceFactor.SRC_ALPHA,
+                GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA
+        );
+        RenderSystem.enableDepthTest();
+        RenderSystem.depthMask(false);
+        RenderSystem.disableCull();
+        RenderSystem.setShader(GameRenderer::getPositionColorShader);
+
+        Matrix4f matrix = poseStack.last().pose();
+        for (ClientTribulationState state : ClientTribulationManager.getStates().values()) {
+            double renderDistance = state.radius() + 48.0D;
+            if (state.center().distanceToSqr(cameraPosition) > renderDistance * renderDistance) {
+                continue;
+            }
+            float intensity = ClientTribulationManager.getCloudIntensity(state, event.getPartialTick());
+            if (intensity > 0.001F) {
+                renderCloudShell(matrix, state.center(), state.radius(), intensity);
+            }
+        }
+
+        RenderSystem.depthMask(true);
         RenderSystem.enableCull();
+        RenderSystem.defaultBlendFunc();
         RenderSystem.disableBlend();
+        poseStack.popPose();
+    }
+
+    private static void renderCloudShell(
+            Matrix4f matrix,
+            Vec3 center,
+            float radius,
+            float intensity
+    ) {
+        BufferBuilder bufferBuilder = Tesselator.getInstance().getBuilder();
+        bufferBuilder.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR);
+
+        for (int layer = 0; layer < 3; layer++) {
+            float layerScale = 0.76F + layer * 0.13F;
+            float horizontalRadius = radius * layerScale;
+            float verticalRadius = 7.0F + layer * 1.5F;
+            Vec3 cloudCenter = center.add(0.0D, 11.0D + layer * 0.7D, 0.0D);
+            int color = layer == 0 ? 0x1C2745 : layer == 1 ? 0x111A32 : 0x0A1024;
+            int alpha = Mth.clamp(
+                    Math.round(intensity * (layer == 0 ? 76.0F : layer == 1 ? 58.0F : 42.0F)),
+                    0,
+                    120
+            );
+            appendEllipsoid(bufferBuilder, matrix, cloudCenter, horizontalRadius, verticalRadius, color, alpha);
+        }
+
+        BufferUploader.drawWithShader(bufferBuilder.end());
+    }
+
+    private static void appendEllipsoid(
+            BufferBuilder bufferBuilder,
+            Matrix4f matrix,
+            Vec3 center,
+            float horizontalRadius,
+            float verticalRadius,
+            int color,
+            int alpha
+    ) {
+        int latitudeSegments = 8;
+        int longitudeSegments = 24;
+        for (int latitude = 0; latitude < latitudeSegments; latitude++) {
+            float theta = Mth.PI * latitude / latitudeSegments;
+            float nextTheta = Mth.PI * (latitude + 1) / latitudeSegments;
+            for (int longitude = 0; longitude < longitudeSegments; longitude++) {
+                float phi = Mth.TWO_PI * longitude / longitudeSegments;
+                float nextPhi = Mth.TWO_PI * (longitude + 1) / longitudeSegments;
+                Vec3 first = ellipsoidPoint(center, theta, phi, horizontalRadius, verticalRadius);
+                Vec3 second = ellipsoidPoint(center, nextTheta, phi, horizontalRadius, verticalRadius);
+                Vec3 third = ellipsoidPoint(center, nextTheta, nextPhi, horizontalRadius, verticalRadius);
+                Vec3 fourth = ellipsoidPoint(center, theta, nextPhi, horizontalRadius, verticalRadius);
+                appendVertex(bufferBuilder, matrix, first, color, alpha);
+                appendVertex(bufferBuilder, matrix, second, color, alpha);
+                appendVertex(bufferBuilder, matrix, third, color, alpha);
+                appendVertex(bufferBuilder, matrix, first, color, alpha);
+                appendVertex(bufferBuilder, matrix, third, color, alpha);
+                appendVertex(bufferBuilder, matrix, fourth, color, alpha);
+            }
+        }
+    }
+
+    private static Vec3 ellipsoidPoint(
+            Vec3 center,
+            float theta,
+            float phi,
+            float horizontalRadius,
+            float verticalRadius
+    ) {
+        float sinTheta = Mth.sin(theta);
+        return center.add(
+                Mth.cos(phi) * sinTheta * horizontalRadius,
+                Mth.cos(theta) * verticalRadius,
+                Mth.sin(phi) * sinTheta * horizontalRadius
+        );
+    }
+
+    private static void appendVertex(
+            BufferBuilder bufferBuilder,
+            Matrix4f matrix,
+            Vec3 point,
+            int color,
+            int alpha
+    ) {
+        bufferBuilder.vertex(matrix, (float) point.x, (float) point.y, (float) point.z)
+                .color(color >> 16 & 0xFF, color >> 8 & 0xFF, color & 0xFF, alpha)
+                .endVertex();
     }
 
     private static void drawFallback(RenderGuiOverlayEvent.Post event, float alpha) {
@@ -68,23 +172,8 @@ public final class TribulationCloudRenderUtility {
                 0,
                 event.getWindow().getGuiScaledWidth(),
                 event.getWindow().getGuiScaledHeight(),
-                ((int) (alpha * 170.0F) << 24) | 0x10182D
+                (Mth.clamp(Math.round(alpha * 220.0F), 0, 220) << 24) | 0x10182D
         );
         RenderSystem.disableBlend();
-    }
-
-    private static void vertex(
-            BufferBuilder bufferBuilder,
-            Matrix4f matrix,
-            float x,
-            float y,
-            float textureU,
-            float textureV,
-            float alpha
-    ) {
-        bufferBuilder.vertex(matrix, x, y, 0.0F)
-                .color(255, 255, 255, Mth.clamp(Math.round(alpha * 255.0F), 0, 255))
-                .uv(textureU, textureV)
-                .endVertex();
     }
 }

@@ -27,7 +27,7 @@ public final class ThunderTribulationRenderer extends EntityRenderer<ThunderTrib
             int packedLight
     ) {
         float lifeFactor = Math.min(1.0F, entity.getRemainingTicks() / 8.0F);
-        float height = 12.0F + entity.getIntensity() * 5.0F;
+        float height = 22.0F + entity.getIntensity() * 8.0F;
         VertexConsumer consumer = bufferSource.getBuffer(RenderType.lightning());
         Matrix4f matrix = poseStack.last().pose();
         long seed = entity.getUUID().getMostSignificantBits()
@@ -57,16 +57,16 @@ public final class ThunderTribulationRenderer extends EntityRenderer<ThunderTrib
             float lifeFactor,
             long seed
     ) {
-        int segmentCount = 11;
-        float width = 0.13F + intensity * 0.025F;
+        int segmentCount = 16;
+        float width = 0.42F + intensity * 0.10F;
         float previousX = 0.0F;
         float previousZ = 0.0F;
         for (int segment = 1; segment <= segmentCount; segment++) {
             float progress = segment / (float) segmentCount;
             float nextX = (random(seed + segment * 0x632BE59BD9B4E019L) - 0.5F)
-                    * (0.8F + intensity * 0.15F);
+                    * (1.25F + intensity * 0.28F);
             float nextZ = (random(seed + segment * 0xC6BC279692B5CC83L) - 0.5F)
-                    * (0.8F + intensity * 0.15F);
+                    * (1.25F + intensity * 0.28F);
             float previousY = (segment - 1) / (float) segmentCount * height;
             float nextY = progress * height;
             appendSegment(
@@ -98,8 +98,8 @@ public final class ThunderTribulationRenderer extends EntityRenderer<ThunderTrib
             float width,
             float alpha
     ) {
-        quad(consumer, matrix, firstX - width, firstY, firstZ, secondX - width, secondY, secondZ, alpha);
-        quad(consumer, matrix, firstX, firstY, firstZ - width, secondX, secondY, secondZ - width, alpha);
+        quad(consumer, matrix, firstX - width, firstY, firstZ, secondX - width, secondY, secondZ, width, alpha);
+        quad(consumer, matrix, firstX, firstY, firstZ - width, secondX, secondY, secondZ - width, width, alpha);
     }
 
     private static void quad(
@@ -111,13 +111,15 @@ public final class ThunderTribulationRenderer extends EntityRenderer<ThunderTrib
             float secondX,
             float secondY,
             float secondZ,
+            float width,
             float alpha
     ) {
         int alphaChannel = Math.max(20, Math.min(255, Math.round(alpha * 255.0F)));
         vertex(consumer, matrix, firstX, firstY, firstZ, alphaChannel);
         vertex(consumer, matrix, secondX, secondY, secondZ, alphaChannel);
-        vertex(consumer, matrix, secondX + 0.22F, secondY, secondZ + 0.22F, alphaChannel);
-        vertex(consumer, matrix, firstX + 0.22F, firstY, firstZ + 0.22F, alphaChannel);
+        float flare = width * 1.45F;
+        vertex(consumer, matrix, secondX + flare, secondY, secondZ + flare, alphaChannel);
+        vertex(consumer, matrix, firstX + flare, firstY, firstZ + flare, alphaChannel);
     }
 
     private static void vertex(VertexConsumer consumer, Matrix4f matrix, float x, float y, float z, int alpha) {

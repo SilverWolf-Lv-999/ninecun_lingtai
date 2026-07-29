@@ -54,12 +54,7 @@ public final class ClientTribulationManager {
         if (state == null || player == null || !isInsideArea(player, state)) {
             return 0.0F;
         }
-        float phaseDarkness = switch (state.phase) {
-            case PREPARING -> 1.0F - Mth.clamp((state.phaseRemainingTicks - partialTick) / PREPARATION_TICKS, 0.0F, 1.0F);
-            case STRIKING -> 0.9F;
-            case AFTERMATH -> 0.84F;
-            case DISSIPATING -> Mth.clamp((state.phaseRemainingTicks + partialTick) / DISSIPATION_TICKS, 0.0F, 1.0F);
-        };
+        float phaseDarkness = getCloudIntensity(state, partialTick);
         float distanceFactor = 1.0F - Mth.clamp(
                 (float) Math.sqrt(player.distanceToSqr(state.center)) / Math.max(1.0F, state.radius),
                 0.0F,
@@ -70,6 +65,23 @@ public final class ClientTribulationManager {
 
     public static float getLocalCloudAlpha(float partialTick) {
         return getLocalDarkness(partialTick) * 0.78F;
+    }
+
+    public static float getCloudIntensity(ClientTribulationState state, float partialTick) {
+        return switch (state.phase) {
+            case PREPARING -> 1.0F - Mth.clamp(
+                    (state.phaseRemainingTicks - partialTick) / (float) PREPARATION_TICKS,
+                    0.0F,
+                    1.0F
+            );
+            case STRIKING -> 1.0F;
+            case AFTERMATH -> 0.92F;
+            case DISSIPATING -> Mth.clamp(
+                    (state.phaseRemainingTicks + partialTick) / (float) DISSIPATION_TICKS,
+                    0.0F,
+                    1.0F
+            );
+        };
     }
 
     public static float applyCameraYRot(Entity cameraEntity, float baseRotation, float partialTick) {
@@ -176,6 +188,18 @@ public final class ClientTribulationManager {
 
         public Vec3 center() {
             return this.center;
+        }
+
+        public TribulationPhase phase() {
+            return this.phase;
+        }
+
+        public int phaseRemainingTicks() {
+            return this.phaseRemainingTicks;
+        }
+
+        public int completedStrikes() {
+            return this.completedStrikes;
         }
 
         public float radius() {

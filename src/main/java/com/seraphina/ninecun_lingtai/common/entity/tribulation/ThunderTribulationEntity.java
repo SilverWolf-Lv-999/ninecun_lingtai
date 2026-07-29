@@ -114,7 +114,8 @@ public final class ThunderTribulationEntity extends Entity {
             return;
         }
         this.entityData.set(REMAINING_TICKS, remainingTicks);
-        if (this.tickCount % 10 == 0 && this.level() instanceof ServerLevel serverLevel) {
+        if ((this.tickCount == 1 || this.tickCount % 10 == 0)
+                && this.level() instanceof ServerLevel serverLevel) {
             this.damageNearbyLivingEntities(serverLevel);
         }
     }
@@ -166,20 +167,37 @@ public final class ThunderTribulationEntity extends Entity {
                 this,
                 this
         );
+        float pulseDamage = this.getDamage() / 6.0F;
+        ServerPlayer owner = this.getOwnerUuid()
+                .map(serverLevel::getPlayerByUUID)
+                .filter(ServerPlayer.class::isInstance)
+                .map(ServerPlayer.class::cast)
+                .orElse(null);
+        if (owner != null && owner.isAlive()) {
+            hurtLivingEntity(owner, damageSource, pulseDamage);
+        }
         for (LivingEntity livingEntity : serverLevel.getEntitiesOfClass(
                 LivingEntity.class,
                 damageBox,
                 livingEntity -> livingEntity.isAlive()
                         && !(livingEntity instanceof DefenseSpellGuardianEntity)
+                        && livingEntity != owner
         )) {
-            float pulseDamage = this.getDamage() / 6.0F;
-            if (livingEntity instanceof ServerPlayer player) {
-                DefenseSpellUtility.getGuardian(player)
-                        .map(guardian -> guardian.hurt(damageSource, pulseDamage))
-                        .orElseGet(() -> livingEntity.hurt(damageSource, pulseDamage));
-                continue;
-            }
-            livingEntity.hurt(damageSource, pulseDamage);
+            hurtLivingEntity(livingEntity, damageSource, pulseDamage);
         }
+    }
+
+    private static void hurtLivingEntity(
+            LivingEntity livingEntity,
+            DamageSource damageSource,
+            float damage
+    ) {
+        if (livingEntity instanceof ServerPlayer player) {
+            DefenseSpellUtility.getGuardian(player)
+                    .map(guardian -> guardian.hurt(damageSource, damage))
+                    .orElseGet(() -> livingEntity.hurt(damageSource, damage));
+            return;
+        }
+        livingEntity.hurt(damageSource, damage);
     }
 }

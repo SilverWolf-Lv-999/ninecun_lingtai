@@ -14,7 +14,6 @@ import com.seraphina.ninecun_lingtai.common.player.PlayerDefenseResourceData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerMeditationManager;
 import com.seraphina.ninecun_lingtai.utility.NotificationUtility;
 import com.seraphina.ninecun_lingtai.utility.TribulationUtility;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -23,7 +22,6 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
@@ -78,11 +76,8 @@ public final class TribulationManager {
         }
         NotificationUtility.send(
                 player,
-                Component.literal("天劫将至·" + type.chineseName()),
-                Component.literal(
-                        type.ancientDescription()
-                                + "　雷云酝酿十息，劫数共 " + type.strikeCount() + " 道。"
-                ),
+                Component.literal(type.chineseName()),
+                Component.empty(),
                 20 * 9
         );
         ModNetwork.sendTribulationState(player, session);
@@ -127,6 +122,7 @@ public final class TribulationManager {
         if (!PlayerMeditationManager.isMeditating(player)) {
             PlayerMeditationManager.startTribulationMeditating(player);
         }
+        spawnCloudParticles(player, session);
 
         switch (session.phase()) {
             case PREPARING -> tickPreparing(player, session);
@@ -145,12 +141,6 @@ public final class TribulationManager {
             return;
         }
         PlayerMeditationManager.finishTribulationMeditating(player);
-        NotificationUtility.send(
-                player,
-                Component.literal("天劫未渡"),
-                Component.literal("道基震荡，金丹未成；请重新凝神，再寻破境之机。"),
-                20 * 5
-        );
         ModNetwork.sendTribulationState(player, session, false);
     }
 
@@ -186,6 +176,50 @@ public final class TribulationManager {
         }
     }
 
+    private static void spawnCloudParticles(ServerPlayer player, TribulationSession session) {
+        if (player.tickCount % 4 != 0) {
+            return;
+        }
+        ServerLevel level = player.serverLevel();
+        float intensity = switch (session.phase()) {
+            case PREPARING -> 0.55F;
+            case STRIKING -> 1.0F;
+            case AFTERMATH -> 0.90F;
+            case DISSIPATING -> Mth.clamp(
+                    session.phaseRemainingTicks()
+                            / (float) Math.max(1, CommonConfig.TRIBULATION_DISSIPATION_TICKS.get()),
+                    0.0F,
+                    1.0F
+            );
+        };
+        if (intensity <= 0.0F) {
+            return;
+        }
+        double radius = session.radius();
+        level.sendParticles(
+                ParticleTypes.CLOUD,
+                session.center().x,
+                session.center().y + 11.0D,
+                session.center().z,
+                Math.max(12, Math.round(24.0F * intensity)),
+                radius * 0.62D,
+                1.6D,
+                radius * 0.62D,
+                0.015D
+        );
+        level.sendParticles(
+                ParticleTypes.SMOKE,
+                session.center().x,
+                session.center().y + 12.0D,
+                session.center().z,
+                Math.max(8, Math.round(16.0F * intensity)),
+                radius * 0.55D,
+                1.2D,
+                radius * 0.55D,
+                0.008D
+        );
+    }
+
     private static void tickStriking(ServerPlayer player, TribulationSession session) {
         session.tickPhase();
         if (session.phaseRemainingTicks() > 0) {
@@ -208,12 +242,6 @@ public final class TribulationManager {
         }
         PlayerCultivationData.setStage(player, new CultivationStage(CultivationRealm.GOLDEN_CORE, 1));
         PlayerDefenseResourceData.refillToMaximum(player);
-        NotificationUtility.send(
-                player,
-                Component.literal("金丹已成"),
-                Component.literal("五行归炉，金丹初结；雷云将散，仙途自此不同。"),
-                20 * 6
-        );
         ModNetwork.sendCultivationInfo(player);
         ModNetwork.sendDefenseResource(player);
         session.startDissipating(CommonConfig.TRIBULATION_DISSIPATION_TICKS.get());
@@ -233,14 +261,9 @@ public final class TribulationManager {
         ServerLevel level = player.serverLevel();
         int strikeIndex = session.completedStrikes() + 1;
         RandomSource random = level.random;
-        double angle = random.nextDouble() * Math.PI * 2.0D;
-        double distance = Math.sqrt(random.nextDouble()) * session.radius();
-        double x = session.center().x + Mth.cos((float) angle) * distance;
-        double z = session.center().z + Mth.sin((float) angle) * distance;
-        BlockPos groundPosition = level.getHeightmapPos(
-                Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-                BlockPos.containing(x, session.center().y, z)
-        );
+        double x = session.center().x + (random.nextDouble() - 0.5D) * 3.0D;
+        double z = session.center().z + (random.nextDouble() - 0.5D) * 3.0D;
+        double y = session.center().y;
         ThunderTribulationEntity lightning = new ThunderTribulationEntity(
                 com.seraphina.ninecun_lingtai.common.registry.ModEntityTypes.THUNDER_TRIBULATION.get(),
                 level
@@ -251,13 +274,13 @@ public final class TribulationManager {
                 TribulationUtility.getStrikeDamage(session.type(), strikeIndex, session.aptitudeScore()),
                 TribulationUtility.getVisualIntensity(session.type(), strikeIndex, session.aptitudeScore())
         );
-        lightning.moveTo(x, groundPosition.getY(), z, 0.0F, 0.0F);
+        lightning.moveTo(x, y, z, 0.0F, 0.0F);
         if (level.addFreshEntity(lightning)) {
             session.completeStrike();
             level.playSound(
                     null,
                     x,
-                    groundPosition.getY(),
+                    y,
                     z,
                     SoundEvents.LIGHTNING_BOLT_IMPACT,
                     SoundSource.WEATHER,
@@ -267,7 +290,7 @@ public final class TribulationManager {
             level.sendParticles(
                     ParticleTypes.ELECTRIC_SPARK,
                     x,
-                    groundPosition.getY() + 1.0D,
+                    y + 1.0D,
                     z,
                     32,
                     1.6D,
@@ -284,12 +307,6 @@ public final class TribulationManager {
         } else {
             session.startStriking(CommonConfig.TRIBULATION_STRIKE_INTERVAL_TICKS.get());
         }
-        NotificationUtility.send(
-                player,
-                Component.literal(session.type().chineseName() + "·第" + strikeIndex + "道"),
-                Component.literal("雷威递增，守住神魂与道心。"),
-                20 * 2
-        );
         ModNetwork.sendTribulationState(player, session);
     }
 

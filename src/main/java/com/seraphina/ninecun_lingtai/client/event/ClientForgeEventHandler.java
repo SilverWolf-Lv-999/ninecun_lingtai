@@ -98,7 +98,8 @@ public final class ClientForgeEventHandler {
             event.setCanceled(true);
             return;
         }
-        if (ClientMeditationManager.isLocalPlayerMeditating()) {
+        if (ClientMeditationManager.isLocalPlayerMeditating()
+                && !ClientTribulationManager.isLocalPlayerInTribulation()) {
             event.setSwingHand(false);
             event.setCanceled(true);
         }
@@ -129,6 +130,7 @@ public final class ClientForgeEventHandler {
     public static void onRenderLevelStage(RenderLevelStageEvent event) {
         SpiritualEnergyRenderUtility.render(event);
         BodyShieldRenderUtility.render(event);
+        TribulationCloudRenderUtility.renderWorld(event);
     }
 
     @SubscribeEvent

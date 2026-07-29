@@ -23,7 +23,8 @@ public final class CastSpellPacket {
 
     public static void handle(CastSpellPacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
         ServerPlayer player = contextSupplier.get().getSender();
-        if (player != null && !PlayerSoulRoamingManager.isSoulRoaming(player)) {
+        if (player != null
+                && !PlayerSoulRoamingManager.isSoulRoaming(player)) {
             SpellCastManager.castSelectedSpell(player);
         }
     }

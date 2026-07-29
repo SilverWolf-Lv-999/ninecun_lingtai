@@ -2,6 +2,7 @@ package com.seraphina.ninecun_lingtai.client.player;
 
 import com.seraphina.ninecun_lingtai.client.input.ModKeyMappings;
 import com.seraphina.ninecun_lingtai.client.screen.SpellSelectionScreen;
+import com.seraphina.ninecun_lingtai.client.tribulation.ClientTribulationManager;
 import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import com.seraphina.ninecun_lingtai.common.network.packet.CastSpellPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SelectSpellPacket;
@@ -25,7 +26,8 @@ public final class ClientSpellManager {
         while (ModKeyMappings.SPELL_SELECTION.consumeClick()) {
             if (player != null
                     && minecraft.screen == null
-                    && !ClientMeditationManager.isLocalPlayerMeditating()
+                    && (ClientTribulationManager.isLocalPlayerInTribulation()
+                    || !ClientMeditationManager.isLocalPlayerMeditating())
                     && !ClientSoulRoamingManager.isLocalPlayerSoulRoaming()) {
                 ClientTechniqueManager.requestRefresh();
                 minecraft.setScreen(new SpellSelectionScreen());
@@ -34,7 +36,8 @@ public final class ClientSpellManager {
         while (ModKeyMappings.CAST_SPELL.consumeClick()) {
             if (player != null
                     && minecraft.screen == null
-                    && !ClientMeditationManager.isLocalPlayerMeditating()
+                    && (ClientTribulationManager.isLocalPlayerInTribulation()
+                    || !ClientMeditationManager.isLocalPlayerMeditating())
                     && !ClientSoulRoamingManager.isLocalPlayerSoulRoaming()) {
                 ModNetwork.sendToServer(CastSpellPacket.INSTANCE);
             }

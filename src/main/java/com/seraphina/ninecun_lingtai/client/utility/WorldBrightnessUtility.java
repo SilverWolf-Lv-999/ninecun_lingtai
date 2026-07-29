@@ -15,20 +15,18 @@ public final class WorldBrightnessUtility {
     }
 
     public static float applySkyDarken(float skyDarken) {
-        if (shouldRenderWorldAtFullBrightness()) {
-            return FULL_WORLD_BRIGHTNESS;
-        }
-        return Math.min(
-                FULL_WORLD_BRIGHTNESS,
-                skyDarken + ClientTribulationManager.getLocalDarkness(0.0F) * 0.72F
-        );
+        float tribulationDarkness = ClientTribulationManager.getLocalDarkness(0.0F);
+        float baseSkyDarken = shouldRenderWorldAtFullBrightness()
+                ? FULL_WORLD_BRIGHTNESS
+                : skyDarken;
+        return baseSkyDarken * (1.0F - tribulationDarkness * 0.85F);
     }
 
     public static float applyLightTextureBrightness(float brightness) {
-        if (shouldRenderWorldAtFullBrightness()) {
-            return FULL_WORLD_BRIGHTNESS;
-        }
         float darkness = ClientTribulationManager.getLocalDarkness(0.0F);
-        return brightness * (1.0F - darkness * 0.42F);
+        float baseBrightness = shouldRenderWorldAtFullBrightness()
+                ? FULL_WORLD_BRIGHTNESS
+                : brightness;
+        return baseBrightness * (1.0F - darkness * 0.65F);
     }
 }

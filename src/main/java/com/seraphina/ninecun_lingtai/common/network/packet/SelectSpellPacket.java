@@ -20,7 +20,8 @@ public record SelectSpellPacket(ResourceLocation spellId) {
 
     public static void handle(SelectSpellPacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
         ServerPlayer player = contextSupplier.get().getSender();
-        if (player != null && !PlayerSoulRoamingManager.isSoulRoaming(player)) {
+        if (player != null
+                && !PlayerSoulRoamingManager.isSoulRoaming(player)) {
             SpellCastManager.selectSpell(player, packet.spellId);
         }
     }

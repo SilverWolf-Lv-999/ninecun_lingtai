@@ -27,6 +27,8 @@ public final class TribulationUtility {
     }
 
     public static double getStrikeRadius(float aptitudeScore) {
+        // The tribulation area is centered on the player. The base radius is 30 blocks,
+        // with the configured aptitude bonus expanding the area for stronger aptitudes.
         return CommonConfig.TRIBULATION_BASE_RADIUS.get()
                 + CommonConfig.TRIBULATION_APTITUDE_RADIUS_BONUS.get() * Mth.clamp(aptitudeScore, 0.0F, 1.0F);
     }

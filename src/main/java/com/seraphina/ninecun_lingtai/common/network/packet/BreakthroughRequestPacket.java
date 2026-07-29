@@ -99,14 +99,7 @@ public final class BreakthroughRequestPacket {
             TribulationManager.StartResult result
     ) {
         switch (result) {
-            case STARTED -> {
-                ModNetwork.sendCultivationFeedback(
-                        player,
-                        true,
-                        Component.literal("金丹天劫已起，请守住道心，渡过三九或四九雷劫。")
-                );
-                ModNetwork.sendCultivationInfo(player);
-            }
+            case STARTED -> ModNetwork.sendCultivationInfo(player);
             case ALREADY_ACTIVE -> ModNetwork.sendCultivationFeedback(
                     player,
                     false,
