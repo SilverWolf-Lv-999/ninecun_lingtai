@@ -16,9 +16,6 @@ public final class PlayerShrinkEarthData {
     private static final String LAST_Y_KEY = "last_y";
     private static final String LAST_Z_KEY = "last_z";
 
-    private PlayerShrinkEarthData() {
-    }
-
     public static boolean isActive(Player player) {
         CompoundTag persistentData = player.getPersistentData();
         return persistentData.contains(SHRINK_EARTH_KEY, Tag.TAG_COMPOUND)

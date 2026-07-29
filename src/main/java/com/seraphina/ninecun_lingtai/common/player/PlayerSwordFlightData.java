@@ -16,6 +16,7 @@ public final class PlayerSwordFlightData {
     private static final String SWORD_KEY = "sword";
 
     private PlayerSwordFlightData() {
+        throw new AssertionError("我欲乘风归去");
     }
 
     public static boolean isFlying(Player player) {

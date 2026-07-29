@@ -85,9 +85,6 @@ public final class ModSpells {
             DefenseSpellKind.FOUR_PHASE_GUARDIAN
     );
 
-    private ModSpells() {
-    }
-
     public static void register(IEventBus modEventBus) {
         SPELLS.register(modEventBus);
     }

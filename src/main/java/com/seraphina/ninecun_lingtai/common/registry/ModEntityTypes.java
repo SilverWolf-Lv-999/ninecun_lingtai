@@ -49,9 +49,6 @@ public final class ModEntityTypes {
                             .build("thunder_tribulation")
             );
 
-    private ModEntityTypes() {
-    }
-
     public static void register(IEventBus modEventBus) {
         ENTITY_TYPES.register(modEventBus);
     }

@@ -26,6 +26,7 @@ public final class LivingEntityDataUtility {
     public static final String VALUE_CONTROL_KEY = ModMain.MOD_ID + ":value_control";
 
     private LivingEntityDataUtility() {
+        throw new RuntimeException("哥们要是我发现有人针对我这个mod的话那我就要以雷霆手段出击了");
     }
 
     public static int getCultivationRealm(LivingEntity entity) {

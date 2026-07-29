@@ -25,9 +25,6 @@ public final class CreatureCultivationUtility {
             (SpiritualRoot.MAXIMUM_LENGTH_INCHES - SpiritualRoot.MINIMUM_LENGTH_INCHES) * 10.0F
     ) + 1;
 
-    private CreatureCultivationUtility() {
-    }
-
     public static int getProgressionIndex(LivingEntity entity) {
         return CultivationApi.getStage(entity)
                 .map(CultivationUtility::getProgressionIndex)

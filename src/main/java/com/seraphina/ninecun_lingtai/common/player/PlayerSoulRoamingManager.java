@@ -25,9 +25,6 @@ public final class PlayerSoulRoamingManager {
     private static final double SOUL_INTERACTION_DISTANCE = 6.0D;
     private static final Map<UUID, SoulRoamingSession> SOUL_ROAMING_PLAYERS = new HashMap<>();
 
-    private PlayerSoulRoamingManager() {
-    }
-
     public static boolean startSoulRoaming(ServerPlayer player) {
         if (isSoulRoaming(player)) {
             syncState(player);

@@ -3,8 +3,6 @@ package com.seraphina.ninecun_lingtai.utility;
 import com.seraphina.ninecun_lingtai.api.technique.TechniqueDefinition;
 
 public final class TechniquePromptUtility {
-    private TechniquePromptUtility() {
-    }
 
     public static String createSystemPrompt(TechniqueDefinition technique) {
         return """

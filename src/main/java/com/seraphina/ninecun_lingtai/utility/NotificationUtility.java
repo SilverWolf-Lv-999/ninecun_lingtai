@@ -13,6 +13,7 @@ public final class NotificationUtility {
     public static final int MAXIMUM_DURATION_TICKS = 20 * 60;
 
     private NotificationUtility() {
+        throw new IllegalStateException("哎呀我去你干什么呢");
     }
 
     public static void send(ServerPlayer player, Component title, Component content) {

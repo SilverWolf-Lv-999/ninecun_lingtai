@@ -27,6 +27,7 @@ public final class LightFlightManager {
     private static final int ENERGY_CONSUMPTION_INTERVAL_TICKS = 20;
 
     private LightFlightManager() {
+        throw new RuntimeException("入金丹，行万里");
     }
 
     public static void requestSetFlying(ServerPlayer player, boolean flying) {

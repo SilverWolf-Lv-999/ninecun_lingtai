@@ -15,8 +15,6 @@ import java.util.Optional;
 import java.util.Set;
 
 public final class PlayerCultivationManager {
-    private PlayerCultivationManager() {
-    }
 
     public static BreakthroughResult tryBreakthrough(Player player) {
         Optional<CultivationStage> currentStage = PlayerCultivationData.getStage(player);

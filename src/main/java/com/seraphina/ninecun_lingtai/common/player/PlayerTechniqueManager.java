@@ -19,8 +19,6 @@ import java.util.List;
 import java.util.Optional;
 
 public final class PlayerTechniqueManager {
-    private PlayerTechniqueManager() {
-    }
 
     /**
      * Adds training proficiency to a learned technique and advances its mastery stage when a

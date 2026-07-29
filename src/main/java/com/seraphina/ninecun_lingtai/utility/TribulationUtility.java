@@ -8,8 +8,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 
 public final class TribulationUtility {
-    private TribulationUtility() {
-    }
 
     public static float getAptitudeScore(SpiritualRoot spiritualRoot, SoulStrength soulStrength) {
         return (float) Mth.clamp(

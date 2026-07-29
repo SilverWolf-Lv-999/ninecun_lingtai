@@ -12,9 +12,6 @@ import java.util.Optional;
 public final class PlayerSelectedSpellData {
     private static final String SELECTED_SPELL_KEY = ModMain.MOD_ID + ":selected_spell";
 
-    private PlayerSelectedSpellData() {
-    }
-
     public static Optional<ResourceLocation> getSelectedSpell(Player player) {
         CompoundTag persistentData = player.getPersistentData();
         if (!persistentData.contains(SELECTED_SPELL_KEY, Tag.TAG_STRING)) {

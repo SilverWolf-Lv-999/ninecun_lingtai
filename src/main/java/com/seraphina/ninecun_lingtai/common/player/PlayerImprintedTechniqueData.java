@@ -13,9 +13,6 @@ import java.util.Set;
 public final class PlayerImprintedTechniqueData {
     private static final String IMPRINTED_TECHNIQUES_KEY = ModMain.MOD_ID + ":imprinted_techniques";
 
-    private PlayerImprintedTechniqueData() {
-    }
-
     public static Set<ResourceLocation> getTechniques(Player player) {
         ListTag techniqueTags = player.getPersistentData().getList(
                 IMPRINTED_TECHNIQUES_KEY,

@@ -7,9 +7,6 @@ import net.minecraft.world.entity.player.Player;
 import java.util.Optional;
 
 public final class PlayerCultivationData {
-    private PlayerCultivationData() {
-    }
-
     public static Optional<CultivationStage> getStage(Player player) {
         return EntityCultivationData.getStage(player);
     }

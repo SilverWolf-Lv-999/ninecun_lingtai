@@ -15,9 +15,6 @@ public final class SpiritualEnergyUtility {
     public static final float GENERATION_AFFINITY = 0.72F;
     public static final float REPULSION_AFFINITY = 0.0F;
 
-    private SpiritualEnergyUtility() {
-    }
-
     public static Map<ElementType, Double> createCultivationAbsorptionRates(
             SpiritualRoot spiritualRoot,
             FiveElementValues environmentValues

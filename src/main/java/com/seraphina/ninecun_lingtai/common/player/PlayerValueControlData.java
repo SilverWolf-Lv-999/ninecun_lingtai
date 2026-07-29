@@ -13,9 +13,6 @@ import java.util.Map;
 public final class PlayerValueControlData {
     private static final String LEGACY_VALUE_CONTROL_KEY = ModMain.MOD_ID + ":value_control";
 
-    private PlayerValueControlData() {
-    }
-
     public static PlayerValueControlSettings getSettings(Player player) {
         CompoundTag valueControlData = LivingEntityDataUtility.getValueControl(player);
         if (valueControlData.isEmpty()) {

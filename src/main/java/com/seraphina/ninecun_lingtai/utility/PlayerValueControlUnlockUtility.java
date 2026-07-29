@@ -15,8 +15,6 @@ import java.util.Map;
 import java.util.Set;
 
 public final class PlayerValueControlUnlockUtility {
-    private PlayerValueControlUnlockUtility() {
-    }
 
     public static boolean isUnlocked(Player player, PlayerValueControlType type) {
         return switch (type) {

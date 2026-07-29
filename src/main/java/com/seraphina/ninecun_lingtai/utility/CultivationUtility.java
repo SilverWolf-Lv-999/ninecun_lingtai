@@ -25,9 +25,6 @@ public final class CultivationUtility {
     private static final int MINOR_REALM_REQUIREMENT_OFFSET = 10;
     private static final BigInteger[][] SPIRITUAL_ENERGY_REQUIREMENTS = createSpiritualEnergyRequirements();
 
-    private CultivationUtility() {
-    }
-
     public static BigInteger getRequiredSpiritualEnergy(CultivationStage targetStage) {
         return SPIRITUAL_ENERGY_REQUIREMENTS[targetStage.realm().ordinal()][targetStage.layer() - 1];
     }

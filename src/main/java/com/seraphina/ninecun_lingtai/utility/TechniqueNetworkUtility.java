@@ -13,9 +13,6 @@ public final class TechniqueNetworkUtility {
     private static final int MAXIMUM_DESCRIPTION_LENGTH = 4096;
     private static final int MAXIMUM_CONTENT_LENGTH = 131072;
 
-    private TechniqueNetworkUtility() {
-    }
-
     public static void writeTechnique(FriendlyByteBuf buffer, TechniqueClientData technique) {
         buffer.writeResourceLocation(technique.id());
         buffer.writeUtf(technique.name(), MAXIMUM_NAME_LENGTH);

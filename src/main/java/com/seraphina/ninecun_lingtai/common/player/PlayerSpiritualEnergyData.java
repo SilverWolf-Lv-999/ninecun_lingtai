@@ -9,6 +9,7 @@ import java.util.Set;
 
 public final class PlayerSpiritualEnergyData {
     private PlayerSpiritualEnergyData() {
+        throw new RuntimeException("你不是在写附属吗？怎么找这来了？想针对老娘的mod？");
     }
 
     public static double getEnergy(Player player, ElementType element) {

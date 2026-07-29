@@ -21,6 +21,7 @@ public final class PlayerTechniqueData {
     private static final String FEEDBACK_KEY = "feedback";
 
     private PlayerTechniqueData() {
+        throw new RuntimeException("欸？云朵？");
     }
 
     public static Map<ResourceLocation, TechniqueProgress> getTechniques(Player player) {

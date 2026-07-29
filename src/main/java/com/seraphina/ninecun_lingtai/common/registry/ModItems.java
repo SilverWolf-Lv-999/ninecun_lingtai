@@ -36,9 +36,6 @@ public final class ModItems {
             () -> new BlockItem(ModBlocks.DEEPSLATE_SPIRITUAL_STONE_ORE.get(), new Item.Properties())
     );
 
-    private ModItems() {
-    }
-
     public static void register(IEventBus modEventBus) {
         ITEMS.register(modEventBus);
     }

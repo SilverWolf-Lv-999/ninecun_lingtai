@@ -14,9 +14,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Blocks;
 
 public final class ElementDamageUtility {
-    private ElementDamageUtility() {
-    }
-
     public static double getDamageMultiplier(ElementalPower attackElement, ElementalPower defenseElement) {
         ElementRelation relation = attackElement.element().getRelationTo(defenseElement.element());
         return switch (relation) {

@@ -8,8 +8,6 @@ import net.minecraft.world.entity.player.Player;
 import java.util.Optional;
 
 public final class PlayerAptitudeData {
-    private PlayerAptitudeData() {
-    }
 
     public static Optional<SpiritualRoot> getSpiritualRoot(Player player) {
         return EntityCultivationData.getSpiritualRoot(player);
