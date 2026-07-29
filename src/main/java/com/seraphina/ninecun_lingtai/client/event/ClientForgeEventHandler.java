@@ -12,6 +12,7 @@ import com.seraphina.ninecun_lingtai.client.player.ClientMeditationManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientPlayerValueControlManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientPossessionManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientShrinkEarthManager;
+import com.seraphina.ninecun_lingtai.client.player.ClientPushingMountainsManager;
 import com.seraphina.ninecun_lingtai.client.tribulation.ClientTribulationManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientSoulRoamingManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientSpellManager;
@@ -23,6 +24,9 @@ import com.seraphina.ninecun_lingtai.client.utility.DefenseBarRenderUtility;
 import com.seraphina.ninecun_lingtai.client.utility.DefenseSpellHudRenderUtility;
 import com.seraphina.ninecun_lingtai.client.utility.TribulationCloudRenderUtility;
 import com.seraphina.ninecun_lingtai.client.utility.NotificationRenderUtility;
+import com.seraphina.ninecun_lingtai.client.render.PushingMountainsRenderMeshManager;
+import com.seraphina.ninecun_lingtai.client.utility.PushingMountainsRenderUtility;
+import com.seraphina.ninecun_lingtai.common.entity.ability.PushingMountainsEntity;
 import com.seraphina.ninecun_lingtai.client.utility.SpiritualEnergyHudRenderUtility;
 import com.seraphina.ninecun_lingtai.client.utility.SpiritualEnergyRenderUtility;
 import net.minecraft.client.Minecraft;
@@ -60,11 +64,13 @@ public final class ClientForgeEventHandler {
             ClientSoulRoamingManager.tick();
             ClientNotificationManager.tick();
             ClientTribulationManager.tick();
+            ClientPushingMountainsManager.tick();
         }
     }
 
     @SubscribeEvent
     public static void onKeyInput(InputEvent.Key event) {
+        ClientPushingMountainsManager.onKeyInput(event.getKey(), event.getAction());
         ClientShrinkEarthManager.onKeyInput(event.getKey(), event.getAction());
         if (event.getAction() == GLFW.GLFW_PRESS
                 && (event.getKey() == GLFW.GLFW_KEY_LEFT_SHIFT || event.getKey() == GLFW.GLFW_KEY_RIGHT_SHIFT)) {
@@ -88,6 +94,9 @@ public final class ClientForgeEventHandler {
 
     @SubscribeEvent
     public static void onInteractionInput(InputEvent.InteractionKeyMappingTriggered event) {
+        if (ClientPushingMountainsManager.handleInteraction(event)) {
+            return;
+        }
         if (ClientSoulRoamingManager.isLocalPlayerSoulRoaming()) {
             if (event.isUseItem()) {
                 Minecraft minecraft = Minecraft.getInstance();
@@ -101,6 +110,14 @@ public final class ClientForgeEventHandler {
         if (ClientMeditationManager.isLocalPlayerMeditating()
                 && !ClientTribulationManager.isLocalPlayerInTribulation()) {
             event.setSwingHand(false);
+            event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onMouseScrolling(InputEvent.MouseScrollingEvent event) {
+        if (ClientPushingMountainsManager.isSelectionMode()) {
+            ClientPushingMountainsManager.onMouseScroll(event.getScrollDelta());
             event.setCanceled(true);
         }
     }
@@ -131,6 +148,7 @@ public final class ClientForgeEventHandler {
         SpiritualEnergyRenderUtility.render(event);
         BodyShieldRenderUtility.render(event);
         TribulationCloudRenderUtility.renderWorld(event);
+        PushingMountainsRenderUtility.render(event);
     }
 
     @SubscribeEvent
@@ -154,6 +172,9 @@ public final class ClientForgeEventHandler {
         if (event.getLevel().isClientSide) {
             ClientBodyShieldManager.removeEntity(event.getEntity().getId());
             ClientDefenseSpellManager.removeEntity(event.getEntity().getId());
+            if (event.getEntity() instanceof PushingMountainsEntity region) {
+                PushingMountainsRenderMeshManager.clearEntity(region.getUUID());
+            }
         }
     }
 
@@ -181,5 +202,7 @@ public final class ClientForgeEventHandler {
         ClientPossessionManager.reset();
         ClientNotificationManager.reset();
         ClientTribulationManager.reset();
+        ClientPushingMountainsManager.reset();
+        PushingMountainsRenderMeshManager.clearAll();
     }
 }

@@ -20,6 +20,8 @@ import com.seraphina.ninecun_lingtai.client.render.SoulRenderer;
 import com.seraphina.ninecun_lingtai.client.render.SpiritualEnergyShader;
 import com.seraphina.ninecun_lingtai.client.render.TechniqueCloudShader;
 import com.seraphina.ninecun_lingtai.client.render.TribulationCloudShader;
+import com.seraphina.ninecun_lingtai.client.render.PushingMountainsCollisionRenderer;
+import com.seraphina.ninecun_lingtai.client.render.PushingMountainsEntityRenderer;
 import com.seraphina.ninecun_lingtai.client.render.layer.BodyDefenseSpellLayer;
 import com.seraphina.ninecun_lingtai.common.entity.tribulation.ThunderTribulationEntity;
 import com.seraphina.ninecun_lingtai.common.registry.ModEntityTypes;
@@ -103,6 +105,7 @@ public final class ClientModEventHandler {
         event.register(ModKeyMappings.MEDITATION);
         event.register(ModKeyMappings.SPELL_SELECTION);
         event.register(ModKeyMappings.CAST_SPELL);
+        event.register(ModKeyMappings.PUSHING_MOUNTAINS);
     }
 
     @SubscribeEvent
@@ -115,6 +118,14 @@ public final class ClientModEventHandler {
         event.registerEntityRenderer(
                 ModEntityTypes.THUNDER_TRIBULATION.get(),
                 ClientModEventHandler::createVanillaLightningRenderer
+        );
+        event.registerEntityRenderer(
+                ModEntityTypes.PUSHING_MOUNTAINS_ENTITY.get(),
+                PushingMountainsEntityRenderer::new
+        );
+        event.registerEntityRenderer(
+                ModEntityTypes.PUSHING_MOUNTAINS_COLLISION.get(),
+                PushingMountainsCollisionRenderer::new
         );
     }
 

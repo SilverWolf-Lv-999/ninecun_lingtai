@@ -72,8 +72,17 @@ public final class CultivationDefenseUtility {
             return;
         }
 
-        double healthBonus = getMaxHealthBonus(CreatureCultivationData.getStage(entity));
+        Optional<CultivationStage> stage = CreatureCultivationData.getStage(entity);
         AttributeModifier existingModifier = maxHealth.getModifier(MAX_HEALTH_MODIFIER_ID);
+        if (stage.isEmpty()) {
+            if (existingModifier != null) {
+                maxHealth.removeModifier(MAX_HEALTH_MODIFIER_ID);
+                clampHealthToMaximum(entity);
+            }
+            return;
+        }
+
+        double healthBonus = getMaxHealthBonus(stage);
         if (existingModifier != null && Math.abs(existingModifier.getAmount() - healthBonus) <= 0.0001D) {
             clampHealthToMaximum(entity);
             return;

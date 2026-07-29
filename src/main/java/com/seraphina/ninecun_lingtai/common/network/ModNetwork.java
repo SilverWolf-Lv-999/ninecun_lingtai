@@ -18,6 +18,11 @@ import com.seraphina.ninecun_lingtai.common.network.packet.LearnTechniquePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.OpenAptitudeScreenPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.OpenTechniqueImprintScreenPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.OpenTechniqueScreenPacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.PushingMountainsClearSelectionPacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.PushingMountainsEntityizePacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.PushingMountainsRestorePacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.PushingMountainsSelectPointPacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.PushingMountainsThrowPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.RequestCultivationInfoPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.RequestPlayerValueControlSettingsPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.RequestTechniqueLibraryPacket;
@@ -80,7 +85,7 @@ import java.util.Set;
 import java.util.UUID;
 
 public final class ModNetwork {
-    private static final String PROTOCOL_VERSION = "28";
+    private static final String PROTOCOL_VERSION = "29";
     private static final SimpleChannel CHANNEL = NetworkRegistry.ChannelBuilder
             .named(ResourceLocation.fromNamespaceAndPath(ModMain.MOD_ID, "main"))
             .networkProtocolVersion(() -> PROTOCOL_VERSION)
@@ -432,6 +437,51 @@ public final class ModNetwork {
                 .encoder(SyncPossessionPacket::encode)
                 .decoder(SyncPossessionPacket::decode)
                 .consumerMainThread(SyncPossessionPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        PushingMountainsSelectPointPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(PushingMountainsSelectPointPacket::encode)
+                .decoder(PushingMountainsSelectPointPacket::decode)
+                .consumerMainThread(PushingMountainsSelectPointPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        PushingMountainsEntityizePacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(PushingMountainsEntityizePacket::encode)
+                .decoder(PushingMountainsEntityizePacket::decode)
+                .consumerMainThread(PushingMountainsEntityizePacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        PushingMountainsClearSelectionPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(PushingMountainsClearSelectionPacket::encode)
+                .decoder(PushingMountainsClearSelectionPacket::decode)
+                .consumerMainThread(PushingMountainsClearSelectionPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        PushingMountainsRestorePacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(PushingMountainsRestorePacket::encode)
+                .decoder(PushingMountainsRestorePacket::decode)
+                .consumerMainThread(PushingMountainsRestorePacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        PushingMountainsThrowPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(PushingMountainsThrowPacket::encode)
+                .decoder(PushingMountainsThrowPacket::decode)
+                .consumerMainThread(PushingMountainsThrowPacket::handle)
                 .add();
     }
     

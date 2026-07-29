@@ -33,6 +33,14 @@ public final class ModKeyMappings {
             "key.categories." + ModMain.MOD_ID
     );
 
+    public static final KeyMapping PUSHING_MOUNTAINS = new KeyMapping(
+            "key." + ModMain.MOD_ID + ".pushing_mountains",
+            KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_GRAVE_ACCENT,
+            "key.categories." + ModMain.MOD_ID
+    );
+
     private ModKeyMappings() {
     }
 }

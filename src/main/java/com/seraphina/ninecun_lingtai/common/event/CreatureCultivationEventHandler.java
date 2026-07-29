@@ -27,6 +27,10 @@ public final class CreatureCultivationEventHandler {
         }
         CreatureCultivationData.markSpawnRollDone(mob);
 
+        // LivingEntity starts with a synchronized health value of 1.0F. A newly spawned mob
+        // must be initialized from its own max-health attribute before cultivation is rolled.
+        mob.setHealth(mob.getMaxHealth());
+
         RandomSource random = mob.getRandom();
         if (random.nextDouble() >= CommonConfig.CREATURE_CULTIVATOR_CHANCE.get()) {
             return;

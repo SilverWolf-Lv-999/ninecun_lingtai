@@ -58,7 +58,7 @@ public abstract class LivingEntityMixin extends Entity {
         );
     }
 
-    @Inject(method = "defineSynchedData", at = @At("HEAD"))
+    @Inject(method = "defineSynchedData", at = @At("TAIL"))
     private void defineSynchedData(CallbackInfo callbackInfo) {
         this.entityData.define(LivingEntityDataUtility.CULTIVATION_REALM, -1);
         this.entityData.define(LivingEntityDataUtility.CULTIVATION_LAYER, 0);

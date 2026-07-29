@@ -2,6 +2,8 @@ package com.seraphina.ninecun_lingtai.common.registry;
 
 import com.seraphina.ninecun_lingtai.ModMain;
 import com.seraphina.ninecun_lingtai.common.entity.SoulEntity;
+import com.seraphina.ninecun_lingtai.common.entity.ability.PushingMountainsCollisionEntity;
+import com.seraphina.ninecun_lingtai.common.entity.ability.PushingMountainsEntity;
 import com.seraphina.ninecun_lingtai.common.entity.spell.DefenseSpellGuardianEntity;
 import com.seraphina.ninecun_lingtai.common.entity.tribulation.ThunderTribulationEntity;
 import net.minecraft.world.entity.EntityType;
@@ -47,6 +49,27 @@ public final class ModEntityTypes {
                             .clientTrackingRange(128)
                             .updateInterval(1)
                             .build("thunder_tribulation")
+            );
+
+    public static final RegistryObject<EntityType<PushingMountainsEntity>> PUSHING_MOUNTAINS_ENTITY = ENTITY_TYPES.register(
+            "pushing_mountains_entity",
+            () -> EntityType.Builder
+                    .of(PushingMountainsEntity::new, MobCategory.MISC)
+                    .sized(1.0F, 1.0F)
+                    .clientTrackingRange(256)
+                    .updateInterval(1)
+                    .build("pushing_mountains_entity")
+    );
+
+    public static final RegistryObject<EntityType<PushingMountainsCollisionEntity>> PUSHING_MOUNTAINS_COLLISION =
+            ENTITY_TYPES.register(
+                    "pushing_mountains_collision",
+                    () -> EntityType.Builder
+                            .of(PushingMountainsCollisionEntity::new, MobCategory.MISC)
+                            .sized(1.0F, 1.0F)
+                            .clientTrackingRange(256)
+                            .updateInterval(1)
+                            .build("pushing_mountains_collision")
             );
 
     public static void register(IEventBus modEventBus) {

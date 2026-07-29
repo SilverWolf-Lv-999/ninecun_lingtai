@@ -68,6 +68,11 @@ public final class CommonConfig {
     public static final ForgeConfigSpec.DoubleValue SHRINK_EARTH_ENERGY_COST_PER_SECOND;
     public static final ForgeConfigSpec.IntValue LIGHT_FLIGHT_BOOST_DURATION_TICKS;
     public static final ForgeConfigSpec.IntValue LIGHT_FLIGHT_BOOST_COOLDOWN_TICKS;
+    public static final ForgeConfigSpec.IntValue PUSHING_MOUNTAINS_BASE_SELECTION_DISTANCE;
+    public static final ForgeConfigSpec.IntValue PUSHING_MOUNTAINS_MAX_SELECTION_DISTANCE;
+    public static final ForgeConfigSpec.IntValue PUSHING_MOUNTAINS_MAX_BLOCKS;
+    public static final ForgeConfigSpec.DoubleValue PUSHING_MOUNTAINS_THROW_DAMAGE;
+    public static final ForgeConfigSpec.IntValue PUSHING_MOUNTAINS_MAX_ENTITY_TICKS;
     public static final ForgeConfigSpec.IntValue MORTAL_PLAYER_LIFESPAN_YEARS;
     public static final ForgeConfigSpec.IntValue QI_REFINING_LIFESPAN_YEARS;
     public static final ForgeConfigSpec.IntValue FOUNDATION_ESTABLISHMENT_LIFESPAN_YEARS;
@@ -328,6 +333,24 @@ public final class CommonConfig {
                         MINIMUM_MULTIPLIER,
                         MAXIMUM_BASE_ABSORPTION_PER_SECOND
                 );
+        BUILDER.pop();
+
+        BUILDER.push("pushingMountains");
+        PUSHING_MOUNTAINS_BASE_SELECTION_DISTANCE = BUILDER
+                .comment("Selection distance at Golden Core layer one")
+                .defineInRange("baseSelectionDistance", 24, 1, 400);
+        PUSHING_MOUNTAINS_MAX_SELECTION_DISTANCE = BUILDER
+                .comment("Hard maximum selection distance")
+                .defineInRange("maxSelectionDistance", 400, 1, 400);
+        PUSHING_MOUNTAINS_MAX_BLOCKS = BUILDER
+                .comment("Maximum number of non-air blocks that may be entityized at once")
+                .defineInRange("maxBlocks", 32768, 1, 1048576);
+        PUSHING_MOUNTAINS_THROW_DAMAGE = BUILDER
+                .comment("Damage dealt to living entities inside a thrown region when it annihilates")
+                .defineInRange("throwDamage", 100.0D, 0.0D, MAXIMUM_BASE_ABSORPTION_PER_SECOND);
+        PUSHING_MOUNTAINS_MAX_ENTITY_TICKS = BUILDER
+                .comment("Maximum lifetime of a thrown region before it annihilates")
+                .defineInRange("maxEntityTicks", 1200, 1, 72000);
         BUILDER.pop();
 
         BUILDER.push("lifespan");
