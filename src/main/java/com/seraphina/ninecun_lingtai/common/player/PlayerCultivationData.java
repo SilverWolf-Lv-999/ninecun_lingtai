@@ -1,63 +1,31 @@
 package com.seraphina.ninecun_lingtai.common.player;
 
-import com.seraphina.ninecun_lingtai.ModMain;
-import com.seraphina.ninecun_lingtai.api.cultivation.CultivationRealm;
 import com.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
+import com.seraphina.ninecun_lingtai.common.entity.EntityCultivationData;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.Optional;
 
 public final class PlayerCultivationData {
-    private static final String CULTIVATION_KEY = ModMain.MOD_ID + ":cultivation";
-    private static final String REALM_KEY = "realm";
-    private static final String LAYER_KEY = "layer";
-
     private PlayerCultivationData() {
     }
 
     public static Optional<CultivationStage> getStage(Player player) {
-        CompoundTag persistentData = player.getPersistentData();
-        if (!persistentData.contains(CULTIVATION_KEY, Tag.TAG_COMPOUND)) {
-            return Optional.empty();
-        }
-
-        CompoundTag stageData = persistentData.getCompound(CULTIVATION_KEY);
-        if (!stageData.contains(REALM_KEY, Tag.TAG_STRING)
-                || !stageData.contains(LAYER_KEY, Tag.TAG_ANY_NUMERIC)) {
-            return Optional.empty();
-        }
-
-        Optional<CultivationRealm> realm = CultivationRealm.fromSerializedName(stageData.getString(REALM_KEY));
-        if (realm.isEmpty()) {
-            return Optional.empty();
-        }
-        try {
-            return Optional.of(new CultivationStage(realm.get(), stageData.getInt(LAYER_KEY)));
-        } catch (IllegalArgumentException exception) {
-            return Optional.empty();
-        }
+        return EntityCultivationData.getStage(player);
     }
 
     public static void setStage(Player player, CultivationStage stage) {
-        CompoundTag stageData = new CompoundTag();
-        stageData.putString(REALM_KEY, stage.realm().getSerializedName());
-        stageData.putInt(LAYER_KEY, stage.layer());
-        player.getPersistentData().put(CULTIVATION_KEY, stageData);
+        EntityCultivationData.setStage(player, stage);
     }
 
     public static void clearStage(Player player) {
-        player.getPersistentData().remove(CULTIVATION_KEY);
+        EntityCultivationData.clearStage(player);
     }
 
     public static void copy(Player sourcePlayer, Player targetPlayer) {
-        CompoundTag sourceData = sourcePlayer.getPersistentData();
-        if (sourceData.contains(CULTIVATION_KEY, Tag.TAG_COMPOUND)) {
-            targetPlayer.getPersistentData().put(
-                    CULTIVATION_KEY,
-                    sourceData.getCompound(CULTIVATION_KEY).copy()
-            );
-        }
+        getStage(sourcePlayer).ifPresentOrElse(
+                stage -> setStage(targetPlayer, stage),
+                () -> clearStage(targetPlayer)
+        );
     }
 }

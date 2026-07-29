@@ -113,6 +113,7 @@
   "screen.ninecun_lingtai.spell_selection.hint": "Click or Enter to choose · V to cast",
   "screen.ninecun_lingtai.value_control.title": "Value Control",
   "screen.ninecun_lingtai.value_control.loading": "Reading value controls...",
+  "screen.ninecun_lingtai.value_control.empty": "No values are adjustable at the current realm",
   "screen.ninecun_lingtai.value_control.field.attack_damage": "Attack Damage",
   "screen.ninecun_lingtai.value_control.field.attack_damage.tooltip": "Controls how much realm bonus damage is applied.",
   "screen.ninecun_lingtai.value_control.field.attack_damage.locked_tooltip": "Unlocks after reaching Qi Refining.",

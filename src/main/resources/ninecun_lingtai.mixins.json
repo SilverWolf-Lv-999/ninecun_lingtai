@@ -3,12 +3,14 @@
   "minVersion": "0.8",
   "package": "com.seraphina.ninecun_lingtai.mixin",
   "compatibilityLevel": "JAVA_17",
+  "plugin": "com.seraphina.ninecun_lingtai.mixin.IMixinPlugin",
   "refmap": "ninecun_lingtai.refmap.json",
   "mixins": [
     "common.ChatFormattingMixin",
     "common.StyleMixin",
     "common.food.FoodDataMixin",
     "common.food.PlayerMixin",
+    "common.entity.MixinLivingEntity",
     "common.health.EntityMixin",
     "common.health.LivingEntityMixin"
   ],

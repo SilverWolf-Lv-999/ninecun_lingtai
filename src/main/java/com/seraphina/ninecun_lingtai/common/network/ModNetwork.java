@@ -48,11 +48,10 @@ import com.seraphina.ninecun_lingtai.common.network.packet.TriggerBodyShieldPack
 import com.seraphina.ninecun_lingtai.common.flight.LightFlightManager;
 import com.seraphina.ninecun_lingtai.common.player.PlayerLightFlightData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerShrinkEarthData;
-import com.seraphina.ninecun_lingtai.common.player.PlayerValueControlData;
+import com.seraphina.ninecun_lingtai.common.lifespan.EntityLifespanData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerSwordFlightData;
 import com.seraphina.ninecun_lingtai.common.player.DefenseResourceSnapshot;
 import com.seraphina.ninecun_lingtai.common.player.DefenseSpellSnapshot;
-import com.seraphina.ninecun_lingtai.common.player.PlayerCultivationInfo;
 import com.seraphina.ninecun_lingtai.common.player.PlayerDefenseResourceData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerDefenseSpellData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerImprintedTechniqueData;
@@ -81,7 +80,7 @@ import java.util.Set;
 import java.util.UUID;
 
 public final class ModNetwork {
-    private static final String PROTOCOL_VERSION = "27";
+    private static final String PROTOCOL_VERSION = "28";
     private static final SimpleChannel CHANNEL = NetworkRegistry.ChannelBuilder
             .named(ResourceLocation.fromNamespaceAndPath(ModMain.MOD_ID, "main"))
             .networkProtocolVersion(() -> PROTOCOL_VERSION)
@@ -637,7 +636,7 @@ public final class ModNetwork {
     public static void sendCultivationInfo(ServerPlayer player) {
         CHANNEL.send(
                 PacketDistributor.PLAYER.with(() -> player),
-                new SyncCultivationInfoPacket(PlayerCultivationInfo.capture(player))
+                new SyncCultivationInfoPacket(EntityLifespanData.capture(player))
         );
     }
 
@@ -682,7 +681,6 @@ public final class ModNetwork {
         CHANNEL.send(
                 PacketDistributor.PLAYER.with(() -> player),
                 new SyncPlayerValueControlSettingsPacket(
-                        PlayerValueControlData.getSettings(player),
                         PlayerSoulRoamingManager.isSoulRoaming(player)
                                 ? Set.of()
                                 : PlayerValueControlUnlockUtility.getUnlockedTypes(player)

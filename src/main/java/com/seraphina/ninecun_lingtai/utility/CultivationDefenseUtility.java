@@ -172,9 +172,7 @@ public final class CultivationDefenseUtility {
     }
 
     public static boolean getProtectedAlive(Entity entity, boolean original) {
-        return entity instanceof LivingEntity livingEntity && hasActiveDefense(livingEntity)
-                ? true
-                : original;
+        return entity instanceof LivingEntity livingEntity && hasActiveDefense(livingEntity) || original;
     }
 
     public static boolean isDeadOrDying(LivingEntity entity) {
@@ -182,9 +180,7 @@ public final class CultivationDefenseUtility {
     }
 
     public static boolean getProtectedDeadOrDying(LivingEntity entity, boolean original) {
-        return hasActiveDefense(entity)
-                ? false
-                : original;
+        return !hasActiveDefense(entity) && original;
     }
 
     public static int getMaximumDefenseResource(Optional<CultivationStage> stage) {

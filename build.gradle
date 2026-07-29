@@ -225,11 +225,20 @@ dependencies {
     runtimeOnly fg.deobf("maven.modrinth:uCdwusMi:${distant_horizons_version}")
     runtimeOnly fg.deobf("maven.modrinth:NNAgCjsB:${entityculling_version}")
     runtimeOnly fg.deobf("maven.modrinth:nmDcB62a:${modernfix_version}")
-    runtimeOnly fg.deobf("maven.modrinth:5ZwdcRci:${immediately_fast_version}")
     runtimeOnly fg.deobf("maven.modrinth:fALzjamp:${chunky_version}")
     runtimeOnly fg.deobf("maven.modrinth:RSeLon5O:${particle_core_version}")
     runtimeOnly fg.deobf("maven.modrinth:hYykXjDp:${fzzy_config_version}")
     runtimeOnly fg.deobf("maven.modrinth:ordsPcFz:${kotlin_for_forge_version}")
+    runtimeOnly fg.deobf("maven.modrinth:uXXizFIs:${ferrite_core_version}")
+    runtimeOnly fg.deobf("maven.modrinth:g96Z4WVZ:${bad_optimizations_version}")
+    runtimeOnly fg.deobf("maven.modrinth:sk9rgfiA:${embeddium_version}")
+    runtimeOnly fg.deobf("maven.modrinth:QdG47OkI:${modelfix_version}")
+    runtimeOnly fg.deobf("maven.modrinth:GchcoXML:${oculus_version}")
+    runtimeOnly fg.deobf("maven.modrinth:ZP7xHXtw:${rrls_version}")
+    runtimeOnly fg.deobf("maven.modrinth:m5T5xmUy:${bettergrassify_version}")
+    runtimeOnly fg.deobf("maven.modrinth:Aqlf1Shp:${forgified_fabric_api_version}")
+    runtimeOnly fg.deobf("maven.modrinth:iRfIGC1s:${starlight_forge_version}")
+    runtimeOnly fg.deobf("maven.modrinth:oY2B1pjg:${rubidium_extra_version}")
     minecraftLibrary("com.sk89q.worldedit:worldedit-core:${worldedit_version}") {
         exclude group: 'com.google.guava', module: 'guava'
         exclude group: 'com.google.code.gson', module: 'gson'

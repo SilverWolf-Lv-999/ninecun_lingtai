@@ -113,6 +113,7 @@
   "screen.ninecun_lingtai.spell_selection.hint": "点击或回车择定 · 按V施展",
   "screen.ninecun_lingtai.value_control.title": "数值自控",
   "screen.ninecun_lingtai.value_control.loading": "正在读取自控设置……",
+  "screen.ninecun_lingtai.value_control.empty": "当前境界尚无可调节的数值",
   "screen.ninecun_lingtai.value_control.field.attack_damage": "攻击伤害",
   "screen.ninecun_lingtai.value_control.field.attack_damage.tooltip": "控制境界加成伤害的应用比例。",
   "screen.ninecun_lingtai.value_control.field.attack_damage.locked_tooltip": "突破至练气期后可调节境界加成伤害。",
