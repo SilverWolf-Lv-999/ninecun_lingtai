@@ -10,23 +10,33 @@ import net.minecraftforge.network.NetworkEvent;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-public record SetMeditationStatePacket(boolean meditating, Optional<ResourceLocation> techniqueId) {
+public record SetMeditationStatePacket(
+        boolean meditating,
+        Optional<ResourceLocation> techniqueId,
+        boolean cultivatingRealm
+) {
     public SetMeditationStatePacket(boolean meditating) {
-        this(meditating, Optional.empty());
+        this(meditating, Optional.empty(), false);
+    }
+
+    public SetMeditationStatePacket(boolean meditating, Optional<ResourceLocation> techniqueId) {
+        this(meditating, techniqueId, false);
     }
 
     public static void encode(SetMeditationStatePacket packet, FriendlyByteBuf buffer) {
         buffer.writeBoolean(packet.meditating);
+        buffer.writeBoolean(packet.cultivatingRealm);
         buffer.writeBoolean(packet.techniqueId.isPresent());
         packet.techniqueId.ifPresent(buffer::writeResourceLocation);
     }
 
     public static SetMeditationStatePacket decode(FriendlyByteBuf buffer) {
         boolean meditating = buffer.readBoolean();
+        boolean cultivatingRealm = buffer.readBoolean();
         Optional<ResourceLocation> techniqueId = buffer.readBoolean()
                 ? Optional.of(buffer.readResourceLocation())
                 : Optional.empty();
-        return new SetMeditationStatePacket(meditating, techniqueId);
+        return new SetMeditationStatePacket(meditating, techniqueId, cultivatingRealm);
     }
 
     public static void handle(SetMeditationStatePacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
@@ -38,7 +48,11 @@ public record SetMeditationStatePacket(boolean meditating, Optional<ResourceLoca
             return;
         }
         if (packet.meditating) {
-            PlayerMeditationManager.startMeditating(player, packet.techniqueId.orElse(null));
+            PlayerMeditationManager.startMeditating(
+                    player,
+                    packet.techniqueId.orElse(null),
+                    packet.cultivatingRealm
+            );
         } else {
             PlayerMeditationManager.stopMeditating(player);
         }

@@ -443,7 +443,11 @@ public final class TechniqueTrainingScreen extends AbstractTechniqueImprintScree
         }
         this.submitted = true;
         this.closeToWorld = true;
-        ClientMeditationManager.startTechniqueCultivation(this.selectedTechniqueId);
+        if (this.mode == Mode.REALM) {
+            ClientMeditationManager.startRealmCultivation(this.selectedTechniqueId);
+        } else {
+            ClientMeditationManager.startTechniqueCultivation(this.selectedTechniqueId);
+        }
         beginClosing();
     }
 

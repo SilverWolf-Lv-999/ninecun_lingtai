@@ -8,7 +8,6 @@ import com.seraphina.ninecun_lingtai.common.registry.ModEntityTypes;
 import com.seraphina.ninecun_lingtai.utility.PossessionUtility;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -42,15 +41,13 @@ public final class PlayerSoulRoamingManager {
             );
             return false;
         }
-        if (!PlayerMeditationManager.isMeditating(player)
-                && !PlayerMeditationManager.startMeditating(player)) {
+        if (!PlayerMeditationManager.startMeditating(player)) {
             player.displayClientMessage(
                     Component.translatable("message.ninecun_lingtai.soul_roaming.cannot_start"),
                     true
             );
             return false;
         }
-        Optional<ResourceLocation> meditationTechnique = PlayerMeditationManager.getCultivatedTechnique(player);
         if (!player.isAlive() || player.isSpectator() || player.isPassenger() || player.isSleeping()) {
             player.displayClientMessage(
                     Component.translatable("message.ninecun_lingtai.soul_roaming.cannot_start"),
@@ -74,7 +71,6 @@ public final class PlayerSoulRoamingManager {
         SoulRoamingSession session = new SoulRoamingSession(
                 player.level().dimension(),
                 player.position(),
-                meditationTechnique,
                 soul.getUUID(),
                 soul.getId(),
                 new SoulMovementInput()
@@ -96,10 +92,7 @@ public final class PlayerSoulRoamingManager {
         }
         keepBodyAtPosition(player, session);
         if (!PlayerMeditationManager.isMeditating(player)) {
-            PlayerMeditationManager.startMeditating(
-                    player,
-                    session.meditationTechnique().orElse(null)
-            );
+            PlayerMeditationManager.startMeditating(player);
         }
 
         SoulEntity soul = getSoulEntity(player.server, session).orElse(null);
@@ -329,7 +322,6 @@ public final class PlayerSoulRoamingManager {
     private record SoulRoamingSession(
             ResourceKey<Level> soulDimension,
             Vec3 bodyPosition,
-            Optional<ResourceLocation> meditationTechnique,
             UUID soulUuid,
             int soulEntityId,
             SoulMovementInput movementInput

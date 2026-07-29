@@ -40,10 +40,18 @@ public final class PlayerMeditationManager {
     }
 
     public static boolean startMeditating(ServerPlayer player) {
-        return startMeditating(player, null);
+        return startMeditating(player, null, false);
     }
 
     public static boolean startMeditating(ServerPlayer player, @Nullable ResourceLocation techniqueId) {
+        return startMeditating(player, techniqueId, false);
+    }
+
+    public static boolean startMeditating(
+            ServerPlayer player,
+            @Nullable ResourceLocation techniqueId,
+            boolean cultivatingRealm
+    ) {
         if (TribulationManager.isInTribulation(player)) {
             return startTribulationMeditating(player);
         }
@@ -55,10 +63,15 @@ public final class PlayerMeditationManager {
             syncSelfState(player, isMeditating(player));
             return false;
         }
+        if (cultivatingRealm && !isBreathingTechnique(techniqueId)) {
+            remindBreathingTechniqueRequired(player);
+            syncSelfState(player, isMeditating(player));
+            return false;
+        }
 
         MeditationSession existingSession = MEDITATING_PLAYERS.get(player.getUUID());
         if (existingSession != null) {
-            existingSession.setTechnique(techniqueId);
+            existingSession.setCultivation(techniqueId, cultivatingRealm);
             syncStateToTrackingAndSelf(player, true);
             return true;
         }
@@ -68,14 +81,11 @@ public final class PlayerMeditationManager {
         }
         MEDITATING_PLAYERS.put(
                 player.getUUID(),
-                new MeditationSession(MeditationRotation.capture(player), techniqueId)
+                new MeditationSession(MeditationRotation.capture(player), techniqueId, cultivatingRealm)
         );
         player.stopUsingItem();
         stopMovement(player);
         lockRotation(player);
-        if (techniqueId == null) {
-            remindBreathingTechniqueRequired(player);
-        }
         syncStateToTrackingAndSelf(player, true);
         return true;
     }
@@ -83,7 +93,7 @@ public final class PlayerMeditationManager {
     public static boolean startTribulationMeditating(ServerPlayer player) {
         MeditationSession existingSession = MEDITATING_PLAYERS.get(player.getUUID());
         if (existingSession != null) {
-            existingSession.setTechnique(null);
+            existingSession.setCultivation(null, false);
             syncStateToTrackingAndSelf(player, true);
             return true;
         }
@@ -92,7 +102,7 @@ public final class PlayerMeditationManager {
         }
         MEDITATING_PLAYERS.put(
                 player.getUUID(),
-                new MeditationSession(MeditationRotation.capture(player), null)
+                new MeditationSession(MeditationRotation.capture(player), null, false)
         );
         player.stopUsingItem();
         stopMovement(player);
@@ -142,6 +152,11 @@ public final class PlayerMeditationManager {
                 : Optional.ofNullable(session.techniqueId());
     }
 
+    public static boolean isCultivatingRealm(ServerPlayer player) {
+        MeditationSession session = MEDITATING_PLAYERS.get(player.getUUID());
+        return session != null && session.cultivatingRealm();
+    }
+
     public static void tickMeditation(ServerPlayer player) {
         MeditationSession session = MEDITATING_PLAYERS.get(player.getUUID());
         if (session == null) {
@@ -161,10 +176,9 @@ public final class PlayerMeditationManager {
             return;
         }
         if (session.techniqueId() == null) {
-            // Realm cultivation is impossible without a breathing technique guiding the qi.
+            // Plain meditation has no technique training or spiritual-energy absorption.
             if (player.tickCount % ABSORPTION_INTERVAL_TICKS == 0) {
                 repairDefenseResource(player);
-                remindBreathingTechniqueRequired(player);
                 syncStateToTrackingAndSelf(player, true);
             }
             return;
@@ -174,10 +188,12 @@ public final class PlayerMeditationManager {
             grantProficiency(player, session);
         }
         if (player.tickCount % ABSORPTION_INTERVAL_TICKS == 0) {
-            double breathingMultiplier = getBreathingAbsorptionMultiplier(player, session.techniqueId());
-            if (breathingMultiplier > 0.0D) {
-                absorbSpiritualEnergy(player, breathingMultiplier);
-                ModNetwork.sendCultivationInfo(player);
+            if (session.cultivatingRealm()) {
+                double breathingMultiplier = getBreathingAbsorptionMultiplier(player, session.techniqueId());
+                if (breathingMultiplier > 0.0D) {
+                    absorbSpiritualEnergy(player, breathingMultiplier);
+                    ModNetwork.sendCultivationInfo(player);
+                }
             }
             repairDefenseResource(player);
             syncStateToTrackingAndSelf(player, true);
@@ -230,6 +246,13 @@ public final class PlayerMeditationManager {
     private static boolean canCultivateTechnique(ServerPlayer player, ResourceLocation techniqueId) {
         return TechniqueManager.INSTANCE.getTechnique(techniqueId).isPresent()
                 && PlayerTechniqueData.hasTechnique(player, techniqueId);
+    }
+
+    private static boolean isBreathingTechnique(@Nullable ResourceLocation techniqueId) {
+        return techniqueId != null
+                && TechniqueManager.INSTANCE.getTechnique(techniqueId)
+                .map(technique -> technique.breathing().isPresent())
+                .orElse(false);
     }
 
     private static boolean canStartMeditating(ServerPlayer player) {
@@ -480,6 +503,7 @@ public final class PlayerMeditationManager {
     private static MeditationSyncData createMeditationSyncData(ServerPlayer player, boolean meditating) {
         if (!meditating
                 || TribulationManager.isInTribulation(player)
+                || !isCultivatingRealm(player)
                 || isAbsorbingFromHeldSpiritualStone(player)) {
             return MeditationSyncData.EMPTY;
         }
@@ -491,7 +515,10 @@ public final class PlayerMeditationManager {
 
     private static boolean isAbsorbingFromHeldSpiritualStone(ServerPlayer player) {
         MeditationSession session = MEDITATING_PLAYERS.get(player.getUUID());
-        if (session == null || session.techniqueId() == null || getHeldUsableSpiritualStone(player).isEmpty()) {
+        if (session == null
+                || !session.cultivatingRealm()
+                || session.techniqueId() == null
+                || getHeldUsableSpiritualStone(player).isEmpty()) {
             return false;
         }
         return getBreathingAbsorptionMultiplier(player, session.techniqueId()) > 0.0D;
@@ -524,12 +551,18 @@ public final class PlayerMeditationManager {
         private final MeditationRotation rotation;
         @Nullable
         private ResourceLocation techniqueId;
+        private boolean cultivatingRealm;
         private int techniqueTicks;
         private long gainedProficiency;
 
-        private MeditationSession(MeditationRotation rotation, @Nullable ResourceLocation techniqueId) {
+        private MeditationSession(
+                MeditationRotation rotation,
+                @Nullable ResourceLocation techniqueId,
+                boolean cultivatingRealm
+        ) {
             this.rotation = rotation;
             this.techniqueId = techniqueId;
+            this.cultivatingRealm = cultivatingRealm;
         }
 
         private MeditationRotation rotation() {
@@ -541,9 +574,18 @@ public final class PlayerMeditationManager {
             return this.techniqueId;
         }
 
-        private void setTechnique(@Nullable ResourceLocation updatedTechniqueId) {
-            if (!java.util.Objects.equals(this.techniqueId, updatedTechniqueId)) {
+        private boolean cultivatingRealm() {
+            return this.cultivatingRealm;
+        }
+
+        private void setCultivation(
+                @Nullable ResourceLocation updatedTechniqueId,
+                boolean updatedCultivatingRealm
+        ) {
+            if (!java.util.Objects.equals(this.techniqueId, updatedTechniqueId)
+                    || this.cultivatingRealm != updatedCultivatingRealm) {
                 this.techniqueId = updatedTechniqueId;
+                this.cultivatingRealm = updatedCultivatingRealm;
                 this.techniqueTicks = 0;
             }
         }

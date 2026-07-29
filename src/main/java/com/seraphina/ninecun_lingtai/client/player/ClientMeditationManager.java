@@ -50,14 +50,21 @@ public final class ClientMeditationManager {
     public static void startTechniqueCultivation(ResourceLocation techniqueId) {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player != null && !isMeditating(player.getUUID())) {
-            requestState(player, true, techniqueId);
+            requestState(player, true, techniqueId, false);
+        }
+    }
+
+    public static void startRealmCultivation(ResourceLocation techniqueId) {
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player != null && !isMeditating(player.getUUID())) {
+            requestState(player, true, techniqueId, true);
         }
     }
 
     public static void requestStop() {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player != null && isMeditating(player.getUUID())) {
-            requestState(player, false, null);
+            requestState(player, false, null, false);
         }
     }
 
@@ -122,7 +129,8 @@ public final class ClientMeditationManager {
     private static void requestState(
             LocalPlayer player,
             boolean meditating,
-            @Nullable ResourceLocation techniqueId
+            @Nullable ResourceLocation techniqueId,
+            boolean cultivatingRealm
     ) {
         // Local prediction only; the realm level is corrected by the server sync that follows.
         setMeditating(
@@ -134,7 +142,8 @@ public final class ClientMeditationManager {
         );
         ModNetwork.sendToServer(new SetMeditationStatePacket(
                 meditating,
-                Optional.ofNullable(techniqueId)
+                Optional.ofNullable(techniqueId),
+                cultivatingRealm
         ));
     }
 }
