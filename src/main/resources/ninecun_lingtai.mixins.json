@@ -10,7 +10,6 @@
     "common.StyleMixin",
     "common.food.FoodDataMixin",
     "common.food.PlayerMixin",
-    "common.entity.MixinLivingEntity",
     "common.health.EntityMixin",
     "common.health.LivingEntityMixin"
   ],
