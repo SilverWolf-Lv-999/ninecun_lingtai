@@ -56,6 +56,10 @@ public final class EntityDefenseResourceData {
         return getOrInitializeCurrent(entity, maximum);
     }
 
+    public static void setCurrent(LivingEntity entity, int current) {
+        setCurrentInternal(entity, current);
+    }
+
     public static int repair(LivingEntity entity, int amount) {
         if (amount <= 0) {
             return 0;
@@ -70,7 +74,7 @@ public final class EntityDefenseResourceData {
         if (repaired <= 0) {
             return 0;
         }
-        setCurrent(entity, current + repaired);
+        setCurrentInternal(entity, current + repaired);
         return repaired;
     }
 
@@ -80,7 +84,7 @@ public final class EntityDefenseResourceData {
             clear(entity);
             return;
         }
-        setCurrent(entity, maximum);
+        setCurrentInternal(entity, maximum);
     }
 
     public static boolean consume(LivingEntity entity, int amount) {
@@ -96,7 +100,7 @@ public final class EntityDefenseResourceData {
         if (current < amount) {
             return false;
         }
-        setCurrent(entity, current - amount);
+        setCurrentInternal(entity, current - amount);
         return true;
     }
 
@@ -105,7 +109,7 @@ public final class EntityDefenseResourceData {
             clear(entity);
             return;
         }
-        setCurrent(entity, 0);
+        setCurrentInternal(entity, 0);
     }
 
     public static void copy(LivingEntity sourceEntity, LivingEntity targetEntity) {
@@ -142,7 +146,7 @@ public final class EntityDefenseResourceData {
         return current;
     }
 
-    private static void setCurrent(LivingEntity entity, int current) {
+    private static void setCurrentInternal(LivingEntity entity, int current) {
         int maximum = getMaximum(entity);
         if (maximum <= 0) {
             clear(entity);

@@ -21,6 +21,13 @@
       "items": [
         "ninecun_lingtai:jade_slip"
       ]
+    },
+    "debug": {
+      "title": "调试",
+      "icon": "ninecun_lingtai:dao_scroll",
+      "items": [
+        "ninecun_lingtai:dao_scroll"
+      ]
     }
   }
 }

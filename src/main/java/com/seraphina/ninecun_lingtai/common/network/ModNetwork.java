@@ -7,6 +7,7 @@ import com.seraphina.ninecun_lingtai.api.technique.TechniqueClientData;
 import com.seraphina.ninecun_lingtai.api.technique.TechniqueProgress;
 import com.seraphina.ninecun_lingtai.common.data.TechniqueManager;
 import com.seraphina.ninecun_lingtai.common.entity.spell.DefenseSpellGuardianEntity;
+import com.seraphina.ninecun_lingtai.common.debug.DaoScrollSnapshot;
 import com.seraphina.ninecun_lingtai.common.network.packet.BreakthroughRequestPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.BoostLightFlightPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.CastSpellPacket;
@@ -16,6 +17,7 @@ import com.seraphina.ninecun_lingtai.common.network.packet.ImprintTechniquePacke
 import com.seraphina.ninecun_lingtai.common.network.packet.ImprintTechniqueToJadeSlipPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.LearnTechniquePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.OpenAptitudeScreenPacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.OpenDaoScrollScreenPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.OpenTechniqueImprintScreenPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.OpenTechniqueScreenPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.PushingMountainsClearSelectionPacket;
@@ -36,6 +38,7 @@ import com.seraphina.ninecun_lingtai.common.network.packet.SetLightFlightPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SetMeditationStatePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SetPressureStatePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SubmitAptitudePacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.SubmitDaoScrollPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SmoothShrinkEarthTeleportPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.ShowNotificationPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncCultivationInfoPacket;
@@ -507,6 +510,24 @@ public final class ModNetwork {
                 .decoder(PushingMountainsThrowPacket::decode)
                 .consumerMainThread(PushingMountainsThrowPacket::handle)
                 .add();
+        CHANNEL.messageBuilder(
+                        OpenDaoScrollScreenPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(OpenDaoScrollScreenPacket::encode)
+                .decoder(OpenDaoScrollScreenPacket::decode)
+                .consumerMainThread(OpenDaoScrollScreenPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        SubmitDaoScrollPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(SubmitDaoScrollPacket::encode)
+                .decoder(SubmitDaoScrollPacket::decode)
+                .consumerMainThread(SubmitDaoScrollPacket::handle)
+                .add();
     }
 
     public static int getId() {
@@ -634,6 +655,17 @@ public final class ModNetwork {
 
     public static void sendAptitudeScreenRequest(ServerPlayer player) {
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), OpenAptitudeScreenPacket.INSTANCE);
+    }
+
+    public static void sendOpenDaoScrollScreen(
+            ServerPlayer player,
+            DaoScrollSnapshot snapshot,
+            boolean editingSelf
+    ) {
+        CHANNEL.send(
+                PacketDistributor.PLAYER.with(() -> player),
+                new OpenDaoScrollScreenPacket(snapshot, editingSelf)
+        );
     }
 
     public static void sendMeditationState(

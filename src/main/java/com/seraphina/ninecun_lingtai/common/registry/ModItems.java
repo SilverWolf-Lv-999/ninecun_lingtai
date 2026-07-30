@@ -1,6 +1,7 @@
 package com.seraphina.ninecun_lingtai.common.registry;
 
 import com.seraphina.ninecun_lingtai.ModMain;
+import com.seraphina.ninecun_lingtai.common.item.DaoScrollItem;
 import com.seraphina.ninecun_lingtai.common.item.SpiritualStoneItem;
 import com.seraphina.ninecun_lingtai.common.item.TechniqueItem;
 import net.minecraft.world.item.BlockItem;
@@ -24,6 +25,11 @@ public final class ModItems {
     public static final RegistryObject<Item> SPIRITUAL_STONE = ITEMS.register(
             "spiritual_stone",
             () -> new SpiritualStoneItem(new Item.Properties().stacksTo(64))
+    );
+
+    public static final RegistryObject<Item> DAO_SCROLL = ITEMS.register(
+            "dao_scroll",
+            () -> new DaoScrollItem(new Item.Properties().stacksTo(1))
     );
 
     public static final RegistryObject<Item> SPIRITUAL_STONE_ORE = ITEMS.register(

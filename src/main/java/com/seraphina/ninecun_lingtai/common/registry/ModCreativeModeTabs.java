@@ -24,6 +24,7 @@ public final class ModCreativeModeTabs {
                     .displayItems((parameters, output) -> {
                         output.accept(ModItems.SPIRITUAL_STONE_ORE.get());
                         output.accept(ModItems.DEEPSLATE_SPIRITUAL_STONE_ORE.get());
+                        output.accept(ModItems.DAO_SCROLL.get());
                         output.acceptAll(SpiritualStoneUtility.getCreativeItemStacks());
                         output.acceptAll(TechniqueCreativeTabCache.getItemStacks());
                     })
