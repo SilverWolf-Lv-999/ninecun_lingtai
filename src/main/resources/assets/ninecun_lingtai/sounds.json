@@ -1,0 +1,10 @@
+{
+  "pressure_ringing": {
+    "sounds": [
+      {
+        "name": "ninecun_lingtai:pressure_ringing",
+        "stream": true
+      }
+    ]
+  }
+}

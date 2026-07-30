@@ -23,11 +23,10 @@ import java.util.Optional;
 public final class LightFlightManager {
     private static final float BASE_FLYING_SPEED = 0.05F;
     private static final float MAXIMUM_LIGHT_FLYING_SPEED = 1300.0F;
-    private static final double AIR_WALKING_SPEED_MULTIPLIER = 3.6D;
+    private static final double AIR_WALKING_SPEED_MULTIPLIER = 2.3D;
     private static final int ENERGY_CONSUMPTION_INTERVAL_TICKS = 20;
 
     private LightFlightManager() {
-        throw new RuntimeException("入金丹，行万里");
     }
 
     public static void requestSetFlying(ServerPlayer player, boolean flying) {

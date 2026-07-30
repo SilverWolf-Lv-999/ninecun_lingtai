@@ -14,7 +14,6 @@ public final class ChineseNumberUtility {
     private static final BigInteger TEN_THOUSAND = BigInteger.valueOf(10_000L);
 
     private ChineseNumberUtility() {
-        throw new RuntimeException("我真服了这个数字");
     }
 
     public static String formatTenths(float value, String integerUnit, String tenthUnit) {

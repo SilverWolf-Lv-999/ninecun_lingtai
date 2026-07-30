@@ -41,6 +41,9 @@ public final class TechniqueJsonUtility {
             "minor_mastery"
     );
 
+    private TechniqueJsonUtility() {
+    }
+
     public static TechniqueDefinition parse(ResourceLocation techniqueId, JsonElement jsonElement) {
         JsonObject jsonObject = GsonHelper.convertToJsonObject(jsonElement, "technique definition");
         String name = getRequiredNonBlankString(jsonObject, "name");

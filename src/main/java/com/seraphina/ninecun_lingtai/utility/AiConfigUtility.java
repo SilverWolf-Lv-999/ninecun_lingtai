@@ -5,7 +5,6 @@ import com.seraphina.ninecun_lingtai.common.config.CommonConfig;
 
 public final class AiConfigUtility {
     private AiConfigUtility() {
-        throw new RuntimeException("你还能有DeepSeep聪明？");
     }
 
     public static AiProvider getProvider() {

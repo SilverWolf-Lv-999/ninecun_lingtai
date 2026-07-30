@@ -8,6 +8,8 @@ import net.minecraft.world.entity.player.Player;
 import java.util.Optional;
 
 public final class CultivationVisionUtility {
+    private CultivationVisionUtility() {
+    }
 
     public static boolean seesNightAsDay(Player player) {
         return seesNightAsDay(CultivationApi.getStage(player));

@@ -36,6 +36,9 @@ public final class PlayerMeditationManager {
     private static final int PROFICIENCY_INTERVAL_TICKS = 1200;
     private static final Map<UUID, MeditationSession> MEDITATING_PLAYERS = new HashMap<>();
 
+    private PlayerMeditationManager() {
+    }
+
     public static boolean startMeditating(ServerPlayer player) {
         return startMeditating(player, null, false);
     }

@@ -20,6 +20,7 @@
   "itemGroup.ninecun_lingtai": "九寸灵台",
   "key.categories.ninecun_lingtai": "九寸灵台",
   "key.ninecun_lingtai.meditation": "修炼",
+  "key.ninecun_lingtai.pressure": "释放威压（按住）",
   "key.ninecun_lingtai.spell_selection": "选择法术",
   "key.ninecun_lingtai.cast_spell": "施展法术",
   "key.ninecun_lingtai.pushing_mountains": "排山倒海（按住~）",
@@ -114,7 +115,6 @@
   "screen.ninecun_lingtai.spell_selection.hint": "点击或回车择定 · 按V施展",
   "screen.ninecun_lingtai.value_control.title": "数值自控",
   "screen.ninecun_lingtai.value_control.loading": "正在读取自控设置……",
-  "screen.ninecun_lingtai.value_control.empty": "当前境界尚无可调节的数值",
   "screen.ninecun_lingtai.value_control.field.attack_damage": "攻击伤害",
   "screen.ninecun_lingtai.value_control.field.attack_damage.tooltip": "控制境界加成伤害的应用比例。",
   "screen.ninecun_lingtai.value_control.field.attack_damage.locked_tooltip": "突破至练气期后可调节境界加成伤害。",
@@ -197,5 +197,7 @@
   "screen.ninecun_lingtai.config.error.invalid_number": "%s 必须是 %s 到 %s 之间的数字",
   "screen.ninecun_lingtai.config.error.save_failed": "保存配置失败，请检查配置文件是否可写",
   "death.attack.ninecun_lingtai.realm_execution": "%1$s 被 %2$s 跨越凡仙之隔一击抹杀",
-  "death.attack.ninecun_lingtai.realm_execution.item": "%1$s 被 %2$s 使用 %3$s 跨越凡仙之隔一击抹杀"
+  "death.attack.ninecun_lingtai.realm_execution.item": "%1$s 被 %2$s 使用 %3$s 跨越凡仙之隔一击抹杀",
+  "death.attack.ninecun_lingtai.pressure_execution": "%1$s 承受不住 %2$s 的威压，神魂俱灭",
+  "death.attack.ninecun_lingtai.pressure_execution.item": "%1$s 承受不住 %2$s 使用 %3$s 释放的威压，神魂俱灭"
 }

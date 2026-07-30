@@ -15,6 +15,9 @@ public final class SpiritualStoneUtility {
     private static final String ENERGY_KEY = ModMain.MOD_ID + ":spiritual_stone_energy";
     private static final double DEPLETED_EPSILON = 1.0E-9D;
 
+    private SpiritualStoneUtility() {
+    }
+
     public static ItemStack createStack(SpiritualStoneGrade grade) {
         ItemStack itemStack = new ItemStack(ModItems.SPIRITUAL_STONE.get());
         writeSpiritualStoneData(itemStack, grade, grade.getEnergyCapacity());

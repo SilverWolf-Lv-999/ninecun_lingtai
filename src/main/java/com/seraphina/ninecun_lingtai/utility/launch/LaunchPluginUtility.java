@@ -27,7 +27,6 @@ public final class LaunchPluginUtility {
     private static final Unsafe UNSAFE = getUnsafe();
 
     private LaunchPluginUtility() {
-        throw new RuntimeException("以雷霆之姿直刺modlauncher老冯");
     }
 
     public static void install(String pluginName, ILaunchPluginService plugin) {

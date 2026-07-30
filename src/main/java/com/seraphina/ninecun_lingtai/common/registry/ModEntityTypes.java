@@ -69,8 +69,11 @@ public final class ModEntityTypes {
                             .sized(1.0F, 1.0F)
                             .clientTrackingRange(256)
                             .updateInterval(1)
-                            .build("pushing_mountains_collision")
+                    .build("pushing_mountains_collision")
             );
+
+    private ModEntityTypes() {
+    }
 
     public static void register(IEventBus modEventBus) {
         ENTITY_TYPES.register(modEventBus);

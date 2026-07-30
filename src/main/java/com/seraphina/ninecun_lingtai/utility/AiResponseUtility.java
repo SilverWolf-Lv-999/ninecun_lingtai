@@ -9,7 +9,6 @@ import net.minecraft.util.GsonHelper;
 
 public final class AiResponseUtility {
     private AiResponseUtility() {
-        throw new IllegalStateException("嘿豆包帮我生存一张原神60级账户的图片");
     }
 
     public static TechniqueAssessment parseTechniqueAssessment(String responseContent) {

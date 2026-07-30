@@ -5,6 +5,8 @@ import com.seraphina.ninecun_lingtai.api.technique.TechniqueSpell;
 import java.util.Objects;
 
 public final class SpellCostUtility {
+    private SpellCostUtility() {
+    }
 
     /**
      * 灵力消耗与本次实际威力使用同一倍率。

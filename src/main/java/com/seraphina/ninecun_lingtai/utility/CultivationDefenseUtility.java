@@ -48,6 +48,9 @@ public final class CultivationDefenseUtility {
     private static final int NASCENT_SOUL_HIGH_DAMAGE_COST = 10;
     private static final int SPIRIT_TRANSFORMATION_HIGH_DAMAGE_COST = 1;
 
+    private CultivationDefenseUtility() {
+    }
+
     public static double getMaxHealthBonus(Optional<CultivationStage> stage) {
         return stage.map(CultivationDefenseUtility::getMaxHealthBonus).orElse(0.0D);
     }
@@ -178,7 +181,9 @@ public final class CultivationDefenseUtility {
     }
 
     public static boolean getProtectedAlive(Entity entity, boolean original) {
-        return entity instanceof LivingEntity livingEntity && hasActiveDefense(livingEntity) || original;
+        return entity instanceof LivingEntity livingEntity && hasActiveDefense(livingEntity)
+                ? true
+                : original;
     }
 
     public static boolean isDeadOrDying(LivingEntity entity) {
@@ -186,7 +191,9 @@ public final class CultivationDefenseUtility {
     }
 
     public static boolean getProtectedDeadOrDying(LivingEntity entity, boolean original) {
-        return !hasActiveDefense(entity) && original;
+        return hasActiveDefense(entity)
+                ? false
+                : original;
     }
 
     public static int getMaximumDefenseResource(Optional<CultivationStage> stage) {

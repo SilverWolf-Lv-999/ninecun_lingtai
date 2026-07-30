@@ -38,16 +38,6 @@ public record PlayerCultivationInfo(
         );
     }
 
-    public static PlayerCultivationInfo capture(Player player, LifespanSnapshot lifespan) {
-        return new PlayerCultivationInfo(
-                PlayerAptitudeData.getSpiritualRoot(player),
-                PlayerAptitudeData.getSoulStrength(player),
-                PlayerCultivationData.getStage(player),
-                PlayerSpiritualEnergyData.getAllEnergy(player),
-                lifespan
-        );
-    }
-
     public static PlayerCultivationInfo empty() {
         return new PlayerCultivationInfo(
                 Optional.empty(),

@@ -21,5 +21,4 @@ public final class ModEntityAttributeEventHandler {
                 DefenseSpellGuardianEntity.createAttributes().build()
         );
     }
-
 }

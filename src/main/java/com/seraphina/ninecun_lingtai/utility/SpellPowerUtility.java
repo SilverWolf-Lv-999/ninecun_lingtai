@@ -10,6 +10,9 @@ public final class SpellPowerUtility {
     public static final double MAJOR_REALM_POWER_MULTIPLIER = 6.0D;
     public static final double MINOR_LAYER_POWER_MULTIPLIER = 1.12D;
 
+    private SpellPowerUtility() {
+    }
+
     /**
      * 熟练度在相邻掌握阶段之间连续提升威力，同时不会低于已经参悟到的掌握阶段。
      */

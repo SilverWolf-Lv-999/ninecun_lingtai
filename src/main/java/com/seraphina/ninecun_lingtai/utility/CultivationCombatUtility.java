@@ -6,6 +6,9 @@ import com.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
 import java.util.Optional;
 
 public final class CultivationCombatUtility {
+    private CultivationCombatUtility() {
+    }
+
     public static boolean canInstantlyKillLowerRealmCultivator(
             Optional<CultivationStage> attackerStage,
             Optional<CultivationStage> defenderStage

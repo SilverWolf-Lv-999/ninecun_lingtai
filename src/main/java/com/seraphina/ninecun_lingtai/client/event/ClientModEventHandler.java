@@ -103,6 +103,7 @@ public final class ClientModEventHandler {
     @SubscribeEvent
     public static void onRegisterKeyMappings(RegisterKeyMappingsEvent event) {
         event.register(ModKeyMappings.MEDITATION);
+        event.register(ModKeyMappings.PRESSURE);
         event.register(ModKeyMappings.SPELL_SELECTION);
         event.register(ModKeyMappings.CAST_SPELL);
         event.register(ModKeyMappings.PUSHING_MOUNTAINS);

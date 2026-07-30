@@ -17,6 +17,14 @@ public final class ModKeyMappings {
             "key.categories." + ModMain.MOD_ID
     );
 
+    public static final KeyMapping PRESSURE = new KeyMapping(
+            "key." + ModMain.MOD_ID + ".pressure",
+            KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_X,
+            "key.categories." + ModMain.MOD_ID
+    );
+
     public static final KeyMapping SPELL_SELECTION = new KeyMapping(
             "key." + ModMain.MOD_ID + ".spell_selection",
             KeyConflictContext.IN_GAME,

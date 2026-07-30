@@ -21,7 +21,6 @@ public final class LifespanUtility {
     public static final long TICKS_PER_YEAR = DAYS_PER_YEAR * TICKS_PER_DAY;
 
     private LifespanUtility() {
-        throw new RuntimeException("蝼蚁");
     }
 
     public static boolean hasLifespan(LivingEntity entity) {

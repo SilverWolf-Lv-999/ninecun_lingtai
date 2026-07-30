@@ -34,6 +34,7 @@ import com.seraphina.ninecun_lingtai.common.network.packet.SetShrinkEarthPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SetPlayerValueControlSettingsPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SetLightFlightPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SetMeditationStatePacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.SetPressureStatePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SubmitAptitudePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SmoothShrinkEarthTeleportPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.ShowNotificationPacket;
@@ -43,6 +44,7 @@ import com.seraphina.ninecun_lingtai.common.network.packet.SyncDefenseSpellState
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncLightFlightPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncMeditationStatePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncPossessionPacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.SyncPressureStatePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncPlayerValueControlSettingsPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncShrinkEarthPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncSoulRoamingPacket;
@@ -53,10 +55,11 @@ import com.seraphina.ninecun_lingtai.common.network.packet.TriggerBodyShieldPack
 import com.seraphina.ninecun_lingtai.common.flight.LightFlightManager;
 import com.seraphina.ninecun_lingtai.common.player.PlayerLightFlightData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerShrinkEarthData;
-import com.seraphina.ninecun_lingtai.common.lifespan.EntityLifespanData;
+import com.seraphina.ninecun_lingtai.common.player.PlayerValueControlData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerSwordFlightData;
 import com.seraphina.ninecun_lingtai.common.player.DefenseResourceSnapshot;
 import com.seraphina.ninecun_lingtai.common.player.DefenseSpellSnapshot;
+import com.seraphina.ninecun_lingtai.common.player.PlayerCultivationInfo;
 import com.seraphina.ninecun_lingtai.common.player.PlayerDefenseResourceData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerDefenseSpellData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerImprintedTechniqueData;
@@ -85,7 +88,7 @@ import java.util.Set;
 import java.util.UUID;
 
 public final class ModNetwork {
-    private static final String PROTOCOL_VERSION = "29";
+    private static final String PROTOCOL_VERSION = "30";
     private static final SimpleChannel CHANNEL = NetworkRegistry.ChannelBuilder
             .named(ResourceLocation.fromNamespaceAndPath(ModMain.MOD_ID, "main"))
             .networkProtocolVersion(() -> PROTOCOL_VERSION)
@@ -95,10 +98,13 @@ public final class ModNetwork {
 
     private static int nextPacketId;
 
+    private ModNetwork() {
+    }
+
     public static void register() {
         CHANNEL.messageBuilder(
                         OpenAptitudeScreenPacket.class,
-                        getId(),
+                        nextPacketId++,
                         NetworkDirection.PLAY_TO_CLIENT
                 )
                 .encoder(OpenAptitudeScreenPacket::encode)
@@ -107,7 +113,7 @@ public final class ModNetwork {
                 .add();
         CHANNEL.messageBuilder(
                         SubmitAptitudePacket.class,
-                        getId(),
+                        nextPacketId++,
                         NetworkDirection.PLAY_TO_SERVER
                 )
                 .encoder(SubmitAptitudePacket::encode)
@@ -116,7 +122,7 @@ public final class ModNetwork {
                 .add();
         CHANNEL.messageBuilder(
                         SetMeditationStatePacket.class,
-                        getId(),
+                        nextPacketId++,
                         NetworkDirection.PLAY_TO_SERVER
                 )
                 .encoder(SetMeditationStatePacket::encode)
@@ -124,8 +130,26 @@ public final class ModNetwork {
                 .consumerMainThread(SetMeditationStatePacket::handle)
                 .add();
         CHANNEL.messageBuilder(
-                        SyncMeditationStatePacket.class,
+                        SetPressureStatePacket.class,
                         getId(),
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(SetPressureStatePacket::encode)
+                .decoder(SetPressureStatePacket::decode)
+                .consumerMainThread(SetPressureStatePacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        SyncPressureStatePacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(SyncPressureStatePacket::encode)
+                .decoder(SyncPressureStatePacket::decode)
+                .consumerMainThread(SyncPressureStatePacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        SyncMeditationStatePacket.class,
+                        nextPacketId++,
                         NetworkDirection.PLAY_TO_CLIENT
                 )
                 .encoder(SyncMeditationStatePacket::encode)
@@ -134,7 +158,7 @@ public final class ModNetwork {
                 .add();
         CHANNEL.messageBuilder(
                         SyncTribulationStatePacket.class,
-                        getId(),
+                        nextPacketId++,
                         NetworkDirection.PLAY_TO_CLIENT
                 )
                 .encoder(SyncTribulationStatePacket::encode)
@@ -143,7 +167,7 @@ public final class ModNetwork {
                 .add();
         CHANNEL.messageBuilder(
                         RequestCultivationInfoPacket.class,
-                        getId(),
+                        nextPacketId++,
                         NetworkDirection.PLAY_TO_SERVER
                 )
                 .encoder(RequestCultivationInfoPacket::encode)
@@ -152,7 +176,7 @@ public final class ModNetwork {
                 .add();
         CHANNEL.messageBuilder(
                         SyncCultivationInfoPacket.class,
-                        getId(),
+                        nextPacketId++,
                         NetworkDirection.PLAY_TO_CLIENT
                 )
                 .encoder(SyncCultivationInfoPacket::encode)
@@ -161,7 +185,7 @@ public final class ModNetwork {
                 .add();
         CHANNEL.messageBuilder(
                         OpenTechniqueScreenPacket.class,
-                        getId(),
+                        nextPacketId++,
                         NetworkDirection.PLAY_TO_CLIENT
                 )
                 .encoder(OpenTechniqueScreenPacket::encode)
@@ -170,7 +194,7 @@ public final class ModNetwork {
                 .add();
         CHANNEL.messageBuilder(
                         OpenTechniqueImprintScreenPacket.class,
-                        getId(),
+                        nextPacketId++,
                         NetworkDirection.PLAY_TO_CLIENT
                 )
                 .encoder(OpenTechniqueImprintScreenPacket::encode)
@@ -179,7 +203,7 @@ public final class ModNetwork {
                 .add();
         CHANNEL.messageBuilder(
                         RequestTechniqueLibraryPacket.class,
-                        getId(),
+                        nextPacketId++,
                         NetworkDirection.PLAY_TO_SERVER
                 )
                 .encoder(RequestTechniqueLibraryPacket::encode)
@@ -188,7 +212,7 @@ public final class ModNetwork {
                 .add();
         CHANNEL.messageBuilder(
                         SyncTechniqueLibraryPacket.class,
-                        getId(),
+                        nextPacketId++,
                         NetworkDirection.PLAY_TO_CLIENT
                 )
                 .encoder(SyncTechniqueLibraryPacket::encode)
@@ -197,7 +221,7 @@ public final class ModNetwork {
                 .add();
         CHANNEL.messageBuilder(
                         ImprintTechniquePacket.class,
-                        getId(),
+                        nextPacketId++,
                         NetworkDirection.PLAY_TO_SERVER
                 )
                 .encoder(ImprintTechniquePacket::encode)
@@ -206,7 +230,7 @@ public final class ModNetwork {
                 .add();
         CHANNEL.messageBuilder(
                         ImprintTechniqueToJadeSlipPacket.class,
-                        getId(),
+                        nextPacketId++,
                         NetworkDirection.PLAY_TO_SERVER
                 )
                 .encoder(ImprintTechniqueToJadeSlipPacket::encode)
@@ -215,7 +239,7 @@ public final class ModNetwork {
                 .add();
         CHANNEL.messageBuilder(
                         LearnTechniquePacket.class,
-                        getId(),
+                        nextPacketId++,
                         NetworkDirection.PLAY_TO_SERVER
                 )
                 .encoder(LearnTechniquePacket::encode)
@@ -224,7 +248,7 @@ public final class ModNetwork {
                 .add();
         CHANNEL.messageBuilder(
                         BreakthroughRequestPacket.class,
-                        getId(),
+                        nextPacketId++,
                         NetworkDirection.PLAY_TO_SERVER
                 )
                 .encoder(BreakthroughRequestPacket::encode)
@@ -233,7 +257,7 @@ public final class ModNetwork {
                 .add();
         CHANNEL.messageBuilder(
                         CultivationFeedbackPacket.class,
-                        getId(),
+                        nextPacketId++,
                         NetworkDirection.PLAY_TO_CLIENT
                 )
                 .encoder(CultivationFeedbackPacket::encode)
@@ -242,7 +266,7 @@ public final class ModNetwork {
                 .add();
         CHANNEL.messageBuilder(
                         ShowNotificationPacket.class,
-                        getId(),
+                        nextPacketId++,
                         NetworkDirection.PLAY_TO_CLIENT
                 )
                 .encoder(ShowNotificationPacket::encode)
@@ -251,7 +275,7 @@ public final class ModNetwork {
                 .add();
         CHANNEL.messageBuilder(
                         SelectSpellPacket.class,
-                        getId(),
+                        nextPacketId++,
                         NetworkDirection.PLAY_TO_SERVER
                 )
                 .encoder(SelectSpellPacket::encode)
@@ -260,7 +284,7 @@ public final class ModNetwork {
                 .add();
         CHANNEL.messageBuilder(
                         CastSpellPacket.class,
-                        getId(),
+                        nextPacketId++,
                         NetworkDirection.PLAY_TO_SERVER
                 )
                 .encoder(CastSpellPacket::encode)
@@ -269,7 +293,7 @@ public final class ModNetwork {
                 .add();
         CHANNEL.messageBuilder(
                         SyncSwordFlightPacket.class,
-                        getId(),
+                        nextPacketId++,
                         NetworkDirection.PLAY_TO_CLIENT
                 )
                 .encoder(SyncSwordFlightPacket::encode)
@@ -278,7 +302,7 @@ public final class ModNetwork {
                 .add();
         CHANNEL.messageBuilder(
                         DismountSwordFlightPacket.class,
-                        getId(),
+                        nextPacketId++,
                         NetworkDirection.PLAY_TO_SERVER
                 )
                 .encoder(DismountSwordFlightPacket::encode)
@@ -287,7 +311,7 @@ public final class ModNetwork {
                 .add();
         CHANNEL.messageBuilder(
                         SetLightFlightPacket.class,
-                        getId(),
+                        nextPacketId++,
                         NetworkDirection.PLAY_TO_SERVER
                 )
                 .encoder(SetLightFlightPacket::encode)
@@ -296,7 +320,7 @@ public final class ModNetwork {
                 .add();
         CHANNEL.messageBuilder(
                         BoostLightFlightPacket.class,
-                        getId(),
+                        nextPacketId++,
                         NetworkDirection.PLAY_TO_SERVER
                 )
                 .encoder(BoostLightFlightPacket::encode)
@@ -305,7 +329,7 @@ public final class ModNetwork {
                 .add();
         CHANNEL.messageBuilder(
                         SetShrinkEarthPacket.class,
-                        getId(),
+                        nextPacketId++,
                         NetworkDirection.PLAY_TO_SERVER
                 )
                 .encoder(SetShrinkEarthPacket::encode)
@@ -314,7 +338,7 @@ public final class ModNetwork {
                 .add();
         CHANNEL.messageBuilder(
                         SyncShrinkEarthPacket.class,
-                        getId(),
+                        nextPacketId++,
                         NetworkDirection.PLAY_TO_CLIENT
                 )
                 .encoder(SyncShrinkEarthPacket::encode)
@@ -323,7 +347,7 @@ public final class ModNetwork {
                 .add();
         CHANNEL.messageBuilder(
                         SmoothShrinkEarthTeleportPacket.class,
-                        getId(),
+                        nextPacketId++,
                         NetworkDirection.PLAY_TO_CLIENT
                 )
                 .encoder(SmoothShrinkEarthTeleportPacket::encode)
@@ -332,7 +356,7 @@ public final class ModNetwork {
                 .add();
         CHANNEL.messageBuilder(
                         SyncLightFlightPacket.class,
-                        getId(),
+                        nextPacketId++,
                         NetworkDirection.PLAY_TO_CLIENT
                 )
                 .encoder(SyncLightFlightPacket::encode)
@@ -341,7 +365,7 @@ public final class ModNetwork {
                 .add();
         CHANNEL.messageBuilder(
                         RequestPlayerValueControlSettingsPacket.class,
-                        getId(),
+                        nextPacketId++,
                         NetworkDirection.PLAY_TO_SERVER
                 )
                 .encoder(RequestPlayerValueControlSettingsPacket::encode)
@@ -350,7 +374,7 @@ public final class ModNetwork {
                 .add();
         CHANNEL.messageBuilder(
                         SetPlayerValueControlSettingsPacket.class,
-                        getId(),
+                        nextPacketId++,
                         NetworkDirection.PLAY_TO_SERVER
                 )
                 .encoder(SetPlayerValueControlSettingsPacket::encode)
@@ -359,7 +383,7 @@ public final class ModNetwork {
                 .add();
         CHANNEL.messageBuilder(
                         SyncPlayerValueControlSettingsPacket.class,
-                        getId(),
+                        nextPacketId++,
                         NetworkDirection.PLAY_TO_CLIENT
                 )
                 .encoder(SyncPlayerValueControlSettingsPacket::encode)
@@ -368,7 +392,7 @@ public final class ModNetwork {
                 .add();
         CHANNEL.messageBuilder(
                         TriggerBodyShieldPacket.class,
-                        getId(),
+                        nextPacketId++,
                         NetworkDirection.PLAY_TO_CLIENT
                 )
                 .encoder(TriggerBodyShieldPacket::encode)
@@ -377,7 +401,7 @@ public final class ModNetwork {
                 .add();
         CHANNEL.messageBuilder(
                         SyncDefenseResourcePacket.class,
-                        getId(),
+                        nextPacketId++,
                         NetworkDirection.PLAY_TO_CLIENT
                 )
                 .encoder(SyncDefenseResourcePacket::encode)
@@ -386,7 +410,7 @@ public final class ModNetwork {
                 .add();
         CHANNEL.messageBuilder(
                         SyncDefenseSpellStatePacket.class,
-                        getId(),
+                        nextPacketId++,
                         NetworkDirection.PLAY_TO_CLIENT
                 )
                 .encoder(SyncDefenseSpellStatePacket::encode)
@@ -395,7 +419,7 @@ public final class ModNetwork {
                 .add();
         CHANNEL.messageBuilder(
                         StartSoulRoamingPacket.class,
-                        getId(),
+                        nextPacketId++,
                         NetworkDirection.PLAY_TO_SERVER
                 )
                 .encoder(StartSoulRoamingPacket::encode)
@@ -404,7 +428,7 @@ public final class ModNetwork {
                 .add();
         CHANNEL.messageBuilder(
                         SyncSoulRoamingPacket.class,
-                        getId(),
+                        nextPacketId++,
                         NetworkDirection.PLAY_TO_CLIENT
                 )
                 .encoder(SyncSoulRoamingPacket::encode)
@@ -413,7 +437,7 @@ public final class ModNetwork {
                 .add();
         CHANNEL.messageBuilder(
                         SoulMovementPacket.class,
-                        getId(),
+                        nextPacketId++,
                         NetworkDirection.PLAY_TO_SERVER
                 )
                 .encoder(SoulMovementPacket::encode)
@@ -422,7 +446,7 @@ public final class ModNetwork {
                 .add();
         CHANNEL.messageBuilder(
                         SoulInteractionPacket.class,
-                        getId(),
+                        nextPacketId++,
                         NetworkDirection.PLAY_TO_SERVER
                 )
                 .encoder(SoulInteractionPacket::encode)
@@ -431,7 +455,7 @@ public final class ModNetwork {
                 .add();
         CHANNEL.messageBuilder(
                         SyncPossessionPacket.class,
-                        getId(),
+                        nextPacketId++,
                         NetworkDirection.PLAY_TO_CLIENT
                 )
                 .encoder(SyncPossessionPacket::encode)
@@ -484,7 +508,7 @@ public final class ModNetwork {
                 .consumerMainThread(PushingMountainsThrowPacket::handle)
                 .add();
     }
-    
+
     public static int getId() {
         return nextPacketId++;
     }
@@ -576,6 +600,18 @@ public final class ModNetwork {
         CHANNEL.send(
                 PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> entity),
                 new TriggerBodyShieldPacket(entity.getId())
+        );
+    }
+
+    public static void sendPressureState(
+            ServerPlayer player,
+            boolean affected,
+            float severity,
+            boolean immobilized
+    ) {
+        CHANNEL.send(
+                PacketDistributor.PLAYER.with(() -> player),
+                new SyncPressureStatePacket(affected, severity, immobilized)
         );
     }
 
@@ -687,7 +723,7 @@ public final class ModNetwork {
     public static void sendCultivationInfo(ServerPlayer player) {
         CHANNEL.send(
                 PacketDistributor.PLAYER.with(() -> player),
-                new SyncCultivationInfoPacket(EntityLifespanData.capture(player))
+                new SyncCultivationInfoPacket(PlayerCultivationInfo.capture(player))
         );
     }
 
@@ -732,6 +768,7 @@ public final class ModNetwork {
         CHANNEL.send(
                 PacketDistributor.PLAYER.with(() -> player),
                 new SyncPlayerValueControlSettingsPacket(
+                        PlayerValueControlData.getSettings(player),
                         PlayerSoulRoamingManager.isSoulRoaming(player)
                                 ? Set.of()
                                 : PlayerValueControlUnlockUtility.getUnlockedTypes(player)

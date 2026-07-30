@@ -31,6 +31,7 @@ public final class PlayerValueControlScreen extends AbstractContainerScreen<Play
     private static final int PANEL_BORDER_COLOR = 0xFF75644D;
     private static final int PRIMARY_TEXT_COLOR = 0xFFF0E5CA;
     private static final int SECONDARY_TEXT_COLOR = 0xFFB9B2A4;
+    private static final int MUTED_TEXT_COLOR = 0xFF817D75;
     private static final int SAVED_TEXT_COLOR = 0xFF8FD694;
     private static final int ROW_SPACING = 29;
     private static final int SLIDER_HEIGHT = 20;
@@ -58,11 +59,7 @@ public final class PlayerValueControlScreen extends AbstractContainerScreen<Play
     @Override
     protected void init() {
         this.imageWidth = Mth.clamp(this.width - 34, MINIMUM_IMAGE_WIDTH, PREFERRED_IMAGE_WIDTH);
-        this.imageHeight = Mth.clamp(
-                this.height - 34,
-                MINIMUM_IMAGE_HEIGHT,
-                getPreferredImageHeight()
-        );
+        this.imageHeight = Mth.clamp(this.height - 34, MINIMUM_IMAGE_HEIGHT, PREFERRED_IMAGE_HEIGHT);
         super.init();
         this.sliders.clear();
         if (ClientPlayerValueControlManager.isInitialized()
@@ -137,26 +134,16 @@ public final class PlayerValueControlScreen extends AbstractContainerScreen<Play
         int rowTop = panelTop + 45;
         int sliderLeft = getSliderLeft();
         int labelWidth = sliderLeft - labelLeft - 10;
-        List<PlayerValueControlType> visibleTypes = getVisibleTypes();
-        if (visibleTypes.isEmpty()) {
-            drawCenteredFittedText(
-                    guiGraphics,
-                    Component.translatable("screen.ninecun_lingtai.value_control.empty"),
-                    panelLeft + this.imageWidth / 2,
-                    panelTop + 61,
-                    this.imageWidth - 32,
-                    SECONDARY_TEXT_COLOR
-            );
-        }
-        for (int typeIndex = 0; typeIndex < visibleTypes.size(); typeIndex++) {
-            PlayerValueControlType type = visibleTypes.get(typeIndex);
+        for (int typeIndex = 0; typeIndex < PlayerValueControlType.values().length; typeIndex++) {
+            PlayerValueControlType type = PlayerValueControlType.values()[typeIndex];
+            boolean unlocked = ClientPlayerValueControlManager.isUnlocked(type);
             drawFittedText(
                     guiGraphics,
                     Component.translatable(getFieldTranslationKey(type)),
                     labelLeft,
                     rowTop + typeIndex * ROW_SPACING + 6,
                     labelWidth,
-                    PRIMARY_TEXT_COLOR
+                    unlocked ? PRIMARY_TEXT_COLOR : MUTED_TEXT_COLOR
             );
         }
         if (!this.statusMessage.getString().isEmpty()) {
@@ -186,21 +173,28 @@ public final class PlayerValueControlScreen extends AbstractContainerScreen<Play
         int sliderLeft = getSliderLeft();
         int sliderWidth = this.leftPos + this.imageWidth - sliderLeft - 17;
         int rowTop = this.topPos + 45;
-        List<PlayerValueControlType> visibleTypes = getVisibleTypes();
-        for (int typeIndex = 0; typeIndex < visibleTypes.size(); typeIndex++) {
-            PlayerValueControlType type = visibleTypes.get(typeIndex);
+        boolean initialized = ClientPlayerValueControlManager.isInitialized();
+        for (int typeIndex = 0; typeIndex < PlayerValueControlType.values().length; typeIndex++) {
+            PlayerValueControlType type = PlayerValueControlType.values()[typeIndex];
+            boolean unlocked = initialized && ClientPlayerValueControlManager.isUnlocked(type);
             ApplicationSlider slider = new ApplicationSlider(
                     sliderLeft,
                     rowTop + typeIndex * ROW_SPACING,
                     sliderWidth,
                     SLIDER_HEIGHT,
                     type,
+                    unlocked,
                     this.draftApplications.getOrDefault(
                             type,
                             PlayerValueControlUtility.DEFAULT_APPLICATION
                     )
             );
-            slider.setTooltip(Tooltip.create(Component.translatable(getTooltipTranslationKey(type))));
+            slider.active = unlocked;
+            slider.setTooltip(Tooltip.create(Component.translatable(
+                    unlocked
+                            ? getTooltipTranslationKey(type)
+                            : getLockedTooltipTranslationKey(type)
+            )));
             this.sliders.add(slider);
             this.addRenderableWidget(slider);
         }
@@ -235,26 +229,6 @@ public final class PlayerValueControlScreen extends AbstractContainerScreen<Play
 
     private int getSliderLeft() {
         return this.leftPos + Math.max(118, this.imageWidth / 2 - 8);
-    }
-
-    private int getPreferredImageHeight() {
-        if (!ClientPlayerValueControlManager.isInitialized()) {
-            return PREFERRED_IMAGE_HEIGHT;
-        }
-        return Mth.clamp(100 + getVisibleTypes().size() * ROW_SPACING, MINIMUM_IMAGE_HEIGHT, PREFERRED_IMAGE_HEIGHT);
-    }
-
-    private List<PlayerValueControlType> getVisibleTypes() {
-        if (!ClientPlayerValueControlManager.isInitialized()) {
-            return List.of();
-        }
-        List<PlayerValueControlType> visibleTypes = new ArrayList<>();
-        for (PlayerValueControlType type : PlayerValueControlType.values()) {
-            if (ClientPlayerValueControlManager.isUnlocked(type)) {
-                visibleTypes.add(type);
-            }
-        }
-        return visibleTypes;
     }
 
     private void copySettings(PlayerValueControlSettings settings) {
@@ -358,8 +332,13 @@ public final class PlayerValueControlScreen extends AbstractContainerScreen<Play
         return getFieldTranslationKey(type) + ".tooltip";
     }
 
+    private static String getLockedTooltipTranslationKey(PlayerValueControlType type) {
+        return getFieldTranslationKey(type) + ".locked_tooltip";
+    }
+
     private final class ApplicationSlider extends AbstractSliderButton {
         private final PlayerValueControlType controlType;
+        private final boolean unlocked;
 
         private ApplicationSlider(
                 int left,
@@ -367,6 +346,7 @@ public final class PlayerValueControlScreen extends AbstractContainerScreen<Play
                 int width,
                 int height,
                 PlayerValueControlType controlType,
+                boolean unlocked,
                 double application
         ) {
             super(
@@ -375,14 +355,21 @@ public final class PlayerValueControlScreen extends AbstractContainerScreen<Play
                     width,
                     height,
                     Component.empty(),
-                    PlayerValueControlUtility.sanitizeApplication(application)
+                    unlocked
+                            ? PlayerValueControlUtility.sanitizeApplication(application)
+                            : PlayerValueControlUtility.DEFAULT_APPLICATION
             );
             this.controlType = controlType;
+            this.unlocked = unlocked;
             updateMessage();
         }
 
         @Override
         protected void updateMessage() {
+            if (!this.unlocked) {
+                this.setMessage(Component.translatable("screen.ninecun_lingtai.value_control.locked"));
+                return;
+            }
             this.setMessage(Component.translatable(
                     "screen.ninecun_lingtai.value_control.percent",
                     Math.round(this.value * 100.0D)
@@ -391,6 +378,9 @@ public final class PlayerValueControlScreen extends AbstractContainerScreen<Play
 
         @Override
         protected void applyValue() {
+            if (!this.unlocked) {
+                return;
+            }
             double application = Math.round(this.value * 100.0D) / 100.0D;
             this.value = application;
             draftApplications.put(this.controlType, application);

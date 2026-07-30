@@ -1,9 +1,8 @@
 package com.seraphina.ninecun_lingtai.api.cultivation;
 
-import com.seraphina.ninecun_lingtai.common.entity.EntityCultivationData;
+import com.seraphina.ninecun_lingtai.common.player.PlayerCultivationData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerCultivationManager;
 import com.seraphina.ninecun_lingtai.utility.CultivationUtility;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 
 import java.math.BigInteger;
@@ -14,11 +13,7 @@ public final class CultivationApi {
     }
 
     public static Optional<CultivationStage> getStage(Player player) {
-        return EntityCultivationData.getStage(player);
-    }
-
-    public static Optional<CultivationStage> getStage(LivingEntity entity) {
-        return EntityCultivationData.getStage(entity);
+        return PlayerCultivationData.getStage(player);
     }
 
     public static Optional<BigInteger> getNextRequiredSpiritualEnergy(Player player) {

@@ -24,6 +24,8 @@ import java.util.Optional;
 import java.util.Set;
 
 public final class TechniqueUtility {
+    private TechniqueUtility() {
+    }
 
     public static TechniqueLearnability getLearnability(Player player, TechniqueDefinition technique) {
         List<TechniqueRequirementFailure> failures = new ArrayList<>();

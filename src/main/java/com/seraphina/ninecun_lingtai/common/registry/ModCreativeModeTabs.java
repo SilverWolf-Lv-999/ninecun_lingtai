@@ -30,6 +30,9 @@ public final class ModCreativeModeTabs {
                     .build()
     );
 
+    private ModCreativeModeTabs() {
+    }
+
     public static void register(IEventBus modEventBus) {
         CREATIVE_MODE_TABS.register(modEventBus);
     }

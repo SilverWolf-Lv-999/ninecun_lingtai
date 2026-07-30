@@ -12,6 +12,9 @@ import java.util.Map;
 public final class PlayerTechniqueProficiencyData {
     private static final String PROFICIENCY_KEY = ModMain.MOD_ID + ":technique_proficiency";
 
+    private PlayerTechniqueProficiencyData() {
+    }
+
     public static Map<ResourceLocation, Long> getAll(Player player) {
         CompoundTag persistentData = player.getPersistentData();
         if (!persistentData.contains(PROFICIENCY_KEY, Tag.TAG_COMPOUND)) {

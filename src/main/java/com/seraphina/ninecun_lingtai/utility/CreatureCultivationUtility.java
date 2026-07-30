@@ -4,7 +4,7 @@ import com.seraphina.ninecun_lingtai.api.aptitude.SpiritualRoot;
 import com.seraphina.ninecun_lingtai.api.cultivation.CultivationRealm;
 import com.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
 import com.seraphina.ninecun_lingtai.api.element.ElementType;
-import com.seraphina.ninecun_lingtai.api.cultivation.CultivationApi;
+import com.seraphina.ninecun_lingtai.common.creature.CreatureCultivationData;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -25,8 +25,11 @@ public final class CreatureCultivationUtility {
             (SpiritualRoot.MAXIMUM_LENGTH_INCHES - SpiritualRoot.MINIMUM_LENGTH_INCHES) * 10.0F
     ) + 1;
 
+    private CreatureCultivationUtility() {
+    }
+
     public static int getProgressionIndex(LivingEntity entity) {
-        return CultivationApi.getStage(entity)
+        return CreatureCultivationData.getStage(entity)
                 .map(CultivationUtility::getProgressionIndex)
                 .orElse(MISSING_PROGRESSION_INDEX);
     }
@@ -38,7 +41,7 @@ public final class CreatureCultivationUtility {
 
     /** A viewer perceives a creature's cultivation when their major realm is not below the target's. */
     public static boolean canInspect(Player viewer, CultivationStage targetStage) {
-        Optional<CultivationStage> viewerStage = CultivationApi.getStage(viewer);
+        Optional<CultivationStage> viewerStage = CreatureCultivationData.getStage(viewer);
         return viewerStage.isPresent()
                 && viewerStage.get().realm().ordinal() >= targetStage.realm().ordinal();
     }

@@ -9,6 +9,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
 public final class PossessionUtility {
+    private PossessionUtility() {
+    }
 
     public static PossessionResult tryPossess(ServerPlayer player, ServerPlayer target) {
         PossessionResult validationResult = validatePossession(player, target);

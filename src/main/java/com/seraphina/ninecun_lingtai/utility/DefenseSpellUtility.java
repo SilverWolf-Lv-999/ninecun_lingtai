@@ -30,6 +30,8 @@ import java.util.Set;
 import java.util.UUID;
 
 public final class DefenseSpellUtility {
+    private DefenseSpellUtility() {
+    }
 
     public static boolean canUse(ServerPlayer player, DefenseSpellKind kind) {
         return PlayerAptitudeData.getSpiritualRoot(player)

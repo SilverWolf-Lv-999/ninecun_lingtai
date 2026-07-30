@@ -20,6 +20,7 @@
   "itemGroup.ninecun_lingtai": "Ninecun Lingtai",
   "key.categories.ninecun_lingtai": "Ninecun Lingtai",
   "key.ninecun_lingtai.meditation": "Cultivate",
+  "key.ninecun_lingtai.pressure": "Release Pressure (hold)",
   "key.ninecun_lingtai.spell_selection": "Select Spell",
   "key.ninecun_lingtai.cast_spell": "Cast Spell",
   "key.ninecun_lingtai.pushing_mountains": "Pushing Mountains (hold ~)",
@@ -114,7 +115,6 @@
   "screen.ninecun_lingtai.spell_selection.hint": "Click or Enter to choose · V to cast",
   "screen.ninecun_lingtai.value_control.title": "Value Control",
   "screen.ninecun_lingtai.value_control.loading": "Reading value controls...",
-  "screen.ninecun_lingtai.value_control.empty": "No values are adjustable at the current realm",
   "screen.ninecun_lingtai.value_control.field.attack_damage": "Attack Damage",
   "screen.ninecun_lingtai.value_control.field.attack_damage.tooltip": "Controls how much realm bonus damage is applied.",
   "screen.ninecun_lingtai.value_control.field.attack_damage.locked_tooltip": "Unlocks after reaching Qi Refining.",
@@ -197,5 +197,7 @@
   "screen.ninecun_lingtai.config.error.invalid_number": "%s must be a number from %s to %s",
   "screen.ninecun_lingtai.config.error.save_failed": "Could not save the configuration; check file permissions",
   "death.attack.ninecun_lingtai.realm_execution": "%1$s was erased in a single strike by %2$s across the mortal-divine divide",
-  "death.attack.ninecun_lingtai.realm_execution.item": "%1$s was erased in a single strike by %2$s using %3$s across the mortal-divine divide"
+  "death.attack.ninecun_lingtai.realm_execution.item": "%1$s was erased in a single strike by %2$s using %3$s across the mortal-divine divide",
+  "death.attack.ninecun_lingtai.pressure_execution": "%1$s could not withstand %2$s's pressure and had their soul extinguished",
+  "death.attack.ninecun_lingtai.pressure_execution.item": "%1$s could not withstand the pressure released by %2$s using %3$s and had their soul extinguished"
 }

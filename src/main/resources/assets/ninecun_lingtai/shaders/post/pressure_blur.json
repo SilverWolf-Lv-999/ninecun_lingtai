@@ -1,0 +1,31 @@
+{
+  "targets": [
+    "swap"
+  ],
+  "passes": [
+    {
+      "name": "ninecun_lingtai:pressure_blur",
+      "intarget": "minecraft:main",
+      "outtarget": "swap",
+      "uniforms": [
+        {
+          "name": "BlurRadius",
+          "values": [10.0]
+        },
+        {
+          "name": "Distortion",
+          "values": [0.012]
+        },
+        {
+          "name": "ChromaticAberration",
+          "values": [0.008]
+        }
+      ]
+    },
+    {
+      "name": "blit",
+      "intarget": "swap",
+      "outtarget": "minecraft:main"
+    }
+  ]
+}

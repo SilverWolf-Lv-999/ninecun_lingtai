@@ -73,6 +73,11 @@ public final class CommonConfig {
     public static final ForgeConfigSpec.IntValue PUSHING_MOUNTAINS_MAX_BLOCKS;
     public static final ForgeConfigSpec.DoubleValue PUSHING_MOUNTAINS_THROW_DAMAGE;
     public static final ForgeConfigSpec.IntValue PUSHING_MOUNTAINS_MAX_ENTITY_TICKS;
+    public static final ForgeConfigSpec.DoubleValue PRESSURE_BASE_RANGE;
+    public static final ForgeConfigSpec.DoubleValue PRESSURE_LAYER_RANGE_BONUS;
+    public static final ForgeConfigSpec.DoubleValue PRESSURE_REALM_RANGE_BONUS;
+    public static final ForgeConfigSpec.DoubleValue PRESSURE_MAX_RANGE;
+    public static final ForgeConfigSpec.IntValue PRESSURE_INSTANT_DEATH_REALM_GAP;
     public static final ForgeConfigSpec.IntValue MORTAL_PLAYER_LIFESPAN_YEARS;
     public static final ForgeConfigSpec.IntValue QI_REFINING_LIFESPAN_YEARS;
     public static final ForgeConfigSpec.IntValue FOUNDATION_ESTABLISHMENT_LIFESPAN_YEARS;
@@ -351,6 +356,24 @@ public final class CommonConfig {
         PUSHING_MOUNTAINS_MAX_ENTITY_TICKS = BUILDER
                 .comment("Maximum lifetime of a thrown region before it annihilates")
                 .defineInRange("maxEntityTicks", 1200, 1, 72000);
+        BUILDER.pop();
+
+        BUILDER.push("pressure");
+        PRESSURE_BASE_RANGE = BUILDER
+                .comment("Base pressure radius in blocks")
+                .defineInRange("baseRange", 5.0D, 0.0D, 2000.0D);
+        PRESSURE_LAYER_RANGE_BONUS = BUILDER
+                .comment("Pressure radius added for each completed minor layer")
+                .defineInRange("layerRangeBonus", 1.0D, 0.0D, 2000.0D);
+        PRESSURE_REALM_RANGE_BONUS = BUILDER
+                .comment("Pressure radius added for each completed major realm")
+                .defineInRange("realmRangeBonus", 30.0D, 0.0D, 2000.0D);
+        PRESSURE_MAX_RANGE = BUILDER
+                .comment("Hard maximum pressure radius in blocks")
+                .defineInRange("maxRange", 2000.0D, 0.0D, 2000.0D);
+        PRESSURE_INSTANT_DEATH_REALM_GAP = BUILDER
+                .comment("Major-realm gap required for pressure to instantly kill a lower target")
+                .defineInRange("instantDeathRealmGap", 2, 1, 9);
         BUILDER.pop();
 
         BUILDER.push("lifespan");

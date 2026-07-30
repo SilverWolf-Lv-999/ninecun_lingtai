@@ -1,7 +1,6 @@
 package com.seraphina.ninecun_lingtai.common.player;
 
 import com.seraphina.ninecun_lingtai.ModMain;
-import com.seraphina.ninecun_lingtai.utility.LivingEntityDataUtility;
 import com.seraphina.ninecun_lingtai.utility.PlayerValueControlUtility;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -11,32 +10,17 @@ import java.util.EnumMap;
 import java.util.Map;
 
 public final class PlayerValueControlData {
-    private static final String LEGACY_VALUE_CONTROL_KEY = ModMain.MOD_ID + ":value_control";
+    private static final String VALUE_CONTROL_KEY = ModMain.MOD_ID + ":value_control";
+
+    private PlayerValueControlData() {
+    }
 
     public static PlayerValueControlSettings getSettings(Player player) {
-        CompoundTag valueControlData = LivingEntityDataUtility.getValueControl(player);
-        if (valueControlData.isEmpty()) {
-            CompoundTag legacyData = player.getPersistentData().getCompound(LEGACY_VALUE_CONTROL_KEY);
-            if (!legacyData.isEmpty()) {
-                Map<PlayerValueControlType, Double> migratedApplications = new EnumMap<>(
-                        PlayerValueControlType.class
-                );
-                for (PlayerValueControlType type : PlayerValueControlType.values()) {
-                    String key = type.getSerializedName();
-                    if (legacyData.contains(key, Tag.TAG_ANY_NUMERIC)) {
-                        migratedApplications.put(type, legacyData.getDouble(key));
-                    }
-                }
-                PlayerValueControlSettings migratedSettings = new PlayerValueControlSettings(
-                        migratedApplications
-                );
-                setSettings(player, migratedSettings);
-                player.getPersistentData().remove(LEGACY_VALUE_CONTROL_KEY);
-                return migratedSettings;
-            }
+        CompoundTag persistentData = player.getPersistentData();
+        if (!persistentData.contains(VALUE_CONTROL_KEY, Tag.TAG_COMPOUND)) {
             return PlayerValueControlSettings.defaultSettings();
         }
-
+        CompoundTag valueControlData = persistentData.getCompound(VALUE_CONTROL_KEY);
         Map<PlayerValueControlType, Double> applications = new EnumMap<>(PlayerValueControlType.class);
         for (PlayerValueControlType type : PlayerValueControlType.values()) {
             String key = type.getSerializedName();
@@ -52,18 +36,17 @@ public final class PlayerValueControlData {
     }
 
     public static void setSettings(Player player, PlayerValueControlSettings settings) {
+        CompoundTag valueControlData = new CompoundTag();
         PlayerValueControlSettings sanitizedSettings = settings == null
                 ? PlayerValueControlSettings.defaultSettings()
                 : settings;
-        CompoundTag valueControlData = new CompoundTag();
         for (PlayerValueControlType type : PlayerValueControlType.values()) {
             valueControlData.putDouble(
                     type.getSerializedName(),
-                    PlayerValueControlUtility.sanitizeApplication(sanitizedSettings.getApplication(type))
+                    sanitizedSettings.getApplication(type)
             );
         }
-        LivingEntityDataUtility.setValueControl(player, valueControlData);
-        player.getPersistentData().remove(LEGACY_VALUE_CONTROL_KEY);
+        player.getPersistentData().put(VALUE_CONTROL_KEY, valueControlData);
     }
 
     public static void setApplication(
@@ -78,12 +61,12 @@ public final class PlayerValueControlData {
     }
 
     public static void copy(Player sourcePlayer, Player targetPlayer) {
-        setSettings(targetPlayer, getSettings(sourcePlayer));
-    }
-
-    public static void migratePersistentData(Player player) {
-        if (player.getPersistentData().contains(LEGACY_VALUE_CONTROL_KEY, Tag.TAG_COMPOUND)) {
-            getSettings(player);
+        CompoundTag sourceData = sourcePlayer.getPersistentData();
+        if (sourceData.contains(VALUE_CONTROL_KEY, Tag.TAG_COMPOUND)) {
+            targetPlayer.getPersistentData().put(
+                    VALUE_CONTROL_KEY,
+                    sourceData.getCompound(VALUE_CONTROL_KEY).copy()
+            );
         }
     }
 }

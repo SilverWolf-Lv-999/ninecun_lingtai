@@ -13,6 +13,9 @@ public final class PlayerLightFlightData {
     private static final String BOOST_UNTIL_TICK_KEY = "boost_until_tick";
     private static final String NEXT_BOOST_TICK_KEY = "next_boost_tick";
 
+    private PlayerLightFlightData() {
+    }
+
     public static boolean isFlying(Player player) {
         CompoundTag persistentData = player.getPersistentData();
         return persistentData.contains(LIGHT_FLIGHT_KEY, Tag.TAG_COMPOUND)
