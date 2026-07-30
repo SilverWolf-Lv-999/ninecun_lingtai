@@ -29,5 +29,6 @@
   },
   "overwrites": {
     "requireAnnotations": true
-  }
+  },
+  "plugin": "com.seraphina.ninecun_lingtai.mixin.IMixinPlugin"
 }
