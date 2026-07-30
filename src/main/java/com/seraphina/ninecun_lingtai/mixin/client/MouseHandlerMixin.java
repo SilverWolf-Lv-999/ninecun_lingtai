@@ -1,6 +1,7 @@
 package com.seraphina.ninecun_lingtai.mixin.client;
 
 import com.seraphina.ninecun_lingtai.client.player.ClientMeditationCameraManager;
+import com.seraphina.ninecun_lingtai.client.player.ClientPressureManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientSoulRoamingManager;
 import net.minecraft.client.MouseHandler;
 import net.minecraft.client.player.LocalPlayer;
@@ -18,6 +19,9 @@ public abstract class MouseHandlerMixin {
             )
     )
     private void ninecunLingtai$rotateMeditationCamera(LocalPlayer player, double yRotDelta, double xRotDelta) {
+        if (ClientPressureManager.rotateCamera(player, yRotDelta, xRotDelta)) {
+            return;
+        }
         if (ClientSoulRoamingManager.rotateSoul(player, yRotDelta, xRotDelta)) {
             return;
         }

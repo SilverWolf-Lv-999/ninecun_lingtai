@@ -11,6 +11,7 @@ import com.seraphina.ninecun_lingtai.client.player.ClientLightFlightManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientMeditationManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientPlayerValueControlManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientPossessionManager;
+import com.seraphina.ninecun_lingtai.client.player.ClientPressureManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientShrinkEarthManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientPushingMountainsManager;
 import com.seraphina.ninecun_lingtai.client.tribulation.ClientTribulationManager;
@@ -54,6 +55,7 @@ public final class ClientForgeEventHandler {
     public static void onClientTick(TickEvent.ClientTickEvent event) {
         if (event.phase == TickEvent.Phase.END) {
             ClientAptitudeScreenManager.tick();
+            ClientPressureManager.tick();
             ClientMeditationManager.tick();
             ClientSpellManager.tick();
             ClientSwordFlightManager.tick();
@@ -124,6 +126,14 @@ public final class ClientForgeEventHandler {
 
     @SubscribeEvent
     public static void onMovementInput(MovementInputUpdateEvent event) {
+        if (ClientPressureManager.isLocalPlayerImmobilized()) {
+            Input input = event.getInput();
+            input.leftImpulse = 0.0F;
+            input.forwardImpulse = 0.0F;
+            input.jumping = false;
+            input.shiftKeyDown = false;
+            return;
+        }
         if (ClientSoulRoamingManager.isLocalPlayerSoulRoaming()) {
             Input input = event.getInput();
             ClientSoulRoamingManager.sendMovement(input);
@@ -203,6 +213,7 @@ public final class ClientForgeEventHandler {
         ClientNotificationManager.reset();
         ClientTribulationManager.reset();
         ClientPushingMountainsManager.reset();
+        ClientPressureManager.reset();
         PushingMountainsRenderMeshManager.clearAll();
     }
 }
