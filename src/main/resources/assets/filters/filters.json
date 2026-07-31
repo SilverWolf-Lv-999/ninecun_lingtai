@@ -28,6 +28,13 @@
       "items": [
         "ninecun_lingtai:dao_scroll"
       ]
+    },
+    "weapons": {
+      "title": "兵器",
+      "icon": "ninecun_lingtai:han_sword",
+      "items": [
+        "ninecun_lingtai:han_sword"
+      ]
     }
   }
 }

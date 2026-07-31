@@ -12,6 +12,9 @@ Filters API 的分类数据只保存 `Item`，刷新创意栏时会用 `new Item
 - 基础物品：`ninecun_lingtai:spiritual_stone`
 - 复杂 NBT 变体来源：`SpiritualStoneUtility.getCreativeItemStacks()`
 - 结果：当“材料”分类启用并显示普通灵石时，自动补入人品、地品、天品灵石。
+- 基础物品：`ninecun_lingtai:han_sword`
+- 复杂 NBT 变体来源：`SpiritualItemUtility.getCreativeItemStacks(ModItems.HAN_SWORD.get())`
+- 结果：当“兵器”分类启用并显示汉剑时，自动补入凡品、灵品、仙品汉剑。
 
 行为约束：
 
