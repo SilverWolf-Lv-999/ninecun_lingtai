@@ -2,15 +2,20 @@ package com.seraphina.ninecun_lingtai.client.player;
 
 import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import com.seraphina.ninecun_lingtai.common.network.packet.DismountSwordFlightPacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.MountSwordFlightPacket;
+import com.seraphina.ninecun_lingtai.common.spell.SwordFlightManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.SwordItem;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.client.event.InputEvent;
 
 import java.util.Map;
 import java.util.UUID;
@@ -50,6 +55,30 @@ public final class ClientSwordFlightManager {
 
     public static ItemStack getSword(UUID playerId) {
         return FLYING_SWORDS.getOrDefault(playerId, ItemStack.EMPTY);
+    }
+
+    /**
+     * 使用客户端原始潜行键处理登剑交互，避免依赖可能被其他客户端模组改写的移动输入状态。
+     */
+    public static boolean handleInteraction(InputEvent.InteractionKeyMappingTriggered event) {
+        Minecraft minecraft = Minecraft.getInstance();
+        LocalPlayer player = minecraft.player;
+        if (player == null
+                || minecraft.screen != null
+                || !event.isUseItem()
+                || event.getHand() != InteractionHand.MAIN_HAND
+                || !minecraft.options.keyShift.isDown()
+                || !player.onGround()
+                || isFlying(player.getUUID())
+                || !(player.getMainHandItem().getItem() instanceof SwordItem)
+                || !ClientTechniqueManager.isInitialized()
+                || !ClientTechniqueManager.isLearned(SwordFlightManager.TECHNIQUE_ID)) {
+            return false;
+        }
+        ModNetwork.sendToServer(MountSwordFlightPacket.INSTANCE);
+        event.setSwingHand(false);
+        event.setCanceled(true);
+        return true;
     }
 
     public static boolean isLocalPlayerFlying() {

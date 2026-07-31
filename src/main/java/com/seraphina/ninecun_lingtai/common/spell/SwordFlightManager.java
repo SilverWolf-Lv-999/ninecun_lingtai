@@ -5,7 +5,9 @@ import com.seraphina.ninecun_lingtai.api.cultivation.CultivationApi;
 import com.seraphina.ninecun_lingtai.api.cultivation.CultivationRealm;
 import com.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
 import com.seraphina.ninecun_lingtai.api.spell.SpellCastContext;
+import com.seraphina.ninecun_lingtai.api.technique.TechniqueDefinition;
 import com.seraphina.ninecun_lingtai.api.technique.TechniqueMasteryStage;
+import com.seraphina.ninecun_lingtai.common.data.TechniqueManager;
 import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import com.seraphina.ninecun_lingtai.common.player.PlayerSwordFlightData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerTechniqueData;
@@ -26,6 +28,8 @@ import net.minecraft.world.item.SwordItem;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+
+import java.util.Optional;
 
 /**
  * 御剑飞行的服务端管理：登剑、收剑、锁剑与飞行速度。
@@ -62,6 +66,23 @@ public final class SwordFlightManager {
     private SwordFlightManager() {
     }
 
+    /**
+     * 请求施展御剑术。交互触发时不依赖服务端潜行同步，其他入口仍保留原本的潜行要求。
+     */
+    public static boolean requestMount(ServerPlayer player, boolean interactionTriggered) {
+        Optional<TechniqueDefinition> technique =
+                TechniqueManager.INSTANCE.getTechnique(TECHNIQUE_ID);
+        if (technique.isEmpty()) {
+            return false;
+        }
+        if (interactionTriggered) {
+            SpellCastManager.castTechniqueFromInteraction(player, technique.get());
+        } else {
+            SpellCastManager.castTechnique(player, technique.get());
+        }
+        return true;
+    }
+
     /** 由 SwordFlightSpell.cast 调用；返回 false 时灵力由施法管线退还。 */
     public static boolean tryMount(ServerPlayer player, SpellCastContext context) {
         if (PlayerSwordFlightData.isFlying(player)) {
@@ -77,7 +98,8 @@ public final class SwordFlightManager {
             sendActionBar(player, "御剑先得有剑，须手持一柄剑");
             return false;
         }
-        if (!player.onGround() || !player.isShiftKeyDown()) {
+        if (!player.onGround()
+                || (!context.interactionTriggered() && !player.isShiftKeyDown())) {
             sendActionBar(player, "须立于实地、蹲身将剑踏于足下，方可起飞");
             return false;
         }

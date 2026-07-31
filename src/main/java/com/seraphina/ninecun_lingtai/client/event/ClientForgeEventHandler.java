@@ -113,6 +113,10 @@ public final class ClientForgeEventHandler {
                 && !ClientTribulationManager.isLocalPlayerInTribulation()) {
             event.setSwingHand(false);
             event.setCanceled(true);
+            return;
+        }
+        if (ClientSwordFlightManager.handleInteraction(event)) {
+            return;
         }
     }
 

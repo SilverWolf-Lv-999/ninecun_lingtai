@@ -16,6 +16,7 @@ import com.seraphina.ninecun_lingtai.common.network.packet.DismountSwordFlightPa
 import com.seraphina.ninecun_lingtai.common.network.packet.ImprintTechniquePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.ImprintTechniqueToJadeSlipPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.LearnTechniquePacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.MountSwordFlightPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.OpenAptitudeScreenPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.OpenDaoScrollScreenPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.OpenTechniqueImprintScreenPacket;
@@ -91,7 +92,7 @@ import java.util.Set;
 import java.util.UUID;
 
 public final class ModNetwork {
-    private static final String PROTOCOL_VERSION = "30";
+    private static final String PROTOCOL_VERSION = "31";
     private static final SimpleChannel CHANNEL = NetworkRegistry.ChannelBuilder
             .named(ResourceLocation.fromNamespaceAndPath(ModMain.MOD_ID, "main"))
             .networkProtocolVersion(() -> PROTOCOL_VERSION)
@@ -311,6 +312,15 @@ public final class ModNetwork {
                 .encoder(DismountSwordFlightPacket::encode)
                 .decoder(DismountSwordFlightPacket::decode)
                 .consumerMainThread(DismountSwordFlightPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        MountSwordFlightPacket.class,
+                        nextPacketId++,
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(MountSwordFlightPacket::encode)
+                .decoder(MountSwordFlightPacket::decode)
+                .consumerMainThread(MountSwordFlightPacket::handle)
                 .add();
         CHANNEL.messageBuilder(
                         SetLightFlightPacket.class,

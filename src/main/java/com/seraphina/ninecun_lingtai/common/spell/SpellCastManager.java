@@ -77,6 +77,19 @@ public final class SpellCastManager {
 
     /** 施展指定的法术类功法（御剑等法术亦可绕过择法，由特定操作直接触发）。 */
     public static void castTechnique(ServerPlayer player, TechniqueDefinition technique) {
+        castTechnique(player, technique, false);
+    }
+
+    /** 由客户端交互触发指定法术；施法本身仍由服务端完整校验。 */
+    public static void castTechniqueFromInteraction(ServerPlayer player, TechniqueDefinition technique) {
+        castTechnique(player, technique, true);
+    }
+
+    private static void castTechnique(
+            ServerPlayer player,
+            TechniqueDefinition technique,
+            boolean interactionTriggered
+    ) {
         if (technique.spell().isEmpty()) {
             sendActionBar(player, "此功并非法术，无从施展");
             return;
@@ -139,7 +152,8 @@ public final class SpellCastManager {
                 spellData,
                 masteryStage,
                 powerEfficiency,
-                cultivationStrength
+                cultivationStrength,
+                interactionTriggered
         );
         if (!spell.cast(player, context)) {
             if (anyElementConsumption != null) {

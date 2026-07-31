@@ -1,12 +1,9 @@
 package com.seraphina.ninecun_lingtai.common.event;
 
 import com.seraphina.ninecun_lingtai.ModMain;
-import com.seraphina.ninecun_lingtai.api.technique.TechniqueDefinition;
-import com.seraphina.ninecun_lingtai.common.data.TechniqueManager;
 import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import com.seraphina.ninecun_lingtai.common.player.PlayerSwordFlightData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerTechniqueData;
-import com.seraphina.ninecun_lingtai.common.spell.SpellCastManager;
 import com.seraphina.ninecun_lingtai.common.spell.SwordFlightManager;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -21,8 +18,6 @@ import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-
-import java.util.Optional;
 
 /** 御剑术的事件入口：蹲下右键登剑、每刻维持、锁剑防丢与生死进退的善后。 */
 @Mod.EventBusSubscriber(modid = ModMain.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
@@ -58,13 +53,7 @@ public final class SwordFlightEventHandler {
         if (!PlayerTechniqueData.hasTechnique(player, SwordFlightManager.TECHNIQUE_ID)) {
             return false;
         }
-        Optional<TechniqueDefinition> technique =
-                TechniqueManager.INSTANCE.getTechnique(SwordFlightManager.TECHNIQUE_ID);
-        if (technique.isEmpty()) {
-            return false;
-        }
-        SpellCastManager.castTechnique(player, technique.get());
-        return true;
+        return SwordFlightManager.requestMount(player, false);
     }
 
     @SubscribeEvent

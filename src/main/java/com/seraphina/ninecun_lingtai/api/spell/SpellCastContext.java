@@ -14,14 +14,26 @@ import java.util.Objects;
  * @param masteryStage        施法者对此功法的掌握阶段（入门／小成／大成／圆满）
  * @param powerEfficiency     熟练度发挥率与灵根资质相乘后的威力比例
  * @param cultivationStrength 修为强度（境界序号 × 9 + 层数，练气一层为 1）
+ * @param interactionTriggered 是否由客户端交互请求触发
  */
 public record SpellCastContext(
         TechniqueDefinition technique,
         TechniqueSpell spellData,
         TechniqueMasteryStage masteryStage,
         double powerEfficiency,
-        int cultivationStrength
+        int cultivationStrength,
+        boolean interactionTriggered
 ) {
+    public SpellCastContext(
+            TechniqueDefinition technique,
+            TechniqueSpell spellData,
+            TechniqueMasteryStage masteryStage,
+            double powerEfficiency,
+            int cultivationStrength
+    ) {
+        this(technique, spellData, masteryStage, powerEfficiency, cultivationStrength, false);
+    }
+
     public SpellCastContext {
         Objects.requireNonNull(technique, "technique");
         Objects.requireNonNull(spellData, "spellData");
