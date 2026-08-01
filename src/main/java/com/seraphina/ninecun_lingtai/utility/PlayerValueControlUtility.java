@@ -5,9 +5,6 @@ public final class PlayerValueControlUtility {
     public static final double MINIMUM_APPLICATION = 0.0D;
     public static final double MAXIMUM_APPLICATION = 1.0D;
 
-    private PlayerValueControlUtility() {
-    }
-
     public static double sanitizeApplication(double application) {
         if (!Double.isFinite(application)) {
             return DEFAULT_APPLICATION;

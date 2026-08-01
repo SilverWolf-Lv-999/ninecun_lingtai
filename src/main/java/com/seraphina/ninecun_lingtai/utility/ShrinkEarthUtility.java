@@ -10,8 +10,6 @@ public final class ShrinkEarthUtility {
     public static final float MIN_WORLD_RENDER_SCALE = 0.4F;
     public static final double UNCHANGED_WORLD_RENDER_RADIUS = 8.0D;
 
-    private ShrinkEarthUtility() {
-    }
 
     public static int getCompressionScale(TechniqueMasteryStage masteryStage) {
         return switch (masteryStage) {

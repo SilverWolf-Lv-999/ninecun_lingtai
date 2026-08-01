@@ -20,9 +20,6 @@ public final class LifespanUtility {
     public static final long TICKS_PER_DAY = 24000L;
     public static final long TICKS_PER_YEAR = DAYS_PER_YEAR * TICKS_PER_DAY;
 
-    private LifespanUtility() {
-    }
-
     public static boolean hasLifespan(LivingEntity entity) {
         return (entity.getMobType() != MobType.UNDEAD || isBossLevelCreature(entity))
                 && (entity instanceof Player || entity instanceof Mob);

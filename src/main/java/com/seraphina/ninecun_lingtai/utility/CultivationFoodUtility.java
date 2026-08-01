@@ -8,8 +8,6 @@ import net.minecraft.world.entity.player.Player;
 import java.util.Optional;
 
 public final class CultivationFoodUtility {
-    private CultivationFoodUtility() {
-    }
 
     public static boolean isFasting(Player player) {
         return isFasting(CultivationApi.getStage(player));

@@ -48,9 +48,6 @@ public final class CultivationDefenseUtility {
     private static final int NASCENT_SOUL_HIGH_DAMAGE_COST = 10;
     private static final int SPIRIT_TRANSFORMATION_HIGH_DAMAGE_COST = 1;
 
-    private CultivationDefenseUtility() {
-    }
-
     public static double getMaxHealthBonus(Optional<CultivationStage> stage) {
         return stage.map(CultivationDefenseUtility::getMaxHealthBonus).orElse(0.0D);
     }

@@ -45,9 +45,6 @@ public final class SpiritualRootUtility {
             Map.entry(ElementType.CHAOS, 0xC46CFF)
     );
 
-    private SpiritualRootUtility() {
-    }
-
     public static String getElementName(ElementType element) {
         String elementName = ELEMENT_NAMES.get(element);
         if (elementName == null) {

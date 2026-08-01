@@ -12,9 +12,6 @@ import java.util.List;
 public final class SpiritualItemUtility {
     private static final String GRADE_KEY = ModMain.MOD_ID + ":spiritual_item_grade";
 
-    private SpiritualItemUtility() {
-    }
-
     public static ItemStack createStack(ItemLike itemLike, SpiritualItemGrade grade) {
         ItemStack itemStack = new ItemStack(itemLike);
         setGrade(itemStack, grade);

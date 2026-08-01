@@ -14,9 +14,6 @@ public final class PressureUtility {
     private static final int DEFAULT_INSTANT_DEATH_REALM_GAP = 2;
     private static final int NON_CULTIVATOR_RANK = -1;
 
-    private PressureUtility() {
-    }
-
     public static int getCultivationRank(CultivationStage stage) {
         return stage.realm().ordinal() * CultivationStage.MAXIMUM_LAYER
                 + stage.layer()

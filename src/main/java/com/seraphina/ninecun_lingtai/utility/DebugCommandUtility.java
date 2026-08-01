@@ -56,9 +56,6 @@ public final class DebugCommandUtility {
             "金", "木", "水", "火", "土", "阴阳", "五行", "混沌"
     );
 
-    private DebugCommandUtility() {
-    }
-
     public static ElementType getElement(
             CommandContext<CommandSourceStack> context,
             String argumentName

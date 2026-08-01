@@ -15,9 +15,6 @@ public final class TechniqueItemUtility {
     private static final String TECHNIQUE_NAME_KEY = ModMain.MOD_ID + ":technique_name";
     private static final String TECHNIQUE_DESCRIPTION_KEY = ModMain.MOD_ID + ":technique_description";
 
-    private TechniqueItemUtility() {
-    }
-
     public static ItemStack createStack(TechniqueDefinition technique) {
         return createStack(
                 technique.id(),

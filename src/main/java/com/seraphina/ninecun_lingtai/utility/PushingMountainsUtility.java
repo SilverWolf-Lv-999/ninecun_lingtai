@@ -12,9 +12,6 @@ import java.util.Optional;
 public final class PushingMountainsUtility {
     public static final CultivationStage MINIMUM_STAGE = new CultivationStage(CultivationRealm.GOLDEN_CORE, 1);
 
-    private PushingMountainsUtility() {
-    }
-
     public static boolean canUse(Optional<CultivationStage> stage) {
         return stage.map(PushingMountainsUtility::canUse).orElse(false);
     }

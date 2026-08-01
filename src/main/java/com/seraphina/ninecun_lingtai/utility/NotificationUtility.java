@@ -12,9 +12,6 @@ public final class NotificationUtility {
     public static final int MINIMUM_DURATION_TICKS = 20;
     public static final int MAXIMUM_DURATION_TICKS = 20 * 60;
 
-    private NotificationUtility() {
-    }
-
     public static void send(ServerPlayer player, Component title, Component content) {
         send(player, title, content, DEFAULT_DURATION_TICKS);
     }
