@@ -202,17 +202,17 @@ public final class ThunderTribulationEntity extends LightningBolt {
         if (livingEntity instanceof ServerPlayer player) {
             DefenseSpellUtility.getGuardian(player).ifPresentOrElse(
                     guardian -> {
-                        TribulationUtility.noHurtDelay(guardian);
+                        TribulationUtility.noHurtDelay(guardian, 2);
                         guardian.hurt(damageSource, damage);
                     },
                     () -> {
-                        TribulationUtility.noHurtDelay(player);
+                        TribulationUtility.noHurtDelay(player, 2);
                         player.hurt(damageSource, damage);
                     }
             );
             return;
         }
-        TribulationUtility.noHurtDelay(livingEntity);
+        TribulationUtility.noHurtDelay(livingEntity, 2);
         livingEntity.hurt(damageSource, damage);
     }
 }

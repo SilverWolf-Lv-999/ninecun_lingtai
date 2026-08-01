@@ -64,8 +64,13 @@ public final class TribulationUtility {
     }
 
     public static void noHurtDelay(LivingEntity livingEntity) {
+        noHurtDelay(livingEntity, 0);
+    }
+
+    public static void noHurtDelay(LivingEntity livingEntity, int delay) {
         livingEntity.hurtTime = 10;
-        livingEntity.invulnerableTime = 0;
-        livingEntity.invulnerableDuration = 0;
+        livingEntity.invulnerableTime = delay;
+        livingEntity.invulnerableDuration = delay;
+        livingEntity.hurtDuration = delay;
     }
 }
