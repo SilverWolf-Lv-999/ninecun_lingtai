@@ -231,6 +231,7 @@ dependencies {
     runtimeOnly fg.deobf("maven.modrinth:hYykXjDp:${fzzy_config_version}")
     runtimeOnly fg.deobf("maven.modrinth:ordsPcFz:${kotlin_for_forge_version}")
     runtimeOnly fg.deobf("maven.modrinth:uXXizFIs:${ferrite_core_version}")
+    compileOnly fg.deobf("maven.modrinth:g96Z4WVZ:${bad_optimizations_version}")
     runtimeOnly fg.deobf("maven.modrinth:g96Z4WVZ:${bad_optimizations_version}")
     runtimeOnly fg.deobf("maven.modrinth:sk9rgfiA:${embeddium_version}")
     runtimeOnly fg.deobf("maven.modrinth:QdG47OkI:${modelfix_version}")
