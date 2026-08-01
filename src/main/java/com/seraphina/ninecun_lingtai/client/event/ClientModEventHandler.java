@@ -11,6 +11,7 @@ import com.seraphina.ninecun_lingtai.client.inventorytab.PlayerValueControlTabRe
 import com.seraphina.ninecun_lingtai.client.inventorytab.TechniqueLibraryTabRegistrar;
 import com.seraphina.ninecun_lingtai.client.model.BodyDefenseSpellModel;
 import com.seraphina.ninecun_lingtai.client.render.AptitudeFormationShader;
+import com.seraphina.ninecun_lingtai.client.render.AlchemyFurnaceBlockRenderer;
 import com.seraphina.ninecun_lingtai.client.render.DefenseBarShader;
 import com.seraphina.ninecun_lingtai.client.render.DefenseSpellGuardianRenderer;
 import com.seraphina.ninecun_lingtai.client.render.ElementFlowShader;
@@ -25,6 +26,7 @@ import com.seraphina.ninecun_lingtai.client.render.PushingMountainsEntityRendere
 import com.seraphina.ninecun_lingtai.client.render.layer.BodyDefenseSpellLayer;
 import com.seraphina.ninecun_lingtai.common.entity.tribulation.ThunderTribulationEntity;
 import com.seraphina.ninecun_lingtai.common.registry.ModEntityTypes;
+import com.seraphina.ninecun_lingtai.common.registry.ModBlockEntityTypes;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -111,6 +113,10 @@ public final class ClientModEventHandler {
 
     @SubscribeEvent
     public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
+        event.registerBlockEntityRenderer(
+                ModBlockEntityTypes.ALCHEMY_FURNACE.get(),
+                context -> new AlchemyFurnaceBlockRenderer()
+        );
         event.registerEntityRenderer(ModEntityTypes.SOUL_ENTITY.get(), SoulRenderer::new);
         event.registerEntityRenderer(
                 ModEntityTypes.DEFENSE_SPELL_GUARDIAN.get(),

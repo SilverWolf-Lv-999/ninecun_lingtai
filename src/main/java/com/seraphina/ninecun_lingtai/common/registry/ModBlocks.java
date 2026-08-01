@@ -1,6 +1,7 @@
 package com.seraphina.ninecun_lingtai.common.registry;
 
 import com.seraphina.ninecun_lingtai.ModMain;
+import com.seraphina.ninecun_lingtai.common.block.AlchemyFurnaceBlock;
 import net.minecraft.util.valueproviders.UniformInt;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -31,6 +32,11 @@ public final class ModBlocks {
                     BlockBehaviour.Properties.copy(Blocks.DEEPSLATE_DIAMOND_ORE),
                     UniformInt.of(2, 5)
             )
+    );
+
+    public static final RegistryObject<Block> ALCHEMY_FURNACE = BLOCKS.register(
+            "alchemy_furnace",
+            AlchemyFurnaceBlock::new
     );
 
     private ModBlocks() {

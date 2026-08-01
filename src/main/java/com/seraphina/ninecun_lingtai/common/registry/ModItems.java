@@ -48,6 +48,11 @@ public final class ModItems {
             () -> new BlockItem(ModBlocks.DEEPSLATE_SPIRITUAL_STONE_ORE.get(), new Item.Properties())
     );
 
+    public static final RegistryObject<Item> ALCHEMY_FURNACE = ITEMS.register(
+            "alchemy_furnace",
+            () -> new BlockItem(ModBlocks.ALCHEMY_FURNACE.get(), new Item.Properties())
+    );
+
     private ModItems() {
     }
 

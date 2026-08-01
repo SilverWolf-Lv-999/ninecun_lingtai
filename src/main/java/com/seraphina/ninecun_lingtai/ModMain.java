@@ -3,6 +3,7 @@ package com.seraphina.ninecun_lingtai;
 import com.seraphina.ninecun_lingtai.common.config.CommonConfig;
 import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import com.seraphina.ninecun_lingtai.common.registry.ModBlocks;
+import com.seraphina.ninecun_lingtai.common.registry.ModBlockEntityTypes;
 import com.seraphina.ninecun_lingtai.common.registry.ModCreativeModeTabs;
 import com.seraphina.ninecun_lingtai.common.registry.ModEntityTypes;
 import com.seraphina.ninecun_lingtai.common.registry.ModItems;
@@ -24,6 +25,7 @@ public final class ModMain {
         LOGGER.info("Loading Mod ...");
         IEventBus modEventBus = context.getModEventBus();
         ModBlocks.register(modEventBus);
+        ModBlockEntityTypes.register(modEventBus);
         ModItems.register(modEventBus);
         ModEntityTypes.register(modEventBus);
         ModSpells.register(modEventBus);
