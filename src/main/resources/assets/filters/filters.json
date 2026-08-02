@@ -5,7 +5,8 @@
       "icon": "ninecun_lingtai:spiritual_stone_ore",
       "items": [
         "ninecun_lingtai:spiritual_stone_ore",
-        "ninecun_lingtai:deepslate_spiritual_stone_ore"
+        "ninecun_lingtai:deepslate_spiritual_stone_ore",
+        "ninecun_lingtai:alchemy_furnace"
       ]
     },
     "materials": {
