@@ -2,6 +2,7 @@ package com.seraphina.ninecun_lingtai.common.ability;
 
 import com.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
 import com.seraphina.ninecun_lingtai.common.creature.CreatureCultivationData;
+import com.seraphina.ninecun_lingtai.common.defense.EntityDefenseResourceData;
 import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import com.seraphina.ninecun_lingtai.common.registry.ModDamageTypes;
 import com.seraphina.ninecun_lingtai.utility.PressureUtility;
@@ -167,6 +168,11 @@ public final class PressureManager {
     }
 
     private static void killByPressure(ServerPlayer source, LivingEntity target) {
+        EntityDefenseResourceData.deplete(target);
+        if (target instanceof ServerPlayer player) {
+            ModNetwork.sendDefenseResource(player);
+        }
+
         DamageSource damageSource = new DamageSource(
                 target.level()
                         .registryAccess()
