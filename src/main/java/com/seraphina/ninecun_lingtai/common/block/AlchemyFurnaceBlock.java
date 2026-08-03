@@ -20,6 +20,7 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraft.world.InteractionHand;
@@ -30,7 +31,12 @@ import javax.annotation.Nullable;
 
 public final class AlchemyFurnaceBlock extends BaseEntityBlock {
     public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
-    private static final VoxelShape SHAPE = Block.box(-16.0D, 0.0D, -16.0D, 32.0D, 48.0D, 32.0D);
+    /*
+     * The furnace renderer extends beyond its placed block, but block interaction packets are
+     * validated against the block position on the server. Keeping the hit shape local prevents
+     * clicks on the rendered overhang from being rejected before use() can open the menu.
+     */
+    private static final VoxelShape SHAPE = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 16.0D, 16.0D);
 
     public AlchemyFurnaceBlock() {
         super(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK).noOcclusion());
@@ -76,7 +82,14 @@ public final class AlchemyFurnaceBlock extends BaseEntityBlock {
         if (!level.isClientSide
                 && player instanceof net.minecraft.server.level.ServerPlayer serverPlayer
                 && level.getBlockEntity(blockPosition) instanceof AlchemyFurnaceBlockEntity furnace) {
-            furnace.openMenu(serverPlayer);
+            InteractionHand ignitionHand = player.getMainHandItem().is(Items.FLINT_AND_STEEL)
+                    ? InteractionHand.MAIN_HAND
+                    : player.getOffhandItem().is(Items.FLINT_AND_STEEL) ? InteractionHand.OFF_HAND : null;
+            if (ignitionHand != null) {
+                furnace.ignite(serverPlayer, ignitionHand);
+            } else {
+                furnace.openMenu(serverPlayer);
+            }
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }

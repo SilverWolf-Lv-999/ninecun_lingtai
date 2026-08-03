@@ -10,13 +10,20 @@ import net.minecraftforge.network.NetworkEvent;
 
 import java.util.function.Supplier;
 
-public record OpenAlchemyRecipeScreenPacket(AlchemyRecipeClientData recipe) {
+public record OpenAlchemyRecipeScreenPacket(
+        AlchemyRecipeClientData recipe,
+        boolean learned
+) {
     public static void encode(OpenAlchemyRecipeScreenPacket packet, FriendlyByteBuf buffer) {
         AlchemyRecipeNetworkUtility.writeRecipe(buffer, packet.recipe);
+        buffer.writeBoolean(packet.learned);
     }
 
     public static OpenAlchemyRecipeScreenPacket decode(FriendlyByteBuf buffer) {
-        return new OpenAlchemyRecipeScreenPacket(AlchemyRecipeNetworkUtility.readRecipe(buffer));
+        return new OpenAlchemyRecipeScreenPacket(
+                AlchemyRecipeNetworkUtility.readRecipe(buffer),
+                buffer.readBoolean()
+        );
     }
 
     public static void handle(
@@ -25,7 +32,7 @@ public record OpenAlchemyRecipeScreenPacket(AlchemyRecipeClientData recipe) {
     ) {
         DistExecutor.unsafeRunWhenOn(
                 Dist.CLIENT,
-                () -> () -> ClientAlchemyRecipeManager.openRecipe(packet.recipe)
+                () -> () -> ClientAlchemyRecipeManager.openRecipe(packet.recipe, packet.learned)
         );
     }
 }

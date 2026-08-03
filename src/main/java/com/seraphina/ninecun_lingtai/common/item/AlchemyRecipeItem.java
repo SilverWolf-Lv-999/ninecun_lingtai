@@ -2,6 +2,7 @@ package com.seraphina.ninecun_lingtai.common.item;
 
 import com.seraphina.ninecun_lingtai.common.data.AlchemyRecipeManager;
 import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
+import com.seraphina.ninecun_lingtai.common.player.PlayerLearnedAlchemyRecipeData;
 import com.seraphina.ninecun_lingtai.utility.AlchemyRecipeItemUtility;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -35,11 +36,30 @@ public final class AlchemyRecipeItem extends Item {
 
         Optional<ResourceLocation> recipeId = AlchemyRecipeItemUtility.getRecipeId(itemStack);
         if (recipeId.isEmpty()) {
-            return InteractionResultHolder.fail(itemStack);
+            List<com.seraphina.ninecun_lingtai.api.alchemy.AlchemyRecipeClientData> learnedRecipes =
+                    PlayerLearnedAlchemyRecipeData.getRecipes(serverPlayer).stream()
+                            .flatMap(id -> AlchemyRecipeManager.INSTANCE.getRecipe(id).stream())
+                            .map(com.seraphina.ninecun_lingtai.api.alchemy.AlchemyRecipeClientData::fromDefinition)
+                            .toList();
+            if (learnedRecipes.isEmpty()) {
+                player.displayClientMessage(
+                        Component.translatable(
+                                "message.ninecun_lingtai.no_learned_alchemy_recipes_to_imprint"
+                        ),
+                        true
+                );
+                return InteractionResultHolder.fail(itemStack);
+            }
+            ModNetwork.sendOpenAlchemyRecipeImprintScreen(serverPlayer, hand, learnedRecipes);
+            return InteractionResultHolder.consume(itemStack);
         }
         return AlchemyRecipeManager.INSTANCE.getRecipe(recipeId.get())
                 .map(recipe -> {
-                    ModNetwork.sendOpenAlchemyRecipeScreen(serverPlayer, recipe);
+                    ModNetwork.sendOpenAlchemyRecipeScreen(
+                            serverPlayer,
+                            recipe,
+                            PlayerLearnedAlchemyRecipeData.hasRecipe(serverPlayer, recipe.id())
+                    );
                     return InteractionResultHolder.consume(itemStack);
                 })
                 .orElseGet(() -> {
@@ -60,6 +80,8 @@ public final class AlchemyRecipeItem extends Item {
     ) {
         Optional<ResourceLocation> recipeId = AlchemyRecipeItemUtility.getRecipeId(itemStack);
         if (recipeId.isEmpty()) {
+            tooltip.add(Component.translatable("tooltip.ninecun_lingtai.empty_alchemy_recipe")
+                    .withStyle(ChatFormatting.GRAY));
             return;
         }
 

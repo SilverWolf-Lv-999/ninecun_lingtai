@@ -17,10 +17,13 @@ import com.seraphina.ninecun_lingtai.common.network.packet.CultivationFeedbackPa
 import com.seraphina.ninecun_lingtai.common.network.packet.DismountSwordFlightPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.ImprintTechniquePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.ImprintTechniqueToJadeSlipPacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.ImprintAlchemyRecipeToFormulaSlipPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.LearnTechniquePacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.LearnAlchemyRecipePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.MountSwordFlightPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.OpenAptitudeScreenPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.AlchemyFurnaceActionPacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.OpenAlchemyRecipeImprintScreenPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.OpenAlchemyRecipeScreenPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.OpenDaoScrollScreenPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.OpenTechniqueImprintScreenPacket;
@@ -32,6 +35,7 @@ import com.seraphina.ninecun_lingtai.common.network.packet.PushingMountainsSelec
 import com.seraphina.ninecun_lingtai.common.network.packet.PushingMountainsThrowPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.RequestCultivationInfoPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.RequestPlayerValueControlSettingsPacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.RequestAlchemyRecipeLibraryPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.RequestTechniqueLibraryPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SelectSpellPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SoulInteractionPacket;
@@ -72,6 +76,7 @@ import com.seraphina.ninecun_lingtai.common.player.PlayerCultivationInfo;
 import com.seraphina.ninecun_lingtai.common.player.PlayerDefenseResourceData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerDefenseSpellData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerImprintedTechniqueData;
+import com.seraphina.ninecun_lingtai.common.player.PlayerLearnedAlchemyRecipeData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerSoulRoamingManager;
 import com.seraphina.ninecun_lingtai.common.player.PlayerTechniqueData;
 import com.seraphina.ninecun_lingtai.common.player.PlayerTechniqueProficiencyData;
@@ -97,7 +102,7 @@ import java.util.Set;
 import java.util.UUID;
 
 public final class ModNetwork {
-    private static final String PROTOCOL_VERSION = "32";
+    private static final String PROTOCOL_VERSION = "33";
     private static final SimpleChannel CHANNEL = NetworkRegistry.ChannelBuilder
             .named(ResourceLocation.fromNamespaceAndPath(ModMain.MOD_ID, "main"))
             .networkProtocolVersion(() -> PROTOCOL_VERSION)
@@ -220,6 +225,15 @@ public final class ModNetwork {
                 .consumerMainThread(OpenAlchemyRecipeScreenPacket::handle)
                 .add();
         CHANNEL.messageBuilder(
+                        OpenAlchemyRecipeImprintScreenPacket.class,
+                        nextPacketId++,
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(OpenAlchemyRecipeImprintScreenPacket::encode)
+                .decoder(OpenAlchemyRecipeImprintScreenPacket::decode)
+                .consumerMainThread(OpenAlchemyRecipeImprintScreenPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
                         OpenTechniqueImprintScreenPacket.class,
                         nextPacketId++,
                         NetworkDirection.PLAY_TO_CLIENT
@@ -238,6 +252,15 @@ public final class ModNetwork {
                 .consumerMainThread(RequestTechniqueLibraryPacket::handle)
                 .add();
         CHANNEL.messageBuilder(
+                        RequestAlchemyRecipeLibraryPacket.class,
+                        nextPacketId++,
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(RequestAlchemyRecipeLibraryPacket::encode)
+                .decoder(RequestAlchemyRecipeLibraryPacket::decode)
+                .consumerMainThread(RequestAlchemyRecipeLibraryPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
                         SyncTechniqueLibraryPacket.class,
                         nextPacketId++,
                         NetworkDirection.PLAY_TO_CLIENT
@@ -254,6 +277,24 @@ public final class ModNetwork {
                 .encoder(SyncAlchemyRecipesPacket::encode)
                 .decoder(SyncAlchemyRecipesPacket::decode)
                 .consumerMainThread(SyncAlchemyRecipesPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        ImprintAlchemyRecipeToFormulaSlipPacket.class,
+                        nextPacketId++,
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(ImprintAlchemyRecipeToFormulaSlipPacket::encode)
+                .decoder(ImprintAlchemyRecipeToFormulaSlipPacket::decode)
+                .consumerMainThread(ImprintAlchemyRecipeToFormulaSlipPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        LearnAlchemyRecipePacket.class,
+                        nextPacketId++,
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(LearnAlchemyRecipePacket::encode)
+                .decoder(LearnAlchemyRecipePacket::decode)
+                .consumerMainThread(LearnAlchemyRecipePacket::handle)
                 .add();
         CHANNEL.messageBuilder(
                         ImprintTechniquePacket.class,
@@ -886,11 +927,15 @@ public final class ModNetwork {
 
     public static void sendOpenAlchemyRecipeScreen(
             ServerPlayer player,
-            com.seraphina.ninecun_lingtai.api.alchemy.AlchemyRecipeDefinition recipe
+            com.seraphina.ninecun_lingtai.api.alchemy.AlchemyRecipeDefinition recipe,
+            boolean learned
     ) {
         CHANNEL.send(
                 PacketDistributor.PLAYER.with(() -> player),
-                new OpenAlchemyRecipeScreenPacket(AlchemyRecipeClientData.fromDefinition(recipe))
+                new OpenAlchemyRecipeScreenPacket(
+                        AlchemyRecipeClientData.fromDefinition(recipe),
+                        learned
+                )
         );
     }
 
@@ -900,8 +945,22 @@ public final class ModNetwork {
                 new SyncAlchemyRecipesPacket(
                         AlchemyRecipeManager.INSTANCE.getRecipes().stream()
                                 .map(AlchemyRecipeClientData::fromDefinition)
-                                .toList()
+                                .toList(),
+                        PlayerSoulRoamingManager.isSoulRoaming(player)
+                                ? Set.of()
+                                : PlayerLearnedAlchemyRecipeData.getRecipes(player)
                 )
+        );
+    }
+
+    public static void sendOpenAlchemyRecipeImprintScreen(
+            ServerPlayer player,
+            InteractionHand hand,
+            List<AlchemyRecipeClientData> recipes
+    ) {
+        CHANNEL.send(
+                PacketDistributor.PLAYER.with(() -> player),
+                new OpenAlchemyRecipeImprintScreenPacket(hand, recipes)
         );
     }
 

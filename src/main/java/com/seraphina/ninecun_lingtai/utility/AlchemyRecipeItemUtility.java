@@ -35,6 +35,14 @@ public final class AlchemyRecipeItemUtility {
         ));
     }
 
+    public static boolean isRecipe(ItemStack itemStack, ResourceLocation recipeId) {
+        return getRecipeId(itemStack).filter(recipeId::equals).isPresent();
+    }
+
+    public static boolean isEmptyAlchemyRecipe(ItemStack itemStack) {
+        return itemStack.is(ModItems.ALCHEMY_RECIPE.get()) && getRecipeId(itemStack).isEmpty();
+    }
+
     public static Optional<String> getRecipeName(ItemStack itemStack) {
         return getText(itemStack, RECIPE_NAME_KEY);
     }
@@ -49,11 +57,27 @@ public final class AlchemyRecipeItemUtility {
             String description
     ) {
         ItemStack itemStack = new ItemStack(ModItems.ALCHEMY_RECIPE.get());
+        writeRecipeData(itemStack, recipeId, name, description);
+        return itemStack;
+    }
+
+    public static void imprintRecipe(ItemStack itemStack, AlchemyRecipeDefinition recipe) {
+        if (!itemStack.is(ModItems.ALCHEMY_RECIPE.get())) {
+            throw new IllegalArgumentException("Only an alchemy formula jade slip can carry an alchemy recipe");
+        }
+        writeRecipeData(itemStack, recipe.id(), recipe.name(), recipe.description());
+    }
+
+    private static void writeRecipeData(
+            ItemStack itemStack,
+            ResourceLocation recipeId,
+            String name,
+            String description
+    ) {
         CompoundTag itemData = itemStack.getOrCreateTag();
         itemData.putString(RECIPE_ID_KEY, recipeId.toString());
         itemData.putString(RECIPE_NAME_KEY, name);
         itemData.putString(RECIPE_DESCRIPTION_KEY, description);
-        return itemStack;
     }
 
     private static Optional<String> getText(ItemStack itemStack, String key) {

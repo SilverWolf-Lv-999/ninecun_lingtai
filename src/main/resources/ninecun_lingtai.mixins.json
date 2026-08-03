@@ -22,6 +22,10 @@
     "client.LivingEntityRendererMixin",
     "client.LightTextureMixin",
     "client.AbstractClientPlayerMixin",
+    "client.compat.InventoryTabsClientMixin",
+    "client.compat.jei.BookmarkOverlayMixin",
+    "client.compat.jei.GuiEventHandlerMixin",
+    "client.compat.jei.IngredientListOverlayMixin",
     "client.MouseHandlerMixin",
     "client.food.PlayerFoodMixin"
   ],

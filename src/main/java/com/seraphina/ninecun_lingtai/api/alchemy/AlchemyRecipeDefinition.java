@@ -15,6 +15,7 @@ public record AlchemyRecipeDefinition(
         String content,
         AlchemyGrade grade,
         Set<CultivationRealm> allowedRealms,
+        CultivationRealm minimumRefiningRealm,
         AlchemyIngredient primaryIngredient,
         List<AlchemyIngredient> secondaryIngredients,
         List<AlchemyIngredient> auxiliaryIngredients,
@@ -33,6 +34,7 @@ public record AlchemyRecipeDefinition(
         if (allowedRealms.isEmpty()) {
             throw new IllegalArgumentException("Alchemy recipe must allow at least one cultivation realm");
         }
+        Objects.requireNonNull(minimumRefiningRealm, "minimumRefiningRealm");
         Objects.requireNonNull(primaryIngredient, "primaryIngredient");
         secondaryIngredients = List.copyOf(secondaryIngredients);
         if (secondaryIngredients.size() != 2) {
@@ -65,5 +67,9 @@ public record AlchemyRecipeDefinition(
                 .sorted()
                 .map(CultivationRealm::getChineseName)
                 .collect(Collectors.joining("、"));
+    }
+
+    public String getMinimumRefiningRealmName() {
+        return this.minimumRefiningRealm.getChineseName();
     }
 }

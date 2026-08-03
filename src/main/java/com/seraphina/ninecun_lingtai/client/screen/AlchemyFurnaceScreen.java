@@ -2,12 +2,9 @@ package com.seraphina.ninecun_lingtai.client.screen;
 
 import com.seraphina.ninecun_lingtai.client.utility.AptitudeRenderUtility;
 import com.seraphina.ninecun_lingtai.client.utility.AptitudeRenderUtility.ScreenPoint;
-import com.seraphina.ninecun_lingtai.client.utility.TechniqueImprintRenderUtility;
 import com.seraphina.ninecun_lingtai.common.menu.AlchemyFurnaceMenu;
 import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import com.seraphina.ninecun_lingtai.common.network.packet.AlchemyFurnaceActionPacket;
-import com.seraphina.ninecun_lingtai.utility.ColorUtility;
-import net.minecraft.Util;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
@@ -19,8 +16,13 @@ public final class AlchemyFurnaceScreen extends AbstractContainerScreen<AlchemyF
     private static final int MINIMUM_WIDTH = PREFERRED_WIDTH;
     private static final int IMAGE_HEIGHT = 250;
     private static final int PRIMARY_TEXT_COLOR = 0xFFE6D5A8;
-    private static final int SECONDARY_TEXT_COLOR = 0xFFC1A96D;
-    private static final int MUTED_TEXT_COLOR = 0xFF7D745E;
+    private static final int PANEL_COLOR = 0xF2181612;
+    private static final int PANEL_BORDER_COLOR = 0xFF8E7645;
+    private static final int DIAGRAM_COLOR = 0x705E4A28;
+    private static final int SLOT_BORDER_COLOR = 0xFF776B56;
+    private static final int OUTPUT_SLOT_BORDER_COLOR = 0xFFC5A35B;
+    private static final int SLOT_FILL_COLOR = 0xEE0E0E0D;
+    private static final int SLOT_INNER_FILL_COLOR = 0xFF171512;
     private static final int HEAT_TRACK_COLOR = 0x99251D16;
     private static final int HEAT_FILL_COLOR = 0xFFDD793A;
     private static final int PROGRESS_TRACK_COLOR = 0x9928241E;
@@ -29,15 +31,11 @@ public final class AlchemyFurnaceScreen extends AbstractContainerScreen<AlchemyF
     private static final int START_BUTTON_TOP = 137;
     private static final int START_BUTTON_WIDTH = 100;
     private static final int ACTION_BUTTON_HEIGHT = 20;
-    private static final int IGNITE_BUTTON_LEFT = 250;
-    private static final int IGNITE_BUTTON_TOP = 137;
-    private static final int IGNITE_BUTTON_WIDTH = 52;
 
     public AlchemyFurnaceScreen(AlchemyFurnaceMenu menu, net.minecraft.world.entity.player.Inventory inventory, Component title) {
         super(menu, inventory, title);
         this.imageWidth = PREFERRED_WIDTH;
         this.imageHeight = IMAGE_HEIGHT;
-        this.inventoryLabelY = 155;
     }
 
     @Override
@@ -49,32 +47,34 @@ public final class AlchemyFurnaceScreen extends AbstractContainerScreen<AlchemyF
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        long currentTime = Util.getMillis();
-        TechniqueImprintRenderUtility.drawCloudVeil(guiGraphics, this.width, this.height, currentTime, 1.0F);
-        TechniqueImprintRenderUtility.drawConstellationField(guiGraphics, this.width, this.height, currentTime, 0.42F);
+        this.renderBackground(guiGraphics);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
         renderTooltip(guiGraphics, mouseX, mouseY);
     }
 
     @Override
     protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
-        long currentTime = Util.getMillis();
         int panelRight = this.leftPos + this.imageWidth;
         int panelBottom = this.topPos + this.imageHeight;
-        int panelColor = ColorUtility.withAlpha(0x1A1612, 0.92F);
-        guiGraphics.fill(this.leftPos, this.topPos, panelRight, panelBottom, panelColor);
+        guiGraphics.fill(this.leftPos, this.topPos, panelRight, panelBottom, PANEL_COLOR);
         guiGraphics.renderOutline(
                 this.leftPos,
                 this.topPos,
                 this.imageWidth,
                 this.imageHeight,
-                ColorUtility.withAlpha(TechniqueImprintRenderUtility.GOLD_COLOR, 0.62F)
+                PANEL_BORDER_COLOR
         );
-
-        renderRefiningDiagram(guiGraphics, currentTime);
-        renderSlotLabels(guiGraphics);
+        guiGraphics.fill(
+                this.leftPos + 8,
+                this.topPos + 159,
+                panelRight - 8,
+                this.topPos + 160,
+                PANEL_BORDER_COLOR
+        );
+        renderRefiningDiagram(guiGraphics);
+        renderSlotFrames(guiGraphics);
         renderProgress(guiGraphics);
-        renderActions(guiGraphics, mouseX, mouseY, currentTime);
+        renderActions(guiGraphics, mouseX, mouseY);
     }
 
     @Override
@@ -86,20 +86,12 @@ public final class AlchemyFurnaceScreen extends AbstractContainerScreen<AlchemyF
                 7,
                 PRIMARY_TEXT_COLOR
         );
-        guiGraphics.drawString(
-                this.font,
-                this.playerInventoryTitle,
-                8,
-                this.inventoryLabelY,
-                SECONDARY_TEXT_COLOR,
-                false
-        );
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
-            if (TechniqueImprintRenderUtility.isInside(
+            if (isInside(
                     mouseX,
                     mouseY,
                     this.leftPos + START_BUTTON_LEFT,
@@ -113,86 +105,44 @@ public final class AlchemyFurnaceScreen extends AbstractContainerScreen<AlchemyF
                 ));
                 return true;
             }
-            if (TechniqueImprintRenderUtility.isInside(
-                    mouseX,
-                    mouseY,
-                    this.leftPos + IGNITE_BUTTON_LEFT,
-                    this.topPos + IGNITE_BUTTON_TOP,
-                    IGNITE_BUTTON_WIDTH,
-                    ACTION_BUTTON_HEIGHT
-            )) {
-                ModNetwork.sendToServer(new AlchemyFurnaceActionPacket(
-                        this.menu.getBlockPosition(),
-                        AlchemyFurnaceActionPacket.Action.IGNITE
-                ));
-                return true;
-            }
         }
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
-    private void renderRefiningDiagram(GuiGraphics guiGraphics, long currentTime) {
-        float alpha = 0.78F;
+    private void renderRefiningDiagram(GuiGraphics guiGraphics) {
         ScreenPoint main = point(153.0F, 31.0F);
         ScreenPoint firstSecondary = point(89.0F, 75.0F);
         ScreenPoint secondSecondary = point(217.0F, 75.0F);
         ScreenPoint output = point(153.0F, 96.0F);
         ScreenPoint firstAuxiliary = point(89.0F, 126.0F);
         ScreenPoint secondAuxiliary = point(217.0F, 126.0F);
-        int connectionColor = ColorUtility.withAlpha(
-                TechniqueImprintRenderUtility.MUTED_GOLD_COLOR,
-                alpha * 0.48F
-        );
 
-        drawConnection(guiGraphics, main, firstSecondary, connectionColor);
-        drawConnection(guiGraphics, main, secondSecondary, connectionColor);
-        drawConnection(guiGraphics, firstSecondary, output, connectionColor);
-        drawConnection(guiGraphics, secondSecondary, output, connectionColor);
-        drawConnection(guiGraphics, firstAuxiliary, output, connectionColor);
-        drawConnection(guiGraphics, secondAuxiliary, output, connectionColor);
-
-        float outputPulse = this.menu.isRefining()
-                ? 1.0F + Mth.sin(currentTime * 0.008F) * 0.08F
-                : 1.0F;
-        AptitudeRenderUtility.drawRing(
-                guiGraphics,
-                output.x(),
-                output.y(),
-                16.0F * outputPulse,
-                this.menu.isRefining() ? 1.1F : 0.7F,
-                ColorUtility.withAlpha(
-                        this.menu.isRefining()
-                                ? TechniqueImprintRenderUtility.BRIGHT_GOLD_COLOR
-                                : TechniqueImprintRenderUtility.GOLD_COLOR,
-                        this.menu.isRefining() ? 0.86F : 0.5F
-                )
-        );
-        TechniqueImprintRenderUtility.drawSeal(
-                guiGraphics,
-                output.x(),
-                output.y(),
-                10.5F * outputPulse,
-                this.menu.isRefining(),
-                false,
-                currentTime,
-                alpha
-        );
+        drawConnection(guiGraphics, main, firstSecondary, DIAGRAM_COLOR);
+        drawConnection(guiGraphics, main, secondSecondary, DIAGRAM_COLOR);
+        drawConnection(guiGraphics, firstSecondary, output, DIAGRAM_COLOR);
+        drawConnection(guiGraphics, secondSecondary, output, DIAGRAM_COLOR);
+        drawConnection(guiGraphics, firstAuxiliary, output, DIAGRAM_COLOR);
+        drawConnection(guiGraphics, secondAuxiliary, output, DIAGRAM_COLOR);
     }
 
-    private void renderSlotLabels(GuiGraphics guiGraphics) {
-        drawSlotLabel(guiGraphics, Component.translatable("screen.ninecun_lingtai.alchemy.main"), 153, 12);
-        drawSlotLabel(guiGraphics, Component.translatable("screen.ninecun_lingtai.alchemy.secondary"), 58, 54);
-        drawSlotLabel(guiGraphics, Component.translatable("screen.ninecun_lingtai.alchemy.secondary"), 230, 54);
-        drawSlotLabel(guiGraphics, Component.translatable("screen.ninecun_lingtai.alchemy.auxiliary"), 58, 106);
-        drawSlotLabel(guiGraphics, Component.translatable("screen.ninecun_lingtai.alchemy.auxiliary"), 230, 106);
-        drawSlotLabel(guiGraphics, Component.translatable("screen.ninecun_lingtai.alchemy.output"), 153, 74);
+    private void renderSlotFrames(GuiGraphics guiGraphics) {
+        for (int slotIndex = 0; slotIndex < this.menu.slots.size(); slotIndex++) {
+            int slotLeft = this.leftPos + this.menu.slots.get(slotIndex).x;
+            int slotTop = this.topPos + this.menu.slots.get(slotIndex).y;
+            int slotBorder = slotIndex == AlchemyFurnaceMenu.OUTPUT_SLOT
+                    ? OUTPUT_SLOT_BORDER_COLOR
+                    : SLOT_BORDER_COLOR;
+            guiGraphics.fill(slotLeft, slotTop, slotLeft + 18, slotTop + 18, slotBorder);
+            guiGraphics.fill(slotLeft + 1, slotTop + 1, slotLeft + 17, slotTop + 17, SLOT_FILL_COLOR);
+            guiGraphics.fill(slotLeft + 2, slotTop + 2, slotLeft + 16, slotTop + 16, SLOT_INNER_FILL_COLOR);
+        }
     }
 
     private void renderProgress(GuiGraphics guiGraphics) {
-        int progressLeft = this.leftPos + 18;
-        int progressTop = this.topPos + 28;
-        int progressWidth = 38;
-        int progressHeight = 6;
+        int progressLeft = this.leftPos + 16;
+        int progressTop = this.topPos + 144;
+        int progressWidth = 72;
+        int progressHeight = 5;
         float brewProgress = this.menu.getBrewDuration() <= 0
                 ? 0.0F
                 : Mth.clamp(
@@ -207,14 +157,6 @@ public final class AlchemyFurnaceScreen extends AbstractContainerScreen<AlchemyF
                 progressLeft + Math.round(progressWidth * brewProgress),
                 progressTop + progressHeight,
                 PROGRESS_FILL_COLOR
-        );
-        guiGraphics.drawString(
-                this.font,
-                Component.translatable("screen.ninecun_lingtai.alchemy.progress"),
-                progressLeft,
-                progressTop - 11,
-                MUTED_TEXT_COLOR,
-                false
         );
 
         int heatLeft = this.leftPos + 279;
@@ -232,19 +174,11 @@ public final class AlchemyFurnaceScreen extends AbstractContainerScreen<AlchemyF
                 heatTop + heatHeight,
                 HEAT_FILL_COLOR
         );
-        guiGraphics.renderOutline(heatLeft, heatTop, 7, heatHeight, MUTED_TEXT_COLOR);
-        guiGraphics.drawString(
-                this.font,
-                Component.translatable("screen.ninecun_lingtai.alchemy.heat"),
-                heatLeft - 8,
-                heatTop - 11,
-                MUTED_TEXT_COLOR,
-                false
-        );
+        guiGraphics.renderOutline(heatLeft, heatTop, 7, heatHeight, SLOT_BORDER_COLOR);
     }
 
-    private void renderActions(GuiGraphics guiGraphics, int mouseX, int mouseY, long currentTime) {
-        boolean startHovered = TechniqueImprintRenderUtility.isInside(
+    private void renderActions(GuiGraphics guiGraphics, int mouseX, int mouseY) {
+        boolean startHovered = isInside(
                 mouseX,
                 mouseY,
                 this.leftPos + START_BUTTON_LEFT,
@@ -252,46 +186,31 @@ public final class AlchemyFurnaceScreen extends AbstractContainerScreen<AlchemyF
                 START_BUTTON_WIDTH,
                 ACTION_BUTTON_HEIGHT
         );
-        TechniqueImprintRenderUtility.drawStarButton(
-                guiGraphics,
+        int buttonLeft = this.leftPos + START_BUTTON_LEFT;
+        int buttonTop = this.topPos + START_BUTTON_TOP;
+        guiGraphics.fill(
+                buttonLeft,
+                buttonTop,
+                buttonLeft + START_BUTTON_WIDTH,
+                buttonTop + ACTION_BUTTON_HEIGHT,
+                startHovered ? 0xFF3C3120 : 0xFF29231A
+        );
+        guiGraphics.renderOutline(
+                buttonLeft,
+                buttonTop,
+                START_BUTTON_WIDTH,
+                ACTION_BUTTON_HEIGHT,
+                startHovered ? OUTPUT_SLOT_BORDER_COLOR : SLOT_BORDER_COLOR
+        );
+        guiGraphics.drawCenteredString(
                 this.font,
                 Component.translatable(this.menu.isRefining()
                         ? "screen.ninecun_lingtai.alchemy.stop"
                         : "screen.ninecun_lingtai.alchemy.start"),
-                this.leftPos + START_BUTTON_LEFT,
-                this.topPos + START_BUTTON_TOP,
-                START_BUTTON_WIDTH,
-                ACTION_BUTTON_HEIGHT,
-                true,
-                startHovered,
-                currentTime,
-                0.95F
+                buttonLeft + START_BUTTON_WIDTH / 2,
+                buttonTop + 6,
+                PRIMARY_TEXT_COLOR
         );
-        boolean igniteHovered = TechniqueImprintRenderUtility.isInside(
-                mouseX,
-                mouseY,
-                this.leftPos + IGNITE_BUTTON_LEFT,
-                this.topPos + IGNITE_BUTTON_TOP,
-                IGNITE_BUTTON_WIDTH,
-                ACTION_BUTTON_HEIGHT
-        );
-        TechniqueImprintRenderUtility.drawStarButton(
-                guiGraphics,
-                this.font,
-                Component.translatable("screen.ninecun_lingtai.alchemy.ignite"),
-                this.leftPos + IGNITE_BUTTON_LEFT,
-                this.topPos + IGNITE_BUTTON_TOP,
-                IGNITE_BUTTON_WIDTH,
-                ACTION_BUTTON_HEIGHT,
-                true,
-                igniteHovered,
-                currentTime,
-                0.95F
-        );
-    }
-
-    private void drawSlotLabel(GuiGraphics guiGraphics, Component label, int centerX, int y) {
-        guiGraphics.drawCenteredString(this.font, label, centerX, y, MUTED_TEXT_COLOR);
     }
 
     private ScreenPoint point(float x, float y) {
@@ -300,5 +219,19 @@ public final class AlchemyFurnaceScreen extends AbstractContainerScreen<AlchemyF
 
     private static void drawConnection(GuiGraphics guiGraphics, ScreenPoint start, ScreenPoint end, int color) {
         AptitudeRenderUtility.drawLine(guiGraphics, start, end, 0.65F, color);
+    }
+
+    private static boolean isInside(
+            double mouseX,
+            double mouseY,
+            int left,
+            int top,
+            int width,
+            int height
+    ) {
+        return mouseX >= left
+                && mouseX < left + width
+                && mouseY >= top
+                && mouseY < top + height;
     }
 }

@@ -12,13 +12,17 @@ import java.util.Set;
 public final class IMixinPlugin implements IMixinConfigPlugin {
     private static final String EMBEDDIUM_MOD_ID = "embeddium";
     private static final String BAD_OPTIMIZATIONS_MOD_ID = "badoptimizations";
+    private static final String JEI_MOD_ID = "jei";
     private static final String LEVEL_RENDERER_MIXIN =
             "com.seraphina.ninecun_lingtai.mixin.client.LevelRendererMixin";
     private static final String BAD_OPTIMIZATIONS_ENTITY_DATA_MIXIN =
             "com.seraphina.ninecun_lingtai.mixin.client.compat.badoptimizations.EntityDataCacheMixin";
+    private static final String JEI_MIXIN_PREFIX =
+            "com.seraphina.ninecun_lingtai.mixin.client.compat.jei.";
 
     private boolean embeddiumLoaded;
     private boolean badOptimizationsLoaded;
+    private boolean jeiLoaded;
 
     @Override
     public void onLoad(String mixinPackage) {
@@ -27,6 +31,8 @@ public final class IMixinPlugin implements IMixinConfigPlugin {
                 && loadingModList.getModFileById(EMBEDDIUM_MOD_ID) != null;
         this.badOptimizationsLoaded = loadingModList != null
                 && loadingModList.getModFileById(BAD_OPTIMIZATIONS_MOD_ID) != null;
+        this.jeiLoaded = loadingModList != null
+                && loadingModList.getModFileById(JEI_MOD_ID) != null;
     }
 
     @Override
@@ -38,6 +44,9 @@ public final class IMixinPlugin implements IMixinConfigPlugin {
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
         if (BAD_OPTIMIZATIONS_ENTITY_DATA_MIXIN.equals(mixinClassName)) {
             return this.badOptimizationsLoaded;
+        }
+        if (mixinClassName.startsWith(JEI_MIXIN_PREFIX)) {
+            return this.jeiLoaded;
         }
         return !this.embeddiumLoaded || !LEVEL_RENDERER_MIXIN.equals(mixinClassName);
     }

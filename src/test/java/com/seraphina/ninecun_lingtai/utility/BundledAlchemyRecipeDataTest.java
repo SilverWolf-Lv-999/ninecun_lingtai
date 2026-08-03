@@ -46,6 +46,10 @@ class BundledAlchemyRecipeDataTest {
         assertTrue(recipe.allowedRealms().contains(
                 com.seraphina.ninecun_lingtai.api.cultivation.CultivationRealm.FOUNDATION_ESTABLISHMENT
         ));
+        assertEquals(
+                com.seraphina.ninecun_lingtai.api.cultivation.CultivationRealm.QI_REFINING,
+                recipe.minimumRefiningRealm()
+        );
         assertTrue(recipe.pillEffect().regenerationAmplifier() == 4);
         assertEquals(3, recipe.primaryIngredient().count());
         assertEquals(200, recipe.brewingDuration());

@@ -27,6 +27,10 @@ public final class AlchemyRecipeJsonUtility {
         String content = getRequiredNonBlankString(recipeJson, "content");
         AlchemyGrade grade = parseGrade(recipeJson);
         Set<CultivationRealm> allowedRealms = parseAllowedRealms(recipeJson);
+        CultivationRealm minimumRefiningRealm = parseRealm(
+                GsonHelper.getAsString(recipeJson, "minimum_refining_realm"),
+                "minimum_refining_realm"
+        );
         JsonObject ingredientsJson = GsonHelper.getAsJsonObject(recipeJson, "ingredients");
         AlchemyIngredient primaryIngredient = parseIngredient(
                 GsonHelper.getAsJsonObject(ingredientsJson, "primary"),
@@ -55,6 +59,7 @@ public final class AlchemyRecipeJsonUtility {
                     content,
                     grade,
                     allowedRealms,
+                    minimumRefiningRealm,
                     primaryIngredient,
                     secondaryIngredients,
                     auxiliaryIngredients,
@@ -93,6 +98,13 @@ public final class AlchemyRecipeJsonUtility {
             throw new JsonParseException("allowed_realms must not be empty");
         }
         return Set.copyOf(realms);
+    }
+
+    private static CultivationRealm parseRealm(String serializedName, String fieldName) {
+        return CultivationRealm.fromSerializedName(serializedName)
+                .orElseThrow(() -> new JsonParseException(
+                        "Unknown cultivation realm for " + fieldName + ": " + serializedName
+                ));
     }
 
     private static AlchemyPillEffect parsePillEffect(JsonObject recipeJson) {

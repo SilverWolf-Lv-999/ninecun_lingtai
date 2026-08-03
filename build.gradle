@@ -209,6 +209,7 @@ dependencies {
     implementation(fg.deobf("ziyue.filters:filters-forge:${filters_api_version}")) {
         exclude group: 'net.minecraftforge'
     }
+    runtimeOnly fg.deobf("maven.modrinth:kH9HkrSN:2omzLQh9")
 
     compileOnly fg.deobf("maven.modrinth:jade:${jade_version}")
     runtimeOnly fg.deobf("maven.modrinth:jade:${jade_version}")

@@ -1,13 +1,18 @@
 package com.seraphina.ninecun_lingtai.client.screen;
 
 import com.seraphina.ninecun_lingtai.api.alchemy.AlchemyRecipeClientData;
+import com.seraphina.ninecun_lingtai.client.player.ClientAlchemyRecipeManager;
 import com.seraphina.ninecun_lingtai.client.utility.TechniqueImprintRenderUtility;
 import com.seraphina.ninecun_lingtai.client.utility.VerticalTextUtility;
+import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
+import com.seraphina.ninecun_lingtai.common.network.packet.LearnAlchemyRecipePacket;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import org.lwjgl.glfw.GLFW;
 
+import javax.annotation.Nullable;
 import java.util.List;
 
 public final class AlchemyRecipeReadingScreen extends AbstractTechniqueImprintScreen {
@@ -16,10 +21,13 @@ public final class AlchemyRecipeReadingScreen extends AbstractTechniqueImprintSc
     private static final int BODY_LINE_HEIGHT = 18;
     private static final int COLUMN_GAP = 24;
     private static final int PAGE_BUTTON_WIDTH = 64;
-    private static final int ACTION_BUTTON_WIDTH = 88;
+    private static final int ACTION_BUTTON_WIDTH = 104;
     private static final int BUTTON_HEIGHT = 30;
 
     private final AlchemyRecipeClientData recipe;
+    @Nullable
+    private final Screen parentScreen;
+    private final boolean allowLearning;
 
     private List<List<String>> columns = List.of();
     private int columnOffset;
@@ -32,10 +40,18 @@ public final class AlchemyRecipeReadingScreen extends AbstractTechniqueImprintSc
     private int previousButtonLeft;
     private int actionButtonLeft;
     private int nextButtonLeft;
+    private boolean awaitingLearning;
+    private int learningRequestRevision;
 
-    public AlchemyRecipeReadingScreen(AlchemyRecipeClientData recipe) {
+    public AlchemyRecipeReadingScreen(
+            AlchemyRecipeClientData recipe,
+            @Nullable Screen parentScreen,
+            boolean allowLearning
+    ) {
         super(Component.literal(recipe.name()));
         this.recipe = recipe;
+        this.parentScreen = parentScreen;
+        this.allowLearning = allowLearning;
     }
 
     @Override
@@ -56,6 +72,16 @@ public final class AlchemyRecipeReadingScreen extends AbstractTechniqueImprintSc
         int visibleColumns = getVisibleColumnCount();
         this.maximumColumnOffset = Math.max(0, this.columns.size() - visibleColumns);
         this.columnOffset = Mth.clamp(this.columnOffset, 0, this.maximumColumnOffset);
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        if (this.awaitingLearning
+                && ClientAlchemyRecipeManager.getRevision() > this.learningRequestRevision) {
+            this.awaitingLearning = false;
+            beginClosing();
+        }
     }
 
     @Override
@@ -114,7 +140,7 @@ public final class AlchemyRecipeReadingScreen extends AbstractTechniqueImprintSc
                 ACTION_BUTTON_WIDTH,
                 BUTTON_HEIGHT
         )) {
-            beginClosing();
+            activateActionButton();
             return true;
         }
         return super.mouseClicked(mouseX, mouseY, button);
@@ -147,10 +173,16 @@ public final class AlchemyRecipeReadingScreen extends AbstractTechniqueImprintSc
         }
         if (acceptsInput()
                 && (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER)) {
-            beginClosing();
+            activateActionButton();
             return true;
         }
         return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    @Nullable
+    @Override
+    protected Screen getParentScreen() {
+        return this.parentScreen;
     }
 
     private void renderRecipeMetadata(GuiGraphics guiGraphics, long currentTime) {
@@ -303,12 +335,12 @@ public final class AlchemyRecipeReadingScreen extends AbstractTechniqueImprintSc
         TechniqueImprintRenderUtility.drawStarButton(
                 guiGraphics,
                 this.font,
-                Component.translatable("screen.ninecun_lingtai.return"),
+                getActionButtonText(),
                 this.actionButtonLeft,
                 this.actionButtonTop,
                 ACTION_BUTTON_WIDTH,
                 BUTTON_HEIGHT,
-                true,
+                isActionButtonActive(),
                 actionHovered,
                 currentTime,
                 controlsAlpha
@@ -326,6 +358,36 @@ public final class AlchemyRecipeReadingScreen extends AbstractTechniqueImprintSc
                 currentTime,
                 controlsAlpha
         );
+    }
+
+    private Component getActionButtonText() {
+        if (!this.allowLearning) {
+            return Component.translatable("screen.ninecun_lingtai.return");
+        }
+        if (ClientAlchemyRecipeManager.isLearned(this.recipe.id())) {
+            return Component.translatable("screen.ninecun_lingtai.alchemy_recipe_learned");
+        }
+        if (this.awaitingLearning) {
+            return Component.translatable("screen.ninecun_lingtai.learning_alchemy_recipe");
+        }
+        return Component.translatable("screen.ninecun_lingtai.learn_alchemy_recipe");
+    }
+
+    private boolean isActionButtonActive() {
+        return !this.awaitingLearning;
+    }
+
+    private void activateActionButton() {
+        if (this.awaitingLearning) {
+            return;
+        }
+        if (!this.allowLearning || ClientAlchemyRecipeManager.isLearned(this.recipe.id())) {
+            beginClosing();
+            return;
+        }
+        this.awaitingLearning = true;
+        this.learningRequestRevision = ClientAlchemyRecipeManager.getRevision();
+        ModNetwork.sendToServer(new LearnAlchemyRecipePacket(this.recipe.id()));
     }
 
     private int getVisibleColumnCount() {

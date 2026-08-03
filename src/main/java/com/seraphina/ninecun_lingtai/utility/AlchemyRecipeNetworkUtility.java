@@ -74,4 +74,8 @@ public final class AlchemyRecipeNetworkUtility {
         }
         return List.copyOf(recipes);
     }
+
+    public static int getMaximumRecipes() {
+        return MAXIMUM_RECIPES;
+    }
 }

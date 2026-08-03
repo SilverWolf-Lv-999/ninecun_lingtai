@@ -10,6 +10,7 @@
     "qi_refining",
     "foundation_establishment"
   ],
+  "minimum_refining_realm": "qi_refining",
   "ingredients": {
     "primary": {
       "item": "minecraft:wheat",

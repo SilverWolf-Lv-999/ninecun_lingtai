@@ -23,6 +23,7 @@ import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerData;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -98,10 +99,6 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
     }
 
     public void handleAction(ServerPlayer player, AlchemyFurnaceActionPacket.Action action) {
-        if (action == AlchemyFurnaceActionPacket.Action.IGNITE) {
-            ignite(player);
-            return;
-        }
         if (this.refining) {
             stopRefining();
         } else {
@@ -109,24 +106,21 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
         }
     }
 
-    private void ignite(ServerPlayer player) {
-        ItemStack ignitionTool = player.getMainHandItem().is(Items.FLINT_AND_STEEL)
-                ? player.getMainHandItem()
-                : player.getOffhandItem().is(Items.FLINT_AND_STEEL) ? player.getOffhandItem() : ItemStack.EMPTY;
-        if (ignitionTool.isEmpty()) {
+    public void ignite(ServerPlayer player, InteractionHand interactionHand) {
+        ItemStack ignitionTool = player.getItemInHand(interactionHand);
+        this.heat = MAXIMUM_HEAT;
+        ignitionTool.hurtAndBreak(1, player, ignored -> player.broadcastBreakEvent(interactionHand));
+        this.setChangedAndSynchronize();
+    }
+
+    private void startRefining(ServerPlayer player) {
+        if (this.heat <= 0) {
             player.displayClientMessage(
                     Component.translatable("message.ninecun_lingtai.alchemy_requires_ignition"),
                     true
             );
             return;
         }
-        this.heat = MAXIMUM_HEAT;
-        ignitionTool.hurtAndBreak(1, player, ignored -> {
-        });
-        this.setChangedAndSynchronize();
-    }
-
-    private void startRefining(ServerPlayer player) {
         Optional<AlchemyRecipeDefinition> matchedRecipe = getMatchingRecipe();
         if (matchedRecipe.isEmpty()) {
             player.displayClientMessage(
@@ -136,14 +130,14 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
             return;
         }
         AlchemyRecipeDefinition recipe = matchedRecipe.get();
-        boolean allowedRealm = PlayerCultivationData.getStage(player)
-                .map(stage -> recipe.allowedRealms().contains(stage.realm()))
+        boolean meetsMinimumRefiningRealm = PlayerCultivationData.getStage(player)
+                .map(stage -> stage.realm().ordinal() >= recipe.minimumRefiningRealm().ordinal())
                 .orElse(false);
-        if (!allowedRealm) {
+        if (!meetsMinimumRefiningRealm) {
             player.displayClientMessage(
                     Component.translatable(
                             "message.ninecun_lingtai.alchemy_realm_restricted",
-                            recipe.getAllowedRealmNames()
+                            recipe.getMinimumRefiningRealmName()
                     ),
                     true
             );
