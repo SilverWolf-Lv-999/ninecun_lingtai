@@ -4,6 +4,7 @@ import com.seraphina.ninecun_lingtai.common.item.AlchemyRecipeCreativeTabCache;
 import com.seraphina.ninecun_lingtai.common.item.TechniqueCreativeTabCache;
 import com.seraphina.ninecun_lingtai.common.registry.ModCreativeModeTabs;
 import com.seraphina.ninecun_lingtai.common.registry.ModItems;
+import com.seraphina.ninecun_lingtai.utility.AlchemyPillUtility;
 import com.seraphina.ninecun_lingtai.utility.SpiritualItemUtility;
 import com.seraphina.ninecun_lingtai.utility.SpiritualStoneUtility;
 import net.minecraft.core.NonNullList;
@@ -49,8 +50,21 @@ public final class ComplexNbtCreativeTabUtility {
                     provider.itemStacks().get()
             );
         }
+        changed |= appendPillStacks(displayedItemStacks);
         if (changed) {
             displayedItemStacks.sort(Comparator.comparingInt(itemStack -> Item.getId(itemStack.getItem())));
+        }
+        return changed;
+    }
+
+    private static boolean appendPillStacks(NonNullList<ItemStack> displayedItemStacks) {
+        boolean changed = false;
+        for (Item pill : ModItems.getPillItems()) {
+            changed |= appendComplexNbtStacksWhenBaseItemVisible(
+                    displayedItemStacks,
+                    pill,
+                    AlchemyPillUtility.getCreativeItemStacks(pill)
+            );
         }
         return changed;
     }

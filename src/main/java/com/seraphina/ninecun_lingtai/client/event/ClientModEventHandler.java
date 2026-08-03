@@ -26,9 +26,11 @@ import com.seraphina.ninecun_lingtai.client.render.TribulationCloudShader;
 import com.seraphina.ninecun_lingtai.client.render.PushingMountainsCollisionRenderer;
 import com.seraphina.ninecun_lingtai.client.render.PushingMountainsEntityRenderer;
 import com.seraphina.ninecun_lingtai.client.render.layer.BodyDefenseSpellLayer;
+import com.seraphina.ninecun_lingtai.common.item.ColorItem;
 import com.seraphina.ninecun_lingtai.common.entity.tribulation.ThunderTribulationEntity;
 import com.seraphina.ninecun_lingtai.common.registry.ModEntityTypes;
 import com.seraphina.ninecun_lingtai.common.registry.ModBlockEntityTypes;
+import com.seraphina.ninecun_lingtai.common.registry.ModItems;
 import com.seraphina.ninecun_lingtai.common.registry.ModMenuTypes;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.renderer.entity.EntityRenderer;
@@ -41,6 +43,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
+import net.minecraftforge.client.event.RegisterColorHandlersEvent;
 import net.minecraftforge.client.event.RegisterShadersEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
@@ -115,6 +118,16 @@ public final class ClientModEventHandler {
         event.register(ModKeyMappings.SPELL_SELECTION);
         event.register(ModKeyMappings.CAST_SPELL);
         event.register(ModKeyMappings.PUSHING_MOUNTAINS);
+    }
+
+    @SubscribeEvent
+    public static void onRegisterItemColors(RegisterColorHandlersEvent.Item event) {
+        event.register(
+                (itemStack, tintIndex) -> tintIndex == 0 && itemStack.getItem() instanceof ColorItem colorItem
+                        ? colorItem.getColor()
+                        : 0xFFFFFF,
+                ModItems.getColorItems()
+        );
     }
 
     @SubscribeEvent

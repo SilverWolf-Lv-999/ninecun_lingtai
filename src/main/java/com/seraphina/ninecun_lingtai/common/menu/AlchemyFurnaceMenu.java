@@ -108,14 +108,6 @@ public final class AlchemyFurnaceMenu extends AbstractContainerMenu {
         return this.blockPosition;
     }
 
-    public int getBrewProgress() {
-        return this.furnaceData.get(AlchemyFurnaceBlockEntity.BREW_PROGRESS_DATA_INDEX);
-    }
-
-    public int getBrewDuration() {
-        return this.furnaceData.get(AlchemyFurnaceBlockEntity.BREW_DURATION_DATA_INDEX);
-    }
-
     public int getHeat() {
         return this.furnaceData.get(AlchemyFurnaceBlockEntity.HEAT_DATA_INDEX);
     }

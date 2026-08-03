@@ -37,6 +37,7 @@ public record AlchemyFurnaceActionPacket(BlockPos blockPosition, Action action) 
     }
 
     public enum Action {
-        TOGGLE_REFINING
+        START_REFINING,
+        FINISH_REFINING
     }
 }

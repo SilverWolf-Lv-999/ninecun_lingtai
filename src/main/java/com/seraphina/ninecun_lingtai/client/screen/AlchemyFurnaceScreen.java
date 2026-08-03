@@ -25,8 +25,6 @@ public final class AlchemyFurnaceScreen extends AbstractContainerScreen<AlchemyF
     private static final int SLOT_INNER_FILL_COLOR = 0xFF171512;
     private static final int HEAT_TRACK_COLOR = 0x99251D16;
     private static final int HEAT_FILL_COLOR = 0xFFDD793A;
-    private static final int PROGRESS_TRACK_COLOR = 0x9928241E;
-    private static final int PROGRESS_FILL_COLOR = 0xFFB8954A;
     private static final int START_BUTTON_LEFT = 112;
     private static final int START_BUTTON_TOP = 137;
     private static final int START_BUTTON_WIDTH = 100;
@@ -73,7 +71,7 @@ public final class AlchemyFurnaceScreen extends AbstractContainerScreen<AlchemyF
         );
         renderRefiningDiagram(guiGraphics);
         renderSlotFrames(guiGraphics);
-        renderProgress(guiGraphics);
+        renderHeat(guiGraphics);
         renderActions(guiGraphics, mouseX, mouseY);
     }
 
@@ -101,7 +99,9 @@ public final class AlchemyFurnaceScreen extends AbstractContainerScreen<AlchemyF
             )) {
                 ModNetwork.sendToServer(new AlchemyFurnaceActionPacket(
                         this.menu.getBlockPosition(),
-                        AlchemyFurnaceActionPacket.Action.TOGGLE_REFINING
+                        this.menu.isRefining()
+                                ? AlchemyFurnaceActionPacket.Action.FINISH_REFINING
+                                : AlchemyFurnaceActionPacket.Action.START_REFINING
                 ));
                 return true;
             }
@@ -138,27 +138,7 @@ public final class AlchemyFurnaceScreen extends AbstractContainerScreen<AlchemyF
         }
     }
 
-    private void renderProgress(GuiGraphics guiGraphics) {
-        int progressLeft = this.leftPos + 16;
-        int progressTop = this.topPos + 144;
-        int progressWidth = 72;
-        int progressHeight = 5;
-        float brewProgress = this.menu.getBrewDuration() <= 0
-                ? 0.0F
-                : Mth.clamp(
-                        this.menu.getBrewProgress() / (float) this.menu.getBrewDuration(),
-                        0.0F,
-                        1.0F
-                );
-        guiGraphics.fill(progressLeft, progressTop, progressLeft + progressWidth, progressTop + progressHeight, PROGRESS_TRACK_COLOR);
-        guiGraphics.fill(
-                progressLeft,
-                progressTop,
-                progressLeft + Math.round(progressWidth * brewProgress),
-                progressTop + progressHeight,
-                PROGRESS_FILL_COLOR
-        );
-
+    private void renderHeat(GuiGraphics guiGraphics) {
         int heatLeft = this.leftPos + 279;
         int heatTop = this.topPos + 36;
         int heatHeight = 88;

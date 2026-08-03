@@ -8,6 +8,8 @@ import com.seraphina.ninecun_lingtai.common.menu.AlchemyFurnaceMenu;
 import com.seraphina.ninecun_lingtai.common.network.packet.AlchemyFurnaceActionPacket;
 import com.seraphina.ninecun_lingtai.common.registry.ModBlockEntityTypes;
 import com.seraphina.ninecun_lingtai.common.player.PlayerCultivationData;
+import com.seraphina.ninecun_lingtai.common.player.PlayerLearnedAlchemyRecipeData;
+import com.seraphina.ninecun_lingtai.utility.AlchemyPillUtility;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -41,18 +43,16 @@ import javax.annotation.Nullable;
 import java.util.Optional;
 
 public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoBlockEntity, Container, MenuProvider, ContainerData {
-    public static final int BREW_PROGRESS_DATA_INDEX = 0;
-    public static final int BREW_DURATION_DATA_INDEX = 1;
-    public static final int HEAT_DATA_INDEX = 2;
-    public static final int MAXIMUM_HEAT_DATA_INDEX = 3;
-    public static final int REFINING_DATA_INDEX = 4;
-    public static final int DATA_COUNT = 5;
+    public static final int HEAT_DATA_INDEX = 0;
+    public static final int MAXIMUM_HEAT_DATA_INDEX = 1;
+    public static final int REFINING_DATA_INDEX = 2;
+    public static final int DATA_COUNT = 3;
 
     private static final int MAXIMUM_HEAT = 600;
     private static final String REFINING_KEY = "Refining";
     private static final String ACTIVE_RECIPE_KEY = "ActiveRecipe";
-    private static final String BREW_PROGRESS_KEY = "BrewProgress";
-    private static final String BREW_DURATION_KEY = "BrewDuration";
+    private static final String REFINING_TICKS_KEY = "RefiningTicks";
+    private static final String LEGACY_BREW_PROGRESS_KEY = "BrewProgress";
     private static final String HEAT_KEY = "Heat";
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
@@ -64,8 +64,7 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
     private boolean refining;
     @Nullable
     private ResourceLocation activeRecipeId;
-    private int brewProgress;
-    private int brewDuration;
+    private int refiningTicks;
     private int heat;
 
     public AlchemyFurnaceBlockEntity(BlockPos blockPosition, BlockState blockState) {
@@ -82,27 +81,32 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
     }
 
     public static void serverTick(Level level, BlockPos blockPosition, BlockState blockState, AlchemyFurnaceBlockEntity furnace) {
-        if (!furnace.refining) {
-            return;
-        }
         if (furnace.heat <= 0) {
-            furnace.burnIngredients();
             return;
         }
-
         furnace.heat--;
-        furnace.brewProgress++;
-        if (furnace.brewProgress >= furnace.brewDuration) {
-            furnace.finishRefining();
+        if (furnace.refining) {
+            furnace.refiningTicks++;
+            if (furnace.heat <= 0) {
+                furnace.burnIngredients();
+                return;
+            }
         }
         furnace.setChangedAndSynchronize();
     }
 
     public void handleAction(ServerPlayer player, AlchemyFurnaceActionPacket.Action action) {
-        if (this.refining) {
-            stopRefining();
-        } else {
-            startRefining(player);
+        switch (action) {
+            case START_REFINING -> {
+                if (!this.refining) {
+                    startRefining(player);
+                }
+            }
+            case FINISH_REFINING -> {
+                if (this.refining) {
+                    finishRefining(player);
+                }
+            }
         }
     }
 
@@ -130,6 +134,13 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
             return;
         }
         AlchemyRecipeDefinition recipe = matchedRecipe.get();
+        if (!PlayerLearnedAlchemyRecipeData.hasRecipe(player, recipe.id())) {
+            player.displayClientMessage(
+                    Component.translatable("message.ninecun_lingtai.alchemy_recipe_not_learned"),
+                    true
+            );
+            return;
+        }
         boolean meetsMinimumRefiningRealm = PlayerCultivationData.getStage(player)
                 .map(stage -> stage.realm().ordinal() >= recipe.minimumRefiningRealm().ordinal())
                 .orElse(false);
@@ -153,33 +164,11 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
 
         this.refining = true;
         this.activeRecipeId = recipe.id();
-        this.brewProgress = 0;
-        this.brewDuration = recipe.brewingDuration();
+        this.refiningTicks = 0;
         this.setChangedAndSynchronize();
     }
 
-    private void stopRefining() {
-        if (this.level == null) {
-            return;
-        }
-        this.refining = false;
-        this.activeRecipeId = null;
-        this.brewProgress = 0;
-        this.brewDuration = 0;
-        this.heat = 0;
-        clearIngredientSlots();
-        this.setChangedAndSynchronize();
-        this.level.explode(
-                null,
-                this.worldPosition.getX() + 0.5D,
-                this.worldPosition.getY() + 0.5D,
-                this.worldPosition.getZ() + 0.5D,
-                1.5F,
-                Level.ExplosionInteraction.BLOCK
-        );
-    }
-
-    private void finishRefining() {
+    private void finishRefining(ServerPlayer player) {
         AlchemyRecipeDefinition recipe = this.activeRecipeId == null
                 ? null
                 : AlchemyRecipeManager.INSTANCE.getRecipe(this.activeRecipeId).orElse(null);
@@ -187,10 +176,22 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
             burnIngredients();
             return;
         }
+        if (this.refiningTicks < recipe.brewingDuration()) {
+            burnIngredients();
+            player.displayClientMessage(
+                    Component.translatable("message.ninecun_lingtai.alchemy_pill_not_formed"),
+                    true
+            );
+            return;
+        }
 
         consumeIngredients(recipe);
         Item outputItem = BuiltInRegistries.ITEM.get(recipe.outputItem());
-        ItemStack output = new ItemStack(outputItem, recipe.outputCount());
+        ItemStack output = AlchemyPillUtility.createStack(
+                outputItem,
+                recipe.outputCount(),
+                recipe.grade()
+        );
         ItemStack previousOutput = getItem(AlchemyFurnaceMenu.OUTPUT_SLOT);
         if (previousOutput.isEmpty()) {
             setItem(AlchemyFurnaceMenu.OUTPUT_SLOT, output);
@@ -200,15 +201,14 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
         }
         this.refining = false;
         this.activeRecipeId = null;
-        this.brewProgress = 0;
-        this.brewDuration = 0;
+        this.refiningTicks = 0;
+        this.setChangedAndSynchronize();
     }
 
     private void burnIngredients() {
         this.refining = false;
         this.activeRecipeId = null;
-        this.brewProgress = 0;
-        this.brewDuration = 0;
+        this.refiningTicks = 0;
         this.heat = 0;
         clearIngredientSlots();
         this.setChangedAndSynchronize();
@@ -251,10 +251,15 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
         if (outputItem == Items.AIR) {
             return false;
         }
+        ItemStack expectedOutput = AlchemyPillUtility.createStack(
+                outputItem,
+                recipe.outputCount(),
+                recipe.grade()
+        );
         ItemStack output = getItem(AlchemyFurnaceMenu.OUTPUT_SLOT);
         return output.isEmpty()
-                || (output.is(outputItem)
-                && output.getCount() + recipe.outputCount() <= output.getMaxStackSize());
+                || (ItemStack.isSameItemSameTags(output, expectedOutput)
+                && output.getCount() + expectedOutput.getCount() <= output.getMaxStackSize());
     }
 
     private void consumeIngredients(AlchemyRecipeDefinition recipe) {
@@ -378,8 +383,6 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
     @Override
     public int get(int index) {
         return switch (index) {
-            case BREW_PROGRESS_DATA_INDEX -> this.brewProgress;
-            case BREW_DURATION_DATA_INDEX -> this.brewDuration;
             case HEAT_DATA_INDEX -> this.heat;
             case MAXIMUM_HEAT_DATA_INDEX -> MAXIMUM_HEAT;
             case REFINING_DATA_INDEX -> this.refining ? 1 : 0;
@@ -390,8 +393,6 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
     @Override
     public void set(int index, int value) {
         switch (index) {
-            case BREW_PROGRESS_DATA_INDEX -> this.brewProgress = value;
-            case BREW_DURATION_DATA_INDEX -> this.brewDuration = value;
             case HEAT_DATA_INDEX -> this.heat = value;
             case REFINING_DATA_INDEX -> this.refining = value != 0;
             default -> {
@@ -412,8 +413,7 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
         if (this.activeRecipeId != null) {
             tag.putString(ACTIVE_RECIPE_KEY, this.activeRecipeId.toString());
         }
-        tag.putInt(BREW_PROGRESS_KEY, this.brewProgress);
-        tag.putInt(BREW_DURATION_KEY, this.brewDuration);
+        tag.putInt(REFINING_TICKS_KEY, this.refiningTicks);
         tag.putInt(HEAT_KEY, this.heat);
     }
 
@@ -426,8 +426,12 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
         this.activeRecipeId = tag.contains(ACTIVE_RECIPE_KEY)
                 ? ResourceLocation.tryParse(tag.getString(ACTIVE_RECIPE_KEY))
                 : null;
-        this.brewProgress = Math.max(0, tag.getInt(BREW_PROGRESS_KEY));
-        this.brewDuration = Math.max(0, tag.getInt(BREW_DURATION_KEY));
+        this.refiningTicks = Math.max(
+                0,
+                tag.contains(REFINING_TICKS_KEY)
+                        ? tag.getInt(REFINING_TICKS_KEY)
+                        : tag.getInt(LEGACY_BREW_PROGRESS_KEY)
+        );
         this.heat = Math.max(0, Math.min(MAXIMUM_HEAT, tag.getInt(HEAT_KEY)));
     }
 

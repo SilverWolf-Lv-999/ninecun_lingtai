@@ -112,9 +112,11 @@ public final class AlchemyRecipeJsonUtility {
         try {
             return new AlchemyPillEffect(
                     GsonHelper.getAsDouble(effectJson, "max_health_fraction"),
-                    GsonHelper.getAsDouble(effectJson, "minimum_healing"),
-                    GsonHelper.getAsInt(effectJson, "regeneration_duration"),
-                    GsonHelper.getAsInt(effectJson, "regeneration_amplifier")
+                    effectJson.has("flat_healing")
+                            ? GsonHelper.getAsDouble(effectJson, "flat_healing")
+                            : GsonHelper.getAsDouble(effectJson, "minimum_healing"),
+                    GsonHelper.getAsInt(effectJson, "regeneration_duration", 0),
+                    GsonHelper.getAsInt(effectJson, "regeneration_amplifier", 0)
             );
         } catch (IllegalArgumentException exception) {
             throw new JsonParseException(exception.getMessage(), exception);

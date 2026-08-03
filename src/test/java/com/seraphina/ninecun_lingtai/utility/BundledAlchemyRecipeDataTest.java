@@ -50,8 +50,18 @@ class BundledAlchemyRecipeDataTest {
                 com.seraphina.ninecun_lingtai.api.cultivation.CultivationRealm.QI_REFINING,
                 recipe.minimumRefiningRealm()
         );
-        assertTrue(recipe.pillEffect().regenerationAmplifier() == 4);
-        assertEquals(3, recipe.primaryIngredient().count());
+        assertEquals(0.10D, recipe.pillEffect().maxHealthFraction());
+        assertEquals(3.0D, recipe.pillEffect().flatHealing());
+        assertEquals(0, recipe.pillEffect().regenerationDuration());
+        assertEquals(ResourceLocation.withDefaultNamespace("grass"), recipe.primaryIngredient().item());
+        assertEquals(6, recipe.primaryIngredient().count());
+        assertEquals(ResourceLocation.withDefaultNamespace("fern"), recipe.secondaryIngredients().get(0).item());
+        assertEquals(ResourceLocation.withDefaultNamespace("moss_block"), recipe.secondaryIngredients().get(1).item());
+        assertEquals(ResourceLocation.withDefaultNamespace("azalea_leaves"), recipe.auxiliaryIngredients().get(0).item());
+        assertEquals(
+                ResourceLocation.withDefaultNamespace("flowering_azalea_leaves"),
+                recipe.auxiliaryIngredients().get(1).item()
+        );
         assertEquals(200, recipe.brewingDuration());
     }
 

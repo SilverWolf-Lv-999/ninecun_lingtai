@@ -28,24 +28,22 @@ class AlchemyRecipeJsonUtilityTest {
                   "allowed_realms": ["qi_refining", "foundation_establishment"],
                   "minimum_refining_realm": "qi_refining",
                   "ingredients": {
-                    "primary": {"item": "minecraft:wheat", "count": 3},
+                    "primary": {"item": "minecraft:grass", "count": 6},
                     "secondary": [
-                      {"item": "minecraft:glow_berries", "count": 2},
-                      {"item": "minecraft:kelp", "count": 2}
+                      {"item": "minecraft:fern", "count": 4},
+                      {"item": "minecraft:moss_block", "count": 2}
                     ],
                     "auxiliary": [
-                      {"item": "minecraft:apple", "count": 1},
-                      {"item": "minecraft:sugar", "count": 1}
+                      {"item": "minecraft:azalea_leaves", "count": 4},
+                      {"item": "minecraft:flowering_azalea_leaves", "count": 4}
                     ]
                   },
                   "output_item": "test:grass_restoration_pill",
                   "output_count": 1,
                   "brewing_duration": 200,
                   "pill_effect": {
-                    "max_health_fraction": 0.75,
-                    "minimum_healing": 8.0,
-                    "regeneration_duration": 200,
-                    "regeneration_amplifier": 4
+                    "max_health_fraction": 0.10,
+                    "flat_healing": 3.0
                   }
                 }
                 """));
@@ -57,11 +55,12 @@ class AlchemyRecipeJsonUtilityTest {
         assertTrue(recipe.allowedRealms().contains(CultivationRealm.FOUNDATION_ESTABLISHMENT));
         assertEquals(CultivationRealm.QI_REFINING, recipe.minimumRefiningRealm());
         assertEquals(ResourceLocation.fromNamespaceAndPath("test", "grass_restoration_pill"), recipe.outputItem());
-        assertEquals(ResourceLocation.withDefaultNamespace("wheat"), recipe.primaryIngredient().item());
-        assertEquals(3, recipe.primaryIngredient().count());
+        assertEquals(ResourceLocation.withDefaultNamespace("grass"), recipe.primaryIngredient().item());
+        assertEquals(6, recipe.primaryIngredient().count());
         assertEquals(200, recipe.brewingDuration());
-        assertEquals(0.75D, recipe.pillEffect().maxHealthFraction());
-        assertEquals(4, recipe.pillEffect().regenerationAmplifier());
+        assertEquals(0.10D, recipe.pillEffect().maxHealthFraction());
+        assertEquals(3.0D, recipe.pillEffect().flatHealing());
+        assertEquals(0, recipe.pillEffect().regenerationDuration());
     }
 
     @Test
@@ -76,14 +75,14 @@ class AlchemyRecipeJsonUtilityTest {
                           "allowed_realms": [],
                           "minimum_refining_realm": "qi_refining",
                           "ingredients": {
-                            "primary": {"item": "minecraft:wheat", "count": 3},
+                            "primary": {"item": "minecraft:grass", "count": 6},
                             "secondary": [
-                              {"item": "minecraft:glow_berries", "count": 2},
-                              {"item": "minecraft:kelp", "count": 2}
+                              {"item": "minecraft:fern", "count": 4},
+                              {"item": "minecraft:moss_block", "count": 2}
                             ],
                             "auxiliary": [
-                              {"item": "minecraft:apple", "count": 1},
-                              {"item": "minecraft:sugar", "count": 1}
+                              {"item": "minecraft:azalea_leaves", "count": 4},
+                              {"item": "minecraft:flowering_azalea_leaves", "count": 4}
                             ]
                           },
                           "output_item": "test:empty_pill",
@@ -111,14 +110,14 @@ class AlchemyRecipeJsonUtilityTest {
                           "allowed_realms": ["qi_refining"],
                           "minimum_refining_realm": "qi_refining",
                           "ingredients": {
-                            "primary": {"item": "minecraft:wheat", "count": 3},
+                            "primary": {"item": "minecraft:grass", "count": 6},
                             "secondary": [
-                              {"item": "minecraft:glow_berries", "count": 2},
-                              {"item": "minecraft:kelp", "count": 2}
+                              {"item": "minecraft:fern", "count": 4},
+                              {"item": "minecraft:moss_block", "count": 2}
                             ],
                             "auxiliary": [
-                              {"item": "minecraft:apple", "count": 1},
-                              {"item": "minecraft:sugar", "count": 1}
+                              {"item": "minecraft:azalea_leaves", "count": 4},
+                              {"item": "minecraft:flowering_azalea_leaves", "count": 4}
                             ]
                           },
                           "output_item": "test:invalid_pill",
@@ -146,13 +145,13 @@ class AlchemyRecipeJsonUtilityTest {
                           "allowed_realms": ["qi_refining"],
                           "minimum_refining_realm": "qi_refining",
                           "ingredients": {
-                            "primary": {"item": "minecraft:wheat", "count": 3},
+                            "primary": {"item": "minecraft:grass", "count": 6},
                             "secondary": [
-                              {"item": "minecraft:glow_berries", "count": 2},
-                              {"item": "minecraft:kelp", "count": 2}
+                              {"item": "minecraft:fern", "count": 4},
+                              {"item": "minecraft:moss_block", "count": 2}
                             ],
                             "auxiliary": [
-                              {"item": "minecraft:apple", "count": 1}
+                              {"item": "minecraft:azalea_leaves", "count": 4}
                             ]
                           },
                           "output_item": "test:invalid_pill",
@@ -179,14 +178,14 @@ class AlchemyRecipeJsonUtilityTest {
                           "grade": {"tier": 1, "rank": 1},
                           "allowed_realms": ["qi_refining"],
                           "ingredients": {
-                            "primary": {"item": "minecraft:wheat", "count": 3},
+                            "primary": {"item": "minecraft:grass", "count": 6},
                             "secondary": [
-                              {"item": "minecraft:glow_berries", "count": 2},
-                              {"item": "minecraft:kelp", "count": 2}
+                              {"item": "minecraft:fern", "count": 4},
+                              {"item": "minecraft:moss_block", "count": 2}
                             ],
                             "auxiliary": [
-                              {"item": "minecraft:apple", "count": 1},
-                              {"item": "minecraft:sugar", "count": 1}
+                              {"item": "minecraft:azalea_leaves", "count": 4},
+                              {"item": "minecraft:flowering_azalea_leaves", "count": 4}
                             ]
                           },
                           "output_item": "test:invalid_pill",

@@ -27,7 +27,13 @@
       "title": "炼丹",
       "icon": "ninecun_lingtai:alchemy_recipe",
       "items": [
-        "ninecun_lingtai:alchemy_recipe",
+        "ninecun_lingtai:alchemy_recipe"
+      ]
+    },
+    "pills": {
+      "title": "丹药",
+      "icon": "ninecun_lingtai:grass_restoration_pill",
+      "items": [
         "ninecun_lingtai:grass_restoration_pill"
       ]
     },

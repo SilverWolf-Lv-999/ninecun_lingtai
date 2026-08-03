@@ -14,11 +14,16 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public final class ModItems {
     private static final DeferredRegister<Item> ITEMS = DeferredRegister.create(
             ForgeRegistries.ITEMS,
             ModMain.MOD_ID
     );
+    private static final List<RegistryObject<Item>> COLOR_ITEMS = new ArrayList<>();
+    private static final List<RegistryObject<Item>> PILL_ITEMS = new ArrayList<>();
 
     public static final RegistryObject<Item> JADE_SLIP = ITEMS.register(
             "jade_slip",
@@ -45,9 +50,9 @@ public final class ModItems {
             HanSwordItem::new
     );
 
-    public static final RegistryObject<Item> GRASS_RESTORATION_PILL = ITEMS.register(
+    public static final RegistryObject<Item> GRASS_RESTORATION_PILL = registerPill(
             "grass_restoration_pill",
-            () -> new PillItem(new Item.Properties().stacksTo(16))
+            0x609A4A
     );
 
     public static final RegistryObject<Item> SPIRITUAL_STONE_ORE = ITEMS.register(
@@ -66,6 +71,26 @@ public final class ModItems {
     );
 
     private ModItems() {
+    }
+
+    public static Item[] getColorItems() {
+        return COLOR_ITEMS.stream()
+                .map(RegistryObject::get)
+                .toArray(Item[]::new);
+    }
+
+    public static List<Item> getPillItems() {
+        return PILL_ITEMS.stream().map(RegistryObject::get).toList();
+    }
+
+    private static RegistryObject<Item> registerPill(String name, int color) {
+        RegistryObject<Item> pill = ITEMS.register(
+                name,
+                () -> new PillItem(new Item.Properties().stacksTo(16), color)
+        );
+        COLOR_ITEMS.add(pill);
+        PILL_ITEMS.add(pill);
+        return pill;
     }
 
     public static void register(IEventBus modEventBus) {
