@@ -1,5 +1,6 @@
 package com.seraphina.ninecun_lingtai.client.utility;
 
+import com.seraphina.ninecun_lingtai.common.item.AlchemyRecipeCreativeTabCache;
 import com.seraphina.ninecun_lingtai.common.item.TechniqueCreativeTabCache;
 import com.seraphina.ninecun_lingtai.common.registry.ModCreativeModeTabs;
 import com.seraphina.ninecun_lingtai.common.registry.ModItems;
@@ -22,7 +23,11 @@ public final class ComplexNbtCreativeTabUtility {
                     () -> SpiritualItemUtility.getCreativeItemStacks(ModItems.HAN_SWORD.get())
             ),
             new ComplexNbtItemProvider(ModItems.SPIRITUAL_STONE::get, SpiritualStoneUtility::getCreativeItemStacks),
-            new ComplexNbtItemProvider(ModItems.JADE_SLIP::get, TechniqueCreativeTabCache::getItemStacks)
+            new ComplexNbtItemProvider(ModItems.JADE_SLIP::get, TechniqueCreativeTabCache::getItemStacks),
+            new ComplexNbtItemProvider(
+                    ModItems.ALCHEMY_RECIPE::get,
+                    AlchemyRecipeCreativeTabCache::getItemStacks
+            )
     );
 
     private ComplexNbtCreativeTabUtility() {
@@ -44,7 +49,6 @@ public final class ComplexNbtCreativeTabUtility {
                     provider.itemStacks().get()
             );
         }
-
         if (changed) {
             displayedItemStacks.sort(Comparator.comparingInt(itemStack -> Item.getId(itemStack.getItem())));
         }

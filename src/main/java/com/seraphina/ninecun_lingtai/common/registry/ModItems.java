@@ -1,8 +1,10 @@
 package com.seraphina.ninecun_lingtai.common.registry;
 
 import com.seraphina.ninecun_lingtai.ModMain;
+import com.seraphina.ninecun_lingtai.common.item.AlchemyRecipeItem;
 import com.seraphina.ninecun_lingtai.common.item.DaoScrollItem;
 import com.seraphina.ninecun_lingtai.common.item.HanSwordItem;
+import com.seraphina.ninecun_lingtai.common.item.PillItem;
 import com.seraphina.ninecun_lingtai.common.item.SpiritualStoneItem;
 import com.seraphina.ninecun_lingtai.common.item.TechniqueItem;
 import net.minecraft.world.item.BlockItem;
@@ -23,6 +25,11 @@ public final class ModItems {
             () -> new TechniqueItem(new Item.Properties().stacksTo(1))
     );
 
+    public static final RegistryObject<Item> ALCHEMY_RECIPE = ITEMS.register(
+            "alchemy_recipe",
+            () -> new AlchemyRecipeItem(new Item.Properties().stacksTo(1))
+    );
+
     public static final RegistryObject<Item> SPIRITUAL_STONE = ITEMS.register(
             "spiritual_stone",
             () -> new SpiritualStoneItem(new Item.Properties().stacksTo(64))
@@ -36,6 +43,11 @@ public final class ModItems {
     public static final RegistryObject<Item> HAN_SWORD = ITEMS.register(
             "han_sword",
             HanSwordItem::new
+    );
+
+    public static final RegistryObject<Item> GRASS_RESTORATION_PILL = ITEMS.register(
+            "grass_restoration_pill",
+            () -> new PillItem(new Item.Properties().stacksTo(16))
     );
 
     public static final RegistryObject<Item> SPIRITUAL_STONE_ORE = ITEMS.register(

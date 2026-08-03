@@ -23,6 +23,14 @@
         "ninecun_lingtai:jade_slip"
       ]
     },
+    "alchemy": {
+      "title": "炼丹",
+      "icon": "ninecun_lingtai:alchemy_recipe",
+      "items": [
+        "ninecun_lingtai:alchemy_recipe",
+        "ninecun_lingtai:grass_restoration_pill"
+      ]
+    },
     "debug": {
       "title": "调试",
       "icon": "ninecun_lingtai:dao_scroll",

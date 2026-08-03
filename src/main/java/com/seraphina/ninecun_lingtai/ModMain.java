@@ -7,6 +7,7 @@ import com.seraphina.ninecun_lingtai.common.registry.ModBlockEntityTypes;
 import com.seraphina.ninecun_lingtai.common.registry.ModCreativeModeTabs;
 import com.seraphina.ninecun_lingtai.common.registry.ModEntityTypes;
 import com.seraphina.ninecun_lingtai.common.registry.ModItems;
+import com.seraphina.ninecun_lingtai.common.registry.ModMenuTypes;
 import com.seraphina.ninecun_lingtai.common.registry.ModSpells;
 import com.seraphina.ninecun_lingtai.common.registry.ModSounds;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -26,6 +27,7 @@ public final class ModMain {
         IEventBus modEventBus = context.getModEventBus();
         ModBlocks.register(modEventBus);
         ModBlockEntityTypes.register(modEventBus);
+        ModMenuTypes.register(modEventBus);
         ModItems.register(modEventBus);
         ModEntityTypes.register(modEventBus);
         ModSpells.register(modEventBus);

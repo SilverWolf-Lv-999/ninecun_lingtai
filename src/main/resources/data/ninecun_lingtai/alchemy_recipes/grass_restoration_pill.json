@@ -1,0 +1,48 @@
+{
+  "name": "草还丹方",
+  "description": "一阶一品疗伤丹方，草木生机化入丹丸，可供练气、筑基修士服用。",
+  "content": "以青苔草为主药，先取晨露浸润，使草木生机缓缓舒展；继而投入甘露花与回春藤为次药，文火相催，待药液转作澄碧。最后添入两份宁神叶作辅药，收火凝露，见炉中药气不散而聚，便以温养之法结成丹丸。此丹不求激发潜力，只为扶正回元，伤重时可先护住心脉，再使生机自行流转。",
+  "grade": {
+    "tier": 1,
+    "rank": 1
+  },
+  "allowed_realms": [
+    "qi_refining",
+    "foundation_establishment"
+  ],
+  "ingredients": {
+    "primary": {
+      "item": "minecraft:wheat",
+      "count": 3
+    },
+    "secondary": [
+      {
+        "item": "minecraft:glow_berries",
+        "count": 2
+      },
+      {
+        "item": "minecraft:kelp",
+        "count": 2
+      }
+    ],
+    "auxiliary": [
+      {
+        "item": "minecraft:apple",
+        "count": 1
+      },
+      {
+        "item": "minecraft:sugar",
+        "count": 1
+      }
+    ]
+  },
+  "output_item": "ninecun_lingtai:grass_restoration_pill",
+  "output_count": 1,
+  "brewing_duration": 200,
+  "pill_effect": {
+    "max_health_fraction": 0.75,
+    "minimum_healing": 8.0,
+    "regeneration_duration": 200,
+    "regeneration_amplifier": 4
+  }
+}

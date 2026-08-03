@@ -12,6 +12,7 @@ import com.seraphina.ninecun_lingtai.client.inventorytab.TechniqueLibraryTabRegi
 import com.seraphina.ninecun_lingtai.client.model.BodyDefenseSpellModel;
 import com.seraphina.ninecun_lingtai.client.render.AptitudeFormationShader;
 import com.seraphina.ninecun_lingtai.client.render.AlchemyFurnaceBlockRenderer;
+import com.seraphina.ninecun_lingtai.client.screen.AlchemyFurnaceScreen;
 import com.seraphina.ninecun_lingtai.client.render.DefenseBarShader;
 import com.seraphina.ninecun_lingtai.client.render.DefenseSpellGuardianRenderer;
 import com.seraphina.ninecun_lingtai.client.render.ElementFlowShader;
@@ -27,12 +28,14 @@ import com.seraphina.ninecun_lingtai.client.render.layer.BodyDefenseSpellLayer;
 import com.seraphina.ninecun_lingtai.common.entity.tribulation.ThunderTribulationEntity;
 import com.seraphina.ninecun_lingtai.common.registry.ModEntityTypes;
 import com.seraphina.ninecun_lingtai.common.registry.ModBlockEntityTypes;
+import com.seraphina.ninecun_lingtai.common.registry.ModMenuTypes;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.LightningBoltRenderer;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.client.renderer.ShaderInstance;
+import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.EntityRenderersEvent;
@@ -94,6 +97,7 @@ public final class ClientModEventHandler {
     public static void onClientSetup(FMLClientSetupEvent event) {
         ClientConfigScreenRegistrar.register();
         event.enqueueWork(() -> {
+            MenuScreens.register(ModMenuTypes.ALCHEMY_FURNACE.get(), AlchemyFurnaceScreen::new);
             MeditationAnimationManager.register();
             LightFlightAnimationManager.register();
             CultivationInfoTabRegistrar.register();
