@@ -25,6 +25,13 @@ public final class AlchemyRecipeItem extends Item {
     }
 
     @Override
+    public Component getName(ItemStack itemStack) {
+        return AlchemyRecipeItemUtility.getRecipeName(itemStack)
+                .<Component>map(recipeName -> Component.literal(recipeName + "•丹方"))
+                .orElseGet(() -> super.getName(itemStack));
+    }
+
+    @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack itemStack = player.getItemInHand(hand);
         if (level.isClientSide) {
