@@ -25,10 +25,15 @@ public final class AlchemyFurnaceScreen extends AbstractContainerScreen<AlchemyF
     private static final int SLOT_INNER_FILL_COLOR = 0xFF171512;
     private static final int HEAT_TRACK_COLOR = 0x99251D16;
     private static final int HEAT_FILL_COLOR = 0xFFDD793A;
-    private static final int START_BUTTON_LEFT = 112;
+    private static final int START_BUTTON_WIDTH = 124;
+    private static final int START_BUTTON_LEFT = (PREFERRED_WIDTH - START_BUTTON_WIDTH) / 2;
     private static final int START_BUTTON_TOP = 137;
-    private static final int START_BUTTON_WIDTH = 100;
     private static final int ACTION_BUTTON_HEIGHT = 20;
+    private static final int HEAT_BAR_LEFT = 278;
+    private static final int HEAT_BAR_TOP = 23;
+    private static final int HEAT_BAR_WIDTH = 16;
+    private static final int HEAT_BAR_HEIGHT = 112;
+    private static final int SLOT_CENTER_OFFSET = 9;
 
     public AlchemyFurnaceScreen(AlchemyFurnaceMenu menu, net.minecraft.world.entity.player.Inventory inventory, Component title) {
         super(menu, inventory, title);
@@ -110,12 +115,12 @@ public final class AlchemyFurnaceScreen extends AbstractContainerScreen<AlchemyF
     }
 
     private void renderRefiningDiagram(GuiGraphics guiGraphics) {
-        ScreenPoint main = point(153.0F, 31.0F);
-        ScreenPoint firstSecondary = point(89.0F, 75.0F);
-        ScreenPoint secondSecondary = point(217.0F, 75.0F);
-        ScreenPoint output = point(153.0F, 96.0F);
-        ScreenPoint firstAuxiliary = point(89.0F, 126.0F);
-        ScreenPoint secondAuxiliary = point(217.0F, 126.0F);
+        ScreenPoint main = slotCenter(AlchemyFurnaceMenu.MAIN_INGREDIENT_SLOT);
+        ScreenPoint firstSecondary = slotCenter(AlchemyFurnaceMenu.FIRST_SECONDARY_INGREDIENT_SLOT);
+        ScreenPoint secondSecondary = slotCenter(AlchemyFurnaceMenu.SECOND_SECONDARY_INGREDIENT_SLOT);
+        ScreenPoint output = slotCenter(AlchemyFurnaceMenu.OUTPUT_SLOT);
+        ScreenPoint firstAuxiliary = slotCenter(AlchemyFurnaceMenu.FIRST_AUXILIARY_INGREDIENT_SLOT);
+        ScreenPoint secondAuxiliary = slotCenter(AlchemyFurnaceMenu.SECOND_AUXILIARY_INGREDIENT_SLOT);
 
         drawConnection(guiGraphics, main, firstSecondary, DIAGRAM_COLOR);
         drawConnection(guiGraphics, main, secondSecondary, DIAGRAM_COLOR);
@@ -139,22 +144,33 @@ public final class AlchemyFurnaceScreen extends AbstractContainerScreen<AlchemyF
     }
 
     private void renderHeat(GuiGraphics guiGraphics) {
-        int heatLeft = this.leftPos + 279;
-        int heatTop = this.topPos + 36;
-        int heatHeight = 88;
+        int heatLeft = this.leftPos + HEAT_BAR_LEFT;
+        int heatTop = this.topPos + HEAT_BAR_TOP;
         float heat = this.menu.getMaximumHeat() <= 0
                 ? 0.0F
                 : Mth.clamp(this.menu.getHeat() / (float) this.menu.getMaximumHeat(), 0.0F, 1.0F);
-        guiGraphics.fill(heatLeft, heatTop, heatLeft + 7, heatTop + heatHeight, HEAT_TRACK_COLOR);
-        int heatFillHeight = Math.round(heatHeight * heat);
         guiGraphics.fill(
                 heatLeft,
-                heatTop + heatHeight - heatFillHeight,
-                heatLeft + 7,
-                heatTop + heatHeight,
+                heatTop,
+                heatLeft + HEAT_BAR_WIDTH,
+                heatTop + HEAT_BAR_HEIGHT,
+                HEAT_TRACK_COLOR
+        );
+        int heatFillHeight = Math.round((HEAT_BAR_HEIGHT - 2) * heat);
+        guiGraphics.fill(
+                heatLeft + 1,
+                heatTop + HEAT_BAR_HEIGHT - 1 - heatFillHeight,
+                heatLeft + HEAT_BAR_WIDTH - 1,
+                heatTop + HEAT_BAR_HEIGHT - 1,
                 HEAT_FILL_COLOR
         );
-        guiGraphics.renderOutline(heatLeft, heatTop, 7, heatHeight, SLOT_BORDER_COLOR);
+        guiGraphics.renderOutline(
+                heatLeft,
+                heatTop,
+                HEAT_BAR_WIDTH,
+                HEAT_BAR_HEIGHT,
+                SLOT_BORDER_COLOR
+        );
     }
 
     private void renderActions(GuiGraphics guiGraphics, int mouseX, int mouseY) {
@@ -195,6 +211,11 @@ public final class AlchemyFurnaceScreen extends AbstractContainerScreen<AlchemyF
 
     private ScreenPoint point(float x, float y) {
         return new ScreenPoint(this.leftPos + x, this.topPos + y);
+    }
+
+    private ScreenPoint slotCenter(int slotIndex) {
+        net.minecraft.world.inventory.Slot slot = this.menu.slots.get(slotIndex);
+        return point(slot.x + SLOT_CENTER_OFFSET, slot.y + SLOT_CENTER_OFFSET);
     }
 
     private static void drawConnection(GuiGraphics guiGraphics, ScreenPoint start, ScreenPoint end, int color) {

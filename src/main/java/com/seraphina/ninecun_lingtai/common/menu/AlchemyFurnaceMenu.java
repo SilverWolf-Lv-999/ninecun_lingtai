@@ -29,6 +29,16 @@ public final class AlchemyFurnaceMenu extends AbstractContainerMenu {
     private static final int PLAYER_INVENTORY_END = PLAYER_INVENTORY_START + 27;
     private static final int HOTBAR_START = PLAYER_INVENTORY_END;
     private static final int HOTBAR_END = HOTBAR_START + 9;
+    private static final int SCREEN_WIDTH = 324;
+    private static final int SLOT_SIZE = 18;
+    private static final int REFINING_CENTER_X = SCREEN_WIDTH / 2;
+    private static final int MAIN_INGREDIENT_X = REFINING_CENTER_X - SLOT_SIZE / 2;
+    private static final int FIRST_SECONDARY_INGREDIENT_X = MAIN_INGREDIENT_X - 64;
+    private static final int SECOND_SECONDARY_INGREDIENT_X = MAIN_INGREDIENT_X + 64;
+    private static final int FIRST_AUXILIARY_INGREDIENT_X = FIRST_SECONDARY_INGREDIENT_X;
+    private static final int SECOND_AUXILIARY_INGREDIENT_X = SECOND_SECONDARY_INGREDIENT_X;
+    private static final int OUTPUT_X = MAIN_INGREDIENT_X;
+    private static final int PLAYER_INVENTORY_X = (SCREEN_WIDTH - 9 * SLOT_SIZE) / 2;
 
     private final Container furnace;
     private final ContainerData furnaceData;
@@ -62,25 +72,25 @@ public final class AlchemyFurnaceMenu extends AbstractContainerMenu {
         this.blockPosition = blockPosition;
         this.level = level;
 
-        addSlot(new IngredientSlot(furnace, MAIN_INGREDIENT_SLOT, 145, 23));
-        addSlot(new IngredientSlot(furnace, FIRST_SECONDARY_INGREDIENT_SLOT, 81, 67));
-        addSlot(new IngredientSlot(furnace, SECOND_SECONDARY_INGREDIENT_SLOT, 209, 67));
-        addSlot(new IngredientSlot(furnace, FIRST_AUXILIARY_INGREDIENT_SLOT, 81, 118));
-        addSlot(new IngredientSlot(furnace, SECOND_AUXILIARY_INGREDIENT_SLOT, 209, 118));
-        addSlot(new OutputSlot(furnace, OUTPUT_SLOT, 145, 88));
+        addSlot(new IngredientSlot(furnace, MAIN_INGREDIENT_SLOT, MAIN_INGREDIENT_X, 23));
+        addSlot(new IngredientSlot(furnace, FIRST_SECONDARY_INGREDIENT_SLOT, FIRST_SECONDARY_INGREDIENT_X, 67));
+        addSlot(new IngredientSlot(furnace, SECOND_SECONDARY_INGREDIENT_SLOT, SECOND_SECONDARY_INGREDIENT_X, 67));
+        addSlot(new IngredientSlot(furnace, FIRST_AUXILIARY_INGREDIENT_SLOT, FIRST_AUXILIARY_INGREDIENT_X, 118));
+        addSlot(new IngredientSlot(furnace, SECOND_AUXILIARY_INGREDIENT_SLOT, SECOND_AUXILIARY_INGREDIENT_X, 118));
+        addSlot(new OutputSlot(furnace, OUTPUT_SLOT, OUTPUT_X, 88));
 
         for (int row = 0; row < 3; row++) {
             for (int column = 0; column < 9; column++) {
                 addSlot(new Slot(
                         playerInventory,
                         column + row * 9 + 9,
-                        73 + column * 18,
-                        166 + row * 18
+                        PLAYER_INVENTORY_X + column * SLOT_SIZE,
+                        166 + row * SLOT_SIZE
                 ));
             }
         }
         for (int column = 0; column < 9; column++) {
-            addSlot(new Slot(playerInventory, column, 73 + column * 18, 224));
+            addSlot(new Slot(playerInventory, column, PLAYER_INVENTORY_X + column * SLOT_SIZE, 224));
         }
         addDataSlots(furnaceData);
     }
