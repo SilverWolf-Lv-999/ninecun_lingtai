@@ -1,6 +1,7 @@
 package com.seraphina.ninecun_lingtai.common.network.packet;
 
 import com.seraphina.ninecun_lingtai.api.alchemy.AlchemyRecipeClientData;
+import com.seraphina.ninecun_lingtai.api.alchemy.AlchemyRecipeJeiData;
 import com.seraphina.ninecun_lingtai.client.player.ClientAlchemyRecipeManager;
 import com.seraphina.ninecun_lingtai.utility.AlchemyRecipeNetworkUtility;
 import net.minecraft.network.FriendlyByteBuf;
@@ -15,11 +16,16 @@ import java.util.function.Supplier;
 
 public record SyncAlchemyRecipesPacket(
         List<AlchemyRecipeClientData> recipes,
-        Set<net.minecraft.resources.ResourceLocation> learnedRecipeIds
+        Set<net.minecraft.resources.ResourceLocation> learnedRecipeIds,
+        List<AlchemyRecipeJeiData> learnedJeiRecipes
 ) {
     public SyncAlchemyRecipesPacket {
         recipes = List.copyOf(recipes);
         learnedRecipeIds = Set.copyOf(learnedRecipeIds);
+        learnedJeiRecipes = List.copyOf(learnedJeiRecipes);
+        if (!learnedJeiRecipes.stream().map(AlchemyRecipeJeiData::id).allMatch(learnedRecipeIds::contains)) {
+            throw new IllegalArgumentException("JEI alchemy recipes must be learned");
+        }
     }
 
     public static void encode(SyncAlchemyRecipesPacket packet, FriendlyByteBuf buffer) {
@@ -29,6 +35,7 @@ public record SyncAlchemyRecipesPacket(
         }
         buffer.writeVarInt(packet.learnedRecipeIds.size());
         packet.learnedRecipeIds.stream().sorted().forEach(buffer::writeResourceLocation);
+        AlchemyRecipeNetworkUtility.writeJeiRecipes(buffer, packet.learnedJeiRecipes);
     }
 
     public static SyncAlchemyRecipesPacket decode(FriendlyByteBuf buffer) {
@@ -44,7 +51,11 @@ public record SyncAlchemyRecipesPacket(
         for (int recipeIndex = 0; recipeIndex < learnedRecipeCount; recipeIndex++) {
             learnedRecipeIds.add(buffer.readResourceLocation());
         }
-        return new SyncAlchemyRecipesPacket(recipes, learnedRecipeIds);
+        return new SyncAlchemyRecipesPacket(
+                recipes,
+                learnedRecipeIds,
+                AlchemyRecipeNetworkUtility.readJeiRecipes(buffer)
+        );
     }
 
     public static void handle(
@@ -55,7 +66,8 @@ public record SyncAlchemyRecipesPacket(
                 Dist.CLIENT,
                 () -> () -> ClientAlchemyRecipeManager.acceptRecipes(
                         packet.recipes,
-                        packet.learnedRecipeIds
+                        packet.learnedRecipeIds,
+                        packet.learnedJeiRecipes
                 )
         );
     }

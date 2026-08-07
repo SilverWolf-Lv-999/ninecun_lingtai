@@ -1,6 +1,8 @@
 package com.seraphina.ninecun_lingtai.client.player;
 
 import com.seraphina.ninecun_lingtai.api.alchemy.AlchemyRecipeClientData;
+import com.seraphina.ninecun_lingtai.api.alchemy.AlchemyRecipeJeiData;
+import com.seraphina.ninecun_lingtai.client.compat.jei.AlchemyRecipeJeiRuntimeManager;
 import com.seraphina.ninecun_lingtai.client.screen.AlchemyRecipeReadingScreen;
 import com.seraphina.ninecun_lingtai.client.utility.ClientCreativeTabUtility;
 import com.seraphina.ninecun_lingtai.common.item.AlchemyRecipeCreativeTabCache;
@@ -8,6 +10,7 @@ import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import com.seraphina.ninecun_lingtai.common.network.packet.RequestAlchemyRecipeLibraryPacket;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.fml.ModList;
 
 import java.util.Comparator;
 import java.util.HashSet;
@@ -21,6 +24,7 @@ import java.util.Set;
 public final class ClientAlchemyRecipeManager {
     private static Map<ResourceLocation, AlchemyRecipeClientData> recipes = Map.of();
     private static Set<ResourceLocation> learnedRecipeIds = Set.of();
+    private static Map<ResourceLocation, AlchemyRecipeJeiData> learnedJeiRecipes = Map.of();
     private static boolean initialized;
     private static int revision;
 
@@ -37,7 +41,8 @@ public final class ClientAlchemyRecipeManager {
 
     public static void acceptRecipes(
             List<AlchemyRecipeClientData> updatedRecipes,
-            Set<ResourceLocation> updatedLearnedRecipeIds
+            Set<ResourceLocation> updatedLearnedRecipeIds,
+            List<AlchemyRecipeJeiData> updatedLearnedJeiRecipes
     ) {
         Map<ResourceLocation, AlchemyRecipeClientData> recipeMap = new LinkedHashMap<>();
         updatedRecipes.stream()
@@ -45,10 +50,17 @@ public final class ClientAlchemyRecipeManager {
                 .forEach(recipe -> recipeMap.put(recipe.id(), recipe));
         recipes = Map.copyOf(recipeMap);
         learnedRecipeIds = Set.copyOf(updatedLearnedRecipeIds);
+        Map<ResourceLocation, AlchemyRecipeJeiData> jeiRecipeMap = new LinkedHashMap<>();
+        updatedLearnedJeiRecipes.stream()
+                .filter(recipe -> learnedRecipeIds.contains(recipe.id()))
+                .sorted(Comparator.comparing(recipe -> recipe.id().toString()))
+                .forEach(recipe -> jeiRecipeMap.put(recipe.id(), recipe));
+        learnedJeiRecipes = Map.copyOf(jeiRecipeMap);
         initialized = true;
         revision++;
         AlchemyRecipeCreativeTabCache.setRecipes(updatedRecipes);
         ClientCreativeTabUtility.rebuildCreativeTabs();
+        synchronizeJeiRecipes();
     }
 
     public static void openRecipe(AlchemyRecipeClientData recipe, boolean learned) {
@@ -80,6 +92,12 @@ public final class ClientAlchemyRecipeManager {
         return learnedRecipeIds.contains(recipeId);
     }
 
+    public static List<AlchemyRecipeJeiData> getLearnedJeiRecipes() {
+        return learnedJeiRecipes.values().stream()
+                .sorted(Comparator.comparing(recipe -> recipe.id().toString()))
+                .toList();
+    }
+
     public static boolean isInitialized() {
         return initialized;
     }
@@ -91,8 +109,16 @@ public final class ClientAlchemyRecipeManager {
     public static void reset() {
         recipes = Map.of();
         learnedRecipeIds = Set.of();
+        learnedJeiRecipes = Map.of();
         initialized = false;
         revision++;
         AlchemyRecipeCreativeTabCache.clear();
+        synchronizeJeiRecipes();
+    }
+
+    private static void synchronizeJeiRecipes() {
+        if (ModList.get().isLoaded("jei")) {
+            AlchemyRecipeJeiRuntimeManager.synchronizeRecipes(getLearnedJeiRecipes());
+        }
     }
 }

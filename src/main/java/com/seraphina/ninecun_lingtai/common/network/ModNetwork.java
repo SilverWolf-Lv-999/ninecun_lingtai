@@ -3,6 +3,7 @@ package com.seraphina.ninecun_lingtai.common.network;
 import com.seraphina.ninecun_lingtai.ModMain;
 import com.seraphina.ninecun_lingtai.api.element.FiveElementValues;
 import com.seraphina.ninecun_lingtai.api.alchemy.AlchemyRecipeClientData;
+import com.seraphina.ninecun_lingtai.api.alchemy.AlchemyRecipeJeiData;
 import com.seraphina.ninecun_lingtai.api.technique.LearnedTechniqueClientData;
 import com.seraphina.ninecun_lingtai.api.technique.TechniqueClientData;
 import com.seraphina.ninecun_lingtai.api.technique.TechniqueProgress;
@@ -102,7 +103,7 @@ import java.util.Set;
 import java.util.UUID;
 
 public final class ModNetwork {
-    private static final String PROTOCOL_VERSION = "33";
+    private static final String PROTOCOL_VERSION = "34";
     private static final SimpleChannel CHANNEL = NetworkRegistry.ChannelBuilder
             .named(ResourceLocation.fromNamespaceAndPath(ModMain.MOD_ID, "main"))
             .networkProtocolVersion(() -> PROTOCOL_VERSION)
@@ -940,15 +941,20 @@ public final class ModNetwork {
     }
 
     public static void sendAlchemyRecipes(ServerPlayer player) {
+        Set<ResourceLocation> learnedRecipeIds = PlayerSoulRoamingManager.isSoulRoaming(player)
+                ? Set.of()
+                : PlayerLearnedAlchemyRecipeData.getRecipes(player);
         CHANNEL.send(
                 PacketDistributor.PLAYER.with(() -> player),
                 new SyncAlchemyRecipesPacket(
                         AlchemyRecipeManager.INSTANCE.getRecipes().stream()
                                 .map(AlchemyRecipeClientData::fromDefinition)
                                 .toList(),
-                        PlayerSoulRoamingManager.isSoulRoaming(player)
-                                ? Set.of()
-                                : PlayerLearnedAlchemyRecipeData.getRecipes(player)
+                        learnedRecipeIds,
+                        learnedRecipeIds.stream()
+                                .flatMap(recipeId -> AlchemyRecipeManager.INSTANCE.getRecipe(recipeId).stream())
+                                .map(AlchemyRecipeJeiData::fromDefinition)
+                                .toList()
                 )
         );
     }

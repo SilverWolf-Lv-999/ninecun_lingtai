@@ -1,7 +1,9 @@
 package com.seraphina.ninecun_lingtai.utility;
 
 import com.seraphina.ninecun_lingtai.api.alchemy.AlchemyGrade;
+import com.seraphina.ninecun_lingtai.api.alchemy.AlchemyIngredient;
 import com.seraphina.ninecun_lingtai.api.alchemy.AlchemyRecipeClientData;
+import com.seraphina.ninecun_lingtai.api.alchemy.AlchemyRecipeJeiData;
 import com.seraphina.ninecun_lingtai.api.cultivation.CultivationRealm;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
@@ -73,6 +75,71 @@ public final class AlchemyRecipeNetworkUtility {
             recipes.add(readRecipe(buffer));
         }
         return List.copyOf(recipes);
+    }
+
+    public static void writeJeiRecipes(FriendlyByteBuf buffer, List<AlchemyRecipeJeiData> recipes) {
+        if (recipes.size() > MAXIMUM_RECIPES) {
+            throw new IllegalArgumentException("Too many JEI alchemy recipes to synchronize");
+        }
+        buffer.writeVarInt(recipes.size());
+        recipes.forEach(recipe -> writeJeiRecipe(buffer, recipe));
+    }
+
+    public static List<AlchemyRecipeJeiData> readJeiRecipes(FriendlyByteBuf buffer) {
+        int recipeCount = buffer.readVarInt();
+        if (recipeCount < 0 || recipeCount > MAXIMUM_RECIPES) {
+            throw new IllegalArgumentException("Invalid synchronized JEI alchemy recipe count: " + recipeCount);
+        }
+        List<AlchemyRecipeJeiData> recipes = new ArrayList<>(recipeCount);
+        for (int recipeIndex = 0; recipeIndex < recipeCount; recipeIndex++) {
+            recipes.add(readJeiRecipe(buffer));
+        }
+        return List.copyOf(recipes);
+    }
+
+    public static void writeJeiRecipe(FriendlyByteBuf buffer, AlchemyRecipeJeiData recipe) {
+        buffer.writeResourceLocation(recipe.id());
+        writeIngredient(buffer, recipe.primaryIngredient());
+        recipe.secondaryIngredients().forEach(ingredient -> writeIngredient(buffer, ingredient));
+        recipe.auxiliaryIngredients().forEach(ingredient -> writeIngredient(buffer, ingredient));
+        buffer.writeResourceLocation(recipe.outputItem());
+        buffer.writeVarInt(recipe.outputCount());
+        buffer.writeVarInt(recipe.grade().tier());
+        buffer.writeVarInt(recipe.grade().rank());
+    }
+
+    public static AlchemyRecipeJeiData readJeiRecipe(FriendlyByteBuf buffer) {
+        ResourceLocation recipeId = buffer.readResourceLocation();
+        AlchemyIngredient primaryIngredient = readIngredient(buffer);
+        List<AlchemyIngredient> secondaryIngredients = List.of(
+                readIngredient(buffer),
+                readIngredient(buffer)
+        );
+        List<AlchemyIngredient> auxiliaryIngredients = List.of(
+                readIngredient(buffer),
+                readIngredient(buffer)
+        );
+        ResourceLocation outputItem = buffer.readResourceLocation();
+        int outputCount = buffer.readVarInt();
+        AlchemyGrade grade = new AlchemyGrade(buffer.readVarInt(), buffer.readVarInt());
+        return new AlchemyRecipeJeiData(
+                recipeId,
+                primaryIngredient,
+                secondaryIngredients,
+                auxiliaryIngredients,
+                outputItem,
+                outputCount,
+                grade
+        );
+    }
+
+    private static void writeIngredient(FriendlyByteBuf buffer, AlchemyIngredient ingredient) {
+        buffer.writeResourceLocation(ingredient.item());
+        buffer.writeVarInt(ingredient.count());
+    }
+
+    private static AlchemyIngredient readIngredient(FriendlyByteBuf buffer) {
+        return new AlchemyIngredient(buffer.readResourceLocation(), buffer.readVarInt());
     }
 
     public static int getMaximumRecipes() {
