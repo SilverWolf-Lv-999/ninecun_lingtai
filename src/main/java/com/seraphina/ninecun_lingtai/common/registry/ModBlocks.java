@@ -2,6 +2,7 @@ package com.seraphina.ninecun_lingtai.common.registry;
 
 import com.seraphina.ninecun_lingtai.ModMain;
 import com.seraphina.ninecun_lingtai.common.block.AlchemyFurnaceBlock;
+import com.seraphina.ninecun_lingtai.common.block.AlchemyFurnacePartBlock;
 import net.minecraft.util.valueproviders.UniformInt;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -37,6 +38,11 @@ public final class ModBlocks {
     public static final RegistryObject<Block> ALCHEMY_FURNACE = BLOCKS.register(
             "alchemy_furnace",
             AlchemyFurnaceBlock::new
+    );
+
+    public static final RegistryObject<Block> ALCHEMY_FURNACE_PART = BLOCKS.register(
+            "alchemy_furnace_part",
+            AlchemyFurnacePartBlock::new
     );
 
     private ModBlocks() {
