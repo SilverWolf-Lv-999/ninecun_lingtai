@@ -22,6 +22,7 @@ import com.seraphina.ninecun_lingtai.client.player.ClientTechniqueManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientAlchemyRecipeManager;
 import com.seraphina.ninecun_lingtai.client.screen.ClientAptitudeScreenManager;
 import com.seraphina.ninecun_lingtai.client.utility.BodyShieldRenderUtility;
+import com.seraphina.ninecun_lingtai.client.utility.AlchemyFurnaceHighlightRenderUtility;
 import com.seraphina.ninecun_lingtai.client.utility.DefenseBarRenderUtility;
 import com.seraphina.ninecun_lingtai.client.utility.DefenseSpellHudRenderUtility;
 import com.seraphina.ninecun_lingtai.client.utility.TribulationCloudRenderUtility;
@@ -39,6 +40,7 @@ import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.client.event.MovementInputUpdateEvent;
 import net.minecraftforge.client.event.RenderGuiOverlayEvent;
+import net.minecraftforge.client.event.RenderHighlightEvent;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.client.event.ViewportEvent;
 import net.minecraftforge.event.TickEvent;
@@ -164,6 +166,11 @@ public final class ClientForgeEventHandler {
         BodyShieldRenderUtility.render(event);
         TribulationCloudRenderUtility.renderWorld(event);
         PushingMountainsRenderUtility.render(event);
+    }
+
+    @SubscribeEvent
+    public static void onRenderBlockHighlight(RenderHighlightEvent.Block event) {
+        AlchemyFurnaceHighlightRenderUtility.render(event);
     }
 
     @SubscribeEvent
