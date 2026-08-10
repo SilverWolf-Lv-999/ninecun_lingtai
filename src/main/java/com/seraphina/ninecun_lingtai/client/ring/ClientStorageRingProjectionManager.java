@@ -3,19 +3,22 @@ package com.seraphina.ninecun_lingtai.client.ring;
 import com.seraphina.ninecun_lingtai.client.render.StorageRingProjectionRenderMeshManager;
 import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import com.seraphina.ninecun_lingtai.common.network.packet.StorageRingCameraPacket;
-import com.seraphina.ninecun_lingtai.common.network.packet.SyncStorageRingCameraPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncStorageRingProjectionPacket;
+import com.seraphina.ninecun_lingtai.utility.MovementUtility;
 import com.seraphina.ninecun_lingtai.utility.RingStorageUtility;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 public final class ClientStorageRingProjectionManager {
@@ -23,16 +26,21 @@ public final class ClientStorageRingProjectionManager {
     private static final double MAXIMUM_INTERACTION_DISTANCE = 8.0D;
     private static final double RAYCAST_EPSILON = 0.000001D;
     private static final float MIDDLE_DRAG_ROTATION_SENSITIVITY = 0.60F;
-    private static final double MAXIMUM_SERVER_CORRECTION_DISTANCE_SQUARED = 1.0D;
+    private static final double MAXIMUM_FRAME_DELTA_SECONDS = 0.10D;
+    private static final double TICKS_PER_SECOND = 20.0D;
 
     private static UUID thisRingId;
     private static Vec3 thisCameraPosition = Vec3.ZERO;
-    private static Vec3 thisPreviousCameraPosition = Vec3.ZERO;
     private static float thisCameraYRot;
     private static float thisCameraXRot;
     private static Map<BlockPos, BlockState> thisBlockStates = Map.of();
     private static long thisSnapshotVersion;
     private static boolean thisClientControlsCamera;
+    private static float thisLeftImpulse;
+    private static float thisForwardImpulse;
+    private static boolean thisMovingUp;
+    private static boolean thisMovingDown;
+    private static long thisLastCameraUpdateNanos;
 
     private ClientStorageRingProjectionManager() {
     }
@@ -43,45 +51,38 @@ public final class ClientStorageRingProjectionManager {
             return;
         }
 
-        Map<BlockPos, BlockState> blockStates = new HashMap<>();
+        boolean resetCamera = !isActiveFor(packet.ringId()) || !thisClientControlsCamera;
+        Map<BlockPos, BlockState> blockStates = resetCamera
+                ? createInitialBlockStates()
+                : new HashMap<>(thisBlockStates);
+        Set<BlockPos> receivedBlockPositions = new HashSet<>(packet.blocks().size());
+        boolean blockStatesChanged = resetCamera;
         for (SyncStorageRingProjectionPacket.BlockSnapshot snapshot : packet.blocks()) {
             BlockState blockState = Block.stateById(snapshot.blockStateId());
             if (!blockState.isAir()) {
-                blockStates.put(snapshot.localPosition().immutable(), blockState);
+                BlockPos localPosition = snapshot.localPosition().immutable();
+                receivedBlockPositions.add(localPosition);
+                BlockState previousBlockState = blockStates.put(localPosition, blockState);
+                if (!blockState.equals(previousBlockState)) {
+                    blockStatesChanged = true;
+                }
             }
         }
-        boolean resetCamera = !isActiveFor(packet.ringId()) || !thisClientControlsCamera;
+        if (removeMissingFloorBlocks(blockStates, receivedBlockPositions, packet.cameraPosition())) {
+            blockStatesChanged = true;
+        }
         thisRingId = packet.ringId();
         if (resetCamera) {
             thisCameraPosition = packet.cameraPosition();
-            thisPreviousCameraPosition = packet.cameraPosition();
             thisCameraYRot = packet.cameraYRot();
             thisCameraXRot = packet.cameraXRot();
             thisClientControlsCamera = false;
-        } else if (thisCameraPosition.distanceToSqr(packet.cameraPosition())
-                > MAXIMUM_SERVER_CORRECTION_DISTANCE_SQUARED) {
-            thisPreviousCameraPosition = thisCameraPosition;
-            thisCameraPosition = packet.cameraPosition();
+            clearCameraInput();
+            thisLastCameraUpdateNanos = System.nanoTime();
         }
-        thisBlockStates = Collections.unmodifiableMap(blockStates);
-        thisSnapshotVersion++;
-    }
-
-    public static void acceptCamera(SyncStorageRingCameraPacket packet) {
-        if (!isActiveFor(packet.ringId())) {
-            return;
-        }
-        if (!thisClientControlsCamera) {
-            thisCameraPosition = packet.cameraPosition();
-            thisPreviousCameraPosition = packet.cameraPosition();
-            thisCameraYRot = packet.cameraYRot();
-            thisCameraXRot = packet.cameraXRot();
-            return;
-        }
-
-        if (thisCameraPosition.distanceToSqr(packet.cameraPosition()) > MAXIMUM_SERVER_CORRECTION_DISTANCE_SQUARED) {
-            thisPreviousCameraPosition = thisCameraPosition;
-            thisCameraPosition = packet.cameraPosition();
+        if (blockStatesChanged) {
+            thisBlockStates = Collections.unmodifiableMap(blockStates);
+            thisSnapshotVersion++;
         }
     }
 
@@ -99,13 +100,16 @@ public final class ClientStorageRingProjectionManager {
         if (!isActiveFor(ringId)) {
             return;
         }
-        moveCamera(leftImpulse, forwardImpulse, movingUp, movingDown);
+        thisLeftImpulse = Mth.clamp(leftImpulse, -1.0F, 1.0F);
+        thisForwardImpulse = Mth.clamp(forwardImpulse, -1.0F, 1.0F);
+        thisMovingUp = movingUp;
+        thisMovingDown = movingDown;
         thisClientControlsCamera = true;
         ModNetwork.sendToServer(new StorageRingCameraPacket(
-                leftImpulse,
-                forwardImpulse,
-                movingUp,
-                movingDown,
+                thisLeftImpulse,
+                thisForwardImpulse,
+                thisMovingUp,
+                thisMovingDown,
                 thisCameraYRot,
                 thisCameraXRot
         ));
@@ -126,6 +130,25 @@ public final class ClientStorageRingProjectionManager {
         thisClientControlsCamera = true;
     }
 
+    public static void updateCameraMotion() {
+        if (thisRingId == null) {
+            return;
+        }
+
+        long currentNanos = System.nanoTime();
+        if (thisLastCameraUpdateNanos == 0L) {
+            thisLastCameraUpdateNanos = currentNanos;
+            return;
+        }
+
+        double elapsedSeconds = Math.min(
+                MAXIMUM_FRAME_DELTA_SECONDS,
+                Math.max(0L, currentNanos - thisLastCameraUpdateNanos) / 1_000_000_000.0D
+        );
+        thisLastCameraUpdateNanos = currentNanos;
+        moveCamera(elapsedSeconds);
+    }
+
     public static ProjectionTarget pick(
             UUID ringId,
             int viewportLeft,
@@ -133,12 +156,12 @@ public final class ClientStorageRingProjectionManager {
             int viewportWidth,
             int viewportHeight,
             double mouseX,
-            double mouseY,
-            float partialTick
+            double mouseY
     ) {
         if (!isActiveFor(ringId)) {
             return null;
         }
+        updateCameraMotion();
 
         double screenX = ((mouseX - viewportLeft) / viewportWidth) * 2.0D - 1.0D;
         double screenY = 1.0D - ((mouseY - viewportTop) / viewportHeight) * 2.0D;
@@ -152,11 +175,11 @@ public final class ClientStorageRingProjectionManager {
                 .add(right.scale(screenX * aspectRatio * tangent))
                 .add(up.scale(screenY * tangent))
                 .normalize();
-        return raycast(getCameraPosition(partialTick), direction);
+        return raycast(getCameraPosition(), direction);
     }
 
-    public static Vec3 getCameraPosition(float partialTick) {
-        return thisPreviousCameraPosition.lerp(thisCameraPosition, Mth.clamp(partialTick, 0.0F, 1.0F));
+    public static Vec3 getCameraPosition() {
+        return thisCameraPosition;
     }
 
     public static float getCameraYRot() {
@@ -175,44 +198,105 @@ public final class ClientStorageRingProjectionManager {
         return thisSnapshotVersion;
     }
 
+    public static void removeBlock(UUID ringId, BlockPos localPosition) {
+        if (!isActiveFor(ringId) || !thisBlockStates.containsKey(localPosition)) {
+            return;
+        }
+
+        Map<BlockPos, BlockState> blockStates = new HashMap<>(thisBlockStates);
+        blockStates.remove(localPosition);
+        thisBlockStates = Collections.unmodifiableMap(blockStates);
+        thisSnapshotVersion++;
+    }
+
     public static void reset() {
         thisRingId = null;
         thisCameraPosition = Vec3.ZERO;
-        thisPreviousCameraPosition = Vec3.ZERO;
         thisCameraYRot = 0.0F;
         thisCameraXRot = 0.0F;
         thisBlockStates = Map.of();
         thisSnapshotVersion++;
         thisClientControlsCamera = false;
+        clearCameraInput();
+        thisLastCameraUpdateNanos = 0L;
         StorageRingProjectionRenderMeshManager.clear();
     }
 
-    private static void moveCamera(
-            float leftImpulse,
-            float forwardImpulse,
-            boolean movingUp,
-            boolean movingDown
-    ) {
-        thisPreviousCameraPosition = thisCameraPosition;
-        if (leftImpulse == 0.0F
-                && forwardImpulse == 0.0F
-                && !movingUp
-                && !movingDown) {
+    private static void moveCamera(double elapsedSeconds) {
+        if (thisLeftImpulse == 0.0F
+                && thisForwardImpulse == 0.0F
+                && !thisMovingUp
+                && !thisMovingDown) {
             return;
         }
 
-        double yRotRadians = Math.toRadians(thisCameraYRot);
-        Vec3 forward = new Vec3(-Math.sin(yRotRadians), 0.0D, Math.cos(yRotRadians));
-        Vec3 right = new Vec3(Math.cos(yRotRadians), 0.0D, Math.sin(yRotRadians));
-        double verticalMovement = (movingUp ? 1.0D : 0.0D) - (movingDown ? 1.0D : 0.0D);
-        Vec3 movement = forward.scale(forwardImpulse)
-                .add(right.scale(leftImpulse))
-                .add(0.0D, verticalMovement, 0.0D)
-                .scale(RingStorageUtility.CAMERA_SPEED);
+        float verticalImpulse = (thisMovingUp ? 1.0F : 0.0F) - (thisMovingDown ? 1.0F : 0.0F);
+        Vec3 movement = MovementUtility.getRelativeMovement(
+                thisLeftImpulse,
+                thisForwardImpulse,
+                verticalImpulse,
+                (float) (RingStorageUtility.CAMERA_SPEED_PER_TICK * TICKS_PER_SECOND * elapsedSeconds),
+                thisCameraYRot
+        );
         Vec3 nextPosition = clampCameraPosition(thisCameraPosition.add(movement));
         if (thisCameraPosition.distanceToSqr(nextPosition) > RAYCAST_EPSILON) {
             thisCameraPosition = nextPosition;
         }
+    }
+
+    private static Map<BlockPos, BlockState> createInitialBlockStates() {
+        Map<BlockPos, BlockState> blockStates = new HashMap<>(
+                RingStorageUtility.POCKET_SIZE * RingStorageUtility.POCKET_SIZE
+        );
+        BlockState floorBlockState = Blocks.SMOOTH_STONE.defaultBlockState();
+        for (int x = 0; x < RingStorageUtility.POCKET_SIZE; x++) {
+            for (int z = 0; z < RingStorageUtility.POCKET_SIZE; z++) {
+                blockStates.put(new BlockPos(x, 0, z), floorBlockState);
+            }
+        }
+        return blockStates;
+    }
+
+    private static boolean removeMissingFloorBlocks(
+            Map<BlockPos, BlockState> blockStates,
+            Set<BlockPos> receivedBlockPositions,
+            Vec3 snapshotCameraPosition
+    ) {
+        int minimumX = Math.max(
+                0,
+                Mth.floor(snapshotCameraPosition.x) - RingStorageUtility.PROJECTION_HORIZONTAL_RADIUS
+        );
+        int maximumX = Math.min(
+                RingStorageUtility.POCKET_SIZE - 1,
+                Mth.floor(snapshotCameraPosition.x) + RingStorageUtility.PROJECTION_HORIZONTAL_RADIUS
+        );
+        int minimumZ = Math.max(
+                0,
+                Mth.floor(snapshotCameraPosition.z) - RingStorageUtility.PROJECTION_HORIZONTAL_RADIUS
+        );
+        int maximumZ = Math.min(
+                RingStorageUtility.POCKET_SIZE - 1,
+                Mth.floor(snapshotCameraPosition.z) + RingStorageUtility.PROJECTION_HORIZONTAL_RADIUS
+        );
+        boolean changed = false;
+        for (int x = minimumX; x <= maximumX; x++) {
+            for (int z = minimumZ; z <= maximumZ; z++) {
+                BlockPos floorPosition = new BlockPos(x, 0, z);
+                if (!receivedBlockPositions.contains(floorPosition)
+                        && blockStates.get(floorPosition) != null) {
+                    blockStates.remove(floorPosition);
+                    changed = true;
+                }
+            }
+        }
+        return changed;
+    }
+
+    private static void clearCameraInput() {
+        thisLeftImpulse = 0.0F;
+        thisForwardImpulse = 0.0F;
+        thisMovingUp = false;
+        thisMovingDown = false;
     }
 
     private static Vec3 clampCameraPosition(Vec3 cameraPosition) {

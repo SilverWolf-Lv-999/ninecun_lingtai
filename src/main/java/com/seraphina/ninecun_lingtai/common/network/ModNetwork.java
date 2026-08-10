@@ -64,7 +64,6 @@ import com.seraphina.ninecun_lingtai.common.network.packet.SyncPressureStatePack
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncPlayerValueControlSettingsPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncShrinkEarthPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncSoulRoamingPacket;
-import com.seraphina.ninecun_lingtai.common.network.packet.SyncStorageRingCameraPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncStorageRingProjectionPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncSwordFlightPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncTechniqueLibraryPacket;
@@ -108,7 +107,7 @@ import java.util.Set;
 import java.util.UUID;
 
 public final class ModNetwork {
-    private static final String PROTOCOL_VERSION = "36";
+    private static final String PROTOCOL_VERSION = "67676767";
     private static final SimpleChannel CHANNEL = NetworkRegistry.ChannelBuilder
             .named(ResourceLocation.fromNamespaceAndPath(ModMain.MOD_ID, "main"))
             .networkProtocolVersion(() -> PROTOCOL_VERSION)
@@ -117,9 +116,6 @@ public final class ModNetwork {
             .simpleChannel();
 
     private static int nextPacketId;
-
-    private ModNetwork() {
-    }
 
     public static void register() {
         CHANNEL.messageBuilder(
@@ -653,15 +649,6 @@ public final class ModNetwork {
                 .decoder(SyncStorageRingProjectionPacket::decode)
                 .consumerMainThread(SyncStorageRingProjectionPacket::handle)
                 .add();
-        CHANNEL.messageBuilder(
-                        SyncStorageRingCameraPacket.class,
-                        getId(),
-                        NetworkDirection.PLAY_TO_CLIENT
-                )
-                .encoder(SyncStorageRingCameraPacket::encode)
-                .decoder(SyncStorageRingCameraPacket::decode)
-                .consumerMainThread(SyncStorageRingCameraPacket::handle)
-                .add();
     }
 
     public static int getId() {
@@ -693,24 +680,6 @@ public final class ModNetwork {
         CHANNEL.send(
                 PacketDistributor.PLAYER.with(() -> player),
                 SyncStorageRingProjectionPacket.inactive()
-        );
-    }
-
-    public static void sendStorageRingCamera(
-            ServerPlayer player,
-            UUID ringId,
-            Vec3 cameraPosition,
-            float cameraYRot,
-            float cameraXRot
-    ) {
-        CHANNEL.send(
-                PacketDistributor.PLAYER.with(() -> player),
-                new SyncStorageRingCameraPacket(
-                        ringId,
-                        cameraPosition,
-                        cameraYRot,
-                        cameraXRot
-                )
         );
     }
 

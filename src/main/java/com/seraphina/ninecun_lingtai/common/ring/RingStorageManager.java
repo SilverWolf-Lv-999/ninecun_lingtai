@@ -4,6 +4,7 @@ import com.seraphina.ninecun_lingtai.ModMain;
 import com.seraphina.ninecun_lingtai.common.menu.StorageRingMenu;
 import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncStorageRingProjectionPacket;
+import com.seraphina.ninecun_lingtai.utility.MovementUtility;
 import com.seraphina.ninecun_lingtai.utility.RingStorageUtility;
 import com.seraphina.ninecun_lingtai.utility.RingStorageUtility.StoragePocket;
 import net.minecraft.core.BlockPos;
@@ -44,7 +45,6 @@ public final class RingStorageManager {
     private static final double MAXIMUM_INTERACTION_DISTANCE_SQUARED = 64.0D;
     private static final double HIT_POSITION_EPSILON = 0.01D;
     private static final long PROJECTION_REFRESH_INTERVAL_TICKS = 10L;
-    private static final int PROJECTION_HORIZONTAL_RADIUS = 32;
     private static final int MAXIMUM_PROJECTION_BLOCKS = 8_192;
     private static final double PROJECTION_REFRESH_DISTANCE_SQUARED = 64.0D;
     private static final Map<UUID, StorageRingSession> ACTIVE_SESSIONS = new HashMap<>();
@@ -188,24 +188,18 @@ public final class RingStorageManager {
             session.clearInput();
         }
         if (session.hasMovementInput()) {
-            double yRotRadians = Math.toRadians(session.cameraYRot);
-            Vec3 forward = new Vec3(-Math.sin(yRotRadians), 0.0D, Math.cos(yRotRadians));
-            Vec3 right = new Vec3(Math.cos(yRotRadians), 0.0D, Math.sin(yRotRadians));
-            double verticalMovement = (session.movingUp ? 1.0D : 0.0D) - (session.movingDown ? 1.0D : 0.0D);
-            Vec3 movement = forward.scale(session.forwardImpulse)
-                    .add(right.scale(session.leftImpulse))
-                    .add(0.0D, verticalMovement, 0.0D)
-                    .scale(RingStorageUtility.CAMERA_SPEED);
+            float verticalImpulse = (session.movingUp ? 1.0F : 0.0F)
+                    - (session.movingDown ? 1.0F : 0.0F);
+            Vec3 movement = MovementUtility.getRelativeMovement(
+                    session.leftImpulse,
+                    session.forwardImpulse,
+                    verticalImpulse,
+                    (float) RingStorageUtility.CAMERA_SPEED_PER_TICK,
+                    session.cameraYRot
+            );
             Vec3 nextPosition = session.pocket.clampCameraPosition(session.cameraPosition.add(movement));
             if (session.cameraPosition.distanceToSqr(nextPosition) > 0.000001D) {
                 session.cameraPosition = nextPosition;
-                ModNetwork.sendStorageRingCamera(
-                        player,
-                        session.ringId,
-                        session.getLocalCameraPosition(),
-                        session.cameraYRot,
-                        session.cameraXRot
-                );
             }
         }
 
@@ -344,15 +338,21 @@ public final class RingStorageManager {
 
         List<SyncStorageRingProjectionPacket.BlockSnapshot> snapshots = new ArrayList<>();
         Vec3 localCameraPosition = session.getLocalCameraPosition();
-        int minimumX = Math.max(0, Mth.floor(localCameraPosition.x) - PROJECTION_HORIZONTAL_RADIUS);
+        int minimumX = Math.max(
+                0,
+                Mth.floor(localCameraPosition.x) - RingStorageUtility.PROJECTION_HORIZONTAL_RADIUS
+        );
         int maximumX = Math.min(
                 RingStorageUtility.POCKET_SIZE - 1,
-                Mth.floor(localCameraPosition.x) + PROJECTION_HORIZONTAL_RADIUS
+                Mth.floor(localCameraPosition.x) + RingStorageUtility.PROJECTION_HORIZONTAL_RADIUS
         );
-        int minimumZ = Math.max(0, Mth.floor(localCameraPosition.z) - PROJECTION_HORIZONTAL_RADIUS);
+        int minimumZ = Math.max(
+                0,
+                Mth.floor(localCameraPosition.z) - RingStorageUtility.PROJECTION_HORIZONTAL_RADIUS
+        );
         int maximumZ = Math.min(
                 RingStorageUtility.POCKET_SIZE - 1,
-                Mth.floor(localCameraPosition.z) + PROJECTION_HORIZONTAL_RADIUS
+                Mth.floor(localCameraPosition.z) + RingStorageUtility.PROJECTION_HORIZONTAL_RADIUS
         );
         snapshotLoop:
         for (int y = 0; y <= RingStorageUtility.MAXIMUM_STORAGE_Y - RingStorageUtility.FLOOR_Y; y++) {

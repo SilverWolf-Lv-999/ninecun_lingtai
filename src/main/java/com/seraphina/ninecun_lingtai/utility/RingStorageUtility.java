@@ -29,7 +29,8 @@ public final class RingStorageUtility {
     public static final int MAXIMUM_STORAGE_Y = FLOOR_Y + 15;
     public static final double MINIMUM_CAMERA_Y = FLOOR_Y + 1.25D;
     public static final double MAXIMUM_CAMERA_Y = FLOOR_Y + 14.75D;
-    public static final double CAMERA_SPEED = 0.18D;
+    public static final int PROJECTION_HORIZONTAL_RADIUS = 32;
+    public static final double CAMERA_SPEED_PER_TICK = 0.35D;
 
     private static final String RING_ID_TAG = "StorageRingId";
 

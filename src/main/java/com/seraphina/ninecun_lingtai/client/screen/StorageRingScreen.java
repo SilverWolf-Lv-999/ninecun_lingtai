@@ -31,7 +31,6 @@ public final class StorageRingScreen extends AbstractContainerScreen<StorageRing
     private boolean movingUp;
     private boolean movingDown;
     private boolean thisRotatingCamera;
-    private float thisProjectionPartialTick;
 
     public StorageRingScreen(
             StorageRingMenu menu,
@@ -55,7 +54,6 @@ public final class StorageRingScreen extends AbstractContainerScreen<StorageRing
 
     @Override
     protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
-        this.thisProjectionPartialTick = partialTick;
         guiGraphics.blit(
                 TEXTURE,
                 this.leftPos,
@@ -171,6 +169,7 @@ public final class StorageRingScreen extends AbstractContainerScreen<StorageRing
         if (!ClientStorageRingProjectionManager.isActiveFor(this.menu.getRingId())) {
             return;
         }
+        ClientStorageRingProjectionManager.updateCameraMotion();
 
         int viewportLeft = this.leftPos + StorageRingMenu.VIEWPORT_LEFT;
         int viewportTop = this.topPos + StorageRingMenu.VIEWPORT_TOP;
@@ -207,7 +206,7 @@ public final class StorageRingScreen extends AbstractContainerScreen<StorageRing
                 Minecraft.getInstance().getBlockRenderer(),
                 ClientStorageRingProjectionManager.getBlockStates(),
                 ClientStorageRingProjectionManager.getSnapshotVersion(),
-                ClientStorageRingProjectionManager.getCameraPosition(this.thisProjectionPartialTick),
+                ClientStorageRingProjectionManager.getCameraPosition(),
                 ClientStorageRingProjectionManager.getCameraYRot(),
                 ClientStorageRingProjectionManager.getCameraXRot(),
                 viewportWidth,
@@ -226,10 +225,15 @@ public final class StorageRingScreen extends AbstractContainerScreen<StorageRing
                 StorageRingMenu.VIEWPORT_WIDTH,
                 StorageRingMenu.VIEWPORT_HEIGHT,
                 mouseX,
-                mouseY,
-                this.thisProjectionPartialTick
+                mouseY
         );
         if (target != null) {
+            if (!use) {
+                ClientStorageRingProjectionManager.removeBlock(
+                        this.menu.getRingId(),
+                        target.localPosition()
+                );
+            }
             ModNetwork.sendToServer(new StorageRingInteractionPacket(
                     target.localPosition(),
                     target.direction(),
@@ -260,7 +264,7 @@ public final class StorageRingScreen extends AbstractContainerScreen<StorageRing
     }
 
     private float getLeftImpulse() {
-        return (this.movingRight ? 1.0F : 0.0F) - (this.movingLeft ? 1.0F : 0.0F);
+        return (this.movingLeft ? 1.0F : 0.0F) - (this.movingRight ? 1.0F : 0.0F);
     }
 
     private float getForwardImpulse() {
