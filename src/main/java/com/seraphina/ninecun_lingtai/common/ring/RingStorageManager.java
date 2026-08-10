@@ -18,7 +18,6 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.ChunkPos;
@@ -50,9 +49,6 @@ public final class RingStorageManager {
     private static final double PROJECTION_REFRESH_DISTANCE_SQUARED = 64.0D;
     private static final Map<UUID, StorageRingSession> ACTIVE_SESSIONS = new HashMap<>();
     private static final Map<StoragePocket, Integer> POCKET_CHUNK_TICKET_REFERENCES = new HashMap<>();
-
-    private RingStorageManager() {
-    }
 
     public static void open(ServerPlayer player, ItemStack ringStack) {
         UUID ringId = RingStorageUtility.getOrCreateRingId(ringStack);
@@ -144,13 +140,6 @@ public final class RingStorageManager {
         session.cameraYRot = Mth.wrapDegrees(yRot);
         session.cameraXRot = Mth.clamp(xRot, -75.0F, 75.0F);
         session.lastCameraUpdateTick = player.server.getTickCount();
-        ModNetwork.sendStorageRingCamera(
-                player,
-                session.ringId,
-                session.getLocalCameraPosition(),
-                session.cameraYRot,
-                session.cameraXRot
-        );
     }
 
     public static void interact(

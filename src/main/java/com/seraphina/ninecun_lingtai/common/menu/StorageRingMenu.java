@@ -14,10 +14,10 @@ import java.util.UUID;
 public final class StorageRingMenu extends AbstractContainerMenu {
     public static final int SCREEN_WIDTH = 256;
     public static final int SCREEN_HEIGHT = 256;
-    public static final int VIEWPORT_LEFT = 47;
-    public static final int VIEWPORT_TOP = 21;
-    public static final int VIEWPORT_WIDTH = 166;
-    public static final int VIEWPORT_HEIGHT = 129;
+    public static final int VIEWPORT_LEFT = 5;
+    public static final int VIEWPORT_TOP = 5;
+    public static final int VIEWPORT_WIDTH = 246;
+    public static final int VIEWPORT_HEIGHT = 141;
     public static final int PLAYER_INVENTORY_TOP = 155;
     public static final int HOTBAR_TOP = 213;
 

@@ -1,6 +1,7 @@
 package com.seraphina.ninecun_lingtai.client.screen;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.platform.Window;
 import com.seraphina.ninecun_lingtai.ModMain;
 import com.seraphina.ninecun_lingtai.client.render.StorageRingProjectionRenderMeshManager;
 import com.seraphina.ninecun_lingtai.client.ring.ClientStorageRingProjectionManager;
@@ -29,6 +30,8 @@ public final class StorageRingScreen extends AbstractContainerScreen<StorageRing
     private boolean movingRight;
     private boolean movingUp;
     private boolean movingDown;
+    private boolean thisRotatingCamera;
+    private float thisProjectionPartialTick;
 
     public StorageRingScreen(
             StorageRingMenu menu,
@@ -52,6 +55,7 @@ public final class StorageRingScreen extends AbstractContainerScreen<StorageRing
 
     @Override
     protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
+        this.thisProjectionPartialTick = partialTick;
         guiGraphics.blit(
                 TEXTURE,
                 this.leftPos,
@@ -112,12 +116,16 @@ public final class StorageRingScreen extends AbstractContainerScreen<StorageRing
             interactWithProjection(true, mouseX, mouseY);
             return true;
         }
-        return button == GLFW.GLFW_MOUSE_BUTTON_MIDDLE || super.mouseClicked(mouseX, mouseY, button);
+        if (button == GLFW.GLFW_MOUSE_BUTTON_MIDDLE) {
+            this.thisRotatingCamera = true;
+            return true;
+        }
+        return super.mouseClicked(mouseX, mouseY, button);
     }
 
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
-        if (button == GLFW.GLFW_MOUSE_BUTTON_MIDDLE && isInsideViewport(mouseX, mouseY)) {
+        if (button == GLFW.GLFW_MOUSE_BUTTON_MIDDLE && this.thisRotatingCamera) {
             ClientStorageRingProjectionManager.rotate(this.menu.getRingId(), dragX, dragY);
             return true;
         }
@@ -126,6 +134,10 @@ public final class StorageRingScreen extends AbstractContainerScreen<StorageRing
 
     @Override
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        if (button == GLFW.GLFW_MOUSE_BUTTON_MIDDLE && this.thisRotatingCamera) {
+            this.thisRotatingCamera = false;
+            return true;
+        }
         return super.mouseReleased(mouseX, mouseY, button);
     }
 
@@ -166,6 +178,28 @@ public final class StorageRingScreen extends AbstractContainerScreen<StorageRing
         int viewportBottom = viewportTop + StorageRingMenu.VIEWPORT_HEIGHT;
         guiGraphics.enableScissor(viewportLeft, viewportTop, viewportRight, viewportBottom);
         guiGraphics.flush();
+        Minecraft minecraft = Minecraft.getInstance();
+        Window window = minecraft.getWindow();
+        int viewportX = toFramebufferCoordinate(
+                viewportLeft,
+                window.getGuiScaledWidth(),
+                window.getWidth()
+        );
+        int viewportY = window.getHeight() - toFramebufferCoordinate(
+                viewportBottom,
+                window.getGuiScaledHeight(),
+                window.getHeight()
+        );
+        int viewportWidth = Math.max(
+                1,
+                toFramebufferCoordinate(viewportRight, window.getGuiScaledWidth(), window.getWidth()) - viewportX
+        );
+        int viewportHeight = Math.max(
+                1,
+                toFramebufferCoordinate(viewportBottom, window.getGuiScaledHeight(), window.getHeight())
+                        - toFramebufferCoordinate(viewportTop, window.getGuiScaledHeight(), window.getHeight())
+        );
+        RenderSystem.viewport(viewportX, viewportY, viewportWidth, viewportHeight);
         RenderSystem.enableDepthTest();
         RenderSystem.depthMask(true);
         RenderSystem.clear(GL11.GL_DEPTH_BUFFER_BIT, Minecraft.ON_OSX);
@@ -173,13 +207,14 @@ public final class StorageRingScreen extends AbstractContainerScreen<StorageRing
                 Minecraft.getInstance().getBlockRenderer(),
                 ClientStorageRingProjectionManager.getBlockStates(),
                 ClientStorageRingProjectionManager.getSnapshotVersion(),
-                ClientStorageRingProjectionManager.getCameraPosition(),
+                ClientStorageRingProjectionManager.getCameraPosition(this.thisProjectionPartialTick),
                 ClientStorageRingProjectionManager.getCameraYRot(),
                 ClientStorageRingProjectionManager.getCameraXRot(),
-                StorageRingMenu.VIEWPORT_WIDTH,
-                StorageRingMenu.VIEWPORT_HEIGHT
+                viewportWidth,
+                viewportHeight
         );
         RenderSystem.disableDepthTest();
+        RenderSystem.viewport(0, 0, window.getWidth(), window.getHeight());
         guiGraphics.disableScissor();
     }
 
@@ -191,7 +226,8 @@ public final class StorageRingScreen extends AbstractContainerScreen<StorageRing
                 StorageRingMenu.VIEWPORT_WIDTH,
                 StorageRingMenu.VIEWPORT_HEIGHT,
                 mouseX,
-                mouseY
+                mouseY,
+                this.thisProjectionPartialTick
         );
         if (target != null) {
             ModNetwork.sendToServer(new StorageRingInteractionPacket(
@@ -229,5 +265,9 @@ public final class StorageRingScreen extends AbstractContainerScreen<StorageRing
 
     private float getForwardImpulse() {
         return (this.movingForward ? 1.0F : 0.0F) - (this.movingBackward ? 1.0F : 0.0F);
+    }
+
+    private static int toFramebufferCoordinate(int coordinate, int guiSize, int framebufferSize) {
+        return (int) Math.round((double) coordinate * framebufferSize / guiSize);
     }
 }

@@ -5,6 +5,7 @@ import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import com.seraphina.ninecun_lingtai.common.network.packet.StorageRingCameraPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncStorageRingCameraPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncStorageRingProjectionPacket;
+import com.seraphina.ninecun_lingtai.utility.RingStorageUtility;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
@@ -21,13 +22,17 @@ public final class ClientStorageRingProjectionManager {
     private static final double FIELD_OF_VIEW = 55.0D;
     private static final double MAXIMUM_INTERACTION_DISTANCE = 8.0D;
     private static final double RAYCAST_EPSILON = 0.000001D;
+    private static final float MIDDLE_DRAG_ROTATION_SENSITIVITY = 0.60F;
+    private static final double MAXIMUM_SERVER_CORRECTION_DISTANCE_SQUARED = 1.0D;
 
     private static UUID thisRingId;
     private static Vec3 thisCameraPosition = Vec3.ZERO;
+    private static Vec3 thisPreviousCameraPosition = Vec3.ZERO;
     private static float thisCameraYRot;
     private static float thisCameraXRot;
     private static Map<BlockPos, BlockState> thisBlockStates = Map.of();
     private static long thisSnapshotVersion;
+    private static boolean thisClientControlsCamera;
 
     private ClientStorageRingProjectionManager() {
     }
@@ -45,10 +50,19 @@ public final class ClientStorageRingProjectionManager {
                 blockStates.put(snapshot.localPosition().immutable(), blockState);
             }
         }
+        boolean resetCamera = !isActiveFor(packet.ringId()) || !thisClientControlsCamera;
         thisRingId = packet.ringId();
-        thisCameraPosition = packet.cameraPosition();
-        thisCameraYRot = packet.cameraYRot();
-        thisCameraXRot = packet.cameraXRot();
+        if (resetCamera) {
+            thisCameraPosition = packet.cameraPosition();
+            thisPreviousCameraPosition = packet.cameraPosition();
+            thisCameraYRot = packet.cameraYRot();
+            thisCameraXRot = packet.cameraXRot();
+            thisClientControlsCamera = false;
+        } else if (thisCameraPosition.distanceToSqr(packet.cameraPosition())
+                > MAXIMUM_SERVER_CORRECTION_DISTANCE_SQUARED) {
+            thisPreviousCameraPosition = thisCameraPosition;
+            thisCameraPosition = packet.cameraPosition();
+        }
         thisBlockStates = Collections.unmodifiableMap(blockStates);
         thisSnapshotVersion++;
     }
@@ -57,9 +71,18 @@ public final class ClientStorageRingProjectionManager {
         if (!isActiveFor(packet.ringId())) {
             return;
         }
-        thisCameraPosition = packet.cameraPosition();
-        thisCameraYRot = packet.cameraYRot();
-        thisCameraXRot = packet.cameraXRot();
+        if (!thisClientControlsCamera) {
+            thisCameraPosition = packet.cameraPosition();
+            thisPreviousCameraPosition = packet.cameraPosition();
+            thisCameraYRot = packet.cameraYRot();
+            thisCameraXRot = packet.cameraXRot();
+            return;
+        }
+
+        if (thisCameraPosition.distanceToSqr(packet.cameraPosition()) > MAXIMUM_SERVER_CORRECTION_DISTANCE_SQUARED) {
+            thisPreviousCameraPosition = thisCameraPosition;
+            thisCameraPosition = packet.cameraPosition();
+        }
     }
 
     public static boolean isActiveFor(UUID ringId) {
@@ -76,6 +99,8 @@ public final class ClientStorageRingProjectionManager {
         if (!isActiveFor(ringId)) {
             return;
         }
+        moveCamera(leftImpulse, forwardImpulse, movingUp, movingDown);
+        thisClientControlsCamera = true;
         ModNetwork.sendToServer(new StorageRingCameraPacket(
                 leftImpulse,
                 forwardImpulse,
@@ -90,12 +115,15 @@ public final class ClientStorageRingProjectionManager {
         if (!isActiveFor(ringId)) {
             return;
         }
-        thisCameraYRot = Mth.wrapDegrees(thisCameraYRot + (float) horizontalDelta * 0.15F);
+        thisCameraYRot = Mth.wrapDegrees(
+                thisCameraYRot + (float) horizontalDelta * MIDDLE_DRAG_ROTATION_SENSITIVITY
+        );
         thisCameraXRot = Mth.clamp(
-                thisCameraXRot + (float) verticalDelta * 0.15F,
+                thisCameraXRot + (float) verticalDelta * MIDDLE_DRAG_ROTATION_SENSITIVITY,
                 -75.0F,
                 75.0F
         );
+        thisClientControlsCamera = true;
     }
 
     public static ProjectionTarget pick(
@@ -105,7 +133,8 @@ public final class ClientStorageRingProjectionManager {
             int viewportWidth,
             int viewportHeight,
             double mouseX,
-            double mouseY
+            double mouseY,
+            float partialTick
     ) {
         if (!isActiveFor(ringId)) {
             return null;
@@ -123,11 +152,11 @@ public final class ClientStorageRingProjectionManager {
                 .add(right.scale(screenX * aspectRatio * tangent))
                 .add(up.scale(screenY * tangent))
                 .normalize();
-        return raycast(direction);
+        return raycast(getCameraPosition(partialTick), direction);
     }
 
-    public static Vec3 getCameraPosition() {
-        return thisCameraPosition;
+    public static Vec3 getCameraPosition(float partialTick) {
+        return thisPreviousCameraPosition.lerp(thisCameraPosition, Mth.clamp(partialTick, 0.0F, 1.0F));
     }
 
     public static float getCameraYRot() {
@@ -149,14 +178,56 @@ public final class ClientStorageRingProjectionManager {
     public static void reset() {
         thisRingId = null;
         thisCameraPosition = Vec3.ZERO;
+        thisPreviousCameraPosition = Vec3.ZERO;
         thisCameraYRot = 0.0F;
         thisCameraXRot = 0.0F;
         thisBlockStates = Map.of();
         thisSnapshotVersion++;
+        thisClientControlsCamera = false;
         StorageRingProjectionRenderMeshManager.clear();
     }
 
-    private static ProjectionTarget raycast(Vec3 direction) {
+    private static void moveCamera(
+            float leftImpulse,
+            float forwardImpulse,
+            boolean movingUp,
+            boolean movingDown
+    ) {
+        thisPreviousCameraPosition = thisCameraPosition;
+        if (leftImpulse == 0.0F
+                && forwardImpulse == 0.0F
+                && !movingUp
+                && !movingDown) {
+            return;
+        }
+
+        double yRotRadians = Math.toRadians(thisCameraYRot);
+        Vec3 forward = new Vec3(-Math.sin(yRotRadians), 0.0D, Math.cos(yRotRadians));
+        Vec3 right = new Vec3(Math.cos(yRotRadians), 0.0D, Math.sin(yRotRadians));
+        double verticalMovement = (movingUp ? 1.0D : 0.0D) - (movingDown ? 1.0D : 0.0D);
+        Vec3 movement = forward.scale(forwardImpulse)
+                .add(right.scale(leftImpulse))
+                .add(0.0D, verticalMovement, 0.0D)
+                .scale(RingStorageUtility.CAMERA_SPEED);
+        Vec3 nextPosition = clampCameraPosition(thisCameraPosition.add(movement));
+        if (thisCameraPosition.distanceToSqr(nextPosition) > RAYCAST_EPSILON) {
+            thisCameraPosition = nextPosition;
+        }
+    }
+
+    private static Vec3 clampCameraPosition(Vec3 cameraPosition) {
+        return new Vec3(
+                Mth.clamp(cameraPosition.x, 0.5D, RingStorageUtility.POCKET_SIZE - 0.5D),
+                Mth.clamp(
+                        cameraPosition.y,
+                        RingStorageUtility.MINIMUM_CAMERA_Y - RingStorageUtility.FLOOR_Y,
+                        RingStorageUtility.MAXIMUM_CAMERA_Y - RingStorageUtility.FLOOR_Y
+                ),
+                Mth.clamp(cameraPosition.z, 0.5D, RingStorageUtility.POCKET_SIZE - 0.5D)
+        );
+    }
+
+    private static ProjectionTarget raycast(Vec3 cameraPosition, Vec3 direction) {
         ProjectionTarget closestTarget = null;
         double closestDistance = MAXIMUM_INTERACTION_DISTANCE;
         for (Map.Entry<BlockPos, BlockState> entry : thisBlockStates.entrySet()) {
@@ -167,21 +238,21 @@ public final class ClientStorageRingProjectionManager {
             RayIntersection intersection = new RayIntersection(0.0D, closestDistance);
             BlockPos position = entry.getKey();
             if (!intersection.clip(
-                    thisCameraPosition.x,
+                    cameraPosition.x,
                     direction.x,
                     position.getX(),
                     position.getX() + 1.0D,
                     Direction.WEST,
                     Direction.EAST
             ) || !intersection.clip(
-                    thisCameraPosition.y,
+                    cameraPosition.y,
                     direction.y,
                     position.getY(),
                     position.getY() + 1.0D,
                     Direction.DOWN,
                     Direction.UP
             ) || !intersection.clip(
-                    thisCameraPosition.z,
+                    cameraPosition.z,
                     direction.z,
                     position.getZ(),
                     position.getZ() + 1.0D,
@@ -195,7 +266,7 @@ public final class ClientStorageRingProjectionManager {
             closestTarget = new ProjectionTarget(
                     position,
                     intersection.thisEnterDirection,
-                    thisCameraPosition.add(direction.scale(intersection.thisEnterDistance))
+                    cameraPosition.add(direction.scale(intersection.thisEnterDistance))
             );
         }
         return closestTarget;
