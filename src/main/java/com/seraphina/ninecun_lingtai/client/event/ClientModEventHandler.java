@@ -14,6 +14,7 @@ import com.seraphina.ninecun_lingtai.client.model.BodyDefenseSpellModel;
 import com.seraphina.ninecun_lingtai.client.render.AptitudeFormationShader;
 import com.seraphina.ninecun_lingtai.client.render.AlchemyFurnaceBlockRenderer;
 import com.seraphina.ninecun_lingtai.client.screen.AlchemyFurnaceScreen;
+import com.seraphina.ninecun_lingtai.client.screen.StorageRingScreen;
 import com.seraphina.ninecun_lingtai.client.render.DefenseBarShader;
 import com.seraphina.ninecun_lingtai.client.render.DefenseSpellGuardianRenderer;
 import com.seraphina.ninecun_lingtai.client.render.ElementFlowShader;
@@ -102,6 +103,7 @@ public final class ClientModEventHandler {
         ClientConfigScreenRegistrar.register();
         event.enqueueWork(() -> {
             MenuScreens.register(ModMenuTypes.ALCHEMY_FURNACE.get(), AlchemyFurnaceScreen::new);
+            MenuScreens.register(ModMenuTypes.STORAGE_RING.get(), StorageRingScreen::new);
             MeditationAnimationManager.register();
             LightFlightAnimationManager.register();
             CultivationInfoTabRegistrar.register();

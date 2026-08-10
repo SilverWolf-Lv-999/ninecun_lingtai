@@ -14,6 +14,7 @@ import com.seraphina.ninecun_lingtai.common.debug.DaoScrollSnapshot;
 import com.seraphina.ninecun_lingtai.common.network.packet.BreakthroughRequestPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.BoostLightFlightPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.CastSpellPacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.CloseStorageRingPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.CultivationFeedbackPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.DismountSwordFlightPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.ImprintTechniquePacket;
@@ -49,6 +50,8 @@ import com.seraphina.ninecun_lingtai.common.network.packet.SetMeditationStatePac
 import com.seraphina.ninecun_lingtai.common.network.packet.SetPressureStatePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SubmitAptitudePacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SubmitDaoScrollPacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.StorageRingCameraPacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.StorageRingInteractionPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SmoothShrinkEarthTeleportPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.ShowNotificationPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncCultivationInfoPacket;
@@ -61,6 +64,8 @@ import com.seraphina.ninecun_lingtai.common.network.packet.SyncPressureStatePack
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncPlayerValueControlSettingsPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncShrinkEarthPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncSoulRoamingPacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.SyncStorageRingCameraPacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.SyncStorageRingProjectionPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncSwordFlightPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncTechniqueLibraryPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SyncAlchemyRecipesPacket;
@@ -103,7 +108,7 @@ import java.util.Set;
 import java.util.UUID;
 
 public final class ModNetwork {
-    private static final String PROTOCOL_VERSION = "34";
+    private static final String PROTOCOL_VERSION = "36";
     private static final SimpleChannel CHANNEL = NetworkRegistry.ChannelBuilder
             .named(ResourceLocation.fromNamespaceAndPath(ModMain.MOD_ID, "main"))
             .networkProtocolVersion(() -> PROTOCOL_VERSION)
@@ -612,10 +617,101 @@ public final class ModNetwork {
                 .decoder(SubmitDaoScrollPacket::decode)
                 .consumerMainThread(SubmitDaoScrollPacket::handle)
                 .add();
+        CHANNEL.messageBuilder(
+                        CloseStorageRingPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(CloseStorageRingPacket::encode)
+                .decoder(CloseStorageRingPacket::decode)
+                .consumerMainThread(CloseStorageRingPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        StorageRingCameraPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(StorageRingCameraPacket::encode)
+                .decoder(StorageRingCameraPacket::decode)
+                .consumerMainThread(StorageRingCameraPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        StorageRingInteractionPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(StorageRingInteractionPacket::encode)
+                .decoder(StorageRingInteractionPacket::decode)
+                .consumerMainThread(StorageRingInteractionPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        SyncStorageRingProjectionPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(SyncStorageRingProjectionPacket::encode)
+                .decoder(SyncStorageRingProjectionPacket::decode)
+                .consumerMainThread(SyncStorageRingProjectionPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        SyncStorageRingCameraPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(SyncStorageRingCameraPacket::encode)
+                .decoder(SyncStorageRingCameraPacket::decode)
+                .consumerMainThread(SyncStorageRingCameraPacket::handle)
+                .add();
     }
 
     public static int getId() {
         return nextPacketId++;
+    }
+
+    public static void sendStorageRingProjection(
+            ServerPlayer player,
+            UUID ringId,
+            Vec3 cameraPosition,
+            float cameraYRot,
+            float cameraXRot,
+            List<SyncStorageRingProjectionPacket.BlockSnapshot> blocks
+    ) {
+        CHANNEL.send(
+                PacketDistributor.PLAYER.with(() -> player),
+                new SyncStorageRingProjectionPacket(
+                        true,
+                        ringId,
+                        cameraPosition,
+                        cameraYRot,
+                        cameraXRot,
+                        blocks
+                )
+        );
+    }
+
+    public static void sendStorageRingProjectionInactive(ServerPlayer player) {
+        CHANNEL.send(
+                PacketDistributor.PLAYER.with(() -> player),
+                SyncStorageRingProjectionPacket.inactive()
+        );
+    }
+
+    public static void sendStorageRingCamera(
+            ServerPlayer player,
+            UUID ringId,
+            Vec3 cameraPosition,
+            float cameraYRot,
+            float cameraXRot
+    ) {
+        CHANNEL.send(
+                PacketDistributor.PLAYER.with(() -> player),
+                new SyncStorageRingCameraPacket(
+                        ringId,
+                        cameraPosition,
+                        cameraYRot,
+                        cameraXRot
+                )
+        );
     }
 
     /** 把玩家当前的缩地状态广播给所有追踪者与其本人。 */

@@ -33,6 +33,7 @@ public final class ModCreativeModeTabs {
                         );
                         output.accept(ModItems.DAO_SCROLL.get());
                         output.acceptAll(SpiritualItemUtility.getCreativeItemStacks(ModItems.HAN_SWORD.get()));
+                        output.accept(ModItems.STORAGE_RING.get());
                         output.acceptAll(SpiritualStoneUtility.getCreativeItemStacks());
                         output.acceptAll(TechniqueCreativeTabCache.getItemStacks());
                         output.acceptAll(AlchemyRecipeCreativeTabCache.getItemStacks());

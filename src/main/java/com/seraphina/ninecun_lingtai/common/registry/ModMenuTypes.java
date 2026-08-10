@@ -2,6 +2,7 @@ package com.seraphina.ninecun_lingtai.common.registry;
 
 import com.seraphina.ninecun_lingtai.ModMain;
 import com.seraphina.ninecun_lingtai.common.menu.AlchemyFurnaceMenu;
+import com.seraphina.ninecun_lingtai.common.menu.StorageRingMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraftforge.common.extensions.IForgeMenuType;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -18,6 +19,11 @@ public final class ModMenuTypes {
     public static final RegistryObject<MenuType<AlchemyFurnaceMenu>> ALCHEMY_FURNACE = MENU_TYPES.register(
             "alchemy_furnace",
             () -> IForgeMenuType.create(AlchemyFurnaceMenu::fromNetwork)
+    );
+
+    public static final RegistryObject<MenuType<StorageRingMenu>> STORAGE_RING = MENU_TYPES.register(
+            "storage_ring",
+            () -> IForgeMenuType.create(StorageRingMenu::fromNetwork)
     );
 
     private ModMenuTypes() {
