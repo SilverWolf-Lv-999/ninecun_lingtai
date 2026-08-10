@@ -22,6 +22,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -81,12 +82,19 @@ public final class RingStorageManager {
             savedData.markInitialized(ringId);
         }
 
+        RingStorageSavedData.CameraState savedCameraState = savedData.getCameraState(ringId).orElse(null);
         StorageRingSession session = new StorageRingSession(
                 ringId,
                 pocket,
-                pocket.initialCameraPosition(),
-                INITIAL_CAMERA_Y_ROT,
-                INITIAL_CAMERA_X_ROT
+                savedCameraState == null
+                        ? pocket.initialCameraPosition()
+                        : pocket.clampCameraPosition(pocket.toWorldPosition(savedCameraState.localPosition())),
+                savedCameraState == null
+                        ? INITIAL_CAMERA_Y_ROT
+                        : Mth.wrapDegrees(savedCameraState.yRot()),
+                savedCameraState == null
+                        ? INITIAL_CAMERA_X_ROT
+                        : Mth.clamp(savedCameraState.xRot(), -75.0F, 75.0F)
         );
         ACTIVE_SESSIONS.put(player.getUUID(), session);
         openMenu(player, session);
@@ -103,6 +111,23 @@ public final class RingStorageManager {
 
     public static boolean isStorageSessionActive(ServerPlayer player) {
         return ACTIVE_SESSIONS.containsKey(player.getUUID());
+    }
+
+    public static boolean isStorageContainerValid(Player player, Level level, BlockPos worldPosition) {
+        if (!(player instanceof ServerPlayer serverPlayer)
+                || !level.dimension().equals(RingStorageUtility.STORAGE_DIMENSION)) {
+            return false;
+        }
+
+        StorageRingSession session = ACTIVE_SESSIONS.get(serverPlayer.getUUID());
+        return session != null && session.pocket.contains(worldPosition);
+    }
+
+    public static boolean isStorageContainerValid(Player player, BlockEntity blockEntity) {
+        Level level = blockEntity.getLevel();
+        return level != null
+                && level.getBlockEntity(blockEntity.getBlockPos()) == blockEntity
+                && isStorageContainerValid(player, level, blockEntity.getBlockPos());
     }
 
     public static void onRingMenuRemoved(Player player, UUID ringId) {
@@ -216,12 +241,20 @@ public final class RingStorageManager {
     }
 
     public static void close(ServerPlayer player) {
+        close(player, null);
+    }
+
+    public static void close(ServerPlayer player, RingStorageSavedData.CameraState cameraState) {
         StorageRingSession session = ACTIVE_SESSIONS.remove(player.getUUID());
         if (session == null) {
             clearLegacyPersistentSession(player);
             return;
         }
 
+        if (cameraState != null) {
+            session.setCameraState(cameraState);
+        }
+        saveCameraState(player.server, session);
         releasePocketChunkTickets(player.server, session.pocket);
         ModNetwork.sendStorageRingProjectionInactive(player);
         player.closeContainer();
@@ -232,6 +265,10 @@ public final class RingStorageManager {
     }
 
     public static void releaseAllChunkTickets(MinecraftServer server) {
+        for (StorageRingSession session : ACTIVE_SESSIONS.values()) {
+            saveCameraState(server, session);
+        }
+
         ServerLevel storageLevel = server.getLevel(RingStorageUtility.STORAGE_DIMENSION);
         if (storageLevel != null) {
             for (StoragePocket pocket : POCKET_CHUNK_TICKET_REFERENCES.keySet()) {
@@ -240,6 +277,17 @@ public final class RingStorageManager {
         }
         POCKET_CHUNK_TICKET_REFERENCES.clear();
         ACTIVE_SESSIONS.clear();
+    }
+
+    private static void saveCameraState(MinecraftServer server, StorageRingSession session) {
+        RingStorageSavedData.get(server).setCameraState(
+                session.ringId,
+                new RingStorageSavedData.CameraState(
+                        session.getLocalCameraPosition(),
+                        session.cameraYRot,
+                        session.cameraXRot
+                )
+        );
     }
 
     private static void useBlock(
@@ -625,6 +673,21 @@ public final class RingStorageManager {
             this.forwardImpulse = 0.0F;
             this.movingUp = false;
             this.movingDown = false;
+        }
+
+        private void setCameraState(RingStorageSavedData.CameraState cameraState) {
+            Vec3 localPosition = cameraState.localPosition();
+            if (!Double.isFinite(localPosition.x)
+                    || !Double.isFinite(localPosition.y)
+                    || !Double.isFinite(localPosition.z)
+                    || !Float.isFinite(cameraState.yRot())
+                    || !Float.isFinite(cameraState.xRot())) {
+                return;
+            }
+
+            this.cameraPosition = this.pocket.clampCameraPosition(this.pocket.toWorldPosition(localPosition));
+            this.cameraYRot = Mth.wrapDegrees(cameraState.yRot());
+            this.cameraXRot = Mth.clamp(cameraState.xRot(), -75.0F, 75.0F);
         }
 
         private boolean requiresProjectionRefresh(long currentTick) {
