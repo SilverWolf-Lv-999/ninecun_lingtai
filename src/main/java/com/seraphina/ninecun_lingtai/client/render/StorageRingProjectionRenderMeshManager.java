@@ -29,6 +29,7 @@ public final class StorageRingProjectionRenderMeshManager {
     private static final List<RenderType> RENDER_TYPE_ORDER = List.of(
             Sheets.solidBlockSheet(),
             Sheets.cutoutBlockSheet(),
+            Sheets.chestSheet(),
             Sheets.translucentCullBlockSheet(),
             Sheets.translucentItemSheet()
     );
@@ -141,14 +142,24 @@ public final class StorageRingProjectionRenderMeshManager {
         for (Map.Entry<BlockPos, BlockState> entry : blockStates.entrySet()) {
             BlockPos position = entry.getKey();
             poseStack.pushPose();
-            poseStack.translate(position.getX(), position.getY(), position.getZ());
-            blockRenderDispatcher.renderSingleBlock(
-                    entry.getValue(),
-                    poseStack,
-                    bufferSource,
-                    0x00F000F0,
-                    OverlayTexture.NO_OVERLAY
-            );
+            BlockState blockState = entry.getValue();
+            if (StorageRingChestProjectionRenderer.isSupported(blockState)) {
+                StorageRingChestProjectionRenderer.render(
+                        blockState,
+                        position,
+                        poseStack,
+                        bufferSource
+                );
+            } else {
+                poseStack.translate(position.getX(), position.getY(), position.getZ());
+                blockRenderDispatcher.renderSingleBlock(
+                        blockState,
+                        poseStack,
+                        bufferSource,
+                        0x00F000F0,
+                        OverlayTexture.NO_OVERLAY
+                );
+            }
             poseStack.popPose();
         }
 

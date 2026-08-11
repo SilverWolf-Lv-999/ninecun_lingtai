@@ -46,6 +46,6 @@ public final class StorageRingEventHandler {
 
     @SubscribeEvent
     public static void onServerStopping(ServerStoppingEvent event) {
-        RingStorageManager.releaseAllChunkTickets(event.getServer());
+        RingStorageManager.closeAllSessions(event.getServer());
     }
 }

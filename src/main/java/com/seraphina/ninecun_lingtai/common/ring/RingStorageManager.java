@@ -49,7 +49,6 @@ public final class RingStorageManager {
     private static final int MAXIMUM_PROJECTION_BLOCKS = 8_192;
     private static final double PROJECTION_REFRESH_DISTANCE_SQUARED = 64.0D;
     private static final Map<UUID, StorageRingSession> ACTIVE_SESSIONS = new HashMap<>();
-    private static final Map<StoragePocket, Integer> POCKET_CHUNK_TICKET_REFERENCES = new HashMap<>();
 
     public static void open(ServerPlayer player, ItemStack ringStack) {
         UUID ringId = RingStorageUtility.getOrCreateRingId(ringStack);
@@ -76,7 +75,7 @@ public final class RingStorageManager {
         migrateLegacyPockets(storageLevel, savedData);
         int pocketIndex = savedData.getOrCreatePocketIndex(ringId);
         StoragePocket pocket = RingStorageUtility.getPocket(pocketIndex);
-        acquirePocketChunkTickets(storageLevel, pocket);
+        ensurePocketChunkTickets(storageLevel, pocket);
         if (!savedData.isInitialized(ringId)) {
             initializePocket(storageLevel, pocket);
             savedData.markInitialized(ringId);
@@ -255,7 +254,6 @@ public final class RingStorageManager {
             session.setCameraState(cameraState);
         }
         saveCameraState(player.server, session);
-        releasePocketChunkTickets(player.server, session.pocket);
         ModNetwork.sendStorageRingProjectionInactive(player);
         player.closeContainer();
     }
@@ -264,18 +262,10 @@ public final class RingStorageManager {
         clearLegacyPersistentSession(player);
     }
 
-    public static void releaseAllChunkTickets(MinecraftServer server) {
+    public static void closeAllSessions(MinecraftServer server) {
         for (StorageRingSession session : ACTIVE_SESSIONS.values()) {
             saveCameraState(server, session);
         }
-
-        ServerLevel storageLevel = server.getLevel(RingStorageUtility.STORAGE_DIMENSION);
-        if (storageLevel != null) {
-            for (StoragePocket pocket : POCKET_CHUNK_TICKET_REFERENCES.keySet()) {
-                setPocketChunkTickets(storageLevel, pocket, false);
-            }
-        }
-        POCKET_CHUNK_TICKET_REFERENCES.clear();
         ACTIVE_SESSIONS.clear();
     }
 
@@ -432,25 +422,9 @@ public final class RingStorageManager {
         session.lastProjectionPosition = session.cameraPosition;
     }
 
-    private static void acquirePocketChunkTickets(ServerLevel storageLevel, StoragePocket pocket) {
-        int referenceCount = POCKET_CHUNK_TICKET_REFERENCES.getOrDefault(pocket, 0);
-        if (referenceCount == 0) {
-            setPocketChunkTickets(storageLevel, pocket, true);
-        }
-        POCKET_CHUNK_TICKET_REFERENCES.put(pocket, referenceCount + 1);
-    }
-
-    private static void releasePocketChunkTickets(MinecraftServer server, StoragePocket pocket) {
-        int referenceCount = POCKET_CHUNK_TICKET_REFERENCES.getOrDefault(pocket, 0);
-        if (referenceCount <= 1) {
-            POCKET_CHUNK_TICKET_REFERENCES.remove(pocket);
-            ServerLevel storageLevel = server.getLevel(RingStorageUtility.STORAGE_DIMENSION);
-            if (storageLevel != null) {
-                setPocketChunkTickets(storageLevel, pocket, false);
-            }
-            return;
-        }
-        POCKET_CHUNK_TICKET_REFERENCES.put(pocket, referenceCount - 1);
+    private static void ensurePocketChunkTickets(ServerLevel storageLevel, StoragePocket pocket) {
+        // Forge persists forced chunks. Keeping this ticket after the UI closes lets block entities keep ticking.
+        setPocketChunkTickets(storageLevel, pocket, true);
     }
 
     private static void setPocketChunkTickets(ServerLevel storageLevel, StoragePocket pocket, boolean add) {
