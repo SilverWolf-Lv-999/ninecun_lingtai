@@ -22,8 +22,6 @@ import net.minecraftforge.fml.common.Mod;
 /** 御剑术的事件入口：蹲下右键登剑、每刻维持、锁剑防丢与生死进退的善后。 */
 @Mod.EventBusSubscriber(modid = ModMain.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class SwordFlightEventHandler {
-    private SwordFlightEventHandler() {
-    }
 
     @SubscribeEvent
     public static void onRightClickItem(PlayerInteractEvent.RightClickItem event) {

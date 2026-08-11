@@ -17,8 +17,6 @@ import java.util.List;
 import java.util.Set;
 
 public final class AlchemyRecipeJsonUtility {
-    private AlchemyRecipeJsonUtility() {
-    }
 
     public static AlchemyRecipeDefinition parse(ResourceLocation recipeId, JsonElement jsonElement) {
         JsonObject recipeJson = GsonHelper.convertToJsonObject(jsonElement, "alchemy recipe definition");

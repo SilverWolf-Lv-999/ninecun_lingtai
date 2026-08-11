@@ -13,9 +13,6 @@ public final class ChineseNumberUtility {
     };
     private static final BigInteger TEN_THOUSAND = BigInteger.valueOf(10_000L);
 
-    private ChineseNumberUtility() {
-    }
-
     public static String formatTenths(float value, String integerUnit, String tenthUnit) {
         int roundedTenths = Math.max(0, Math.round(value * 10.0F));
         int integerPart = roundedTenths / 10;

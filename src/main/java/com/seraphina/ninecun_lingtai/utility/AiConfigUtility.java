@@ -4,9 +4,6 @@ import com.seraphina.ninecun_lingtai.api.ai.AiProvider;
 import com.seraphina.ninecun_lingtai.common.config.CommonConfig;
 
 public final class AiConfigUtility {
-    private AiConfigUtility() {
-    }
-
     public static AiProvider getProvider() {
         return CommonConfig.AI_PROVIDER.get();
     }

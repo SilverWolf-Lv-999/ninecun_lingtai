@@ -45,9 +45,6 @@ public final class ModBlocks {
             AlchemyFurnacePartBlock::new
     );
 
-    private ModBlocks() {
-    }
-
     public static void register(IEventBus modEventBus) {
         BLOCKS.register(modEventBus);
     }

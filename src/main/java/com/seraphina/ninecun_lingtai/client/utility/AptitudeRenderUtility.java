@@ -38,9 +38,6 @@ public final class AptitudeRenderUtility {
             0b011
     };
 
-    private AptitudeRenderUtility() {
-    }
-
     public static void drawCenteredText(
             GuiGraphics guiGraphics,
             Font font,

@@ -15,8 +15,6 @@ import java.util.Optional;
 
 @Mod.EventBusSubscriber(modid = ModMain.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class ElementDamageEventHandler {
-    private ElementDamageEventHandler() {
-    }
 
     @SubscribeEvent
     public static void onAddReloadListener(AddReloadListenerEvent event) {

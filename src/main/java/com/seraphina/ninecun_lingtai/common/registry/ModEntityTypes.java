@@ -72,9 +72,6 @@ public final class ModEntityTypes {
                     .build("pushing_mountains_collision")
             );
 
-    private ModEntityTypes() {
-    }
-
     public static void register(IEventBus modEventBus) {
         ENTITY_TYPES.register(modEventBus);
     }

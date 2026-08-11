@@ -30,9 +30,6 @@ import java.util.OptionalInt;
 public final class CultivationDefenseEventHandler {
     private static final int HEALTH_SYNC_INTERVAL_TICKS = 20;
 
-    private CultivationDefenseEventHandler() {
-    }
-
     @SubscribeEvent
     public static void onEntityJoinLevel(EntityJoinLevelEvent event) {
         if (event.getLevel().isClientSide || !(event.getEntity() instanceof LivingEntity entity)) {

@@ -15,7 +15,4 @@ public final class ModDamageTypes {
             Registries.DAMAGE_TYPE,
             ResourceLocation.fromNamespaceAndPath(ModMain.MOD_ID, "pressure_execution")
     );
-
-    private ModDamageTypes() {
-    }
 }

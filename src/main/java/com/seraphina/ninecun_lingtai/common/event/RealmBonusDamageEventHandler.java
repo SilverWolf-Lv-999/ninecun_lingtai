@@ -24,8 +24,6 @@ import java.util.Optional;
 
 @Mod.EventBusSubscriber(modid = ModMain.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class RealmBonusDamageEventHandler {
-    private RealmBonusDamageEventHandler() {
-    }
 
     // LOW priority so the elemental multiplier pass in ElementDamageEventHandler only scales
     // the base damage; the realm bonus applies its own elemental multipliers below.

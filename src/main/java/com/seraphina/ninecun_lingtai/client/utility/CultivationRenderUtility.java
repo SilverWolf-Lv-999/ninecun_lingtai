@@ -17,9 +17,6 @@ import java.util.List;
 public final class CultivationRenderUtility {
     private static final float CUSTOM_FONT_RENDER_HEIGHT = 48.0F;
 
-    private CultivationRenderUtility() {
-    }
-
     /**
      * Renders the player front-facing in the current pose. Unlike the inventory model this
      * never follows the mouse cursor: body, head, and pitch are pinned towards the viewer.

@@ -16,8 +16,6 @@ import net.minecraft.util.Mth;
 import org.joml.Matrix4f;
 
 public final class AptitudeFormationRenderUtility {
-    private AptitudeFormationRenderUtility() {
-    }
 
     public static void drawFormation(
             GuiGraphics guiGraphics,

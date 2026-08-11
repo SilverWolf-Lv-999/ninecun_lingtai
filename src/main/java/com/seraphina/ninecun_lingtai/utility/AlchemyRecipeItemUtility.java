@@ -15,9 +15,6 @@ public final class AlchemyRecipeItemUtility {
     private static final String RECIPE_NAME_KEY = ModMain.MOD_ID + ":alchemy_recipe_name";
     private static final String RECIPE_DESCRIPTION_KEY = ModMain.MOD_ID + ":alchemy_recipe_description";
 
-    private AlchemyRecipeItemUtility() {
-    }
-
     public static ItemStack createStack(AlchemyRecipeDefinition recipe) {
         return createStack(recipe.id(), recipe.name(), recipe.description());
     }

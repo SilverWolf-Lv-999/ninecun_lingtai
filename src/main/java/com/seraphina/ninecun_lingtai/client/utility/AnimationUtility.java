@@ -3,8 +3,6 @@ package com.seraphina.ninecun_lingtai.client.utility;
 import net.minecraft.util.Mth;
 
 public final class AnimationUtility {
-    private AnimationUtility() {
-    }
 
     public static float progress(long elapsedMilliseconds, long durationMilliseconds) {
         if (durationMilliseconds <= 0L) {

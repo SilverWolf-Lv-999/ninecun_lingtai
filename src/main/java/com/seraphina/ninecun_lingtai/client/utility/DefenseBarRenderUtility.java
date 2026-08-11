@@ -35,9 +35,6 @@ public final class DefenseBarRenderUtility {
     private static final int TRACK_COLOR = 0x9004080D;
     private static final int HIGHLIGHT_COLOR = 0x36FFFFFF;
 
-    private DefenseBarRenderUtility() {
-    }
-
     public static void render(RenderGuiOverlayEvent.Post event) {
         if (!event.getOverlay().id().equals(VanillaGuiOverlay.HOTBAR.id())) {
             return;

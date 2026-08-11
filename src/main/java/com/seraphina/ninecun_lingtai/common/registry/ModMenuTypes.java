@@ -26,9 +26,6 @@ public final class ModMenuTypes {
             () -> IForgeMenuType.create(StorageRingMenu::fromNetwork)
     );
 
-    private ModMenuTypes() {
-    }
-
     public static void register(IEventBus modEventBus) {
         MENU_TYPES.register(modEventBus);
     }

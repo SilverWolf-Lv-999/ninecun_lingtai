@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class VerticalTextUtility {
-    private VerticalTextUtility() {
-    }
 
     public static List<List<String>> splitIntoColumns(String content, int maximumRows) {
         if (maximumRows <= 0) {

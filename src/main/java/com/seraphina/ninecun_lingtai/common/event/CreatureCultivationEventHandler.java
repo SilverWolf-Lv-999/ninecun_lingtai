@@ -15,8 +15,6 @@ import net.minecraftforge.fml.common.Mod;
 
 @Mod.EventBusSubscriber(modid = ModMain.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class CreatureCultivationEventHandler {
-    private CreatureCultivationEventHandler() {
-    }
 
     /** Rolls innate cultivation exactly once per creature, covering natural spawns and spawn eggs. */
     @SubscribeEvent

@@ -7,12 +7,7 @@ import com.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
 import com.seraphina.ninecun_lingtai.common.config.CommonConfig;
 import com.seraphina.ninecun_lingtai.common.entity.tribulation.ThunderTribulationEntity;
 import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
-import com.seraphina.ninecun_lingtai.common.player.PlayerAptitudeData;
-import com.seraphina.ninecun_lingtai.common.player.PlayerCultivationData;
-import com.seraphina.ninecun_lingtai.common.player.PlayerCultivationManager;
-import com.seraphina.ninecun_lingtai.common.player.PlayerDefenseResourceData;
-import com.seraphina.ninecun_lingtai.common.player.PlayerMeditationManager;
-import com.seraphina.ninecun_lingtai.common.player.PlayerSpiritualEnergyData;
+import com.seraphina.ninecun_lingtai.common.player.*;
 import com.seraphina.ninecun_lingtai.utility.NotificationUtility;
 import com.seraphina.ninecun_lingtai.utility.TribulationUtility;
 import net.minecraft.core.particles.ParticleTypes;
@@ -23,7 +18,6 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.HashMap;
@@ -34,9 +28,6 @@ import java.util.UUID;
 public final class TribulationManager {
     private static final double TRIBULATION_REMAINING_SPIRITUAL_ENERGY_RATIO = 0.01D;
     private static final Map<UUID, TribulationSession> SESSIONS = new HashMap<>();
-
-    private TribulationManager() {
-    }
 
     public static StartResult request(ServerPlayer player) {
         if (isInTribulation(player)) {

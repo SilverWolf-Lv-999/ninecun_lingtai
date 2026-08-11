@@ -10,8 +10,6 @@ import net.minecraftforge.fml.common.Mod;
 
 @Mod.EventBusSubscriber(modid = ModMain.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class TechniqueEventHandler {
-    private TechniqueEventHandler() {
-    }
 
     @SubscribeEvent
     public static void onAddReloadListener(AddReloadListenerEvent event) {

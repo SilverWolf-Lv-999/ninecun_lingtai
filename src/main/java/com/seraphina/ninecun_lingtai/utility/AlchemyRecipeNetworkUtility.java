@@ -19,9 +19,6 @@ public final class AlchemyRecipeNetworkUtility {
     private static final int MAXIMUM_DESCRIPTION_LENGTH = 4096;
     private static final int MAXIMUM_CONTENT_LENGTH = 131072;
 
-    private AlchemyRecipeNetworkUtility() {
-    }
-
     public static void writeRecipe(FriendlyByteBuf buffer, AlchemyRecipeClientData recipe) {
         buffer.writeResourceLocation(recipe.id());
         buffer.writeUtf(recipe.name(), MAXIMUM_NAME_LENGTH);

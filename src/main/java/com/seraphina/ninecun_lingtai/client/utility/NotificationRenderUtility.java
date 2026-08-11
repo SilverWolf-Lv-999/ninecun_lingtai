@@ -38,9 +38,6 @@ public final class NotificationRenderUtility {
     private static final float VIEW_ANGLE_DEGREES = 80.0F;
     private static final int INK_COLOR = 0x3A291A;
 
-    private NotificationRenderUtility() {
-    }
-
     public static void render(RenderGuiOverlayEvent.Post event) {
         if (!event.getOverlay().id().equals(VanillaGuiOverlay.HOTBAR.id())) {
             return;

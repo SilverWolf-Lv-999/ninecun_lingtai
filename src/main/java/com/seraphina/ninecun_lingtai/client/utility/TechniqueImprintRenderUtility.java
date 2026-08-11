@@ -29,9 +29,6 @@ public final class TechniqueImprintRenderUtility {
     private static final int CURVE_SEGMENTS = 12;
     private static final float CUSTOM_FONT_RENDER_HEIGHT = 48.0F;
 
-    private TechniqueImprintRenderUtility() {
-    }
-
     public static void drawCloudVeil(
             GuiGraphics guiGraphics,
             int width,

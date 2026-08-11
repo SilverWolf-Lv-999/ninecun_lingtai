@@ -38,9 +38,6 @@ public final class SpiritualEnergyHudRenderUtility {
             ElementType.CHAOS
     );
 
-    private SpiritualEnergyHudRenderUtility() {
-    }
-
     public static void render(RenderGuiOverlayEvent.Post event) {
         if (!event.getOverlay().id().equals(VanillaGuiOverlay.HOTBAR.id())) {
             return;

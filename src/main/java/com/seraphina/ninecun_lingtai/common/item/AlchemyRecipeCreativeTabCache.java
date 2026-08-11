@@ -9,9 +9,6 @@ import java.util.List;
 public final class AlchemyRecipeCreativeTabCache {
     private static volatile List<ItemStack> itemStacks = List.of();
 
-    private AlchemyRecipeCreativeTabCache() {
-    }
-
     public static void setRecipes(List<AlchemyRecipeClientData> recipes) {
         itemStacks = recipes.stream()
                 .map(AlchemyRecipeItemUtility::createStack)

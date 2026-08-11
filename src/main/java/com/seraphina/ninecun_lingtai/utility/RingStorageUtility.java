@@ -34,9 +34,6 @@ public final class RingStorageUtility {
 
     private static final String RING_ID_TAG = "StorageRingId";
 
-    private RingStorageUtility() {
-    }
-
     public static UUID getOrCreateRingId(ItemStack itemStack) {
         if (itemStack.getOrCreateTag().hasUUID(RING_ID_TAG)) {
             return itemStack.getOrCreateTag().getUUID(RING_ID_TAG);

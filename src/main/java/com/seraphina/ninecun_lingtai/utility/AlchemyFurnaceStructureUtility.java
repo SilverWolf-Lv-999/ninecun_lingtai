@@ -39,9 +39,6 @@ public final class AlchemyFurnaceStructureUtility {
     private static final List<AABB> FURNACE_COLLISION_BOXES = createFurnaceCollisionBoxes();
     private static final VoxelShape[] FURNACE_STRUCTURE_SHAPES = createFurnaceStructureShapes();
 
-    private AlchemyFurnaceStructureUtility() {
-    }
-
     public static boolean canPlaceAt(
             Level level,
             BlockPos furnacePosition,

@@ -26,9 +26,6 @@ public final class LightFlightManager {
     private static final double AIR_WALKING_SPEED_MULTIPLIER = 4.7D;
     private static final int ENERGY_CONSUMPTION_INTERVAL_TICKS = 20;
 
-    private LightFlightManager() {
-    }
-
     public static void requestSetFlying(ServerPlayer player, boolean flying) {
         if (flying) {
             start(player);

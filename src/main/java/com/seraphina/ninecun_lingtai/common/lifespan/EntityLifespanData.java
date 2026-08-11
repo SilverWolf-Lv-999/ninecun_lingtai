@@ -13,9 +13,6 @@ public final class EntityLifespanData {
     private static final String LAST_CALENDAR_TICK_KEY = "lastCalendarTick";
     private static final String EXPIRATION_HANDLED_KEY = "expirationHandled";
 
-    private EntityLifespanData() {
-    }
-
     public static LifespanSnapshot capture(LivingEntity entity) {
         if (!LifespanUtility.hasLifespan(entity)) {
             return LifespanSnapshot.empty();

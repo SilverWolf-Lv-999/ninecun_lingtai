@@ -33,9 +33,6 @@ import java.util.UUID;
 public final class DefenseSpellEventHandler {
     private static final double FULL_BLOCK_EPSILON = 1.0E-5D;
 
-    private DefenseSpellEventHandler() {
-    }
-
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onLivingAttack(LivingAttackEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer owner)

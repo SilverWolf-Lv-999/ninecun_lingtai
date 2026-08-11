@@ -21,9 +21,6 @@ public final class ModSounds {
             )
     );
 
-    private ModSounds() {
-    }
-
     public static void register(IEventBus modEventBus) {
         SOUND_EVENTS.register(modEventBus);
     }

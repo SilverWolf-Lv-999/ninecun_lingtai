@@ -11,9 +11,6 @@ public final class NotificationAnimationUtility {
     public static final int MINIMUM_HOLD_TICKS = NotificationUtility.MINIMUM_DURATION_TICKS;
     public static final int MAXIMUM_HOLD_TICKS = NotificationUtility.MAXIMUM_DURATION_TICKS;
 
-    private NotificationAnimationUtility() {
-    }
-
     public static int clampHoldTicks(int holdTicks) {
         return NotificationUtility.clampDurationTicks(holdTicks);
     }

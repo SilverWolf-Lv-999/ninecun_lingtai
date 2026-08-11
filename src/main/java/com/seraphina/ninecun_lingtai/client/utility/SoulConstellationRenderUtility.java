@@ -30,9 +30,6 @@ public final class SoulConstellationRenderUtility {
             {0.875F, 0.500F}
     };
 
-    private SoulConstellationRenderUtility() {
-    }
-
     public static void drawConstellation(
             GuiGraphics guiGraphics,
             float centerX,

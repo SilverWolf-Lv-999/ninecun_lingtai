@@ -11,9 +11,6 @@ import java.util.List;
 public final class TechniqueCreativeTabCache {
     private static volatile List<ItemStack> itemStacks = List.of();
 
-    private TechniqueCreativeTabCache() {
-    }
-
     public static void setTechniques(List<TechniqueClientData> techniques) {
         itemStacks = techniques.stream()
                 .map(TechniqueItemUtility::createStack)

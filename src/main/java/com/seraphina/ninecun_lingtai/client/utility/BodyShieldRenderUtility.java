@@ -33,9 +33,6 @@ public final class BodyShieldRenderUtility {
     private static final float HEIGHT_RADIUS_MULTIPLIER = 0.56F;
     private static final float BASE_ALPHA = 0.28F;
 
-    private BodyShieldRenderUtility() {
-    }
-
     public static void render(RenderLevelStageEvent event) {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES) {
             return;

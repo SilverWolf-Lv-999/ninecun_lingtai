@@ -16,13 +16,7 @@ public final class AlchemyFurnaceHighlightRenderUtility {
     private static final float BLUE = 0.0F;
     private static final float ALPHA = 0.4F;
 
-    private AlchemyFurnaceHighlightRenderUtility() {
-    }
-
     public static void render(RenderHighlightEvent.Block event) {
-        if (event.getCamera().getEntity() == null) {
-            return;
-        }
 
         BlockPos furnacePosition = AlchemyFurnaceStructureUtility.getMainFurnacePosition(
                 event.getCamera().getEntity().level(),

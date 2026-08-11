@@ -12,9 +12,6 @@ public final class AlchemyPillUtility {
     private static final String TIER_KEY = ModMain.MOD_ID + ":alchemy_pill_tier";
     private static final String RANK_KEY = ModMain.MOD_ID + ":alchemy_pill_rank";
 
-    private AlchemyPillUtility() {
-    }
-
     public static ItemStack createStack(ItemLike itemLike, AlchemyGrade grade) {
         return createStack(itemLike, 1, grade);
     }

@@ -4,8 +4,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
 public final class MovementUtility {
-    private MovementUtility() {
-    }
 
     /**
      * Matches Entity#moveRelative's input-vector transform.

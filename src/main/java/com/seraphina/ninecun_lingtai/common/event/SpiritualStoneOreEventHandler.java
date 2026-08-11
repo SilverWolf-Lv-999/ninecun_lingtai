@@ -14,9 +14,6 @@ import net.minecraftforge.fml.common.Mod;
 public final class SpiritualStoneOreEventHandler {
     private static final float SILK_TOUCH_EXPLOSION_RADIUS = 3.0F;
 
-    private SpiritualStoneOreEventHandler() {
-    }
-
     @SubscribeEvent
     public static void onBreakBlock(BlockEvent.BreakEvent event) {
         if (!(event.getLevel() instanceof Level level) || level.isClientSide()) {

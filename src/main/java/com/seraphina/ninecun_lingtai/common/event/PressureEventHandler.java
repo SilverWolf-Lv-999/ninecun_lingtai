@@ -12,8 +12,6 @@ import net.minecraftforge.fml.common.Mod;
 
 @Mod.EventBusSubscriber(modid = ModMain.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class PressureEventHandler {
-    private PressureEventHandler() {
-    }
 
     @SubscribeEvent
     public static void onServerTick(TickEvent.ServerTickEvent event) {

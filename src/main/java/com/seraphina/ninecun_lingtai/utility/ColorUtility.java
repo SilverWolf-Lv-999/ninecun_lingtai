@@ -5,8 +5,6 @@ import net.minecraft.util.Mth;
 import java.util.Collection;
 
 public final class ColorUtility {
-    private ColorUtility() {
-    }
 
     public static int withAlpha(int color, float alpha) {
         int alphaChannel = Mth.clamp(Math.round(alpha * 255.0F), 0, 255);

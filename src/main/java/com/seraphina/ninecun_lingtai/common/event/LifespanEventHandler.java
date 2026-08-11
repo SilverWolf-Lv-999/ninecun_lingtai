@@ -18,9 +18,6 @@ import net.minecraftforge.fml.common.Mod;
 public final class LifespanEventHandler {
     private static final int CHECK_INTERVAL_TICKS = 20;
 
-    private LifespanEventHandler() {
-    }
-
     @SubscribeEvent
     public static void onLivingTick(LivingEvent.LivingTickEvent event) {
         LivingEntity entity = event.getEntity();

@@ -21,9 +21,6 @@ public final class PushingMountainsRenderUtility {
     private static final int BLUE = 48;
     private static final int ALPHA = 210;
 
-    private PushingMountainsRenderUtility() {
-    }
-
     public static void render(RenderLevelStageEvent event) {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES) {
             return;

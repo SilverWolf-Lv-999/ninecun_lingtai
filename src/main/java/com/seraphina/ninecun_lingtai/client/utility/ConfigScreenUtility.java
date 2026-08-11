@@ -7,9 +7,6 @@ import java.util.regex.Pattern;
 public final class ConfigScreenUtility {
     private static final Pattern DECIMAL_INPUT_PATTERN = Pattern.compile("-?\\d*(?:\\.\\d*)?");
 
-    private ConfigScreenUtility() {
-    }
-
     public static boolean isPotentialDecimal(String value) {
         return value != null && DECIMAL_INPUT_PATTERN.matcher(value).matches();
     }

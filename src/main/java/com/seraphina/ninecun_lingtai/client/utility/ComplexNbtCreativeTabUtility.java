@@ -31,9 +31,6 @@ public final class ComplexNbtCreativeTabUtility {
             )
     );
 
-    private ComplexNbtCreativeTabUtility() {
-    }
-
     public static boolean appendKnownComplexNbtStacks(
             CreativeModeTab creativeModeTab,
             NonNullList<ItemStack> displayedItemStacks

@@ -8,8 +8,6 @@ import com.seraphina.ninecun_lingtai.api.technique.TechniqueAssessment;
 import net.minecraft.util.GsonHelper;
 
 public final class AiResponseUtility {
-    private AiResponseUtility() {
-    }
 
     public static TechniqueAssessment parseTechniqueAssessment(String responseContent) {
         String json = removeMarkdownFence(responseContent.trim());

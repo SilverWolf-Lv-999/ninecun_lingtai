@@ -41,9 +41,6 @@ public final class SpiritualEnergyRenderUtility {
     private static final float REALM_SPEED_GROWTH = 0.18F;
     private static final float MAXIMUM_REALM_SPEED_MULTIPLIER = 2.6F;
 
-    private SpiritualEnergyRenderUtility() {
-    }
-
     public static void render(RenderLevelStageEvent event) {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES) {
             return;

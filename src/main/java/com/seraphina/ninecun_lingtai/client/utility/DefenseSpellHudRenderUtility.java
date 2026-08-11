@@ -28,9 +28,6 @@ public final class DefenseSpellHudRenderUtility {
     private static final int PRIMARY_TEXT_COLOR = 0xFFF0E5CA;
     private static final int SECONDARY_TEXT_COLOR = 0xFFB9B2A4;
 
-    private DefenseSpellHudRenderUtility() {
-    }
-
     public static void render(RenderGuiOverlayEvent.Post event) {
         if (!event.getOverlay().id().equals(VanillaGuiOverlay.HOTBAR.id())) {
             return;

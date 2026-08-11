@@ -7,8 +7,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 
 public final class ClientCultivationDefenseUtility {
-    private ClientCultivationDefenseUtility() {
-    }
 
     public static float getProtectedHealth(LivingEntity entity, float original) {
         return hasActiveLocalDefense() ? 20.0F : original;

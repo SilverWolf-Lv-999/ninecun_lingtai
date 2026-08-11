@@ -21,8 +21,6 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
 public final class TribulationCloudRenderUtility {
-    private TribulationCloudRenderUtility() {
-    }
 
     public static void render(RenderGuiOverlayEvent.Post event) {
         if (!event.getOverlay().id().equals(VanillaGuiOverlay.HOTBAR.id())) {

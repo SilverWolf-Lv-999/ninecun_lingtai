@@ -6,8 +6,6 @@ import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
 
 public final class ClientCreativeTabUtility {
-    private ClientCreativeTabUtility() {
-    }
 
     public static void rebuildCreativeTabs() {
         Minecraft minecraft = Minecraft.getInstance();

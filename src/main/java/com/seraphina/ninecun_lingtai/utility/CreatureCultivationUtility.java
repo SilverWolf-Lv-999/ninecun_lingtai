@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Optional;
 
 public final class CreatureCultivationUtility {
-    /** Creatures are born at most at Foundation Establishment layer three. */
     public static final CultivationStage MAXIMUM_SPAWN_STAGE = new CultivationStage(
             CultivationRealm.FOUNDATION_ESTABLISHMENT,
             3
@@ -24,9 +23,6 @@ public final class CreatureCultivationUtility {
     private static final int LENGTH_TENTHS_RANGE = Math.round(
             (SpiritualRoot.MAXIMUM_LENGTH_INCHES - SpiritualRoot.MINIMUM_LENGTH_INCHES) * 10.0F
     ) + 1;
-
-    private CreatureCultivationUtility() {
-    }
 
     public static int getProgressionIndex(LivingEntity entity) {
         return CreatureCultivationData.getStage(entity)

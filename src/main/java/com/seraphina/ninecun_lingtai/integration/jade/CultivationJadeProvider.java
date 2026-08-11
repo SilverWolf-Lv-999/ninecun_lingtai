@@ -41,9 +41,6 @@ public final class CultivationJadeProvider implements
     private static final String ROOT_ELEMENT_MASK_KEY = "ninecunLingtaiSpiritualRootElementMask";
     private static final String ROOT_LENGTH_INCHES_KEY = "ninecunLingtaiSpiritualRootLengthInches";
 
-    private CultivationJadeProvider() {
-    }
-
     @Override
     public void appendServerData(CompoundTag data, EntityAccessor accessor) {
         if (!(accessor.getEntity() instanceof LivingEntity entity)) {

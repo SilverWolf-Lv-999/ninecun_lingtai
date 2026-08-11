@@ -22,9 +22,6 @@ public final class ModBlockEntityTypes {
                             .build(null)
             );
 
-    private ModBlockEntityTypes() {
-    }
-
     public static void register(IEventBus modEventBus) {
         BLOCK_ENTITY_TYPES.register(modEventBus);
     }

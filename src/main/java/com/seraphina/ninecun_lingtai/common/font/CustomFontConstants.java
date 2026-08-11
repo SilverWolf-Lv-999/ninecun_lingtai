@@ -22,6 +22,4 @@ public final class CustomFontConstants {
                     "technique_display"
             );
 
-    private CustomFontConstants() {
-    }
 }

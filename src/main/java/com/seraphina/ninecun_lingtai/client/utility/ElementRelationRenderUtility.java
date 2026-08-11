@@ -29,9 +29,6 @@ public final class ElementRelationRenderUtility {
     private static final int TRAVEL_PARTICLE_COUNT = 11;
     private static final float WATER_RIPPLE_DURATION = 2350.0F;
 
-    private ElementRelationRenderUtility() {
-    }
-
     public static void drawSourceAura(
             GuiGraphics guiGraphics,
             ElementType sourceElement,

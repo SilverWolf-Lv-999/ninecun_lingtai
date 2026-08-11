@@ -29,9 +29,6 @@ public final class LifespanJadeProvider implements
     private static final String MAXIMUM_YEARS_KEY = "ninecunLingtaiMaximumLifespanYears";
     private static final String IMMORTAL_KEY = "ninecunLingtaiImmortal";
 
-    private LifespanJadeProvider() {
-    }
-
     @Override
     public void appendServerData(CompoundTag data, EntityAccessor accessor) {
         if (!(accessor.getEntity() instanceof LivingEntity entity)
