@@ -171,7 +171,8 @@ public final class RingStorageManager {
             BlockPos localPosition,
             Direction direction,
             Vec3 localHitLocation,
-            boolean use
+            boolean use,
+            boolean useMainHandItem
     ) {
         StorageRingSession session = ACTIVE_SESSIONS.get(player.getUUID());
         if (session == null
@@ -194,7 +195,15 @@ public final class RingStorageManager {
         }
 
         if (use) {
-            useBlock(player, menu, storageLevel, worldPosition, direction, worldHitLocation);
+            useBlock(
+                    player,
+                    menu,
+                    storageLevel,
+                    worldPosition,
+                    direction,
+                    worldHitLocation,
+                    useMainHandItem
+            );
         } else {
             destroyBlock(player, storageLevel, worldPosition);
         }
@@ -286,7 +295,8 @@ public final class RingStorageManager {
             ServerLevel storageLevel,
             BlockPos worldPosition,
             Direction direction,
-            Vec3 worldHitLocation
+            Vec3 worldHitLocation,
+            boolean useMainHandItem
     ) {
         BlockState blockState = storageLevel.getBlockState(worldPosition);
         if (blockState.isAir()) {
@@ -298,26 +308,30 @@ public final class RingStorageManager {
                 worldPosition,
                 false
         );
-        ItemStack carriedStack = menu.getCarried();
+        ItemStack interactionStack = useMainHandItem
+                ? player.getMainHandItem()
+                : menu.getCarried();
         InteractionResult blockResult = blockState.use(
                 storageLevel,
                 player,
                 InteractionHand.MAIN_HAND,
                 hitResult
         );
-        if (carriedStack.isEmpty() || blockResult.consumesAction()) {
+        if (interactionStack.isEmpty() || blockResult.consumesAction()) {
             menu.broadcastChanges();
             return;
         }
 
-        carriedStack.useOn(new UseOnContext(
+        interactionStack.useOn(new UseOnContext(
                 storageLevel,
                 player,
                 InteractionHand.MAIN_HAND,
-                carriedStack,
+                interactionStack,
                 hitResult
         ));
-        menu.setCarried(carriedStack);
+        if (!useMainHandItem) {
+            menu.setCarried(interactionStack);
+        }
         menu.broadcastChanges();
     }
 

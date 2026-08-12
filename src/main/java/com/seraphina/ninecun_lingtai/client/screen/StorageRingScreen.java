@@ -236,7 +236,8 @@ public final class StorageRingScreen extends AbstractContainerScreen<StorageRing
                     target.localPosition(),
                     target.direction(),
                     target.localHitLocation(),
-                    use
+                    use,
+                    false
             ));
         }
     }

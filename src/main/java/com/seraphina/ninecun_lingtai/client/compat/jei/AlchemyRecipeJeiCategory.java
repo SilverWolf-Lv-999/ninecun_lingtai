@@ -17,6 +17,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
+@SuppressWarnings("all")
 public final class AlchemyRecipeJeiCategory implements IRecipeCategory<AlchemyRecipeJeiData> {
     private static final int WIDTH = 176;
     private static final int HEIGHT = 82;

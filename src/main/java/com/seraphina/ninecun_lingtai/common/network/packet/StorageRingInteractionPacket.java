@@ -14,7 +14,8 @@ public record StorageRingInteractionPacket(
         BlockPos localPosition,
         Direction direction,
         Vec3 localHitLocation,
-        boolean use
+        boolean use,
+        boolean useMainHandItem
 ) {
     public static void encode(StorageRingInteractionPacket packet, FriendlyByteBuf buffer) {
         buffer.writeBlockPos(packet.localPosition);
@@ -23,6 +24,7 @@ public record StorageRingInteractionPacket(
         buffer.writeDouble(packet.localHitLocation.y);
         buffer.writeDouble(packet.localHitLocation.z);
         buffer.writeBoolean(packet.use);
+        buffer.writeBoolean(packet.useMainHandItem);
     }
 
     public static StorageRingInteractionPacket decode(FriendlyByteBuf buffer) {
@@ -30,6 +32,7 @@ public record StorageRingInteractionPacket(
                 buffer.readBlockPos(),
                 buffer.readEnum(Direction.class),
                 new Vec3(buffer.readDouble(), buffer.readDouble(), buffer.readDouble()),
+                buffer.readBoolean(),
                 buffer.readBoolean()
         );
     }
@@ -47,7 +50,8 @@ public record StorageRingInteractionPacket(
                         packet.localPosition,
                         packet.direction,
                         packet.localHitLocation,
-                        packet.use
+                        packet.use,
+                        packet.useMainHandItem
                 );
             }
         });

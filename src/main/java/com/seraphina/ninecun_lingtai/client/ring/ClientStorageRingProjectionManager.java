@@ -174,6 +174,17 @@ public final class ClientStorageRingProjectionManager {
         return raycast(getCameraPosition(), direction);
     }
 
+    public static ProjectionTarget pickFromCrosshair(UUID ringId) {
+        if (!isActiveFor(ringId)) {
+            return null;
+        }
+
+        return raycast(
+                getCameraPosition(),
+                Vec3.directionFromRotation(thisCameraXRot, thisCameraYRot)
+        );
+    }
+
     public static Vec3 getCameraPosition() {
         return thisCameraPosition;
     }

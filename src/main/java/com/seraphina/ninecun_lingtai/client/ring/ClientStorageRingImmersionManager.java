@@ -179,16 +179,10 @@ public final class ClientStorageRingImmersionManager {
 
         if (event.isAttack() || event.isUseItem()) {
             boolean use = event.isUseItem();
-            Minecraft minecraft = Minecraft.getInstance();
-            ClientStorageRingProjectionManager.ProjectionTarget target = ClientStorageRingProjectionManager.pick(
-                    thisRingId,
-                    0,
-                    0,
-                    minecraft.getWindow().getWidth(),
-                    minecraft.getWindow().getHeight(),
-                    minecraft.getWindow().getWidth() * 0.5D,
-                    minecraft.getWindow().getHeight() * 0.5D
-            );
+            ClientStorageRingProjectionManager.ProjectionTarget target =
+                    ClientStorageRingProjectionManager.pickFromCrosshair(
+                            thisRingId
+                    );
             if (target != null) {
                 if (!use) {
                     ClientStorageRingProjectionManager.removeBlock(thisRingId, target.localPosition());
@@ -197,7 +191,8 @@ public final class ClientStorageRingImmersionManager {
                         target.localPosition(),
                         target.direction(),
                         target.localHitLocation(),
-                        use
+                        use,
+                        true
                 ));
             }
         }
