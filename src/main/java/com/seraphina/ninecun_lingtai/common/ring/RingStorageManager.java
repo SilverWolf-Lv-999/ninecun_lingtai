@@ -18,6 +18,8 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleMenuProvider;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
@@ -49,6 +51,8 @@ public final class RingStorageManager {
     private static final int MAXIMUM_PROJECTION_BLOCKS = 8_192;
     private static final double PROJECTION_REFRESH_DISTANCE_SQUARED = 64.0D;
     private static final Map<UUID, StorageRingSession> ACTIVE_SESSIONS = new HashMap<>();
+    private static final ThreadLocal<ServerPlayer> STORAGE_DROP_PLAYER = new ThreadLocal<>();
+    private static final ThreadLocal<Boolean> REDIRECTING_STORAGE_DROP = ThreadLocal.withInitial(() -> false);
 
     public static void open(ServerPlayer player, ItemStack ringStack) {
         UUID ringId = RingStorageUtility.getOrCreateRingId(ringStack);
@@ -299,6 +303,38 @@ public final class RingStorageManager {
         ACTIVE_SESSIONS.clear();
     }
 
+    public static boolean redirectStorageItemDrop(ServerLevel storageLevel, Entity entity) {
+        if (!(entity instanceof ItemEntity itemEntity)
+                || !storageLevel.dimension().equals(RingStorageUtility.STORAGE_DIMENSION)
+                || REDIRECTING_STORAGE_DROP.get()) {
+            return false;
+        }
+
+        ServerPlayer player = STORAGE_DROP_PLAYER.get();
+        if (player == null || player.isRemoved()) {
+            return false;
+        }
+
+        if (player.serverLevel() == storageLevel) {
+            itemEntity.setPos(player.getX(), player.getY(), player.getZ());
+            return false;
+        }
+
+        REDIRECTING_STORAGE_DROP.set(true);
+        try {
+            player.serverLevel().addFreshEntity(new ItemEntity(
+                    player.serverLevel(),
+                    player.getX(),
+                    player.getY(),
+                    player.getZ(),
+                    itemEntity.getItem()
+            ));
+        } finally {
+            REDIRECTING_STORAGE_DROP.remove();
+        }
+        return true;
+    }
+
     private static void saveCameraState(MinecraftServer server, StorageRingSession session) {
         RingStorageSavedData.get(server).setCameraState(
                 session.ringId,
@@ -366,25 +402,35 @@ public final class RingStorageManager {
             return;
         }
 
-        blockState.getBlock().playerWillDestroy(storageLevel, worldPosition, blockState, player);
-        BlockEntity blockEntity = storageLevel.getBlockEntity(worldPosition);
-        List<ItemStack> drops = player.getAbilities().instabuild
-                ? List.of()
-                : Block.getDrops(
-                        blockState,
-                        storageLevel,
-                        worldPosition,
-                        blockEntity,
-                        player,
-                        player.getMainHandItem()
-                );
-        storageLevel.removeBlock(worldPosition, false);
-        if (!player.getAbilities().instabuild) {
-            player.getMainHandItem().mineBlock(storageLevel, blockState, worldPosition, player);
-        }
-        for (ItemStack drop : drops) {
-            if (!player.getInventory().add(drop)) {
-                player.drop(drop, false);
+        ServerPlayer previousDropPlayer = STORAGE_DROP_PLAYER.get();
+        STORAGE_DROP_PLAYER.set(player);
+        try {
+            blockState.getBlock().playerWillDestroy(storageLevel, worldPosition, blockState, player);
+            BlockEntity blockEntity = storageLevel.getBlockEntity(worldPosition);
+            List<ItemStack> drops = player.getAbilities().instabuild
+                    ? List.of()
+                    : Block.getDrops(
+                            blockState,
+                            storageLevel,
+                            worldPosition,
+                            blockEntity,
+                            player,
+                            player.getMainHandItem()
+                    );
+            storageLevel.removeBlock(worldPosition, false);
+            if (!player.getAbilities().instabuild) {
+                player.getMainHandItem().mineBlock(storageLevel, blockState, worldPosition, player);
+            }
+            for (ItemStack drop : drops) {
+                if (!player.getInventory().add(drop)) {
+                    player.drop(drop, false);
+                }
+            }
+        } finally {
+            if (previousDropPlayer == null) {
+                STORAGE_DROP_PLAYER.remove();
+            } else {
+                STORAGE_DROP_PLAYER.set(previousDropPlayer);
             }
         }
     }

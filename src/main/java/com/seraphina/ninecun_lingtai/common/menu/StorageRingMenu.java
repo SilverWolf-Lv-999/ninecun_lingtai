@@ -18,11 +18,11 @@ public final class StorageRingMenu extends AbstractContainerMenu {
     public static final int VIEWPORT_TOP = 5;
     public static final int VIEWPORT_WIDTH = 246;
     public static final int VIEWPORT_HEIGHT = 141;
-    public static final int PLAYER_INVENTORY_TOP = 155;
-    public static final int HOTBAR_TOP = 213;
+    public static final int PLAYER_INVENTORY_TOP = 156;
+    public static final int HOTBAR_TOP = 214;
 
     private static final int SLOT_SIZE = 18;
-    private static final int PLAYER_INVENTORY_LEFT = 48;
+    private static final int PLAYER_INVENTORY_LEFT = 50;
     private static final int PLAYER_INVENTORY_START = 0;
     private static final int PLAYER_INVENTORY_END = PLAYER_INVENTORY_START + 27;
     private static final int HOTBAR_START = PLAYER_INVENTORY_END;
