@@ -81,7 +81,7 @@ public final class StorageRingProjectionRenderUtility {
         guiGraphics.enableScissor(viewportLeft, viewportTop, viewportRight, viewportBottom);
         guiGraphics.flush();
         try {
-            render(getGuiViewport(guiLeft, guiTop), false, partialTick);
+            render(getGuiViewport(guiLeft, guiTop), false, partialTick, false);
         } finally {
             guiGraphics.disableScissor();
         }
@@ -94,10 +94,19 @@ public final class StorageRingProjectionRenderUtility {
             float partialTick
     ) {
         guiGraphics.flush();
-        render(viewport, clearColor, partialTick);
+        render(viewport, clearColor, partialTick, false);
     }
 
     public static void render(Viewport viewport, boolean clearColor, float partialTick) {
+        render(viewport, clearColor, partialTick, true);
+    }
+
+    private static void render(
+            Viewport viewport,
+            boolean clearColor,
+            float partialTick,
+            boolean interpolateCameraPosition
+    ) {
         if (viewport.width <= 0 || viewport.height <= 0) {
             return;
         }
@@ -118,7 +127,9 @@ public final class StorageRingProjectionRenderUtility {
                     minecraft.getBlockRenderer(),
                     ClientStorageRingProjectionManager.getBlockStates(),
                     ClientStorageRingProjectionManager.getSnapshotVersion(),
-                    ClientStorageRingProjectionManager.getInterpolatedCameraPosition(partialTick),
+                    interpolateCameraPosition
+                            ? ClientStorageRingProjectionManager.getInterpolatedCameraPosition(partialTick)
+                            : ClientStorageRingProjectionManager.getCameraPosition(),
                     ClientStorageRingProjectionManager.getCameraYRot(),
                     ClientStorageRingProjectionManager.getCameraXRot(),
                     viewport.width,

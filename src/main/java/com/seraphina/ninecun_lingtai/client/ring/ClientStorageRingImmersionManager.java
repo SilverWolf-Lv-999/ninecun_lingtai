@@ -91,6 +91,7 @@ public final class ClientStorageRingImmersionManager {
         }
 
         if (thisState == State.IMMERSIVE) {
+            ClientStorageRingProjectionManager.tickCameraMotion();
             return;
         }
 
@@ -118,6 +119,9 @@ public final class ClientStorageRingImmersionManager {
                 StorageRingProjectionRenderUtility.getGuiViewport(screen.getLeftPos(), screen.getTopPos());
         StorageRingProjectionRenderUtility.Viewport fullscreenViewport =
                 StorageRingProjectionRenderUtility.getCoveringViewport(initialViewport);
+        if (thisState == State.ENTERING) {
+            ClientStorageRingProjectionManager.updateFrameCameraMotion();
+        }
         float progress = getSmoothedProgress();
         StorageRingProjectionRenderUtility.Viewport viewport = thisState == State.ENTERING
                 ? StorageRingProjectionRenderUtility.interpolate(initialViewport, fullscreenViewport, progress)

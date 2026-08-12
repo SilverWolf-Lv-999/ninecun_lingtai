@@ -152,6 +152,7 @@ public final class StorageRingScreen extends AbstractContainerScreen<StorageRing
         if (!this.closePacketSent) {
             this.closePacketSent = true;
             if (ClientStorageRingProjectionManager.isActiveFor(this.menu.getRingId())) {
+                ClientStorageRingProjectionManager.updateFrameCameraMotion();
                 ModNetwork.sendToServer(CloseStorageRingPacket.withCameraState(
                         ClientStorageRingProjectionManager.getCameraPosition(),
                         ClientStorageRingProjectionManager.getCameraYRot(),
@@ -207,6 +208,7 @@ public final class StorageRingScreen extends AbstractContainerScreen<StorageRing
         if (!ClientStorageRingProjectionManager.isActiveFor(this.menu.getRingId())) {
             return;
         }
+        ClientStorageRingProjectionManager.updateFrameCameraMotion();
         StorageRingProjectionRenderUtility.renderGuiProjection(
                 guiGraphics,
                 this.leftPos,

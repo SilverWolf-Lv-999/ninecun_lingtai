@@ -75,7 +75,6 @@ public final class ClientForgeEventHandler {
             ClientTribulationManager.tick();
             ClientPushingMountainsManager.tick();
             ClientStorageRingImmersionManager.tick();
-            ClientStorageRingProjectionManager.tickCameraMotion();
         }
     }
 
