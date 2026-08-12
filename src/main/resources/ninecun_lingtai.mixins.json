@@ -5,36 +5,36 @@
   "compatibilityLevel": "JAVA_17",
   "refmap": "ninecun_lingtai.refmap.json",
   "mixins": [
-    "common.ChatFormattingMixin",
-    "common.CommandsMixin",
-    "common.StyleMixin",
-    "common.food.FoodDataMixin",
-    "common.food.PlayerMixin",
-    "common.health.EntityMixin",
-    "common.health.LivingEntityMixin",
-    "common.ring.AbstractContainerMenuMixin",
-    "common.ring.AbstractFurnaceBlockEntityMixin",
-    "common.ring.BrewingStandBlockEntityMixin",
-    "common.ring.EnderChestBlockEntityMixin",
-    "common.ring.RandomizableContainerBlockEntityMixin",
-    "common.ring.ServerLevelMixin"
+    "net.seraphina.ninecun_lingtai.mixin.common.ChatFormattingMixin",
+    "net.seraphina.ninecun_lingtai.mixin.common.CommandsMixin",
+    "net.seraphina.ninecun_lingtai.mixin.common.StyleMixin",
+    "net.seraphina.ninecun_lingtai.mixin.common.food.FoodDataMixin",
+    "net.seraphina.ninecun_lingtai.mixin.common.food.PlayerMixin",
+    "net.seraphina.ninecun_lingtai.mixin.common.health.EntityMixin",
+    "net.seraphina.ninecun_lingtai.mixin.common.health.LivingEntityMixin",
+    "net.seraphina.ninecun_lingtai.mixin.common.ring.AbstractContainerMenuMixin",
+    "net.seraphina.ninecun_lingtai.mixin.common.ring.AbstractFurnaceBlockEntityMixin",
+    "net.seraphina.ninecun_lingtai.mixin.common.ring.BrewingStandBlockEntityMixin",
+    "net.seraphina.ninecun_lingtai.mixin.common.ring.EnderChestBlockEntityMixin",
+    "net.seraphina.ninecun_lingtai.mixin.common.ring.RandomizableContainerBlockEntityMixin",
+    "net.seraphina.ninecun_lingtai.mixin.common.ring.ServerLevelMixin"
   ],
   "client": [
-    "client.AbstractClientPlayerMixin",
-    "client.CameraMixin",
-    "client.ClientPacketListenerMixin",
-    "client.CreativeModeInventoryScreenFiltersMixin",
-    "client.GameRendererMixin",
-    "client.LevelRendererMixin",
-    "client.LightTextureMixin",
-    "client.LivingEntityRendererMixin",
-    "client.MouseHandlerMixin",
-    "client.compat.InventoryTabsClientMixin",
-    "client.compat.badoptimizations.EntityDataCacheMixin",
-    "client.compat.jei.BookmarkOverlayMixin",
-    "client.compat.jei.GuiEventHandlerMixin",
-    "client.compat.jei.IngredientListOverlayMixin",
-    "client.food.PlayerFoodMixin"
+    "net.seraphina.ninecun_lingtai.mixin.client.AbstractClientPlayerMixin",
+    "net.seraphina.ninecun_lingtai.mixin.client.CameraMixin",
+    "net.seraphina.ninecun_lingtai.mixin.client.ClientPacketListenerMixin",
+    "net.seraphina.ninecun_lingtai.mixin.client.CreativeModeInventoryScreenFiltersMixin",
+    "net.seraphina.ninecun_lingtai.mixin.client.GameRendererMixin",
+    "net.seraphina.ninecun_lingtai.mixin.client.LevelRendererMixin",
+    "net.seraphina.ninecun_lingtai.mixin.client.LightTextureMixin",
+    "net.seraphina.ninecun_lingtai.mixin.client.LivingEntityRendererMixin",
+    "net.seraphina.ninecun_lingtai.mixin.client.MouseHandlerMixin",
+    "net.seraphina.ninecun_lingtai.mixin.client.compat.InventoryTabsClientMixin",
+    "net.seraphina.ninecun_lingtai.mixin.client.compat.badoptimizations.EntityDataCacheMixin",
+    "net.seraphina.ninecun_lingtai.mixin.client.compat.jei.BookmarkOverlayMixin",
+    "net.seraphina.ninecun_lingtai.mixin.client.compat.jei.GuiEventHandlerMixin",
+    "net.seraphina.ninecun_lingtai.mixin.client.compat.jei.IngredientListOverlayMixin",
+    "net.seraphina.ninecun_lingtai.mixin.client.food.PlayerFoodMixin"
   ],
   "injectors": {
     "defaultRequire": 1
@@ -42,5 +42,5 @@
   "overwrites": {
     "requireAnnotations": true
   },
-  "plugin": "com.seraphina.ninecun_lingtai.mixin.IMixinPlugin"
+  "plugin": "net.seraphina.ninecun_lingtai.mixin.IMixinPlugin"
 }
