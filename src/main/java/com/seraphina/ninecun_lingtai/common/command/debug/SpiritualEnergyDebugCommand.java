@@ -20,8 +20,6 @@ import java.util.Collection;
 import java.util.List;
 
 public final class SpiritualEnergyDebugCommand {
-    private SpiritualEnergyDebugCommand() {
-    }
 
     public static LiteralArgumentBuilder<CommandSourceStack> create() {
         return Commands.literal("energy")

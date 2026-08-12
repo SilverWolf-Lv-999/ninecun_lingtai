@@ -19,8 +19,6 @@ import java.util.Collection;
 import java.util.List;
 
 public final class PlayerDebugCommand {
-    private PlayerDebugCommand() {
-    }
 
     public static LiteralArgumentBuilder<CommandSourceStack> create() {
         return Commands.literal("player")

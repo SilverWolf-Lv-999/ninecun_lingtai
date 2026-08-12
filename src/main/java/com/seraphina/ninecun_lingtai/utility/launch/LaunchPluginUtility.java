@@ -15,19 +15,10 @@ import java.lang.reflect.Modifier;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public final class LaunchPluginUtility {
     private static final Unsafe UNSAFE = getUnsafe();
-
-    private LaunchPluginUtility() {
-    }
 
     public static void install(String pluginName, ILaunchPluginService plugin) {
         try {

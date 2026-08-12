@@ -46,9 +46,11 @@ public final class ClientStorageRingImmersionManager {
 
         Minecraft minecraft = Minecraft.getInstance();
         if (!ClientStorageRingProjectionManager.isActiveFor(thisRingId)
-                || minecraft.player == null
-                || minecraft.screen != null) {
+                || minecraft.player == null) {
             reset();
+            return false;
+        }
+        if (minecraft.screen != null) {
             return false;
         }
 
@@ -89,10 +91,6 @@ public final class ClientStorageRingImmersionManager {
         }
 
         if (thisState == State.IMMERSIVE) {
-            if (minecraft.screen != null) {
-                reset();
-                return;
-            }
             return;
         }
 
@@ -129,10 +127,9 @@ public final class ClientStorageRingImmersionManager {
     }
 
     public static void renderImmersive(RenderLevelStageEvent event) {
-        if (thisState != State.IMMERSIVE
+        if (!isImmersiveProjectionActive()
                 || event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES
-                || thisRingId == null
-                || !ClientStorageRingProjectionManager.isActiveFor(thisRingId)) {
+                || thisRingId == null) {
             return;
         }
         StorageRingProjectionRenderUtility.render(
@@ -215,9 +212,13 @@ public final class ClientStorageRingImmersionManager {
     }
 
     public static boolean isImmersive() {
+        return isImmersiveProjectionActive()
+                && Minecraft.getInstance().screen == null;
+    }
+
+    public static boolean isImmersiveProjectionActive() {
         return thisState == State.IMMERSIVE
                 && thisRingId != null
-                && Minecraft.getInstance().screen == null
                 && ClientStorageRingProjectionManager.isActiveFor(thisRingId);
     }
 

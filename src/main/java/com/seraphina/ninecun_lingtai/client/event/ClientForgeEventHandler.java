@@ -192,7 +192,7 @@ public final class ClientForgeEventHandler {
 
     @SubscribeEvent
     public static void onRenderHand(RenderHandEvent event) {
-        if (ClientStorageRingImmersionManager.isImmersive()) {
+        if (ClientStorageRingImmersionManager.isImmersiveProjectionActive()) {
             event.setCanceled(true);
         }
     }

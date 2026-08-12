@@ -21,9 +21,6 @@ public final class LifespanDebugCommand {
     private static final int MAXIMUM_SET_YEARS = 1_000_000;
     private static final int MAXIMUM_ADJUST_YEARS = 1_000_000;
 
-    private LifespanDebugCommand() {
-    }
-
     public static LiteralArgumentBuilder<CommandSourceStack> create() {
         return Commands.literal("lifespan")
                 .executes(context -> getLifespan(

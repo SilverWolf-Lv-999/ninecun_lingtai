@@ -9,15 +9,11 @@ import net.minecraft.network.chat.Component;
 public final class DebugCommand {
     private static final int DEBUG_PERMISSION_LEVEL = 2;
 
-    private DebugCommand() {
-    }
-
     public static LiteralArgumentBuilder<CommandSourceStack> create() {
         return Commands.literal("debug")
                 .requires(source -> source.hasPermission(DEBUG_PERMISSION_LEVEL))
                 .executes(context -> showHelp(context.getSource()))
-                .then(Commands.literal("help")
-                        .executes(context -> showHelp(context.getSource())))
+                .then(Commands.literal("help").executes(context -> showHelp(context.getSource())))
                 .then(PlayerDebugCommand.create())
                 .then(AptitudeDebugCommand.create())
                 .then(CultivationDebugCommand.create())

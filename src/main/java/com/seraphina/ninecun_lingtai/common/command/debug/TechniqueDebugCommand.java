@@ -49,9 +49,6 @@ public final class TechniqueDebugCommand {
     );
     private static final Map<String, TechniqueMasteryStage> MASTERY_ALIASES = createMasteryAliases();
 
-    private TechniqueDebugCommand() {
-    }
-
     public static LiteralArgumentBuilder<CommandSourceStack> create() {
         return Commands.literal("technique")
                 .executes(context -> getTechniques(

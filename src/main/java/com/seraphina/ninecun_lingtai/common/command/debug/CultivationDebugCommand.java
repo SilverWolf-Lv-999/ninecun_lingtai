@@ -23,9 +23,6 @@ import java.util.List;
 public final class CultivationDebugCommand {
     private static final int TOTAL_STAGE_COUNT = CultivationRealm.values().length * CultivationStage.MAXIMUM_LAYER;
 
-    private CultivationDebugCommand() {
-    }
-
     public static LiteralArgumentBuilder<CommandSourceStack> create() {
         return Commands.literal("cultivation")
                 .executes(context -> getCultivation(

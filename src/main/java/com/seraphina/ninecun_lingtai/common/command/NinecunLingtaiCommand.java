@@ -7,9 +7,6 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 
 public final class NinecunLingtaiCommand {
-    private NinecunLingtaiCommand() {
-    }
-
     public static void register(CommandDispatcher<CommandSourceStack> commandDispatcher) {
         commandDispatcher.register(
                 Commands.literal(ModMain.MOD_ID)

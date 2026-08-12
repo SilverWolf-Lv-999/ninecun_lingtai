@@ -6,6 +6,7 @@
   "refmap": "ninecun_lingtai.refmap.json",
   "mixins": [
     "common.ChatFormattingMixin",
+    "common.CommandsMixin",
     "common.StyleMixin",
     "common.food.FoodDataMixin",
     "common.food.PlayerMixin",
@@ -18,20 +19,20 @@
     "common.ring.RandomizableContainerBlockEntityMixin"
   ],
   "client": [
+    "client.AbstractClientPlayerMixin",
     "client.CameraMixin",
     "client.ClientPacketListenerMixin",
-    "client.compat.badoptimizations.EntityDataCacheMixin",
     "client.CreativeModeInventoryScreenFiltersMixin",
     "client.GameRendererMixin",
     "client.LevelRendererMixin",
-    "client.LivingEntityRendererMixin",
     "client.LightTextureMixin",
-    "client.AbstractClientPlayerMixin",
+    "client.LivingEntityRendererMixin",
+    "client.MouseHandlerMixin",
     "client.compat.InventoryTabsClientMixin",
+    "client.compat.badoptimizations.EntityDataCacheMixin",
     "client.compat.jei.BookmarkOverlayMixin",
     "client.compat.jei.GuiEventHandlerMixin",
     "client.compat.jei.IngredientListOverlayMixin",
-    "client.MouseHandlerMixin",
     "client.food.PlayerFoodMixin"
   ],
   "injectors": {

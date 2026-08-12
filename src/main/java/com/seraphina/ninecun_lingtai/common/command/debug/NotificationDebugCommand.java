@@ -14,8 +14,6 @@ import net.minecraft.server.level.ServerPlayer;
 import java.util.Collection;
 
 public final class NotificationDebugCommand {
-    private NotificationDebugCommand() {
-    }
 
     public static LiteralArgumentBuilder<CommandSourceStack> create() {
         return Commands.literal("notification")

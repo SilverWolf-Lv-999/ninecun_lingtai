@@ -24,8 +24,6 @@ import java.util.List;
 import java.util.Set;
 
 public final class AptitudeDebugCommand {
-    private AptitudeDebugCommand() {
-    }
 
     public static LiteralArgumentBuilder<CommandSourceStack> create() {
         return Commands.literal("aptitude")

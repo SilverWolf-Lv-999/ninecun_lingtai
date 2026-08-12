@@ -23,7 +23,7 @@ public final class ModMain {
     public static final Logger LOGGER = LogManager.getLogger();
 
     public ModMain(FMLJavaModLoadingContext context) {
-        LOGGER.info("Loading Mod ...");
+        LOGGER.info("init mod main......");
         IEventBus modEventBus = context.getModEventBus();
         ModBlocks.register(modEventBus);
         ModBlockEntityTypes.register(modEventBus);
