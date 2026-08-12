@@ -28,9 +28,6 @@ public final class TechniqueComprehensionService {
             .connectTimeout(Duration.ofSeconds(15L))
             .build();
 
-    private TechniqueComprehensionService() {
-    }
-
     public static CompletableFuture<TechniqueAssessment> evaluate(
             TechniqueDefinition technique,
             String playerUnderstanding

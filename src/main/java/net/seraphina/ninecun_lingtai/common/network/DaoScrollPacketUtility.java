@@ -20,9 +20,6 @@ public final class DaoScrollPacketUtility {
     private static final int MAXIMUM_TECHNIQUE_NAME_LENGTH = 256;
     private static final int MAXIMUM_TECHNIQUES = 2048;
 
-    private DaoScrollPacketUtility() {
-    }
-
     public static void writeSnapshot(FriendlyByteBuf buffer, DaoScrollSnapshot snapshot) {
         buffer.writeVarInt(snapshot.entityId());
         buffer.writeUtf(snapshot.entityName(), MAXIMUM_ENTITY_NAME_LENGTH);

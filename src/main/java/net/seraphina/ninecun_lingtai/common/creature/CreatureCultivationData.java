@@ -27,9 +27,6 @@ public final class CreatureCultivationData {
     private static final String LENGTH_INCHES_KEY = "length_inches";
     private static final String SPAWN_ROLL_DONE_KEY = ModMain.MOD_ID + ":cultivation_rolled";
 
-    private CreatureCultivationData() {
-    }
-
     public static Optional<CultivationStage> getStage(LivingEntity entity) {
         if (entity instanceof Player player) {
             return PlayerCultivationData.getStage(player);

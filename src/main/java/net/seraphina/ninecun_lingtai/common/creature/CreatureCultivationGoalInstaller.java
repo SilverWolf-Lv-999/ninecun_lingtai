@@ -22,11 +22,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.Predicate;
 
-/**
- * Equips a cultivating creature with the behaviours its cultivation implies: peaceful animals
- * retaliate and hunt down attackers instead of panicking, and innate fears (creeper vs cat,
- * skeleton vs wolf, ...) invert into aggression when the feared creature is the weaker cultivator.
- */
 public final class CreatureCultivationGoalInstaller {
     private static final Logger LOGGER = LogUtils.getLogger();
     // Priority zero outranks PanicGoal so an attacked cultivator fights instead of fleeing.
@@ -86,9 +81,6 @@ public final class CreatureCultivationGoalInstaller {
             AVOID_PREDICATE_FIELD = predicateFields.get(0);
             ON_AVOID_PREDICATE_FIELD = predicateFields.get(1);
         }
-    }
-
-    private CreatureCultivationGoalInstaller() {
     }
 
     public static void install(Mob mob) {

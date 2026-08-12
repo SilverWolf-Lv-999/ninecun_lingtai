@@ -20,9 +20,6 @@ public final class PlayerPossessionManager {
     private static final Map<UUID, PossessionSession> POSSESSION_SESSIONS = new HashMap<>();
     private static final Map<UUID, UUID> POSSESSED_TARGETS = new HashMap<>();
 
-    private PlayerPossessionManager() {
-    }
-
     public static boolean startPossessing(ServerPlayer possessor, ServerPlayer target) {
         if (possessor == target
                 || !possessor.isAlive()

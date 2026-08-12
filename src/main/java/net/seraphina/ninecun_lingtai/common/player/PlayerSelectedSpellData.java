@@ -8,12 +8,8 @@ import net.minecraft.world.entity.player.Player;
 
 import java.util.Optional;
 
-/** 玩家当前择定的法术，存的是法术类功法的功法 id（persistent NBT）。 */
 public final class PlayerSelectedSpellData {
     private static final String SELECTED_SPELL_KEY = ModMain.MOD_ID + ":selected_spell";
-
-    private PlayerSelectedSpellData() {
-    }
 
     public static Optional<ResourceLocation> getSelectedSpell(Player player) {
         CompoundTag persistentData = player.getPersistentData();

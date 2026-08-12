@@ -30,9 +30,6 @@ public final class MeditationAnimationManager {
 
     private static boolean registered;
 
-    private MeditationAnimationManager() {
-    }
-
     public static void register() {
         if (registered) {
             return;

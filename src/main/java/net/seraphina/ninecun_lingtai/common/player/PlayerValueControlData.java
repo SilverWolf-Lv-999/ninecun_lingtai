@@ -12,9 +12,6 @@ import java.util.Map;
 public final class PlayerValueControlData {
     private static final String VALUE_CONTROL_KEY = ModMain.MOD_ID + ":value_control";
 
-    private PlayerValueControlData() {
-    }
-
     public static PlayerValueControlSettings getSettings(Player player) {
         CompoundTag persistentData = player.getPersistentData();
         if (!persistentData.contains(VALUE_CONTROL_KEY, Tag.TAG_COMPOUND)) {

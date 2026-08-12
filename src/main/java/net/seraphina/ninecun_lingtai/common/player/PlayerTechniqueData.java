@@ -20,9 +20,6 @@ public final class PlayerTechniqueData {
     private static final String MASTERY_KEY = "mastery";
     private static final String FEEDBACK_KEY = "feedback";
 
-    private PlayerTechniqueData() {
-    }
-
     public static Map<ResourceLocation, TechniqueProgress> getTechniques(Player player) {
         CompoundTag persistentData = player.getPersistentData();
         if (!persistentData.contains(TECHNIQUES_KEY, Tag.TAG_COMPOUND)) {

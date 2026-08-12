@@ -6,17 +6,10 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
-/**
- * 玩家御剑飞行状态（persistent NBT）：是否御剑中、脚下之剑锁定的背包槽位与剑的快照。
- * 死亡时不随 clone 复制——人亡剑落，御剑状态自然消散。
- */
 public final class PlayerSwordFlightData {
     private static final String SWORD_FLIGHT_KEY = ModMain.MOD_ID + ":sword_flight";
     private static final String SLOT_KEY = "slot";
     private static final String SWORD_KEY = "sword";
-
-    private PlayerSwordFlightData() {
-    }
 
     public static boolean isFlying(Player player) {
         return player.getPersistentData().contains(SWORD_FLIGHT_KEY, Tag.TAG_COMPOUND);

@@ -27,8 +27,6 @@ public final class PressureManager {
     private static final Map<UUID, PressureEffectState> ACTIVE_PLAYER_EFFECTS = new HashMap<>();
     private static final Map<UUID, Vec3> LOCKED_PLAYER_POSITIONS = new HashMap<>();
 
-    private PressureManager() {
-    }
 
     public static void setActive(ServerPlayer player, boolean active) {
         if (active) {

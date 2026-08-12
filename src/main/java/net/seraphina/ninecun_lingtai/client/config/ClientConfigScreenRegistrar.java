@@ -6,8 +6,6 @@ import net.minecraftforge.client.ConfigScreenHandler;
 import net.minecraftforge.fml.ModList;
 
 public final class ClientConfigScreenRegistrar {
-    private ClientConfigScreenRegistrar() {
-    }
 
     public static void register() {
         ModList.get()

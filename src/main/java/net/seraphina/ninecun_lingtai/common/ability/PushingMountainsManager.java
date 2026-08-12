@@ -30,9 +30,6 @@ public final class PushingMountainsManager {
     private static final Map<UUID, Selection> SELECTIONS = new HashMap<>();
     private static final double INTERACTION_DISTANCE_PADDING = 16.0D;
 
-    private PushingMountainsManager() {
-    }
-
     public static void selectPoint(ServerPlayer player, BlockPos position) {
         if (!canUse(player)) {
             sendMessage(player, "金丹期方可排山倒海");

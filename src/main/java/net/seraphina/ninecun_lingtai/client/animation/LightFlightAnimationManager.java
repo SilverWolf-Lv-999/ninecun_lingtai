@@ -35,9 +35,6 @@ public final class LightFlightAnimationManager {
 
     private static boolean registered;
 
-    private LightFlightAnimationManager() {
-    }
-
     public static void register() {
         if (registered) {
             return;

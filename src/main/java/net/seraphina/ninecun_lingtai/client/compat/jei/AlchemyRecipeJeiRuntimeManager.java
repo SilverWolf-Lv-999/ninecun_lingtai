@@ -19,9 +19,6 @@ public final class AlchemyRecipeJeiRuntimeManager {
     @Nullable
     private static IJeiRuntime runtime;
 
-    private AlchemyRecipeJeiRuntimeManager() {
-    }
-
     public static void setInitialRecipes(List<AlchemyRecipeJeiData> recipes) {
         registeredRecipes.clear();
         registeredRecipes.putAll(createRecipeMap(recipes));

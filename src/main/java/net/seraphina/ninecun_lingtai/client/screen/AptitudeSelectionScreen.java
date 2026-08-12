@@ -44,6 +44,7 @@ public final class AptitudeSelectionScreen extends Screen {
     private static final long ELEMENT_APPEAR_DURATION = 650L;
     private static final long TAIJI_APPEAR_DELAY = 1840L;
     private static final long TAIJI_APPEAR_DURATION = 800L;
+    private static final long TAIJI_ROTATION_DURATION = 45000L;
     private static final long INTRO_DURATION = TAIJI_APPEAR_DELAY + TAIJI_APPEAR_DURATION;
     private static final long SELECTION_FADE_DURATION = 780L;
     private static final long ROOT_FADE_IN_DURATION = 520L;
@@ -313,8 +314,7 @@ public final class AptitudeSelectionScreen extends Screen {
         if (taijiProgress > 0.0F) {
             float centerX = this.width * 0.5F;
             float centerY = getDiagramCenterY();
-            float rotationDuration = Mth.lerp(yinYangBalanceStrength, 45000.0F, 10500.0F);
-            float rotation = (currentTime % (long) rotationDuration) * 360.0F / rotationDuration;
+            float rotation = (currentTime % TAIJI_ROTATION_DURATION) * 360.0F / TAIJI_ROTATION_DURATION;
             float balanceScale = 1.0F + yinYangBalanceStrength * 0.045F * balancePulse;
             AptitudeRenderUtility.drawTaiji(
                     guiGraphics,

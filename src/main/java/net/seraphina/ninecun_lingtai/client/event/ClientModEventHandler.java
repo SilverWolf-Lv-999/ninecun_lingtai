@@ -95,9 +95,6 @@ public final class ClientModEventHandler {
             "tribulation_cloud"
     );
 
-    private ClientModEventHandler() {
-    }
-
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
         ClientConfigScreenRegistrar.register();

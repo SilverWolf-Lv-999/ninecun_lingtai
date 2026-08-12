@@ -14,9 +14,6 @@ import java.util.Set;
 public final class PlayerSpiritualEnergyData {
     private static final String SPIRITUAL_ENERGY_KEY = ModMain.MOD_ID + ":spiritual_energy";
 
-    private PlayerSpiritualEnergyData() {
-    }
-
     public static double getEnergy(Player player, ElementType element) {
         CompoundTag persistentData = player.getPersistentData();
         if (!persistentData.contains(SPIRITUAL_ENERGY_KEY, Tag.TAG_COMPOUND)) {
