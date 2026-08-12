@@ -1,4 +1,4 @@
-# Nine-Inch Spiritual Platform
+# Ninecun Lingtai
 
 A cultivation-themed mod for **Minecraft 1.20.1 Forge**. Players awaken spiritual roots, absorb spiritual energy, cultivate techniques, refine elixirs, cast spells, and advance along the immortal path while facing elemental environments and realm-based suppression.
 
