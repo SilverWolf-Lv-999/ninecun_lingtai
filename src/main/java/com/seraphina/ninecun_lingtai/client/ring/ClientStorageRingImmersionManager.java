@@ -3,6 +3,7 @@ package com.seraphina.ninecun_lingtai.client.ring;
 import com.seraphina.ninecun_lingtai.client.screen.StorageRingScreen;
 import com.seraphina.ninecun_lingtai.client.utility.StorageRingProjectionRenderUtility;
 import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
+import com.seraphina.ninecun_lingtai.common.network.packet.SetStorageRingImmersionPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.StorageRingInteractionPacket;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -36,6 +37,7 @@ public final class ClientStorageRingImmersionManager {
         thisStorageRingScreen = screen;
         thisRingId = screen.getRingId();
         thisTransitionStartNanos = System.nanoTime();
+        ModNetwork.sendToServer(new SetStorageRingImmersionPacket(true));
         return true;
     }
 
@@ -100,6 +102,7 @@ public final class ClientStorageRingImmersionManager {
             return;
         }
         if (isTransitionFinished()) {
+            ModNetwork.sendToServer(new SetStorageRingImmersionPacket(false));
             reset();
         }
     }

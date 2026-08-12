@@ -40,6 +40,7 @@ import com.seraphina.ninecun_lingtai.common.network.packet.RequestPlayerValueCon
 import com.seraphina.ninecun_lingtai.common.network.packet.RequestAlchemyRecipeLibraryPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.RequestTechniqueLibraryPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SelectSpellPacket;
+import com.seraphina.ninecun_lingtai.common.network.packet.SetStorageRingImmersionPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SoulInteractionPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.SoulMovementPacket;
 import com.seraphina.ninecun_lingtai.common.network.packet.StartSoulRoamingPacket;
@@ -630,6 +631,15 @@ public final class ModNetwork {
                 .encoder(StorageRingCameraPacket::encode)
                 .decoder(StorageRingCameraPacket::decode)
                 .consumerMainThread(StorageRingCameraPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        SetStorageRingImmersionPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(SetStorageRingImmersionPacket::encode)
+                .decoder(SetStorageRingImmersionPacket::decode)
+                .consumerMainThread(SetStorageRingImmersionPacket::handle)
                 .add();
         CHANNEL.messageBuilder(
                         StorageRingInteractionPacket.class,

@@ -134,8 +134,24 @@ public final class RingStorageManager {
             return;
         }
         StorageRingSession session = ACTIVE_SESSIONS.get(serverPlayer.getUUID());
-        if (session != null && session.ringId.equals(ringId)) {
+        if (session != null && session.ringId.equals(ringId) && !session.thisImmersive) {
             session.reopenMenuAtTick = serverPlayer.server.getTickCount() + 1L;
+        }
+    }
+
+    public static void setImmersive(ServerPlayer player, boolean immersive) {
+        StorageRingSession session = ACTIVE_SESSIONS.get(player.getUUID());
+        if (session == null) {
+            return;
+        }
+
+        session.thisImmersive = immersive;
+        if (immersive) {
+            session.reopenMenuAtTick = -1L;
+            return;
+        }
+        if (player.containerMenu == player.inventoryMenu) {
+            openMenu(player, session);
         }
     }
 
@@ -175,11 +191,15 @@ public final class RingStorageManager {
             boolean useMainHandItem
     ) {
         StorageRingSession session = ACTIVE_SESSIONS.get(player.getUUID());
-        if (session == null
-                || !(player.containerMenu instanceof StorageRingMenu menu)
-                || !menu.getRingId().equals(session.ringId)
-                || !isValidLocalPosition(localPosition)
+        if (session == null || !isValidLocalPosition(localPosition)
                 || !isValidLocalHit(localPosition, direction, localHitLocation)) {
+            return;
+        }
+        StorageRingMenu menu = player.containerMenu instanceof StorageRingMenu storageRingMenu
+                && storageRingMenu.getRingId().equals(session.ringId)
+                ? storageRingMenu
+                : null;
+        if (menu == null && !(useMainHandItem && session.thisImmersive)) {
             return;
         }
 
@@ -238,6 +258,7 @@ public final class RingStorageManager {
 
         if (session.reopenMenuAtTick >= 0L
                 && currentTick >= session.reopenMenuAtTick
+                && !session.thisImmersive
                 && player.containerMenu == player.inventoryMenu) {
             session.reopenMenuAtTick = -1L;
             openMenu(player, session);
@@ -318,7 +339,9 @@ public final class RingStorageManager {
                 hitResult
         );
         if (interactionStack.isEmpty() || blockResult.consumesAction()) {
-            menu.broadcastChanges();
+            if (menu != null) {
+                menu.broadcastChanges();
+            }
             return;
         }
 
@@ -329,10 +352,12 @@ public final class RingStorageManager {
                 interactionStack,
                 hitResult
         ));
-        if (!useMainHandItem) {
+        if (!useMainHandItem && menu != null) {
             menu.setCarried(interactionStack);
         }
-        menu.broadcastChanges();
+        if (menu != null) {
+            menu.broadcastChanges();
+        }
     }
 
     private static void destroyBlock(ServerPlayer player, ServerLevel storageLevel, BlockPos worldPosition) {
@@ -630,6 +655,7 @@ public final class RingStorageManager {
         private Vec3 lastProjectionPosition;
         private boolean initialProjectionRefreshPending = true;
         private long reopenMenuAtTick = -1L;
+        private boolean thisImmersive;
 
         private StorageRingSession(
                 UUID ringId,
