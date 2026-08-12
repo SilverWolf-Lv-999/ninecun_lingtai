@@ -5,8 +5,6 @@ import net.minecraft.world.entity.player.Player;
 
 /** Player-facing compatibility facade for the shared living-entity defense resource. */
 public final class PlayerDefenseResourceData {
-    private PlayerDefenseResourceData() {
-    }
 
     public static DefenseResourceSnapshot capture(Player player) {
         return EntityDefenseResourceData.capture(player);

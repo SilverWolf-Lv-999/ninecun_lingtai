@@ -1,5 +1,6 @@
 package net.seraphina.ninecun_lingtai.common.spell.defense;
 
+import net.seraphina.ninecun_lingtai.api.aptitude.SpiritualRoot;
 import net.seraphina.ninecun_lingtai.api.spell.Spell;
 import net.seraphina.ninecun_lingtai.api.spell.SpellCastContext;
 import net.seraphina.ninecun_lingtai.common.player.PlayerAptitudeData;
@@ -38,7 +39,7 @@ public final class BodyDefenseSpell extends Spell {
             return false;
         }
         int elementMask = PlayerAptitudeData.getSpiritualRoot(player)
-                .map(root -> root.getElementMask())
+                .map(SpiritualRoot::getElementMask)
                 .orElse(0);
         double maximum = DefenseSpellUtility.getMaximumPoints(this.kind, context);
         PlayerDefenseSpellData.setBodyShield(

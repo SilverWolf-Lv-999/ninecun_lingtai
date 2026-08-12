@@ -13,9 +13,6 @@ import java.util.Set;
 public final class PlayerLearnedAlchemyRecipeData {
     private static final String LEARNED_RECIPES_KEY = ModMain.MOD_ID + ":learned_alchemy_recipes";
 
-    private PlayerLearnedAlchemyRecipeData() {
-    }
-
     public static Set<ResourceLocation> getRecipes(Player player) {
         ListTag recipeTags = player.getPersistentData().getList(
                 LEARNED_RECIPES_KEY,

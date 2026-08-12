@@ -16,8 +16,6 @@ public final class PlayerAptitudeData {
     private static final String LENGTH_INCHES_KEY = "length_inches";
     private static final String ILLUMINATED_STARS_KEY = "illuminated_stars";
 
-    private PlayerAptitudeData() {
-    }
 
     public static Optional<SpiritualRoot> getSpiritualRoot(Player player) {
         CompoundTag persistentData = player.getPersistentData();

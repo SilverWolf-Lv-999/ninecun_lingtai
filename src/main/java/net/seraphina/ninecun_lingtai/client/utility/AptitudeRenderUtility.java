@@ -22,7 +22,7 @@ import java.util.List;
 
 public final class AptitudeRenderUtility {
     private static final int CIRCLE_SEGMENTS = 72;
-    private static final int SPIRITUAL_ROOT_SEGMENTS = 32;
+    private static final int SPIRITUAL_ROOT_SEGMENTS = 96;
     private static final int SPIRITUAL_ROOT_STRAND_COUNT = 3;
     private static final int SPIRITUAL_ROOT_NODE_COUNT = 9;
     private static final int SPIRITUAL_ROOT_MOTE_COUNT = 12;
@@ -865,14 +865,14 @@ public final class AptitudeRenderUtility {
         beginPositionColorRender();
         Matrix4f matrix = poseStack.last().pose();
         BufferBuilder bufferBuilder = Tesselator.getInstance().getBuilder();
-        bufferBuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-        for (int index = 0; index < points.size() - 1; index++) {
-            float progress = (index + 0.5F) / (points.size() - 1);
+        bufferBuilder.begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR);
+        for (int index = 0; index < points.size(); index++) {
+            float progress = (float) index / (points.size() - 1);
             float thickness = progress < 0.52F
                     ? Mth.lerp(progress / 0.52F, startThickness, middleThickness)
                     : Mth.lerp((progress - 0.52F) / 0.48F, middleThickness, endThickness);
             int color = ColorUtility.withAlpha(ColorUtility.blend(startColor, endColor, progress), alpha);
-            appendLineQuad(bufferBuilder, matrix, points.get(index), points.get(index + 1), thickness, color);
+            appendPolylineStripVertices(bufferBuilder, matrix, points, index, thickness, color);
         }
         BufferUploader.drawWithShader(bufferBuilder.end());
         endPositionColorRender();
@@ -885,9 +885,9 @@ public final class AptitudeRenderUtility {
         beginPositionColorRender();
         Matrix4f matrix = poseStack.last().pose();
         BufferBuilder bufferBuilder = Tesselator.getInstance().getBuilder();
-        bufferBuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-        for (int index = 0; index < points.size() - 1; index++) {
-            appendLineQuad(bufferBuilder, matrix, points.get(index), points.get(index + 1), thickness, color);
+        bufferBuilder.begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR);
+        for (int index = 0; index < points.size(); index++) {
+            appendPolylineStripVertices(bufferBuilder, matrix, points, index, thickness, color);
         }
         BufferUploader.drawWithShader(bufferBuilder.end());
         endPositionColorRender();
@@ -941,6 +941,33 @@ public final class AptitudeRenderUtility {
         vertex(bufferBuilder, matrix, start.x - normalX, start.y - normalY, color);
         vertex(bufferBuilder, matrix, end.x - normalX, end.y - normalY, color);
         vertex(bufferBuilder, matrix, end.x + normalX, end.y + normalY, color);
+    }
+
+    private static void appendPolylineStripVertices(
+            BufferBuilder bufferBuilder,
+            Matrix4f matrix,
+            List<ScreenPoint> points,
+            int pointIndex,
+            float thickness,
+            int color
+    ) {
+        ScreenPoint point = points.get(pointIndex);
+        ScreenPoint normal = getPolylineNormal(points, pointIndex);
+        float halfThickness = thickness * 0.5F;
+        vertex(
+                bufferBuilder,
+                matrix,
+                point.x + normal.x * halfThickness,
+                point.y + normal.y * halfThickness,
+                color
+        );
+        vertex(
+                bufferBuilder,
+                matrix,
+                point.x - normal.x * halfThickness,
+                point.y - normal.y * halfThickness,
+                color
+        );
     }
 
     private static void appendQuad(

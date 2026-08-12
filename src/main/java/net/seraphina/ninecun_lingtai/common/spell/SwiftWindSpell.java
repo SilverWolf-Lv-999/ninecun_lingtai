@@ -9,14 +9,12 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 
-/** 御风术的神通实现；名称、品级与消耗见 data/ninecun_lingtai/techniques/swift_wind_spell.json。 */
 public final class SwiftWindSpell extends Spell {
     private static final int FULL_DURATION_TICKS = 20 * 60;
     private static final int MAXIMUM_AMPLIFIER = 4;
 
     @Override
     public boolean cast(ServerPlayer player, SpellCastContext context) {
-        // 每进一个大境界，御风的身法便快上一分；熟练度与灵根资质决定发挥程度。
         int realmIndex = (context.cultivationStrength() - 1) / CultivationStage.MAXIMUM_LAYER;
         int amplifier = (int) Math.round(
                 Math.min(MAXIMUM_AMPLIFIER, realmIndex) * context.powerEfficiency()

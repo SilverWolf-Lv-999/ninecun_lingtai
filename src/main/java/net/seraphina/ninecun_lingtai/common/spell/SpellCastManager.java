@@ -29,10 +29,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-/**
- * 服务端施法入口。法术是一门带 {@code spell} 块的功法：须先参悟（学会）方可择定与施展，
- * 每次施展消耗随品级与本次实际威力共同增长，并像修炼一样积累这门功法的熟练度。
- */
 public final class SpellCastManager {
     private static final long PROFICIENCY_PER_CAST = 1L;
 
@@ -75,12 +71,10 @@ public final class SpellCastManager {
         castTechnique(player, techniqueOptional.get());
     }
 
-    /** 施展指定的法术类功法（御剑等法术亦可绕过择法，由特定操作直接触发）。 */
     public static void castTechnique(ServerPlayer player, TechniqueDefinition technique) {
         castTechnique(player, technique, false);
     }
 
-    /** 由客户端交互触发指定法术；施法本身仍由服务端完整校验。 */
     public static void castTechniqueFromInteraction(ServerPlayer player, TechniqueDefinition technique) {
         castTechnique(player, technique, true);
     }
@@ -169,7 +163,6 @@ public final class SpellCastManager {
             sendActionBar(player, "施法未成，灵力已归丹田");
             return;
         }
-        // 法术亦是功法，愈用愈纯熟；阶段晋升由共用逻辑负责播报。
         PlayerTechniqueManager.addProficiency(player, technique.id(), PROFICIENCY_PER_CAST);
         ModNetwork.sendCultivationInfo(player);
         sendActionBar(player, String.format(

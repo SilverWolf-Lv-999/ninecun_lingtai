@@ -14,9 +14,6 @@ public final class PlayerCultivationData {
     private static final String REALM_KEY = "realm";
     private static final String LAYER_KEY = "layer";
 
-    private PlayerCultivationData() {
-    }
-
     public static Optional<CultivationStage> getStage(Player player) {
         CompoundTag persistentData = player.getPersistentData();
         if (!persistentData.contains(CULTIVATION_KEY, Tag.TAG_COMPOUND)) {

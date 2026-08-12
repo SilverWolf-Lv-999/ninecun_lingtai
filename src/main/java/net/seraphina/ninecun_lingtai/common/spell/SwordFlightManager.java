@@ -31,44 +31,32 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.Optional;
 
-/**
- * 御剑飞行的服务端管理：登剑、收剑、锁剑与飞行速度。
- * 御剑期间借用原版飞行输入（空格升、潜行降、WASD 平移），速度写入 Abilities.flyingSpeed 并同步客户端；
- * 贴地悬浮的细节由客户端逐刻校正（见 ClientSwordFlightManager）。
- */
 public final class SwordFlightManager {
     public static final ResourceLocation TECHNIQUE_ID = ResourceLocation.fromNamespaceAndPath(
             ModMain.MOD_ID,
             "sword_flight_spell"
     );
-    /** 御剑悬浮时与脚下方块保持的间隙。 */
+
     public static final double HOVER_GAP = 0.2D;
-    /** 允许收剑的离地高度上限（客户端判定 0.3 以内，服务端放宽以容忍延迟）。 */
+
     public static final double DISMOUNT_GROUND_DISTANCE = 1.0D;
 
-    /** 原版飞行速度，仅作御剑速度的下限与收剑后的恢复值。 */
     private static final float BASE_FLYING_SPEED = 0.05F;
-    /** 筑基一层的御剑基准速度（约为原版飞行六倍，数十格每秒）。 */
+
     private static final float FOUNDATION_BASE_SPEED = 0.3F;
-    /** 每进一个大境界，剑速翻六倍。 */
+
     private static final double REALM_SPEED_RATIO = 6.0D;
-    /** 境界内每进一层，剑速再快一成二。 */
+
     private static final double LAYER_SPEED_RATIO = 1.12D;
-    /** 熟练度加成封顶所需的熟练度（1800 点翻一倍，3600 点封顶四倍）。 */
+
     private static final long PROFICIENCY_SPEED_CAP = 3600L;
-    /** 剑速硬上限（原版飞行两万倍），护住碰撞与区块加载不至崩坏。 */
+
     private static final float MAXIMUM_FLYING_SPEED = 1000.0F;
     private static final int FOUNDATION_STRENGTH =
             CultivationRealm.FOUNDATION_ESTABLISHMENT.ordinal() * CultivationStage.MAXIMUM_LAYER + 1;
     private static final int PROFICIENCY_INTERVAL_TICKS = 100;
     private static final long PROFICIENCY_PER_INTERVAL = 1L;
 
-    private SwordFlightManager() {
-    }
-
-    /**
-     * 请求施展御剑术。交互触发时不依赖服务端潜行同步，其他入口仍保留原本的潜行要求。
-     */
     public static boolean requestMount(ServerPlayer player, boolean interactionTriggered) {
         Optional<TechniqueDefinition> technique =
                 TechniqueManager.INSTANCE.getTechnique(TECHNIQUE_ID);
@@ -83,7 +71,6 @@ public final class SwordFlightManager {
         return true;
     }
 
-    /** 由 SwordFlightSpell.cast 调用；返回 false 时灵力由施法管线退还。 */
     public static boolean tryMount(ServerPlayer player, SpellCastContext context) {
         if (PlayerSwordFlightData.isFlying(player)) {
             sendActionBar(player, "已在剑上，何须再登");
@@ -122,7 +109,6 @@ public final class SwordFlightManager {
         return true;
     }
 
-    /** 双击潜行且贴近地面时收剑。 */
     public static void requestDismount(ServerPlayer player) {
         if (!PlayerSwordFlightData.isFlying(player)) {
             return;
@@ -135,7 +121,6 @@ public final class SwordFlightManager {
         sendActionBar(player, "剑光敛去，收剑而立");
     }
 
-    /** 无条件解除御剑状态（死亡、剑失、切旁观等）。 */
     public static void dismount(ServerPlayer player) {
         if (!PlayerSwordFlightData.isFlying(player)) {
             return;
@@ -158,7 +143,6 @@ public final class SwordFlightManager {
         ModNetwork.sendSwordFlightState(player);
     }
 
-    /** 每个服务端刻维持御剑状态：锁剑、护持飞行能力、更新速度、积累熟练度。 */
     public static void serverTick(ServerPlayer player) {
         if (!PlayerSwordFlightData.isFlying(player)) {
             return;
@@ -186,7 +170,6 @@ public final class SwordFlightManager {
         if (abilitiesChanged) {
             player.onUpdateAbilities();
         }
-        // 御剑亦是修行，长御长熟。
         if (player.tickCount % PROFICIENCY_INTERVAL_TICKS == 0) {
             PlayerTechniqueManager.addProficiency(player, TECHNIQUE_ID, PROFICIENCY_PER_INTERVAL);
         }
@@ -202,10 +185,6 @@ public final class SwordFlightManager {
         player.onUpdateAbilities();
     }
 
-    /**
-     * 剑被锁在登剑时的槽位：被移动则移回原位，彻底消失（损毁等）则返回 false。
-     * 以剑的种类匹配，耐久变化不影响锁定。
-     */
     private static boolean enforceSwordLock(ServerPlayer player) {
         ItemStack lockedSword = PlayerSwordFlightData.getSword(player);
         if (lockedSword.isEmpty()) {
@@ -219,7 +198,6 @@ public final class SwordFlightManager {
         if (inventory.getItem(slot).is(lockedSword.getItem())) {
             return true;
         }
-        // 剑不在原位：先在背包各处找（含副手），再看是否被拎在鼠标上，找到便换回去。
         for (int searchSlot = 0; searchSlot < inventory.getContainerSize(); searchSlot++) {
             if (searchSlot == slot || !inventory.getItem(searchSlot).is(lockedSword.getItem())) {
                 continue;
@@ -240,12 +218,6 @@ public final class SwordFlightManager {
         return false;
     }
 
-    /**
-     * 飞行速度随境界与熟练度指数增长，一层一重天：
-     * 筑基一层约为原版飞行六倍（数十格每秒），此后每进一个大境界剑速翻六倍——金丹便有数百格每秒，
-     * 元婴破千，化神以上一骑绝尘；境界内每进一层再快一成二。
-     * 熟练度每积一重（1800 点）速度翻倍（至多四倍），掌握不足者难展其速（入门七五折，圆满全速）。
-     */
     public static float getFlightSpeed(ServerPlayer player) {
         CultivationStage stage = CultivationApi.getStage(player)
                 .orElse(new CultivationStage(CultivationRealm.FOUNDATION_ESTABLISHMENT, 1));
@@ -260,7 +232,6 @@ public final class SwordFlightManager {
         );
     }
 
-    /** 遁光、踏空等高阶能力使用的同境界御剑默认基准；不读取背包里的御剑速度调节。 */
     public static float getDefaultFlightSpeed(ServerPlayer player) {
         CultivationStage stage = CultivationApi.getStage(player)
                 .orElse(new CultivationStage(CultivationRealm.FOUNDATION_ESTABLISHMENT, 1));
@@ -271,7 +242,6 @@ public final class SwordFlightManager {
         );
     }
 
-    /** @deprecated Use {@link #getDefaultFlightSpeed(ServerPlayer)} for new flight-style baselines. */
     @Deprecated
     public static float getPerfectionFlightSpeed(ServerPlayer player) {
         return getDefaultFlightSpeed(player);
@@ -312,7 +282,6 @@ public final class SwordFlightManager {
         return (float) Mth.clamp(speed, BASE_FLYING_SPEED, MAXIMUM_FLYING_SPEED);
     }
 
-    /** 自脚底向下探测与地面（碰撞体）的距离，最远三格；悬于虚空时返回大数。 */
     public static double getGroundDistance(ServerPlayer player) {
         Vec3 feet = player.position();
         HitResult hit = player.level().clip(new ClipContext(

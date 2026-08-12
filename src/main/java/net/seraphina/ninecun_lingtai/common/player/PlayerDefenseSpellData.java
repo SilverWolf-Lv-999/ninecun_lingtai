@@ -23,9 +23,6 @@ public final class PlayerDefenseSpellData {
     private static final String ENTITY_UUID_KEY = "entity_uuid";
     private static final int REPAIR_DELAY_TICKS = 20;
 
-    private PlayerDefenseSpellData() {
-    }
-
     public static Optional<DefenseSpellSnapshot> getBodyShield(Player player) {
         CompoundTag persistentData = player.getPersistentData();
         if (!persistentData.contains(BODY_SHIELD_KEY, Tag.TAG_COMPOUND)) {
