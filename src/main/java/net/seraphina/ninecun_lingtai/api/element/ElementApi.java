@@ -13,9 +13,6 @@ public final class ElementApi {
     private static final ElementalPower ROOTLESS_PLAYER_ELEMENT = new ElementalPower(ElementType.METAL, 1.0D);
     private static final List<ElementalEntityProvider> ENTITY_PROVIDERS = new CopyOnWriteArrayList<>();
 
-    private ElementApi() {
-    }
-
     public static void registerEntityProvider(ElementalEntityProvider provider) {
         ENTITY_PROVIDERS.add(Objects.requireNonNull(provider, "provider"));
     }

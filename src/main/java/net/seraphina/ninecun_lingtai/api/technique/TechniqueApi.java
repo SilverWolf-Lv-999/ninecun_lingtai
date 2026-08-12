@@ -19,9 +19,6 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 public final class TechniqueApi {
-    private TechniqueApi() {
-    }
-
     public static Optional<TechniqueDefinition> getTechnique(ResourceLocation techniqueId) {
         return TechniqueManager.INSTANCE.getTechnique(techniqueId);
     }

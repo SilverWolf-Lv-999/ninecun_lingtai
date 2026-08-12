@@ -8,9 +8,6 @@ public final class CustomChatFormatting {
 
     private static ChatFormatting shanBeiFont;
 
-    private CustomChatFormatting() {
-    }
-
     public static ChatFormatting shanBeiFont() {
         if (shanBeiFont == null) {
             ChatFormatting.values();

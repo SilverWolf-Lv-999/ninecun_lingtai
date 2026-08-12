@@ -11,9 +11,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class TechniqueEffectApi {
     private static final Map<ResourceLocation, TechniqueEffectHandler> EFFECT_HANDLERS = new ConcurrentHashMap<>();
 
-    private TechniqueEffectApi() {
-    }
-
     public static void register(ResourceLocation effectType, TechniqueEffectHandler effectHandler) {
         Objects.requireNonNull(effectType, "effectType");
         Objects.requireNonNull(effectHandler, "effectHandler");

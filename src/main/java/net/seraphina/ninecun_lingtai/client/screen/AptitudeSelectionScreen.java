@@ -58,8 +58,10 @@ public final class AptitudeSelectionScreen extends Screen {
     private static final long SOUL_INTRO_DURATION = 1150L;
     private static final long SOUL_BLOOM_DURATION = 1800L;
     private static final long COMPLETE_FADE_DURATION = 720L;
+    private static final long SOUL_STAR_FLASH_DURATION = 260L;
     private static final float SELECTED_ELEMENT_SCALE = 1.14F;
     private static final float SELECTED_TAIJI_SCALE = 1.09F;
+    private static final int DEFAULT_SOUL_STAR_MASK = 1;
 
     private final EnumSet<ElementType> selectedElements = EnumSet.noneOf(ElementType.class);
     private final EnumMap<ElementType, Float> selectionScales = new EnumMap<>(ElementType.class);
@@ -78,9 +80,12 @@ public final class AptitudeSelectionScreen extends Screen {
     private Component spiritualRootName = Component.empty();
     private int spiritualRootColor = 0xFFFFFF;
     private float spiritualRootLength = SpiritualRoot.MINIMUM_LENGTH_INCHES;
-    private int illuminatedSoulStarMask;
+    private int illuminatedSoulStarMask = DEFAULT_SOUL_STAR_MASK;
+    private final long[] soulStarFlashStartedAts = new long[SoulConstellationRenderUtility.STAR_COUNT];
     private float taijiScale = 1.0F;
     private boolean draggingSprout;
+    private boolean draggingSoulStar;
+    private int lastDraggedSoulStarIndex = -1;
     private boolean submitted;
     private boolean blurInstalled;
     private boolean blurLoadFailed;
@@ -168,8 +173,9 @@ public final class AptitudeSelectionScreen extends Screen {
         }
         if (this.phase == AptitudePhase.SOUL_SELECTION) {
             int clickedStarIndex = findClickedSoulStar(mouseX, mouseY);
-            if (clickedStarIndex >= 0) {
-                toggleSoulStar(clickedStarIndex);
+            if (clickedStarIndex == 0) {
+                this.draggingSoulStar = true;
+                this.lastDraggedSoulStarIndex = clickedStarIndex;
                 return true;
             }
         }
@@ -189,6 +195,12 @@ public final class AptitudeSelectionScreen extends Screen {
             updateSpiritualRootLength(mouseY);
             return true;
         }
+        if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT
+                && this.phase == AptitudePhase.SOUL_SELECTION
+                && this.draggingSoulStar) {
+            updateSoulStarDrag(mouseX, mouseY);
+            return true;
+        }
         return false;
     }
 
@@ -199,6 +211,14 @@ public final class AptitudeSelectionScreen extends Screen {
                 && this.draggingSprout) {
             this.draggingSprout = false;
             updateSpiritualRootLength(mouseY);
+            return true;
+        }
+        if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT
+                && this.phase == AptitudePhase.SOUL_SELECTION
+                && this.draggingSoulStar) {
+            updateSoulStarDrag(mouseX, mouseY);
+            this.draggingSoulStar = false;
+            this.lastDraggedSoulStarIndex = -1;
             return true;
         }
         return false;
@@ -579,6 +599,7 @@ public final class AptitudeSelectionScreen extends Screen {
                 bloomProgress,
                 stageAlpha
         );
+        renderSoulStarFlashes(guiGraphics, currentTime, stageAlpha * introProgress);
 
         AptitudeRenderUtility.drawCenteredText(
                 guiGraphics,
@@ -671,15 +692,25 @@ public final class AptitudeSelectionScreen extends Screen {
         }
     }
 
-    private void toggleSoulStar(int starIndex) {
+    private void updateSoulStarDrag(double mouseX, double mouseY) {
+        int hoveredStarIndex = findClickedSoulStar(mouseX, mouseY);
+        if (hoveredStarIndex == this.lastDraggedSoulStarIndex) {
+            return;
+        }
+        this.lastDraggedSoulStarIndex = hoveredStarIndex;
+        if (hoveredStarIndex >= 0) {
+            illuminateSoulStar(hoveredStarIndex);
+        }
+    }
+
+    private void illuminateSoulStar(int starIndex) {
         int starBit = 1 << starIndex;
-        if ((this.illuminatedSoulStarMask & starBit) != 0) {
-            this.illuminatedSoulStarMask &= ~starBit;
-            playUiSound(0.82F);
-        } else {
+        boolean newlyIlluminated = (this.illuminatedSoulStarMask & starBit) == 0;
+        if (newlyIlluminated) {
             this.illuminatedSoulStarMask |= starBit;
             playUiSound(0.98F + starIndex * 0.045F);
         }
+        this.soulStarFlashStartedAts[starIndex] = Util.getMillis();
     }
 
     @Nullable
@@ -726,6 +757,42 @@ public final class AptitudeSelectionScreen extends Screen {
 
     private int getIlluminatedSoulStarCount() {
         return Integer.bitCount(this.illuminatedSoulStarMask & SoulConstellationRenderUtility.ALL_STARS_MASK);
+    }
+
+    private void renderSoulStarFlashes(GuiGraphics guiGraphics, long currentTime, float alpha) {
+        if (alpha <= 0.0F) {
+            return;
+        }
+        List<ScreenPoint> starPositions = SoulConstellationRenderUtility.getStarPositions(
+                this.width * 0.5F,
+                getSoulConstellationCenterY(),
+                getSoulConstellationRadius()
+        );
+        float baseRadius = Mth.clamp(getSoulConstellationRadius() * 0.027F, 3.0F, 8.0F);
+        for (int starIndex = 0; starIndex < starPositions.size(); starIndex++) {
+            long flashStartedAt = this.soulStarFlashStartedAts[starIndex];
+            long flashElapsed = currentTime - flashStartedAt;
+            if (flashStartedAt == 0L || flashElapsed < 0L || flashElapsed >= SOUL_STAR_FLASH_DURATION) {
+                continue;
+            }
+            float flashProgress = AnimationUtility.progress(flashElapsed, SOUL_STAR_FLASH_DURATION);
+            float flashStrength = Mth.sin(flashProgress * (float) Math.PI);
+            ScreenPoint starPosition = starPositions.get(starIndex);
+            AptitudeRenderUtility.drawDisc(
+                    guiGraphics,
+                    starPosition.x(),
+                    starPosition.y(),
+                    baseRadius * (2.2F + flashStrength * 2.3F),
+                    ColorUtility.withAlpha(0x8BE3FF, alpha * flashStrength * 0.28F)
+            );
+            AptitudeRenderUtility.drawDisc(
+                    guiGraphics,
+                    starPosition.x(),
+                    starPosition.y(),
+                    baseRadius * (1.0F + flashStrength * 0.55F),
+                    ColorUtility.withAlpha(0xF5FDFF, alpha * flashStrength * 0.75F)
+            );
+        }
     }
 
     private boolean isMouseOverSprout(double mouseX, double mouseY) {

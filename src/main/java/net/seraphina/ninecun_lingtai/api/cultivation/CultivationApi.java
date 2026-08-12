@@ -9,8 +9,6 @@ import java.math.BigInteger;
 import java.util.Optional;
 
 public final class CultivationApi {
-    private CultivationApi() {
-    }
 
     public static Optional<CultivationStage> getStage(Player player) {
         return PlayerCultivationData.getStage(player);

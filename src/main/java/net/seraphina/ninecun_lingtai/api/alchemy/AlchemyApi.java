@@ -9,9 +9,6 @@ import java.util.List;
 import java.util.Optional;
 
 public final class AlchemyApi {
-    private AlchemyApi() {
-    }
-
     public static Optional<AlchemyRecipeDefinition> getRecipe(ResourceLocation recipeId) {
         return AlchemyRecipeManager.INSTANCE.getRecipe(recipeId);
     }
