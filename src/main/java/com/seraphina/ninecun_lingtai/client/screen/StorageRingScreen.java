@@ -1,10 +1,9 @@
 package com.seraphina.ninecun_lingtai.client.screen;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.platform.Window;
 import com.seraphina.ninecun_lingtai.ModMain;
-import com.seraphina.ninecun_lingtai.client.render.StorageRingProjectionRenderMeshManager;
+import com.seraphina.ninecun_lingtai.client.ring.ClientStorageRingImmersionManager;
 import com.seraphina.ninecun_lingtai.client.ring.ClientStorageRingProjectionManager;
+import com.seraphina.ninecun_lingtai.client.utility.StorageRingProjectionRenderUtility;
 import com.seraphina.ninecun_lingtai.common.menu.StorageRingMenu;
 import com.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import com.seraphina.ninecun_lingtai.common.network.packet.CloseStorageRingPacket;
@@ -15,7 +14,8 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import org.lwjgl.glfw.GLFW;
-import org.lwjgl.opengl.GL11;
+
+import java.util.UUID;
 
 public final class StorageRingScreen extends AbstractContainerScreen<StorageRingMenu> {
     private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(
@@ -45,7 +45,9 @@ public final class StorageRingScreen extends AbstractContainerScreen<StorageRing
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         super.render(guiGraphics, mouseX, mouseY, partialTick);
-        this.renderTooltip(guiGraphics, mouseX, mouseY);
+        if (!ClientStorageRingImmersionManager.renderScreenTransition(guiGraphics, this, partialTick)) {
+            this.renderTooltip(guiGraphics, mouseX, mouseY);
+        }
     }
 
     @Override
@@ -65,7 +67,9 @@ public final class StorageRingScreen extends AbstractContainerScreen<StorageRing
                 StorageRingMenu.SCREEN_WIDTH,
                 StorageRingMenu.SCREEN_HEIGHT
         );
-        renderProjection(guiGraphics);
+        if (!ClientStorageRingImmersionManager.isTransitioningFor(this)) {
+            renderProjection(guiGraphics, partialTick);
+        }
     }
 
     @Override
@@ -86,6 +90,9 @@ public final class StorageRingScreen extends AbstractContainerScreen<StorageRing
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (keyCode == GLFW.GLFW_KEY_O && ClientStorageRingImmersionManager.beginEntering(this)) {
+            return true;
+        }
         if (updateMovementState(keyCode, scanCode, true)) {
             return true;
         }
@@ -141,10 +148,10 @@ public final class StorageRingScreen extends AbstractContainerScreen<StorageRing
 
     @Override
     public void onClose() {
+        ClientStorageRingImmersionManager.cancelForScreen(this);
         if (!this.closePacketSent) {
             this.closePacketSent = true;
             if (ClientStorageRingProjectionManager.isActiveFor(this.menu.getRingId())) {
-                ClientStorageRingProjectionManager.updateCameraMotion();
                 ModNetwork.sendToServer(CloseStorageRingPacket.withCameraState(
                         ClientStorageRingProjectionManager.getCameraPosition(),
                         ClientStorageRingProjectionManager.getCameraYRot(),
@@ -167,6 +174,28 @@ public final class StorageRingScreen extends AbstractContainerScreen<StorageRing
         return false;
     }
 
+    public UUID getRingId() {
+        return this.menu.getRingId();
+    }
+
+    public int getLeftPos() {
+        return this.leftPos;
+    }
+
+    public int getTopPos() {
+        return this.topPos;
+    }
+
+    public void clearProjectionMovementInput() {
+        this.movingForward = false;
+        this.movingBackward = false;
+        this.movingLeft = false;
+        this.movingRight = false;
+        this.movingUp = false;
+        this.movingDown = false;
+        this.thisRotatingCamera = false;
+    }
+
     private boolean isInsideViewport(double mouseX, double mouseY) {
         return mouseX >= this.leftPos + StorageRingMenu.VIEWPORT_LEFT
                 && mouseX < this.leftPos + StorageRingMenu.VIEWPORT_LEFT + StorageRingMenu.VIEWPORT_WIDTH
@@ -174,56 +203,16 @@ public final class StorageRingScreen extends AbstractContainerScreen<StorageRing
                 && mouseY < this.topPos + StorageRingMenu.VIEWPORT_TOP + StorageRingMenu.VIEWPORT_HEIGHT;
     }
 
-    private void renderProjection(GuiGraphics guiGraphics) {
+    private void renderProjection(GuiGraphics guiGraphics, float partialTick) {
         if (!ClientStorageRingProjectionManager.isActiveFor(this.menu.getRingId())) {
             return;
         }
-        ClientStorageRingProjectionManager.updateCameraMotion();
-
-        int viewportLeft = this.leftPos + StorageRingMenu.VIEWPORT_LEFT;
-        int viewportTop = this.topPos + StorageRingMenu.VIEWPORT_TOP;
-        int viewportRight = viewportLeft + StorageRingMenu.VIEWPORT_WIDTH;
-        int viewportBottom = viewportTop + StorageRingMenu.VIEWPORT_HEIGHT;
-        guiGraphics.enableScissor(viewportLeft, viewportTop, viewportRight, viewportBottom);
-        guiGraphics.flush();
-        Minecraft minecraft = Minecraft.getInstance();
-        Window window = minecraft.getWindow();
-        int viewportX = toFramebufferCoordinate(
-                viewportLeft,
-                window.getGuiScaledWidth(),
-                window.getWidth()
+        StorageRingProjectionRenderUtility.renderGuiProjection(
+                guiGraphics,
+                this.leftPos,
+                this.topPos,
+                partialTick
         );
-        int viewportY = window.getHeight() - toFramebufferCoordinate(
-                viewportBottom,
-                window.getGuiScaledHeight(),
-                window.getHeight()
-        );
-        int viewportWidth = Math.max(
-                1,
-                toFramebufferCoordinate(viewportRight, window.getGuiScaledWidth(), window.getWidth()) - viewportX
-        );
-        int viewportHeight = Math.max(
-                1,
-                toFramebufferCoordinate(viewportBottom, window.getGuiScaledHeight(), window.getHeight())
-                        - toFramebufferCoordinate(viewportTop, window.getGuiScaledHeight(), window.getHeight())
-        );
-        RenderSystem.viewport(viewportX, viewportY, viewportWidth, viewportHeight);
-        RenderSystem.enableDepthTest();
-        RenderSystem.depthMask(true);
-        RenderSystem.clear(GL11.GL_DEPTH_BUFFER_BIT, Minecraft.ON_OSX);
-        StorageRingProjectionRenderMeshManager.render(
-                Minecraft.getInstance().getBlockRenderer(),
-                ClientStorageRingProjectionManager.getBlockStates(),
-                ClientStorageRingProjectionManager.getSnapshotVersion(),
-                ClientStorageRingProjectionManager.getCameraPosition(),
-                ClientStorageRingProjectionManager.getCameraYRot(),
-                ClientStorageRingProjectionManager.getCameraXRot(),
-                viewportWidth,
-                viewportHeight
-        );
-        RenderSystem.disableDepthTest();
-        RenderSystem.viewport(0, 0, window.getWidth(), window.getHeight());
-        guiGraphics.disableScissor();
     }
 
     private void interactWithProjection(boolean use, double mouseX, double mouseY) {
@@ -280,7 +269,4 @@ public final class StorageRingScreen extends AbstractContainerScreen<StorageRing
         return (this.movingForward ? 1.0F : 0.0F) - (this.movingBackward ? 1.0F : 0.0F);
     }
 
-    private static int toFramebufferCoordinate(int coordinate, int guiSize, int framebufferSize) {
-        return (int) Math.round((double) coordinate * framebufferSize / guiSize);
-    }
 }

@@ -20,6 +20,8 @@ import com.seraphina.ninecun_lingtai.client.player.ClientSpellManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientSwordFlightManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientTechniqueManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientAlchemyRecipeManager;
+import com.seraphina.ninecun_lingtai.client.ring.ClientStorageRingImmersionManager;
+import com.seraphina.ninecun_lingtai.client.ring.ClientStorageRingProjectionManager;
 import com.seraphina.ninecun_lingtai.client.screen.ClientAptitudeScreenManager;
 import com.seraphina.ninecun_lingtai.client.utility.BodyShieldRenderUtility;
 import com.seraphina.ninecun_lingtai.client.utility.AlchemyFurnaceHighlightRenderUtility;
@@ -40,11 +42,13 @@ import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.client.event.MovementInputUpdateEvent;
 import net.minecraftforge.client.event.RenderGuiOverlayEvent;
+import net.minecraftforge.client.event.RenderHandEvent;
 import net.minecraftforge.client.event.RenderHighlightEvent;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.client.event.ViewportEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.lwjgl.glfw.GLFW;
@@ -70,11 +74,18 @@ public final class ClientForgeEventHandler {
             ClientNotificationManager.tick();
             ClientTribulationManager.tick();
             ClientPushingMountainsManager.tick();
+            ClientStorageRingImmersionManager.tick();
+            ClientStorageRingProjectionManager.tickCameraMotion();
         }
     }
 
     @SubscribeEvent
     public static void onKeyInput(InputEvent.Key event) {
+        if (event.getAction() == GLFW.GLFW_PRESS
+                && event.getKey() == GLFW.GLFW_KEY_O
+                && ClientStorageRingImmersionManager.beginExiting()) {
+            return;
+        }
         ClientPushingMountainsManager.onKeyInput(event.getKey(), event.getAction());
         ClientShrinkEarthManager.onKeyInput(event.getKey(), event.getAction());
         if (event.getAction() == GLFW.GLFW_PRESS
@@ -99,6 +110,9 @@ public final class ClientForgeEventHandler {
 
     @SubscribeEvent
     public static void onInteractionInput(InputEvent.InteractionKeyMappingTriggered event) {
+        if (ClientStorageRingImmersionManager.handleInteraction(event)) {
+            return;
+        }
         if (ClientPushingMountainsManager.handleInteraction(event)) {
             return;
         }
@@ -133,6 +147,9 @@ public final class ClientForgeEventHandler {
 
     @SubscribeEvent
     public static void onMovementInput(MovementInputUpdateEvent event) {
+        if (ClientStorageRingImmersionManager.handleMovementInput(event.getInput())) {
+            return;
+        }
         if (ClientPressureManager.isLocalPlayerImmobilized()) {
             Input input = event.getInput();
             input.leftImpulse = 0.0F;
@@ -166,6 +183,18 @@ public final class ClientForgeEventHandler {
         BodyShieldRenderUtility.render(event);
         TribulationCloudRenderUtility.renderWorld(event);
         PushingMountainsRenderUtility.render(event);
+    }
+
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void onRenderStorageRingImmersive(RenderLevelStageEvent event) {
+        ClientStorageRingImmersionManager.renderImmersive(event);
+    }
+
+    @SubscribeEvent
+    public static void onRenderHand(RenderHandEvent event) {
+        if (ClientStorageRingImmersionManager.isImmersive()) {
+            event.setCanceled(true);
+        }
     }
 
     @SubscribeEvent
@@ -228,5 +257,6 @@ public final class ClientForgeEventHandler {
         ClientPushingMountainsManager.reset();
         ClientPressureManager.reset();
         PushingMountainsRenderMeshManager.clearAll();
+        ClientStorageRingProjectionManager.reset();
     }
 }

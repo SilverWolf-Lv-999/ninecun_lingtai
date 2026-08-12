@@ -60,6 +60,7 @@ public final class StorageRingProjectionRenderMeshManager {
         }
 
         Matrix4f previousProjection = new Matrix4f(RenderSystem.getProjectionMatrix());
+        VertexSorting previousVertexSorting = RenderSystem.getVertexSorting();
         PoseStack modelViewStack = RenderSystem.getModelViewStack();
         modelViewStack.pushPose();
         try {
@@ -102,7 +103,7 @@ public final class StorageRingProjectionRenderMeshManager {
                 }
             }
         } finally {
-            RenderSystem.setProjectionMatrix(previousProjection, VertexSorting.ORTHOGRAPHIC_Z);
+            RenderSystem.setProjectionMatrix(previousProjection, previousVertexSorting);
             modelViewStack.popPose();
             RenderSystem.applyModelViewMatrix();
         }

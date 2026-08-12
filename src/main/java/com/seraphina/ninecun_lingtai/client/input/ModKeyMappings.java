@@ -48,7 +48,4 @@ public final class ModKeyMappings {
             GLFW.GLFW_KEY_GRAVE_ACCENT,
             "key.categories." + ModMain.MOD_ID
     );
-
-    private ModKeyMappings() {
-    }
 }
