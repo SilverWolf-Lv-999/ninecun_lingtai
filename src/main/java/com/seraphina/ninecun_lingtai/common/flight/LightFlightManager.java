@@ -12,7 +12,6 @@ import com.seraphina.ninecun_lingtai.common.spell.SwordFlightManager;
 import com.seraphina.ninecun_lingtai.utility.PlayerValueControlUtility;
 import com.seraphina.ninecun_lingtai.utility.PlayerValueControlUnlockUtility;
 import com.seraphina.ninecun_lingtai.utility.SpiritualRootUtility;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -41,7 +40,6 @@ public final class LightFlightManager {
         }
         Optional<LightFlightStyle> availableStyle = getAvailableStyle(player);
         if (availableStyle.isEmpty()) {
-            sendActionBar(player, "金丹期方可身化遁光，元婴及以上可踏空而行");
             syncState(player);
             return;
         }
@@ -53,7 +51,6 @@ public final class LightFlightManager {
         applyFlightAbilities(player);
         player.fallDistance = 0.0F;
         playStartSound(player, style);
-        sendActionBar(player, getStartMessage(style));
         syncState(player);
     }
 
@@ -72,7 +69,6 @@ public final class LightFlightManager {
         player.onUpdateAbilities();
         player.fallDistance = 0.0F;
         playStopSound(player, style);
-        sendActionBar(player, getStopMessage(style));
         syncState(player);
     }
 
@@ -86,8 +82,6 @@ public final class LightFlightManager {
         }
         long gameTime = player.level().getGameTime();
         if (!PlayerLightFlightData.canBoost(player, gameTime)) {
-            long remainingTicks = Math.max(1L, PlayerLightFlightData.getNextBoostTick(player) - gameTime);
-            sendActionBar(player, String.format("遁光未复，还需 %.1f 秒", remainingTicks / 20.0D));
             syncState(player);
             return;
         }
@@ -128,9 +122,7 @@ public final class LightFlightManager {
             double energyCost = CommonConfig.LIGHT_FLIGHT_ENERGY_COST_PER_SECOND.get();
             if (energyCost > 0.0D) {
                 if (PlayerSpiritualEnergyData.consumeEnergyAny(player, energyCost) == null) {
-                    LightFlightStyle style = PlayerLightFlightData.getStyle(player);
                     stop(player);
-                    sendActionBar(player, getEnergyStopMessage(style));
                     return;
                 }
                 ModNetwork.sendCultivationInfo(player);
@@ -277,25 +269,7 @@ public final class LightFlightManager {
         );
     }
 
-    private static String getStartMessage(LightFlightStyle style) {
-        return style == LightFlightStyle.AIR_WALKING
-                ? "元婴御虚，踏空而行"
-                : "金丹流转，身化遁光";
-    }
-
-    private static String getStopMessage(LightFlightStyle style) {
-        return style == LightFlightStyle.AIR_WALKING ? "踏空止息" : "遁光敛去";
-    }
-
-    private static String getEnergyStopMessage(LightFlightStyle style) {
-        return style == LightFlightStyle.AIR_WALKING ? "灵气不继，踏空难续" : "灵气不继，遁光散去";
-    }
-
     private static void syncState(ServerPlayer player) {
         ModNetwork.sendLightFlightState(player);
-    }
-
-    private static void sendActionBar(ServerPlayer player, String message) {
-        player.displayClientMessage(Component.literal(message), true);
     }
 }
