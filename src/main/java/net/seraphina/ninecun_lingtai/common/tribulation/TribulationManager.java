@@ -7,7 +7,6 @@ import net.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
 import net.seraphina.ninecun_lingtai.common.config.CommonConfig;
 import net.seraphina.ninecun_lingtai.common.entity.tribulation.ThunderTribulationEntity;
 import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
-import com.seraphina.ninecun_lingtai.common.player.*;
 import net.seraphina.ninecun_lingtai.common.player.*;
 import net.seraphina.ninecun_lingtai.utility.NotificationUtility;
 import net.seraphina.ninecun_lingtai.utility.TribulationUtility;
