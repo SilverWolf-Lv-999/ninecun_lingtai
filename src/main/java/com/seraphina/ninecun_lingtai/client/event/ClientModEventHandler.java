@@ -120,6 +120,7 @@ public final class ClientModEventHandler {
         event.register(ModKeyMappings.SPELL_SELECTION);
         event.register(ModKeyMappings.CAST_SPELL);
         event.register(ModKeyMappings.PUSHING_MOUNTAINS);
+        event.register(ModKeyMappings.STORAGE_RING_IMMERSION);
     }
 
     @SubscribeEvent

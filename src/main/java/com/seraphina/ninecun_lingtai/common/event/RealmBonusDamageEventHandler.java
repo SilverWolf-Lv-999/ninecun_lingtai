@@ -25,8 +25,6 @@ import java.util.Optional;
 @Mod.EventBusSubscriber(modid = ModMain.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class RealmBonusDamageEventHandler {
 
-    // LOW priority so the elemental multiplier pass in ElementDamageEventHandler only scales
-    // the base damage; the realm bonus applies its own elemental multipliers below.
     @SubscribeEvent(priority = EventPriority.LOW)
     public static void onLivingHurt(LivingHurtEvent event) {
         if (!(event.getSource().getEntity() instanceof LivingEntity attacker) || event.getEntity() == attacker) {

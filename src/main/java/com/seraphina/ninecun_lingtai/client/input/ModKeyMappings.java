@@ -48,4 +48,12 @@ public final class ModKeyMappings {
             GLFW.GLFW_KEY_GRAVE_ACCENT,
             "key.categories." + ModMain.MOD_ID
     );
+
+    public static final KeyMapping STORAGE_RING_IMMERSION = new KeyMapping(
+            "key." + ModMain.MOD_ID + ".storage_ring_immersion",
+            KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_O,
+            "key.categories." + ModMain.MOD_ID
+    );
 }

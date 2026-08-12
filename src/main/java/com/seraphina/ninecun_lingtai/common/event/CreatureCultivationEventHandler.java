@@ -16,7 +16,6 @@ import net.minecraftforge.fml.common.Mod;
 @Mod.EventBusSubscriber(modid = ModMain.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class CreatureCultivationEventHandler {
 
-    /** Rolls innate cultivation exactly once per creature, covering natural spawns and spawn eggs. */
     @SubscribeEvent
     public static void onFinalizeSpawn(MobSpawnEvent.FinalizeSpawn event) {
         Mob mob = event.getEntity();
@@ -25,8 +24,6 @@ public final class CreatureCultivationEventHandler {
         }
         CreatureCultivationData.markSpawnRollDone(mob);
 
-        // LivingEntity starts with a synchronized health value of 1.0F. A newly spawned mob
-        // must be initialized from its own max-health attribute before cultivation is rolled.
         mob.setHealth(mob.getMaxHealth());
 
         RandomSource random = mob.getRandom();
@@ -40,7 +37,6 @@ public final class CreatureCultivationEventHandler {
         CreatureCultivationGoalInstaller.install(mob);
     }
 
-    /** Goals are not persisted, so cultivating creatures are re-equipped every time they load in. */
     @SubscribeEvent
     public static void onEntityJoinLevel(EntityJoinLevelEvent event) {
         if (event.getLevel().isClientSide

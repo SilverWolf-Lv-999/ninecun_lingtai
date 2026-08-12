@@ -17,9 +17,6 @@ public final class EntityDefenseResourceData {
     private static final String DEFENSE_RESOURCE_KEY = ModMain.MOD_ID + ":defense_resource";
     private static final String CURRENT_KEY = "current";
 
-    private EntityDefenseResourceData() {
-    }
-
     public static DefenseResourceSnapshot capture(LivingEntity entity) {
         Optional<CultivationStage> stage = CreatureCultivationData.getStage(entity);
         int elementMask = CreatureCultivationData.getSpiritualRoot(entity)

@@ -1,6 +1,7 @@
 package com.seraphina.ninecun_lingtai.client.screen;
 
 import com.seraphina.ninecun_lingtai.ModMain;
+import com.seraphina.ninecun_lingtai.client.input.ModKeyMappings;
 import com.seraphina.ninecun_lingtai.client.ring.ClientStorageRingImmersionManager;
 import com.seraphina.ninecun_lingtai.client.ring.ClientStorageRingProjectionManager;
 import com.seraphina.ninecun_lingtai.client.utility.StorageRingProjectionRenderUtility;
@@ -90,7 +91,8 @@ public final class StorageRingScreen extends AbstractContainerScreen<StorageRing
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (keyCode == GLFW.GLFW_KEY_O && ClientStorageRingImmersionManager.beginEntering(this)) {
+        if (ModKeyMappings.STORAGE_RING_IMMERSION.matches(keyCode, scanCode)
+                && ClientStorageRingImmersionManager.beginEntering(this)) {
             return true;
         }
         if (updateMovementState(keyCode, scanCode, true)) {

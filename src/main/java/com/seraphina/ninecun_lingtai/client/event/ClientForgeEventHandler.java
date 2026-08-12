@@ -1,6 +1,7 @@
 package com.seraphina.ninecun_lingtai.client.event;
 
 import com.seraphina.ninecun_lingtai.ModMain;
+import com.seraphina.ninecun_lingtai.client.input.ModKeyMappings;
 import com.seraphina.ninecun_lingtai.client.player.ClientBodyShieldManager;
 import com.seraphina.ninecun_lingtai.client.notification.ClientNotificationManager;
 import com.seraphina.ninecun_lingtai.client.player.ClientCultivationFeedbackManager;
@@ -81,7 +82,7 @@ public final class ClientForgeEventHandler {
     @SubscribeEvent
     public static void onKeyInput(InputEvent.Key event) {
         if (event.getAction() == GLFW.GLFW_PRESS
-                && event.getKey() == GLFW.GLFW_KEY_O
+                && ModKeyMappings.STORAGE_RING_IMMERSION.matches(event.getKey(), event.getScanCode())
                 && ClientStorageRingImmersionManager.beginExiting()) {
             return;
         }
