@@ -9,6 +9,7 @@ public enum SeraMapping {
     Gui$renderHeart$V("renderHeart", "m_280593_"),
     ForgeGui$renderHealth$V("renderHealth", "renderHealth"),
     Item$useOn$InteractionResult("useOn", "m_6225_"),
+    LocalPlayer$shouldShowDeathScreen$Z("shouldShowDeathScreen", "m_108632_")
     ;
 
     final String noObf, obf;

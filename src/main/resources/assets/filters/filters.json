@@ -6,7 +6,8 @@
       "items": [
         "ninecun_lingtai:spiritual_stone_ore",
         "ninecun_lingtai:deepslate_spiritual_stone_ore",
-        "ninecun_lingtai:alchemy_furnace"
+        "ninecun_lingtai:alchemy_furnace",
+        "ninecun_lingtai:fire_lingzhi"
       ]
     },
     "materials": {
@@ -56,6 +57,13 @@
       "icon": "ninecun_lingtai:storage_ring",
       "items": [
         "ninecun_lingtai:storage_ring"
+      ]
+    },
+    "plant": {
+      "title": "植物",
+      "icon": "ninecun_lingtai:fire_lingzhi",
+      "items": [
+        "ninecun_lingtai:fire_lingzhi"
       ]
     }
   }

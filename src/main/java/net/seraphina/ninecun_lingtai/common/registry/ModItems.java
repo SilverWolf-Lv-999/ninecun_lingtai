@@ -96,6 +96,11 @@ public final class ModItems {
             () -> new BlockItem(ModBlocks.ALCHEMY_FURNACE.get(), new Item.Properties())
     );
 
+    public static final RegistryObject<Item> FIRE_LINGZHI = ITEMS.register(
+            "fire_lingzhi",
+            () -> new BlockItem(ModBlocks.FIRE_LINGZHI.get(), new Item.Properties())
+    );
+
     public static Item[] getColorItems() {
         return COLOR_ITEMS.stream()
                 .map(RegistryObject::get)

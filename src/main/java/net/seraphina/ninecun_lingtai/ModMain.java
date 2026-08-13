@@ -6,6 +6,7 @@ import net.seraphina.ninecun_lingtai.common.registry.ModBlocks;
 import net.seraphina.ninecun_lingtai.common.registry.ModBlockEntityTypes;
 import net.seraphina.ninecun_lingtai.common.registry.ModCreativeModeTabs;
 import net.seraphina.ninecun_lingtai.common.registry.ModEntityTypes;
+import net.seraphina.ninecun_lingtai.common.registry.ModFeatures;
 import net.seraphina.ninecun_lingtai.common.registry.ModItems;
 import net.seraphina.ninecun_lingtai.common.registry.ModMenuTypes;
 import net.seraphina.ninecun_lingtai.common.registry.ModSpells;
@@ -29,6 +30,7 @@ public final class ModMain {
         AgentUtility.patchInstrumentDll();
         IEventBus modEventBus = context.getModEventBus();
         ModBlocks.register(modEventBus);
+        ModFeatures.register(modEventBus);
         ModBlockEntityTypes.register(modEventBus);
         ModMenuTypes.register(modEventBus);
         ModItems.register(modEventBus);

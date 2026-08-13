@@ -3,6 +3,7 @@ package net.seraphina.ninecun_lingtai.common.registry;
 import net.seraphina.ninecun_lingtai.ModMain;
 import net.seraphina.ninecun_lingtai.common.block.AlchemyFurnaceBlock;
 import net.seraphina.ninecun_lingtai.common.block.AlchemyFurnacePartBlock;
+import net.seraphina.ninecun_lingtai.common.block.plant.FireLingzhiBlock;
 import net.minecraft.util.valueproviders.UniformInt;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -43,6 +44,11 @@ public final class ModBlocks {
     public static final RegistryObject<Block> ALCHEMY_FURNACE_PART = BLOCKS.register(
             "alchemy_furnace_part",
             AlchemyFurnacePartBlock::new
+    );
+
+    public static final RegistryObject<Block> FIRE_LINGZHI = BLOCKS.register(
+            "fire_lingzhi",
+            FireLingzhiBlock::new
     );
 
     public static void register(IEventBus modEventBus) {

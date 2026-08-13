@@ -2,11 +2,19 @@ package net.seraphina.ninecun_lingtai.utility.jvm;
 
 import net.seraphina.ninecun_lingtai.utility.JDKUtility;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.lang.invoke.MethodHandle;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Executable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class SeraphinaHook {
 
@@ -15,8 +23,14 @@ public class SeraphinaHook {
      * ResolvedMethodName::_vmtarget = 16
      * Method::_constMethod = 8
      * Method::_vtable_index = 44
+     * ConstMethod::_constants = 8
      * ConstMethod::_code_size = 32
+     * ConstMethod::_name_index = 34
+     * ConstMethod::_method_idnum = 38
+     * ConstMethod::_orig_method_idnum = 46
      * ConstMethod::code_base() = 48
+     * ConstantPool::_length = 60
+     * ConstantPool::base() = 72
      *
      * The layout probe below verifies these values before any target method is
      * modified, so an unsupported VM fails before touching Minecraft metadata.
@@ -24,15 +38,33 @@ public class SeraphinaHook {
     private static final long RESOLVED_METHOD_NAME_VMTARGET_OFFSET = 16L;
     private static final long METHOD_CONST_METHOD_OFFSET = 8L;
     private static final long METHOD_VTABLE_INDEX_OFFSET = 44L;
+    private static final long CONST_METHOD_CONSTANTS_OFFSET = 8L;
     private static final long CONST_METHOD_CODE_SIZE_OFFSET = 32L;
+    private static final long CONST_METHOD_NAME_INDEX_OFFSET = 34L;
+    private static final long CONST_METHOD_METHOD_IDNUM_OFFSET = 38L;
+    private static final long CONST_METHOD_ORIGINAL_METHOD_IDNUM_OFFSET = 46L;
     private static final long CONST_METHOD_CODE_OFFSET = 48L;
+    private static final long CONSTANT_POOL_LENGTH_OFFSET = 60L;
+    private static final long CONSTANT_POOL_ENTRIES_OFFSET = 72L;
+    private static final long ARRAY_LENGTH_OFFSET = 0L;
+    private static final long ARRAY_ELEMENTS_OFFSET = 8L;
+    private static final long SYMBOL_LENGTH_OFFSET = 4L;
+    private static final long SYMBOL_BODY_OFFSET = 6L;
     private static final long CLASS_KLASS_OFFSET = 16L;
     private static final long KLASS_JAVA_MIRROR_OFFSET = 112L;
     private static final long KLASS_SUBKLASS_OFFSET = 128L;
     private static final long KLASS_NEXT_SIBLING_OFFSET = 136L;
     private static final long VTABLE_LAYOUT_SCAN_BYTES = 2048L;
+    private static final long INSTANCE_KLASS_LAYOUT_SCAN_BYTES = 4096L;
+    private static final long CONSTANT_POOL_HOLDER_SCAN_BYTES = 64L;
     private static final byte NOP = 0x00;
     private static final byte RETURN = (byte) 0xB1;
+    private static final int MAX_METHOD_ID = 0xFFFE;
+    private static final Runnable NO_OP = () -> {
+    };
+    private static final AtomicLong NEXT_INJECTED_METHOD_ID = new AtomicLong();
+    private static final Map<String, Runnable> INJECTED_METHOD_BODIES = new ConcurrentHashMap<>();
+    private static final Map<String, InjectedMethod> INJECTED_METHODS = new ConcurrentHashMap<>();
 
     private static volatile boolean initialized;
     private static Class<?> directMethodHandleClass;
@@ -43,6 +75,9 @@ public class SeraphinaHook {
     private static long narrowOopBase;
     private static int narrowOopShift;
     private static long vtableStartOffset;
+    private static long methodsOffset;
+    private static long classReflectionDataOffset;
+    private static long metadataAddressPrefix;
 
     public static void hookMethod(Class<?> klass, SeraMapping methodName, Object returnValue) {
         Objects.requireNonNull(klass, "klass");
@@ -51,6 +86,440 @@ public class SeraphinaHook {
         for (Method method : resolveMethods(klass, methodName, new Class<?>[0])) {
             replaceBytecodes(method, constantReturn(method.getReturnType(), returnValue));
         }
+    }
+
+    /**
+     * Adds a public static {@code void methodName()} to a bootstrap-loaded JDK class.
+     *
+     * <p>This only supports the local 64-bit HotSpot JDK 17 layout. Static methods do not
+     * have vtable entries, so the generated {@code Method*} is added to the target
+     * {@code InstanceKlass::_methods} array and the reflection cache is invalidated.</p>
+     */
+    public static void addMethod(Class<?> klass, String methodName, Runnable methodBody) {
+        Objects.requireNonNull(klass, "klass");
+        Objects.requireNonNull(methodName, "methodName");
+        Objects.requireNonNull(methodBody, "methodBody");
+
+        synchronized (SeraphinaHook.class) {
+            initialize();
+            validateAddMethodTarget(klass, methodName);
+
+            String callbackId = Long.toUnsignedString(
+                    NEXT_INJECTED_METHOD_ID.incrementAndGet(), Character.MAX_RADIX);
+            long targetKlassAddress = klassPointer(klass);
+            long originalMethodsAddress = 0L;
+            long replacementMethodsAddress = 0L;
+            long poolHolderAddress = 0L;
+            long originalPoolHolder = 0L;
+            boolean installed = false;
+
+            try {
+                INJECTED_METHOD_BODIES.put(callbackId, NO_OP);
+                Class<?> donorClass = createDonorClass(callbackId, methodName);
+                Method donorMethod = donorClass.getDeclaredMethod(methodName);
+                donorMethod.invoke(null);
+
+                MethodLocation donorLocation = locate(donorMethod);
+                verifyMethodName(donorLocation, methodName);
+
+                originalMethodsAddress = JDKUtility.UNSAFE.getLong(
+                        targetKlassAddress + methodsOffset);
+                int originalMethodCount = methodArrayLength(originalMethodsAddress);
+                int methodId = nextMethodId(originalMethodsAddress, originalMethodCount);
+
+                long donorKlassAddress = klassPointer(donorClass);
+                poolHolderAddress = findConstantPoolHolderAddress(
+                        donorLocation.constMethodAddress, donorKlassAddress);
+                originalPoolHolder = JDKUtility.UNSAFE.getLong(poolHolderAddress);
+
+                JDKUtility.UNSAFE.putShort(
+                        donorLocation.constMethodAddress + CONST_METHOD_METHOD_IDNUM_OFFSET,
+                        (short) methodId);
+                JDKUtility.UNSAFE.putShort(
+                        donorLocation.constMethodAddress + CONST_METHOD_ORIGINAL_METHOD_IDNUM_OFFSET,
+                        (short) methodId);
+                JDKUtility.UNSAFE.putLongVolatile(null, poolHolderAddress, targetKlassAddress);
+
+                replacementMethodsAddress = expandedMethodArray(
+                        originalMethodsAddress, donorLocation.methodAddress);
+                JDKUtility.UNSAFE.putLongVolatile(
+                        null, targetKlassAddress + methodsOffset, replacementMethodsAddress);
+                installed = true;
+                clearReflectionData(klass);
+
+                Method injectedMethod = klass.getDeclaredMethod(methodName);
+                verifyInjectedMethod(klass, injectedMethod);
+
+                INJECTED_METHODS.put(
+                        callbackId, new InjectedMethod(donorClass, replacementMethodsAddress));
+                INJECTED_METHOD_BODIES.put(callbackId, methodBody);
+            } catch (Throwable throwable) {
+                if (installed) {
+                    JDKUtility.UNSAFE.putLongVolatile(
+                            null, targetKlassAddress + methodsOffset, originalMethodsAddress);
+                }
+                if (poolHolderAddress != 0L) {
+                    JDKUtility.UNSAFE.putLongVolatile(
+                            null, poolHolderAddress, originalPoolHolder);
+                }
+                if (replacementMethodsAddress != 0L) {
+                    JDKUtility.UNSAFE.freeMemory(replacementMethodsAddress);
+                }
+                clearReflectionData(klass);
+                INJECTED_METHOD_BODIES.remove(callbackId);
+                throw addMethodFailure(klass, methodName, throwable);
+            }
+        }
+    }
+
+    /**
+     * Entry point used by generated donor methods after their constant-pool call site has
+     * resolved against this class loader.
+     */
+    public static void runInjected(String callbackId) {
+        Runnable methodBody = INJECTED_METHOD_BODIES.get(callbackId);
+        if (methodBody == null) {
+            throw new IllegalStateException("No injected method body registered for " + callbackId);
+        }
+        methodBody.run();
+    }
+
+    private static void validateAddMethodTarget(Class<?> klass, String methodName) {
+        if (klass.getClassLoader() != null) {
+            throw new IllegalArgumentException(
+                    "addMethod only supports bootstrap-loaded JDK classes: " + klass.getName());
+        }
+        if (klass.isArray() || klass.isPrimitive() || klass.isInterface()
+                || Modifier.isAbstract(klass.getModifiers())) {
+            throw new IllegalArgumentException(
+                    "addMethod requires a concrete class: " + klass.getTypeName());
+        }
+        if (!isAsciiJavaIdentifier(methodName)) {
+            throw new IllegalArgumentException(
+                    "Method name must be an ASCII Java identifier: " + methodName);
+        }
+
+        try {
+            klass.getDeclaredMethod(methodName);
+            throw new IllegalArgumentException(
+                    klass.getName() + " already declares " + methodName + "()");
+        } catch (NoSuchMethodException ignored) {
+            // The requested signature is free.
+        }
+    }
+
+    private static boolean isAsciiJavaIdentifier(String value) {
+        if (value.isEmpty() || !isAsciiJavaIdentifierStart(value.charAt(0))) {
+            return false;
+        }
+
+        for (int index = 1; index < value.length(); index++) {
+            if (!isAsciiJavaIdentifierPart(value.charAt(index))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean isAsciiJavaIdentifierStart(char value) {
+        return value >= 'A' && value <= 'Z'
+                || value >= 'a' && value <= 'z'
+                || value == '_' || value == '$';
+    }
+
+    private static boolean isAsciiJavaIdentifierPart(char value) {
+        return isAsciiJavaIdentifierStart(value) || value >= '0' && value <= '9';
+    }
+
+    private static Class<?> createDonorClass(String callbackId, String methodName) {
+        long donorId = NEXT_INJECTED_METHOD_ID.get();
+        String className = SeraphinaHook.class.getPackageName()
+                + ".InjectedMethodDonor" + donorId;
+        byte[] bytecode = createDonorBytecode(className, methodName, callbackId);
+        return new DonorClassLoader(SeraphinaHook.class.getClassLoader()).define(className, bytecode);
+    }
+
+    private static byte[] createDonorBytecode(
+            String className, String methodName, String callbackId) {
+        String internalClassName = className.replace('.', '/');
+        String hookClassName = SeraphinaHook.class.getName().replace('.', '/');
+
+        try (ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+             DataOutputStream output = new DataOutputStream(bytes)) {
+            output.writeInt(0xCAFEBABE);
+            output.writeShort(0);
+            output.writeShort(61);
+
+            output.writeShort(19);
+            writeUtf8Constant(output, internalClassName);                 // 1
+            writeClassConstant(output, 1);                                // 2
+            writeUtf8Constant(output, "java/lang/Object");                // 3
+            writeClassConstant(output, 3);                                // 4
+            writeUtf8Constant(output, "<init>");                          // 5
+            writeUtf8Constant(output, "()V");                             // 6
+            writeNameAndTypeConstant(output, 5, 6);                       // 7
+            writeMethodReferenceConstant(output, 4, 7);                   // 8
+            writeUtf8Constant(output, methodName);                        // 9
+            writeUtf8Constant(output, "Code");                            // 10
+            writeUtf8Constant(output, "runInjected");                     // 11
+            writeUtf8Constant(output, "(Ljava/lang/String;)V");           // 12
+            writeUtf8Constant(output, hookClassName);                     // 13
+            writeClassConstant(output, 13);                               // 14
+            writeNameAndTypeConstant(output, 11, 12);                     // 15
+            writeMethodReferenceConstant(output, 14, 15);                 // 16
+            writeUtf8Constant(output, callbackId);                        // 17
+            writeStringConstant(output, 17);                              // 18
+
+            output.writeShort(Modifier.PUBLIC | 0x0020);
+            output.writeShort(2);
+            output.writeShort(4);
+            output.writeShort(0);
+            output.writeShort(0);
+            output.writeShort(2);
+
+            writeCodeMethod(
+                    output,
+                    Modifier.PUBLIC,
+                    5,
+                    6,
+                    1,
+                    1,
+                    new byte[]{0x2A, (byte) 0xB7, 0x00, 0x08, RETURN});
+            writeCodeMethod(
+                    output,
+                    Modifier.PUBLIC | Modifier.STATIC,
+                    9,
+                    6,
+                    1,
+                    0,
+                    new byte[]{0x12, 0x12, (byte) 0xB8, 0x00, 0x10, RETURN});
+
+            output.writeShort(0);
+            return bytes.toByteArray();
+        } catch (IOException exception) {
+            throw new IllegalStateException("Could not generate the donor class", exception);
+        }
+    }
+
+    private static void writeUtf8Constant(DataOutputStream output, String value) throws IOException {
+        output.writeByte(1);
+        output.writeUTF(value);
+    }
+
+    private static void writeClassConstant(DataOutputStream output, int nameIndex) throws IOException {
+        output.writeByte(7);
+        output.writeShort(nameIndex);
+    }
+
+    private static void writeNameAndTypeConstant(
+            DataOutputStream output, int nameIndex, int descriptorIndex) throws IOException {
+        output.writeByte(12);
+        output.writeShort(nameIndex);
+        output.writeShort(descriptorIndex);
+    }
+
+    private static void writeMethodReferenceConstant(
+            DataOutputStream output, int classIndex, int nameAndTypeIndex) throws IOException {
+        output.writeByte(10);
+        output.writeShort(classIndex);
+        output.writeShort(nameAndTypeIndex);
+    }
+
+    private static void writeStringConstant(DataOutputStream output, int stringIndex)
+            throws IOException {
+        output.writeByte(8);
+        output.writeShort(stringIndex);
+    }
+
+    private static void writeCodeMethod(
+            DataOutputStream output,
+            int access,
+            int nameIndex,
+            int descriptorIndex,
+            int maxStack,
+            int maxLocals,
+            byte[] code) throws IOException {
+        output.writeShort(access);
+        output.writeShort(nameIndex);
+        output.writeShort(descriptorIndex);
+        output.writeShort(1);
+        output.writeShort(10);
+        output.writeInt(12 + code.length);
+        output.writeShort(maxStack);
+        output.writeShort(maxLocals);
+        output.writeInt(code.length);
+        output.write(code);
+        output.writeShort(0);
+        output.writeShort(0);
+    }
+
+    private static int methodArrayLength(long methodsAddress) {
+        if (!looksLikeNativePointer(methodsAddress)) {
+            throw new IllegalStateException("InstanceKlass does not contain a method array");
+        }
+
+        int length = JDKUtility.UNSAFE.getInt(methodsAddress + ARRAY_LENGTH_OFFSET);
+        if (length < 0 || length > MAX_METHOD_ID) {
+            throw new IllegalStateException("Invalid HotSpot method array length " + length);
+        }
+        return length;
+    }
+
+    private static int nextMethodId(long methodsAddress, int methodCount) {
+        if (methodCount > MAX_METHOD_ID) {
+            throw new IllegalStateException("Target class has too many methods to add another one");
+        }
+
+        int candidate = methodCount;
+        while (candidate <= MAX_METHOD_ID) {
+            boolean used = false;
+            for (int index = 0; index < methodCount; index++) {
+                long methodAddress = JDKUtility.UNSAFE.getLong(
+                        methodsAddress + ARRAY_ELEMENTS_OFFSET + (long) index * Long.BYTES);
+                long constMethodAddress = JDKUtility.UNSAFE.getLong(
+                        methodAddress + METHOD_CONST_METHOD_OFFSET);
+                int methodId = Short.toUnsignedInt(JDKUtility.UNSAFE.getShort(
+                        constMethodAddress + CONST_METHOD_METHOD_IDNUM_OFFSET));
+                if (methodId == candidate) {
+                    used = true;
+                    break;
+                }
+            }
+            if (!used) {
+                return candidate;
+            }
+            candidate++;
+        }
+        throw new IllegalStateException("No free HotSpot method id is available");
+    }
+
+    private static long findConstantPoolHolderAddress(
+            long constMethodAddress, long donorKlassAddress) {
+        long constantPoolAddress = JDKUtility.UNSAFE.getLong(
+                constMethodAddress + CONST_METHOD_CONSTANTS_OFFSET);
+        if (!looksLikeNativePointer(constantPoolAddress)) {
+            throw new IllegalStateException("Donor method does not contain a ConstantPool");
+        }
+
+        long holderAddress = 0L;
+        for (long offset = 0L;
+             offset <= CONSTANT_POOL_HOLDER_SCAN_BYTES - Long.BYTES;
+             offset += Long.BYTES) {
+            long candidateAddress = constantPoolAddress + offset;
+            if (JDKUtility.UNSAFE.getLong(candidateAddress) != donorKlassAddress) {
+                continue;
+            }
+            if (holderAddress != 0L) {
+                throw new IllegalStateException(
+                        "Could not uniquely locate ConstantPool::_pool_holder");
+            }
+            holderAddress = candidateAddress;
+        }
+
+        if (holderAddress == 0L) {
+            throw new IllegalStateException("Could not locate ConstantPool::_pool_holder");
+        }
+        return holderAddress;
+    }
+
+    private static long expandedMethodArray(long originalMethodsAddress, long donorMethodAddress) {
+        int originalMethodCount = methodArrayLength(originalMethodsAddress);
+        int replacementMethodCount = originalMethodCount + 1;
+        Long[] methodAddresses = new Long[replacementMethodCount];
+        for (int index = 0; index < originalMethodCount; index++) {
+            methodAddresses[index] = JDKUtility.UNSAFE.getLong(
+                    originalMethodsAddress + ARRAY_ELEMENTS_OFFSET + (long) index * Long.BYTES);
+        }
+        methodAddresses[originalMethodCount] = donorMethodAddress;
+        Arrays.sort(methodAddresses, Comparator.comparingLong(SeraphinaHook::methodNameSymbolAddress));
+
+        long byteCount = ARRAY_ELEMENTS_OFFSET + (long) replacementMethodCount * Long.BYTES;
+        long replacementMethodsAddress = JDKUtility.UNSAFE.allocateMemory(byteCount);
+        JDKUtility.UNSAFE.setMemory(replacementMethodsAddress, byteCount, (byte) 0);
+        JDKUtility.UNSAFE.putInt(
+                replacementMethodsAddress + ARRAY_LENGTH_OFFSET, replacementMethodCount);
+        for (int index = 0; index < replacementMethodCount; index++) {
+            JDKUtility.UNSAFE.putLong(
+                    replacementMethodsAddress + ARRAY_ELEMENTS_OFFSET + (long) index * Long.BYTES,
+                    methodAddresses[index]);
+        }
+        return replacementMethodsAddress;
+    }
+
+    private static long methodNameSymbolAddress(long methodAddress) {
+        long constMethodAddress = JDKUtility.UNSAFE.getLong(
+                methodAddress + METHOD_CONST_METHOD_OFFSET);
+        long constantPoolAddress = JDKUtility.UNSAFE.getLong(
+                constMethodAddress + CONST_METHOD_CONSTANTS_OFFSET);
+        int constantPoolLength = JDKUtility.UNSAFE.getInt(
+                constantPoolAddress + CONSTANT_POOL_LENGTH_OFFSET);
+        int nameIndex = Short.toUnsignedInt(JDKUtility.UNSAFE.getShort(
+                constMethodAddress + CONST_METHOD_NAME_INDEX_OFFSET));
+        if (nameIndex <= 0 || nameIndex >= constantPoolLength) {
+            throw new IllegalStateException("Method has an invalid ConstantPool name index");
+        }
+
+        long symbolAddress = JDKUtility.UNSAFE.getLong(
+                constantPoolAddress + CONSTANT_POOL_ENTRIES_OFFSET + (long) nameIndex * Long.BYTES);
+        if (!looksLikeNativePointer(symbolAddress)) {
+            throw new IllegalStateException("Method name does not resolve to a HotSpot Symbol");
+        }
+        return symbolAddress;
+    }
+
+    private static void verifyMethodName(MethodLocation location, String expectedMethodName) {
+        long symbolAddress = methodNameSymbolAddress(location.methodAddress);
+        int length = Short.toUnsignedInt(JDKUtility.UNSAFE.getShort(
+                symbolAddress + SYMBOL_LENGTH_OFFSET));
+        if (length != expectedMethodName.length()) {
+            throw new IllegalStateException("Unsupported HotSpot Symbol layout");
+        }
+
+        byte[] bytes = new byte[length];
+        for (int index = 0; index < length; index++) {
+            bytes[index] = JDKUtility.UNSAFE.getByte(symbolAddress + SYMBOL_BODY_OFFSET + index);
+        }
+        String actualMethodName = new String(bytes, StandardCharsets.UTF_8);
+        if (!expectedMethodName.equals(actualMethodName)) {
+            throw new IllegalStateException("Unsupported HotSpot ConstantPool layout");
+        }
+    }
+
+    private static void verifyInjectedMethod(Class<?> targetClass, Method injectedMethod) {
+        if (injectedMethod.getDeclaringClass() != targetClass
+                || injectedMethod.getReturnType() != void.class
+                || injectedMethod.getParameterCount() != 0
+                || !Modifier.isPublic(injectedMethod.getModifiers())
+                || !Modifier.isStatic(injectedMethod.getModifiers())) {
+            throw new IllegalStateException(
+                    "JVM did not expose the injected method as "
+                            + targetClass.getName() + "." + injectedMethod.getName() + "()");
+        }
+    }
+
+    private static void clearReflectionData(Class<?> klass) {
+        JDKUtility.UNSAFE.putObjectVolatile(klass, classReflectionDataOffset, null);
+    }
+
+    private static RuntimeException addMethodFailure(
+            Class<?> klass, String methodName, Throwable throwable) {
+        if (throwable instanceof RuntimeException runtimeException) {
+            return runtimeException;
+        }
+        if (throwable instanceof Error error) {
+            throw error;
+        }
+        return new IllegalStateException(
+                "Could not add " + klass.getName() + "." + methodName + "()", throwable);
+    }
+
+    private static boolean looksLikeNativePointer(long address) {
+        return address >= 0x1_0000L && (address & (Long.BYTES - 1L)) == 0L;
+    }
+
+    private static boolean isCurrentMetadataAddress(long address) {
+        return looksLikeNativePointer(address)
+                && (address >>> Integer.SIZE) == metadataAddressPrefix;
     }
 
     public static void replaceMethod(Class<?> target, Class<?> now) {
@@ -246,9 +715,9 @@ public class SeraphinaHook {
                 }
             }
             return new ArrayList<>(subclasses);
-        } catch (Exception e) {
+        } catch (Exception exception) {
             throw new IllegalStateException(
-                    "Could not traverse HotSpot Klass subclasses for " + klass.getName(), e);
+                    "Could not traverse HotSpot Klass subclasses for " + klass.getName(), exception);
         }
     }
 
@@ -488,28 +957,44 @@ public class SeraphinaHook {
             }
 
             try {
+                verifyRuntime();
                 directMethodHandleClass = Class.forName("java.lang.invoke.DirectMethodHandle");
                 Class<?> memberName = Class.forName("java.lang.invoke.MemberName");
 
                 Field directMember = declaredField(directMethodHandleClass, "member");
                 Field resolvedMethod = declaredField(memberName, "method");
                 Field referenceValue = declaredField(ReferenceSlot.class, "value");
-
+                Field reflectionData = declaredField(Class.class, "reflectionData");
                 directMethodHandleMemberOffset = JDKUtility.UNSAFE.objectFieldOffset(directMember);
                 memberNameResolvedMethodOffset = JDKUtility.UNSAFE.objectFieldOffset(resolvedMethod);
                 referenceSlot = new ReferenceSlot();
                 referenceSlotValueOffset = JDKUtility.UNSAFE.objectFieldOffset(referenceValue);
-
+                classReflectionDataOffset = JDKUtility.UNSAFE.objectFieldOffset(reflectionData);
                 NarrowOopEncoding encoding = deriveNarrowOopEncoding();
                 narrowOopBase = encoding.base;
                 narrowOopShift = encoding.shift;
                 verifyKlassLayout();
                 verifyLayout();
                 verifyVtableLayout();
+                verifyMethodTableLayout();
                 initialized = true;
             } catch (Exception e) {
                 throw new IllegalStateException("JDK 17 HotSpot Unsafe hook is unavailable", e);
             }
+        }
+    }
+
+    private static void verifyRuntime() {
+        if (!"17".equals(System.getProperty("java.specification.version"))) {
+            throw new IllegalStateException(
+                    "SeraphinaHook.addMethod only supports JDK 17, found "
+                            + System.getProperty("java.specification.version"));
+        }
+        String vmName = System.getProperty("java.vm.name", "");
+        boolean hotSpotVm = vmName.contains("HotSpot")
+                || vmName.contains("OpenJDK") && vmName.contains("Server VM");
+        if (!"64".equals(System.getProperty("sun.arch.data.model")) || !hotSpotVm) {
+            throw new IllegalStateException("SeraphinaHook only supports 64-bit HotSpot");
         }
     }
 
@@ -555,6 +1040,57 @@ public class SeraphinaHook {
         }
     }
 
+    private static void verifyMethodTableLayout() throws Exception {
+        Class<?> probeClass = MethodTableLayoutProbe.class;
+        Set<Long> expectedMethods = new HashSet<>();
+        for (Method method : probeClass.getDeclaredMethods()) {
+            expectedMethods.add(locate(method).methodAddress);
+        }
+        for (Constructor<?> constructor : probeClass.getDeclaredConstructors()) {
+            expectedMethods.add(locate(constructor).methodAddress);
+        }
+        metadataAddressPrefix = expectedMethods.iterator().next() >>> Integer.SIZE;
+
+        long probeKlassAddress = klassPointer(probeClass);
+        long resolvedMethodsOffset = 0L;
+        for (long offset = 0L;
+             offset <= INSTANCE_KLASS_LAYOUT_SCAN_BYTES - Long.BYTES;
+             offset += Long.BYTES) {
+            long methodArrayAddress = JDKUtility.UNSAFE.getLong(probeKlassAddress + offset);
+            if (!isCurrentMetadataAddress(methodArrayAddress)) {
+                continue;
+            }
+
+            int methodCount = JDKUtility.UNSAFE.getInt(methodArrayAddress + ARRAY_LENGTH_OFFSET);
+            if (methodCount != expectedMethods.size()) {
+                continue;
+            }
+
+            Set<Long> actualMethods = new HashSet<>();
+            boolean matches = true;
+            for (int index = 0; index < methodCount; index++) {
+                long methodAddress = JDKUtility.UNSAFE.getLong(
+                        methodArrayAddress + ARRAY_ELEMENTS_OFFSET + (long) index * Long.BYTES);
+                if (!expectedMethods.contains(methodAddress) || !actualMethods.add(methodAddress)) {
+                    matches = false;
+                    break;
+                }
+            }
+            if (!matches || actualMethods.size() != expectedMethods.size()) {
+                continue;
+            }
+            if (resolvedMethodsOffset != 0L) {
+                throw new IllegalStateException("Could not uniquely locate InstanceKlass::_methods");
+            }
+            resolvedMethodsOffset = offset;
+        }
+
+        if (resolvedMethodsOffset == 0L) {
+            throw new IllegalStateException("Could not locate InstanceKlass::_methods");
+        }
+        methodsOffset = resolvedMethodsOffset;
+    }
+
     private static void verifyLayout() throws Exception {
         Method probe = SeraphinaHook.class.getDeclaredMethod("layoutProbe");
         makeAccessible(probe);
@@ -563,41 +1099,6 @@ public class SeraphinaHook {
                 || JDKUtility.UNSAFE.getByte(location.codeAddress) != 0x03
                 || JDKUtility.UNSAFE.getByte(location.codeAddress + 1) != (byte) 0xAC) {
             throw new IllegalStateException("Unsupported HotSpot Method/ConstMethod layout");
-        }
-    }
-
-    private static NarrowOopEncoding deriveNarrowOopEncoding() throws Exception {
-        long parentMirror = rawJavaMirror(klassPointer(KlassLayoutParent.class));
-        long childMirror = rawJavaMirror(klassPointer(KlassLayoutChild.class));
-        long parentNarrow = narrowOop(KlassLayoutParent.class);
-        long childNarrow = narrowOop(KlassLayoutChild.class);
-        long rawDelta = childMirror - parentMirror;
-        long narrowDelta = childNarrow - parentNarrow;
-
-        if (rawDelta == 0L || narrowDelta == 0L || rawDelta % narrowDelta != 0L) {
-            throw new IllegalStateException("Could not derive compressed OOP encoding");
-        }
-
-        long scale = rawDelta / narrowDelta;
-        if (scale <= 0L || Long.bitCount(scale) != 1) {
-            throw new IllegalStateException("Unsupported compressed OOP scale " + scale);
-        }
-
-        int shift = Long.numberOfTrailingZeros(scale);
-        long base = parentMirror - (parentNarrow << shift);
-        return new NarrowOopEncoding(base, shift);
-    }
-
-    private static void verifyKlassLayout() throws Exception {
-        long parentKlass = klassPointer(KlassLayoutParent.class);
-        long childKlass = klassPointer(KlassLayoutChild.class);
-        long firstChild = JDKUtility.UNSAFE.getLong(parentKlass + KLASS_SUBKLASS_OFFSET);
-        if (parentKlass == 0L || childKlass == 0L || firstChild != childKlass) {
-            throw new IllegalStateException("Unsupported HotSpot Klass subclass layout");
-        }
-
-        if (classMirror(childKlass) != KlassLayoutChild.class) {
-            throw new IllegalStateException("Unsupported HotSpot Klass java mirror layout");
         }
     }
 
@@ -643,6 +1144,41 @@ public class SeraphinaHook {
         return (Class<?>) mirror;
     }
 
+    private static NarrowOopEncoding deriveNarrowOopEncoding() {
+        long parentMirror = rawJavaMirror(klassPointer(KlassLayoutParent.class));
+        long childMirror = rawJavaMirror(klassPointer(KlassLayoutChild.class));
+        long parentNarrow = narrowOop(KlassLayoutParent.class);
+        long childNarrow = narrowOop(KlassLayoutChild.class);
+        long rawDelta = childMirror - parentMirror;
+        long narrowDelta = childNarrow - parentNarrow;
+
+        if (rawDelta == 0L || narrowDelta == 0L || rawDelta % narrowDelta != 0L) {
+            throw new IllegalStateException("Could not derive compressed OOP encoding");
+        }
+
+        long scale = rawDelta / narrowDelta;
+        if (scale <= 0L || Long.bitCount(scale) != 1) {
+            throw new IllegalStateException("Unsupported compressed OOP scale " + scale);
+        }
+
+        int shift = Long.numberOfTrailingZeros(scale);
+        long base = parentMirror - (parentNarrow << shift);
+        return new NarrowOopEncoding(base, shift);
+    }
+
+    private static void verifyKlassLayout() {
+        long parentKlass = klassPointer(KlassLayoutParent.class);
+        long childKlass = klassPointer(KlassLayoutChild.class);
+        long firstChild = JDKUtility.UNSAFE.getLong(parentKlass + KLASS_SUBKLASS_OFFSET);
+        if (parentKlass == 0L || childKlass == 0L || firstChild != childKlass) {
+            throw new IllegalStateException("Unsupported HotSpot Klass subclass layout");
+        }
+
+        if (classMirror(childKlass) != KlassLayoutChild.class) {
+            throw new IllegalStateException("Unsupported HotSpot Klass java mirror layout");
+        }
+    }
+
     private static int encodeNarrowOop(long rawOop) {
         long delta = rawOop - narrowOopBase;
         long alignmentMask = (1L << narrowOopShift) - 1L;
@@ -670,7 +1206,22 @@ public class SeraphinaHook {
     }
 
     private static MethodLocation locate(Method method) throws IllegalAccessException {
-        MethodHandle methodHandle = JDKUtility.LOOKUP.unreflect(method);
+        return locate((Executable) method);
+    }
+
+    private static MethodLocation locate(Constructor<?> constructor) throws IllegalAccessException {
+        return locate((Executable) constructor);
+    }
+
+    private static MethodLocation locate(Executable executable) throws IllegalAccessException {
+        MethodHandle methodHandle;
+        if (executable instanceof Method method) {
+            methodHandle = JDKUtility.LOOKUP.unreflect(method);
+        } else if (executable instanceof Constructor<?> constructor) {
+            methodHandle = JDKUtility.LOOKUP.unreflectConstructor(constructor);
+        } else {
+            throw new IllegalArgumentException("Unsupported executable " + executable);
+        }
         if (!directMethodHandleClass.isInstance(methodHandle)) {
             throw new IllegalStateException(
                     "Expected DirectMethodHandle, got " + methodHandle.getClass().getName());
@@ -694,13 +1245,13 @@ public class SeraphinaHook {
 
         long constMethod = JDKUtility.UNSAFE.getLong(methodPointer + METHOD_CONST_METHOD_OFFSET);
         if (constMethod == 0L) {
-            throw new IllegalArgumentException(method + " has no ConstMethod");
+            throw new IllegalArgumentException(executable + " has no ConstMethod");
         }
 
         int codeSize = JDKUtility.UNSAFE.getShort(constMethod + CONST_METHOD_CODE_SIZE_OFFSET)
                 & 0xFFFF;
         if (codeSize == 0) {
-            throw new IllegalArgumentException(method + " has no Java bytecode");
+            throw new IllegalArgumentException(executable + " has no Java bytecode");
         }
 
         return new MethodLocation(
@@ -738,8 +1289,32 @@ public class SeraphinaHook {
         }
     }
 
+    private static class MethodTableLayoutProbe {
+        static void first() {
+        }
+
+        static void second() {
+        }
+
+        static void third() {
+        }
+    }
+
     private static final class ReferenceSlot {
         private volatile Object value;
+    }
+
+    private static final class DonorClassLoader extends ClassLoader {
+        private DonorClassLoader(ClassLoader parent) {
+            super(parent);
+        }
+
+        private Class<?> define(String className, byte[] bytecode) {
+            return defineClass(className, bytecode, 0, bytecode.length);
+        }
+    }
+
+    private record InjectedMethod(Class<?> donorClass, long methodArrayAddress) {
     }
 
     private record MethodLocation(

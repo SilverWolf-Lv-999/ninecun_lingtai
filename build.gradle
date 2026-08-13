@@ -133,7 +133,7 @@ sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 sourceSets.main.java {
     exclude 'net/seraphina/ninecun_lingtai/transform/**'
-    exclude 'net/seraphina/ninecun_lingtai/utility/launch/**'
+    exclude 'net/seraphina/ninecun_lingtai/utility/launch/LaunchPluginUtility.java'
 }
 
 sourceSets {
@@ -141,7 +141,7 @@ sourceSets {
         java {
             srcDir 'src/main/java'
             include 'net/seraphina/ninecun_lingtai/transform/**'
-            include 'net/seraphina/ninecun_lingtai/utility/launch/**'
+            include 'net/seraphina/ninecun_lingtai/utility/launch/LaunchPluginUtility.java'
         }
         resources {
             srcDir 'src/main/transformationServiceResources'
