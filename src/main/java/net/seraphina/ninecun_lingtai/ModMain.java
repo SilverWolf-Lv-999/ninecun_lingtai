@@ -15,6 +15,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.seraphina.ninecun_lingtai.utility.jvm.AgentUtility;
+import net.seraphina.ninecun_lingtai.utility.launch.HookUtility;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -37,5 +38,11 @@ public final class ModMain {
         ModCreativeModeTabs.register(modEventBus);
         context.registerConfig(ModConfig.Type.COMMON, CommonConfig.SPEC);
         ModNetwork.register();
+        if (Static.isClient()) {
+            HookUtility.clientHooks();
+            HookUtility.clientReplaceMethod();
+        }
+        HookUtility.commonHooks();
+        HookUtility.commonReplaceMethod();
     }
 }
