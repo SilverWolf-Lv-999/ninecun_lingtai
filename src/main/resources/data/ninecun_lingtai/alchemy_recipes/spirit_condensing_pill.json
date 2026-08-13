@@ -1,0 +1,63 @@
+{
+  "name": "凝神丹",
+  "description": "三阶三品悟道丹方，回响之音凝入丹中，服之如坐忘十年。",
+  "content": "回响碎片藏深暗之域先贤残念，此丹八成光阴皆在文火中深度冥想，全书文火最长、维持耗灵最巨，收尾以中火唤醒药性。深暗之域阴阳灵气浓郁，正是炼此丹的绝地宝地——若你敢在潜声守卫眼皮底下起炉。",
+  "grade": {
+    "tier": 3,
+    "rank": 3
+  },
+  "allowed_realms": [
+    "golden_core",
+    "nascent_soul"
+  ],
+  "minimum_refining_realm": "golden_core",
+  "ingredients": {
+    "primary": {
+      "item": "minecraft:echo_shard",
+      "count": 2
+    },
+    "secondary": [
+      {
+        "item": "minecraft:amethyst_shard",
+        "count": 4
+      },
+      {
+        "item": "minecraft:sculk",
+        "count": 8
+      }
+    ],
+    "auxiliary": [
+      {
+        "item": "minecraft:torchflower",
+        "count": 2
+      },
+      {
+        "item": "minecraft:pink_petals",
+        "count": 8
+      }
+    ]
+  },
+  "output_item": "ninecun_lingtai:spirit_condensing_pill",
+  "output_count": 1,
+  "brewing_duration": 2000,
+  "element_profile": {
+    "primary_element": "yin_yang"
+  },
+  "heat_stages": [
+    {
+      "band": "gentle",
+      "portion": 0.8
+    },
+    {
+      "band": "medium",
+      "portion": 0.2
+    }
+  ],
+  "pill_toxin": 15,
+  "effects": [
+    {
+      "type": "proficiency_gain",
+      "technique_proficiency": 40
+    }
+  ]
+}

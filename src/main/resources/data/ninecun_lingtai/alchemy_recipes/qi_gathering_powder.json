@@ -1,0 +1,68 @@
+{
+  "name": "聚气散",
+  "description": "一阶一品回灵丹方，聚四野灵气为一散，练气修士的第一炉丹。",
+  "content": "甜浆果捣浆为主药，甘蔗、海带取其津液，蒲公英与向日葵引气归元。此方顺天而炼：点火之后，顺其自然，武火烈、中火匀、文火收，皆与炉火自行衰减暗合。火将熄时开炉取丹，不必多想，天成之方也。",
+  "grade": {
+    "tier": 1,
+    "rank": 1
+  },
+  "allowed_realms": [
+    "qi_refining",
+    "foundation_establishment"
+  ],
+  "minimum_refining_realm": "qi_refining",
+  "ingredients": {
+    "primary": {
+      "item": "minecraft:sweet_berries",
+      "count": 8
+    },
+    "secondary": [
+      {
+        "item": "minecraft:sugar_cane",
+        "count": 4
+      },
+      {
+        "item": "minecraft:kelp",
+        "count": 4
+      }
+    ],
+    "auxiliary": [
+      {
+        "item": "minecraft:dandelion",
+        "count": 4
+      },
+      {
+        "item": "minecraft:sunflower",
+        "count": 1
+      }
+    ]
+  },
+  "output_item": "ninecun_lingtai:qi_gathering_powder",
+  "output_count": 2,
+  "brewing_duration": 500,
+  "element_profile": {
+    "primary_element": "wood"
+  },
+  "base_success_rate": 0.95,
+  "heat_stages": [
+    {
+      "band": "fierce",
+      "portion": 0.4
+    },
+    {
+      "band": "medium",
+      "portion": 0.4
+    },
+    {
+      "band": "gentle",
+      "portion": 0.2
+    }
+  ],
+  "pill_toxin": 4,
+  "effects": [
+    {
+      "type": "restore_spirit",
+      "amount": 30
+    }
+  ]
+}

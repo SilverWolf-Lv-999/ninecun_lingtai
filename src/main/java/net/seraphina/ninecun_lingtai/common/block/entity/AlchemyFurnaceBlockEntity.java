@@ -1,17 +1,38 @@
 package net.seraphina.ninecun_lingtai.common.block.entity;
 
 import net.seraphina.ninecun_lingtai.ModMain;
+import net.seraphina.ninecun_lingtai.api.alchemy.AlchemyBrewScore;
+import net.seraphina.ninecun_lingtai.api.alchemy.AlchemyFeedStep;
+import net.seraphina.ninecun_lingtai.api.alchemy.AlchemyGrade;
 import net.seraphina.ninecun_lingtai.api.alchemy.AlchemyIngredient;
+import net.seraphina.ninecun_lingtai.api.alchemy.AlchemyIngredientSlot;
 import net.seraphina.ninecun_lingtai.api.alchemy.AlchemyRecipeDefinition;
+import net.seraphina.ninecun_lingtai.api.alchemy.HeatBand;
+import net.seraphina.ninecun_lingtai.api.alchemy.HeatControlMode;
+import net.seraphina.ninecun_lingtai.api.alchemy.HeatStage;
+import net.seraphina.ninecun_lingtai.api.aptitude.SoulStrength;
+import net.seraphina.ninecun_lingtai.api.aptitude.SpiritualRoot;
+import net.seraphina.ninecun_lingtai.api.element.ElementRelation;
+import net.seraphina.ninecun_lingtai.api.element.ElementType;
+import net.seraphina.ninecun_lingtai.common.config.CommonConfig;
 import net.seraphina.ninecun_lingtai.common.data.AlchemyRecipeManager;
+import net.seraphina.ninecun_lingtai.common.data.ElementEnvironmentManager;
+import net.seraphina.ninecun_lingtai.common.item.PillItem;
 import net.seraphina.ninecun_lingtai.common.menu.AlchemyFurnaceMenu;
+import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import net.seraphina.ninecun_lingtai.common.network.packet.AlchemyFurnaceActionPacket;
 import net.seraphina.ninecun_lingtai.common.registry.ModBlockEntityTypes;
+import net.seraphina.ninecun_lingtai.common.registry.ModItems;
+import net.seraphina.ninecun_lingtai.common.player.PlayerAptitudeData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerCultivationData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerLearnedAlchemyRecipeData;
+import net.seraphina.ninecun_lingtai.common.player.PlayerSpiritualEnergyData;
 import net.seraphina.ninecun_lingtai.utility.AlchemyPillUtility;
+import net.seraphina.ninecun_lingtai.utility.AlchemyProcessUtility;
+import net.seraphina.ninecun_lingtai.utility.AlchemyResultCalculator;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -19,10 +40,14 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.Containers;
 import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.InteractionHand;
@@ -40,20 +65,45 @@ import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 import javax.annotation.Nullable;
+import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoBlockEntity, Container, MenuProvider, ContainerData {
     public static final int HEAT_DATA_INDEX = 0;
     public static final int MAXIMUM_HEAT_DATA_INDEX = 1;
     public static final int REFINING_DATA_INDEX = 2;
-    public static final int DATA_COUNT = 3;
+    public static final int ENVIRONMENT_MULTIPLIER_X100_DATA_INDEX = 3;
+    public static final int PRIMARY_ELEMENT_DATA_INDEX = 4;
+    public static final int OPEN_FEED_MASK_DATA_INDEX = 5;
+    public static final int MISSED_FEED_MASK_DATA_INDEX = 6;
+    public static final int FED_FEED_MASK_DATA_INDEX = 7;
+    public static final int LATE_FEED_MASK_DATA_INDEX = 8;
+    public static final int HEAT_CONTROL_MODE_DATA_INDEX = 9;
+    public static final int PLANNED_FEED_MASK_DATA_INDEX = 10;
+    public static final int DATA_COUNT = 11;
 
     private static final int MAXIMUM_HEAT = 600;
+    private static final int CLIENT_SYNCHRONIZATION_INTERVAL = 20;
+    private static final int ENVIRONMENT_CACHE_INTERVAL = 20;
+    private static final double MAINTAIN_RANGE_SQR = 64.0D;
+    private static final int SCENT_TOAST_DURATION_TICKS = 100;
+    private static final int RESULT_TOAST_DURATION_TICKS = 120;
     private static final String REFINING_KEY = "Refining";
-    private static final String ACTIVE_RECIPE_KEY = "ActiveRecipe";
     private static final String REFINING_TICKS_KEY = "RefiningTicks";
     private static final String LEGACY_BREW_PROGRESS_KEY = "BrewProgress";
     private static final String HEAT_KEY = "Heat";
+    private static final String HIT_TICKS_KEY = "HitTicks";
+    private static final String EFFECTIVE_DURATION_KEY = "EffectiveDuration";
+    private static final String ENVIRONMENT_MULTIPLIER_KEY = "EnvMultiplier";
+    private static final String ROOT_SCORE_KEY = "BrewRootScore";
+    private static final String SOUL_SCORE_KEY = "BrewSoulScore";
+    private static final String REALM_SCORE_KEY = "BrewRealmScore";
+    private static final String ENVIRONMENT_SCORE_KEY = "BrewEnvScore";
+    private static final String ROOT_QUALITY_KEY = "BrewRootQuality";
+    private static final String SCENT_PLAN_KEY = "ScentPlan";
+    private static final String SCENT_SENT_KEY = "ScentSent";
+    private static final String REFINER_KEY = "Refiner";
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private final NonNullList<ItemStack> items = NonNullList.withSize(
@@ -63,9 +113,39 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
 
     private boolean refining;
     @Nullable
+    private ResourceLocation selectedRecipeId;
+    @Nullable
     private ResourceLocation activeRecipeId;
     private int refiningTicks;
     private int heat;
+
+    private int hitTicks;
+    private int effectiveDuration;
+    private double environmentMultiplier = 1.0D;
+    private double rootScore;
+    private double soulScore;
+    private double realmScore;
+    private double environmentScore = 1.0D;
+    private double rootQuality;
+    private int scentPlanTicks = -1;
+    private boolean scentSent;
+    @Nullable
+    private UUID refinerId;
+    private int openFeedMask;
+    private int fedFeedMask;
+    private int missedFeedMask;
+    private int lateFeedMask;
+    private int plannedFeedMask;
+    private double feedScoreTotal;
+    private int feedScoreCount;
+
+    @Nullable
+    private UUID heatControllerPlayerId;
+    private HeatControlMode heatControlMode = HeatControlMode.NONE;
+
+    private int cachedEnvironmentMultiplierX100 = 100;
+    private int cachedPrimaryElementOrdinal;
+    private int environmentCacheCooldown;
 
     public AlchemyFurnaceBlockEntity(BlockPos blockPosition, BlockState blockState) {
         super(ModBlockEntityTypes.ALCHEMY_FURNACE.get(), blockPosition, blockState);
@@ -81,18 +161,34 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
     }
 
     public static void serverTick(Level level, BlockPos blockPosition, BlockState blockState, AlchemyFurnaceBlockEntity furnace) {
-        if (furnace.heat <= 0) {
+        if (--furnace.environmentCacheCooldown <= 0) {
+            furnace.environmentCacheCooldown = ENVIRONMENT_CACHE_INTERVAL;
+            furnace.updateEnvironmentCache();
+        }
+        if (furnace.heat <= 0 && !furnace.refining) {
+            furnace.releaseHeatControl();
             return;
         }
-        furnace.heat--;
+
+        boolean heatControlled = furnace.tickHeatControl();
+        if (!heatControlled && furnace.heat > 0) {
+            furnace.heat--;
+        }
+
         if (furnace.refining) {
             furnace.refiningTicks++;
+            furnace.updateFeedWindowState();
             if (furnace.heat <= 0) {
-                furnace.burnIngredients();
+                furnace.failAshes();
                 return;
             }
+            furnace.trackFireScore();
+            furnace.tickScent();
         }
-        furnace.setChangedAndSynchronize();
+        furnace.setChanged();
+        if (furnace.heat % CLIENT_SYNCHRONIZATION_INTERVAL == 0) {
+            furnace.synchronizeToClients();
+        }
     }
 
     public void handleAction(ServerPlayer player, AlchemyFurnaceActionPacket.Action action) {
@@ -110,11 +206,196 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
         }
     }
 
+    public boolean selectRecipe(ServerPlayer player, ResourceLocation recipeId) {
+        if (this.refining) {
+            player.displayClientMessage(
+                    Component.translatable("message.ninecun_lingtai.alchemy_select_while_refining"),
+                    true
+            );
+            return false;
+        }
+        AlchemyRecipeDefinition recipe = AlchemyRecipeManager.INSTANCE.getRecipe(recipeId).orElse(null);
+        if (recipe == null) {
+            player.displayClientMessage(
+                    Component.translatable("message.ninecun_lingtai.missing_alchemy_recipe"),
+                    true
+            );
+            return false;
+        }
+        if (!PlayerLearnedAlchemyRecipeData.hasRecipe(player, recipeId)) {
+            player.displayClientMessage(
+                    Component.translatable("message.ninecun_lingtai.alchemy_recipe_not_learned"),
+                    true
+            );
+            return false;
+        }
+        if (!meetsRefiningRealm(player, recipe)) {
+            player.displayClientMessage(
+                    Component.translatable(
+                            "message.ninecun_lingtai.alchemy_realm_restricted",
+                            recipe.getMinimumRefiningRealmName()
+                    ),
+                    true
+            );
+            return false;
+        }
+        if (!canSelectWithCurrentContents(recipe)) {
+            player.displayClientMessage(
+                    Component.translatable("message.ninecun_lingtai.alchemy_selection_conflicts"),
+                    true
+            );
+            return false;
+        }
+        this.selectedRecipeId = recipeId;
+        this.plannedFeedMask = AlchemyProcessUtility.getRequiredFeedMask(recipe.feedPlan());
+        resetFeedState();
+        this.setChangedAndSynchronize();
+        return true;
+    }
+
+    @Nullable
+    public ResourceLocation getSelectedRecipeId() {
+        return this.selectedRecipeId;
+    }
+
     public void ignite(ServerPlayer player, InteractionHand interactionHand) {
         ItemStack ignitionTool = player.getItemInHand(interactionHand);
         this.heat = MAXIMUM_HEAT;
         ignitionTool.hurtAndBreak(1, player, ignored -> player.broadcastBreakEvent(interactionHand));
         this.setChangedAndSynchronize();
+    }
+
+    public void setHeatControl(ServerPlayer player, HeatControlMode mode) {
+        if (mode == HeatControlMode.NONE) {
+            if (player.getUUID().equals(this.heatControllerPlayerId)) {
+                releaseHeatControl();
+            }
+            return;
+        }
+        if (!this.refining || this.heat <= 0) {
+            return;
+        }
+        this.heatControllerPlayerId = player.getUUID();
+        this.heatControlMode = mode;
+        setChanged();
+    }
+
+    private boolean tickHeatControl() {
+        if (this.heatControllerPlayerId == null
+                || this.heatControlMode == HeatControlMode.NONE
+                || this.level == null
+                || !this.refining
+                || this.heat <= 0) {
+            releaseHeatControl();
+            return false;
+        }
+        ServerPlayer player = this.level.getServer() == null
+                ? null
+                : this.level.getServer().getPlayerList().getPlayer(this.heatControllerPlayerId);
+        if (player == null
+                || !player.isAlive()
+                || player.level() != this.level
+                || !(player.containerMenu instanceof AlchemyFurnaceMenu menu)
+                || !menu.getBlockPosition().equals(this.worldPosition)
+                || player.distanceToSqr(
+                        this.worldPosition.getX() + 0.5D,
+                        this.worldPosition.getY() + 0.5D,
+                        this.worldPosition.getZ() + 0.5D
+                ) > MAINTAIN_RANGE_SQR) {
+            releaseHeatControl();
+            return false;
+        }
+        AlchemyRecipeDefinition recipe = this.activeRecipeId == null
+                ? null
+                : AlchemyRecipeManager.INSTANCE.getRecipe(this.activeRecipeId).orElse(null);
+        HeatBand currentBand = HeatBand.ofHeat(this.heat).orElse(null);
+        if (recipe == null || currentBand == null) {
+            releaseHeatControl();
+            return false;
+        }
+        double costPerTick = getHeatControlCostPerTick(
+                recipe.grade().tier(),
+                currentBand,
+                this.heatControlMode
+        );
+        if (!consumeHeatControlCost(
+                player,
+                recipe.getPrimaryElement().orElse(null),
+                costPerTick
+        )) {
+            releaseHeatControl();
+            player.displayClientMessage(
+                    Component.translatable("message.ninecun_lingtai.alchemy_heat_control_exhausted"),
+                    true
+            );
+            return false;
+        }
+        switch (this.heatControlMode) {
+            case STOKE -> this.heat = Math.min(
+                    MAXIMUM_HEAT,
+                    this.heat + Math.max(1, CommonConfig.ALCHEMY_STOKE_HEAT_PER_TICK.get())
+            );
+            case VENT -> this.heat = Math.max(
+                    0,
+                    this.heat - Math.max(1, CommonConfig.ALCHEMY_VENT_HEAT_PER_TICK.get())
+            );
+            case MAINTAIN -> this.heat = currentBand.getCenterHeat();
+            case NONE -> {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void releaseHeatControl() {
+        this.heatControllerPlayerId = null;
+        this.heatControlMode = HeatControlMode.NONE;
+    }
+
+    private static double getHeatControlCostPerTick(
+            int tier,
+            HeatBand band,
+            HeatControlMode mode
+    ) {
+        double bandFactor = switch (band) {
+            case GENTLE -> 0.6D;
+            case MEDIUM -> 1.0D;
+            case FIERCE -> 1.6D;
+        };
+        double modeFactor = switch (mode) {
+            case STOKE -> CommonConfig.ALCHEMY_STOKE_COST_MULTIPLIER.get();
+            case VENT -> CommonConfig.ALCHEMY_VENT_COST_MULTIPLIER.get();
+            case MAINTAIN -> CommonConfig.ALCHEMY_MAINTAIN_COST_MULTIPLIER.get();
+            case NONE -> 0.0D;
+        };
+        return CommonConfig.ALCHEMY_MAINTAIN_BASE_COST.get()
+                * Math.pow(CommonConfig.ALCHEMY_MAINTAIN_TIER_GROWTH.get(), tier - 1)
+                * bandFactor
+                * modeFactor
+                / 20.0D;
+    }
+
+    private static boolean consumeHeatControlCost(
+            ServerPlayer player,
+            @Nullable ElementType primaryElement,
+            double cost
+    ) {
+        if (cost <= 0.0D) {
+            return true;
+        }
+        if (primaryElement == null) {
+            return PlayerSpiritualEnergyData.consumeEnergyAny(player, cost) != null;
+        }
+        if (PlayerSpiritualEnergyData.consumeEnergy(player, primaryElement, cost)) {
+            return true;
+        }
+        for (ElementType element : ElementType.FIVE_ELEMENTS) {
+            if (element.getRelationTo(primaryElement) == ElementRelation.GENERATES
+                    && PlayerSpiritualEnergyData.consumeEnergy(player, element, cost)) {
+                return true;
+            }
+        }
+        return PlayerSpiritualEnergyData.consumeEnergyAny(player, cost * 1.25D) != null;
     }
 
     private void startRefining(ServerPlayer player) {
@@ -125,15 +406,20 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
             );
             return;
         }
-        Optional<AlchemyRecipeDefinition> matchedRecipe = getMatchingRecipe();
-        if (matchedRecipe.isEmpty()) {
+        AlchemyRecipeDefinition recipe = this.selectedRecipeId == null
+                ? getMatchingRecipe().orElse(null)
+                : AlchemyRecipeManager.INSTANCE.getRecipe(this.selectedRecipeId).orElse(null);
+        boolean validIngredients = recipe != null
+                && (recipe.feedPlan().isEmpty()
+                ? matchesRecipe(recipe)
+                : matchesInitialIngredients(recipe));
+        if (!validIngredients) {
             player.displayClientMessage(
                     Component.translatable("message.ninecun_lingtai.alchemy_invalid_ingredients"),
                     true
             );
             return;
         }
-        AlchemyRecipeDefinition recipe = matchedRecipe.get();
         if (!PlayerLearnedAlchemyRecipeData.hasRecipe(player, recipe.id())) {
             player.displayClientMessage(
                     Component.translatable("message.ninecun_lingtai.alchemy_recipe_not_learned"),
@@ -141,10 +427,9 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
             );
             return;
         }
-        boolean meetsMinimumRefiningRealm = PlayerCultivationData.getStage(player)
-                .map(stage -> stage.realm().ordinal() >= recipe.minimumRefiningRealm().ordinal())
-                .orElse(false);
-        if (!meetsMinimumRefiningRealm) {
+        Optional<net.seraphina.ninecun_lingtai.api.cultivation.CultivationStage> stage =
+                PlayerCultivationData.getStage(player);
+        if (!meetsRefiningRealm(player, recipe)) {
             player.displayClientMessage(
                     Component.translatable(
                             "message.ninecun_lingtai.alchemy_realm_restricted",
@@ -161,63 +446,559 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
             );
             return;
         }
+        double multiplier = 1.0D;
+        ElementType primaryElement = recipe.getPrimaryElement().orElse(null);
+        if (primaryElement != null && this.level != null) {
+            multiplier = ElementEnvironmentManager.INSTANCE.getEnvironmentMultiplier(
+                    this.level,
+                    this.worldPosition,
+                    primaryElement
+            );
+            if (multiplier <= 0.0D) {
+                player.displayClientMessage(
+                        Component.translatable("message.ninecun_lingtai.alchemy_environment_dead"),
+                        true
+                );
+                return;
+            }
+        }
 
+        this.environmentMultiplier = primaryElement == null ? 1.0D : multiplier;
+        this.effectiveDuration = AlchemyResultCalculator.getEffectiveDuration(
+                recipe.brewingDuration(),
+                this.environmentMultiplier
+        );
+        this.environmentScore = AlchemyResultCalculator.calculateEnvironmentScore(
+                multiplier,
+                primaryElement != null
+        );
+        Optional<SpiritualRoot> spiritualRoot = PlayerAptitudeData.getSpiritualRoot(player);
+        this.rootScore = AlchemyResultCalculator.calculateRootScore(spiritualRoot, primaryElement);
+        this.rootQuality = spiritualRoot.map(SpiritualRoot::quality).orElse(0.0F);
+        this.soulScore = AlchemyResultCalculator.calculateSoulScore(PlayerAptitudeData.getSoulStrength(player));
+        this.realmScore = AlchemyResultCalculator.calculateRealmScore(stage, recipe.grade().tier());
+        this.scentPlanTicks = rollScentPlan(player);
+        this.scentSent = false;
+        this.refinerId = player.getUUID();
+        this.hitTicks = 0;
+        this.selectedRecipeId = recipe.id();
+        this.plannedFeedMask = AlchemyProcessUtility.getRequiredFeedMask(recipe.feedPlan());
         this.refining = true;
         this.activeRecipeId = recipe.id();
         this.refiningTicks = 0;
+        resetFeedState();
+        updateFeedWindowState();
         this.setChangedAndSynchronize();
+    }
+
+    private static boolean meetsRefiningRealm(
+            ServerPlayer player,
+            AlchemyRecipeDefinition recipe
+    ) {
+        return PlayerCultivationData.getStage(player)
+                .map(currentStage -> currentStage.realm().ordinal()
+                        >= recipe.minimumRefiningRealm().ordinal()
+                        && currentStage.realm().ordinal() >= recipe.grade().tier() - 1)
+                .orElse(false);
+    }
+
+    private int rollScentPlan(ServerPlayer player) {
+        int stars = PlayerAptitudeData.getSoulStrength(player)
+                .map(SoulStrength::illuminatedStars)
+                .orElse(1);
+        if (stars >= 5) {
+            return this.effectiveDuration;
+        }
+        if (stars >= 3) {
+            if (player.getRandom().nextDouble() < 0.8D) {
+                return this.effectiveDuration
+                        + player.getRandom().nextInt(Math.max(1, this.effectiveDuration / 20));
+            }
+            return -1;
+        }
+        return player.getRandom().nextDouble() < 0.4D ? this.effectiveDuration : -1;
+    }
+
+    private void trackFireScore() {
+        Optional<AlchemyRecipeDefinition> recipe = this.activeRecipeId == null
+                ? Optional.empty()
+                : AlchemyRecipeManager.INSTANCE.getRecipe(this.activeRecipeId);
+        if (recipe.isEmpty()) {
+            return;
+        }
+        List<HeatStage> stages = recipe.get().heatStages();
+        if (stages.isEmpty()) {
+            this.hitTicks++;
+            return;
+        }
+        double progress = this.refiningTicks / (double) Math.max(1, this.effectiveDuration);
+        HeatBand targetBand = HeatStage.getTargetBand(stages, progress);
+        if (HeatBand.ofHeat(this.heat).filter(targetBand::equals).isPresent()) {
+            this.hitTicks++;
+        }
+    }
+
+    private void updateFeedWindowState() {
+        AlchemyRecipeDefinition recipe = this.activeRecipeId == null
+                ? null
+                : AlchemyRecipeManager.INSTANCE.getRecipe(this.activeRecipeId).orElse(null);
+        if (!this.refining || recipe == null || recipe.feedPlan().isEmpty()) {
+            this.openFeedMask = 0;
+            return;
+        }
+        this.plannedFeedMask = AlchemyProcessUtility.getRequiredFeedMask(recipe.feedPlan());
+        AlchemyProcessUtility.StageProgress stageProgress = AlchemyProcessUtility.locateStage(
+                recipe.heatStages(),
+                this.refiningTicks / (double) Math.max(1, this.effectiveDuration)
+        );
+        AlchemyProcessUtility.FeedWindowState windowState =
+                AlchemyProcessUtility.getFeedWindowState(
+                        recipe.feedPlan(),
+                        this.fedFeedMask,
+                        stageProgress
+                );
+        this.missedFeedMask |= windowState.missedMask();
+        this.openFeedMask = windowState.openMask() & ~this.missedFeedMask;
+    }
+
+    private void captureDelayedFeed(int slot, ItemStack itemStack) {
+        if (!this.refining
+                || this.level == null
+                || this.level.isClientSide
+                || slot < AlchemyFurnaceMenu.MAIN_INGREDIENT_SLOT
+                || slot >= AlchemyFurnaceMenu.OUTPUT_SLOT) {
+            return;
+        }
+        int slotMask = 1 << slot;
+        if ((this.openFeedMask & slotMask) == 0
+                || (this.fedFeedMask & slotMask) != 0
+                || (this.missedFeedMask & slotMask) != 0) {
+            return;
+        }
+        AlchemyRecipeDefinition recipe = this.activeRecipeId == null
+                ? null
+                : AlchemyRecipeManager.INSTANCE.getRecipe(this.activeRecipeId).orElse(null);
+        if (recipe == null) {
+            return;
+        }
+        AlchemyFeedStep step = recipe.getFeedStep(AlchemyIngredientSlot.fromSlotIndex(slot))
+                .orElse(null);
+        if (step == null || !matchesIngredientStack(itemStack, recipe.getIngredient(step.slot()))) {
+            return;
+        }
+        AlchemyProcessUtility.StageProgress stageProgress = AlchemyProcessUtility.locateStage(
+                recipe.heatStages(),
+                this.refiningTicks / (double) Math.max(1, this.effectiveDuration)
+        );
+        double accuracy = AlchemyProcessUtility.calculateFeedAccuracy(step, stageProgress);
+        if (accuracy <= 0.0D) {
+            return;
+        }
+        this.feedScoreTotal += accuracy;
+        this.feedScoreCount++;
+        this.fedFeedMask |= slotMask;
+        this.openFeedMask &= ~slotMask;
+        if (stageProgress.progressWithinStage() > step.windowEnd()) {
+            this.lateFeedMask |= slotMask;
+        }
+    }
+
+    private double getFeedScore(AlchemyRecipeDefinition recipe) {
+        if (recipe.feedPlan().isEmpty()) {
+            return 1.0D;
+        }
+        if (hasMissingFeed(recipe)) {
+            return 0.0D;
+        }
+        return Math.max(
+                0.0D,
+                Math.min(1.0D, this.feedScoreTotal / Math.max(1, recipe.feedPlan().size()))
+        );
+    }
+
+    private boolean hasMissingFeed(AlchemyRecipeDefinition recipe) {
+        int requiredMask = AlchemyProcessUtility.getRequiredFeedMask(recipe.feedPlan());
+        return (this.fedFeedMask & requiredMask) != requiredMask
+                || (this.missedFeedMask & requiredMask) != 0;
+    }
+
+    private void tickScent() {
+        if (this.scentSent || this.scentPlanTicks < 0 || this.refiningTicks < this.scentPlanTicks) {
+            return;
+        }
+        this.scentSent = true;
+        ServerPlayer refiner = getRefiner();
+        if (refiner != null) {
+            ModNetwork.sendNotification(
+                    refiner,
+                    Component.translatable("notification.ninecun_lingtai.alchemy_scent_title"),
+                    Component.translatable("notification.ninecun_lingtai.alchemy_scent"),
+                    SCENT_TOAST_DURATION_TICKS
+            );
+        }
+    }
+
+    @Nullable
+    private ServerPlayer getRefiner() {
+        if (this.refinerId == null || this.level == null || this.level.getServer() == null) {
+            return null;
+        }
+        ServerPlayer player = this.level.getServer().getPlayerList().getPlayer(this.refinerId);
+        if (player == null
+                || player.level() != this.level
+                || player.distanceToSqr(
+                        this.worldPosition.getX() + 0.5D,
+                        this.worldPosition.getY() + 0.5D,
+                        this.worldPosition.getZ() + 0.5D
+                ) > 32.0D * 32.0D) {
+            return null;
+        }
+        return player;
     }
 
     private void finishRefining(ServerPlayer player) {
         AlchemyRecipeDefinition recipe = this.activeRecipeId == null
                 ? null
                 : AlchemyRecipeManager.INSTANCE.getRecipe(this.activeRecipeId).orElse(null);
-        if (recipe == null || !matchesRecipe(recipe) || !canAcceptOutput(recipe)) {
+        if (recipe == null) {
             burnIngredients();
             return;
         }
-        if (this.refiningTicks < recipe.brewingDuration()) {
-            burnIngredients();
-            player.displayClientMessage(
-                    Component.translatable("message.ninecun_lingtai.alchemy_pill_not_formed"),
-                    true
-            );
+        double duration = this.effectiveDuration > 0 ? this.effectiveDuration : recipe.brewingDuration();
+        double harvestTiming = this.refiningTicks / duration;
+
+        if (harvestTiming < AlchemyResultCalculator.EXPLOSION_THRESHOLD) {
+            failExplosion(recipe, player, "message.ninecun_lingtai.alchemy_result_exploded_early");
+            return;
+        }
+        if (harvestTiming < AlchemyResultCalculator.WINDOW_START) {
+            failDregs(recipe, player, "message.ninecun_lingtai.alchemy_result_dregs_early");
+            return;
+        }
+        if (harvestTiming > AlchemyResultCalculator.CHARRED_THRESHOLD) {
+            failCharred(recipe, player);
+            return;
+        }
+        if (hasMissingFeed(recipe) || !matchesRecipe(recipe)) {
+            failMissingFeed(recipe, player);
             return;
         }
 
-        consumeIngredients(recipe);
-        Item outputItem = BuiltInRegistries.ITEM.get(recipe.outputItem());
-        ItemStack output = AlchemyPillUtility.createStack(
-                outputItem,
-                recipe.outputCount(),
-                recipe.grade()
+        boolean hasHeatCurve = !recipe.heatStages().isEmpty();
+        double fireScore = AlchemyResultCalculator.calculateFireScore(
+                this.hitTicks,
+                this.refiningTicks,
+                this.rootQuality,
+                hasHeatCurve
         );
-        ItemStack previousOutput = getItem(AlchemyFurnaceMenu.OUTPUT_SLOT);
-        if (previousOutput.isEmpty()) {
-            setItem(AlchemyFurnaceMenu.OUTPUT_SLOT, output);
-        } else {
-            previousOutput.grow(output.getCount());
-            setItem(AlchemyFurnaceMenu.OUTPUT_SLOT, previousOutput);
+        double rawFireScore = AlchemyResultCalculator.getRawFireScore(
+                this.hitTicks,
+                this.refiningTicks,
+                hasHeatCurve
+        );
+        double feedScore = getFeedScore(recipe);
+        double operationScore = AlchemyProcessUtility.combineOperationScore(
+                fireScore,
+                feedScore,
+                !recipe.feedPlan().isEmpty()
+        );
+        double rawOperationScore = AlchemyProcessUtility.combineOperationScore(
+                rawFireScore,
+                feedScore,
+                !recipe.feedPlan().isEmpty()
+        );
+        AlchemyBrewScore score = AlchemyResultCalculator.combine(
+                operationScore,
+                this.environmentScore,
+                this.rootScore,
+                this.soulScore,
+                this.realmScore,
+                recipe.baseSuccessRate()
+        );
+        if (player.getRandom().nextDouble() >= score.successRate()) {
+            if (score.totalScore() < 0.5D) {
+                failExplosion(recipe, player, "message.ninecun_lingtai.alchemy_result_exploded");
+            } else {
+                failDregs(recipe, player, "message.ninecun_lingtai.alchemy_result_dregs");
+            }
+            return;
         }
-        this.refining = false;
-        this.activeRecipeId = null;
-        this.refiningTicks = 0;
+
+        int rankOffset = AlchemyResultCalculator.getRankOffset(score.totalScore(), rawOperationScore)
+                - AlchemyResultCalculator.getOverfireRankPenalty(harvestTiming);
+        if (this.lateFeedMask != 0) {
+            rankOffset = Math.min(0, rankOffset);
+        }
+        int resultRank = Math.max(1, Math.min(9, recipe.grade().rank() + rankOffset));
+        AlchemyGrade resultGrade = new AlchemyGrade(recipe.grade().tier(), resultRank);
+        int outputCount = recipe.outputCount()
+                + (this.lateFeedMask == 0 && AlchemyResultCalculator.rollBonusYield(
+                        score.totalScore(),
+                        rawOperationScore,
+                        player.getRandom()
+                ) ? 1 : 0);
+
+        consumeIngredients(recipe);
+        insertOrDropOutput(createPillOutputStack(recipe, resultGrade, outputCount));
+        ModNetwork.sendNotification(
+                player,
+                Component.translatable("notification.ninecun_lingtai.alchemy_success_title"),
+                Component.translatable(
+                        "notification.ninecun_lingtai.alchemy_success",
+                        recipe.name(),
+                        resultGrade.getDisplayName(),
+                        outputCount
+                ),
+                RESULT_TOAST_DURATION_TICKS
+        );
+        resetBrewSession();
         this.setChangedAndSynchronize();
     }
 
-    private void burnIngredients() {
+    private void failExplosion(AlchemyRecipeDefinition recipe, ServerPlayer player, String messageKey) {
+        clearIngredientSlots();
+        this.heat = 0;
+        resetBrewSession();
+        if (this.level instanceof ServerLevel serverLevel) {
+            double centerX = this.worldPosition.getX() + 0.5D;
+            double centerY = this.worldPosition.getY() + 1.0D;
+            double centerZ = this.worldPosition.getZ() + 0.5D;
+            serverLevel.explode(
+                    null,
+                    centerX,
+                    centerY,
+                    centerZ,
+                    (float) recipe.failureExplosionRadius(),
+                    CommonConfig.ALCHEMY_EXPLOSION_BREAKS_BLOCKS.get()
+                            ? Level.ExplosionInteraction.BLOCK
+                            : Level.ExplosionInteraction.NONE
+            );
+            for (Entity entity : serverLevel.getEntities(
+                    null,
+                    new AABB(this.worldPosition).inflate(recipe.failureExplosionRadius() + 1.0D)
+            )) {
+                if (entity instanceof LivingEntity) {
+                    entity.setSecondsOnFire(3);
+                }
+            }
+        }
+        ModNetwork.sendNotification(
+                player,
+                Component.translatable("notification.ninecun_lingtai.alchemy_failure_title"),
+                Component.translatable(messageKey),
+                RESULT_TOAST_DURATION_TICKS
+        );
+        this.setChangedAndSynchronize();
+    }
+
+    private void failDregs(AlchemyRecipeDefinition recipe, ServerPlayer player, String messageKey) {
+        consumeIngredients(recipe);
+        int dregCount = Math.max(1, recipe.failureDregCount());
+        insertOrDropOutput(new ItemStack(ModItems.DREGS_PILL.get(), dregCount));
+        ModNetwork.sendNotification(
+                player,
+                Component.translatable("notification.ninecun_lingtai.alchemy_failure_title"),
+                Component.translatable(messageKey, dregCount),
+                RESULT_TOAST_DURATION_TICKS
+        );
+        resetBrewSession();
+        this.setChangedAndSynchronize();
+    }
+
+    private void failMissingFeed(AlchemyRecipeDefinition recipe, ServerPlayer player) {
+        clearIngredientSlots();
+        int dregCount = Math.max(1, recipe.failureDregCount());
+        insertOrDropOutput(new ItemStack(ModItems.DREGS_PILL.get(), dregCount));
+        ModNetwork.sendNotification(
+                player,
+                Component.translatable("notification.ninecun_lingtai.alchemy_failure_title"),
+                Component.translatable(
+                        "message.ninecun_lingtai.alchemy_result_missing_feed",
+                        dregCount
+                ),
+                RESULT_TOAST_DURATION_TICKS
+        );
+        resetBrewSession();
+        this.setChangedAndSynchronize();
+    }
+
+    private void failCharred(AlchemyRecipeDefinition recipe, ServerPlayer player) {
+        clearIngredientSlots();
+        resetBrewSession();
+        spawnFailureParticles(ParticleTypes.CAMPFIRE_COSY_SMOKE, 20);
+        ModNetwork.sendNotification(
+                player,
+                Component.translatable("notification.ninecun_lingtai.alchemy_failure_title"),
+                Component.translatable("message.ninecun_lingtai.alchemy_result_charred"),
+                RESULT_TOAST_DURATION_TICKS
+        );
+        this.setChangedAndSynchronize();
+    }
+
+    private void failAshes() {
+        ServerPlayer refiner = getRefiner();
+        burnIngredients();
+        spawnFailureParticles(ParticleTypes.ASH, 24);
+        if (refiner != null) {
+            ModNetwork.sendNotification(
+                    refiner,
+                    Component.translatable("notification.ninecun_lingtai.alchemy_failure_title"),
+                    Component.translatable("message.ninecun_lingtai.alchemy_result_ashes"),
+                    RESULT_TOAST_DURATION_TICKS
+            );
+        }
+    }
+
+    private void spawnFailureParticles(net.minecraft.core.particles.SimpleParticleType particleType, int count) {
+        if (this.level instanceof ServerLevel serverLevel) {
+            serverLevel.sendParticles(
+                    particleType,
+                    this.worldPosition.getX() + 0.5D,
+                    this.worldPosition.getY() + 1.5D,
+                    this.worldPosition.getZ() + 0.5D,
+                    count,
+                    0.4D,
+                    0.6D,
+                    0.4D,
+                    0.01D
+            );
+        }
+    }
+
+    private static ItemStack createPillOutputStack(
+            AlchemyRecipeDefinition recipe,
+            AlchemyGrade grade,
+            int count
+    ) {
+        ItemStack outputStack = AlchemyPillUtility.createStack(
+                BuiltInRegistries.ITEM.get(recipe.outputItem()),
+                count,
+                grade
+        );
+        double pillToxin = AlchemyResultCalculator.calculateToxin(recipe, grade.rank());
+        if (pillToxin > 0.0D) {
+            outputStack.getOrCreateTag().putDouble(PillItem.PILL_TOXIN_TAG_KEY, pillToxin);
+        }
+        return outputStack;
+    }
+
+    private void insertOrDropOutput(ItemStack output) {
+        ItemStack existingOutput = getItem(AlchemyFurnaceMenu.OUTPUT_SLOT);
+        if (existingOutput.isEmpty()) {
+            setItem(AlchemyFurnaceMenu.OUTPUT_SLOT, output);
+            return;
+        }
+        if (ItemStack.isSameItemSameTags(existingOutput, output)
+                && existingOutput.getCount() + output.getCount() <= existingOutput.getMaxStackSize()) {
+            existingOutput.grow(output.getCount());
+            setItem(AlchemyFurnaceMenu.OUTPUT_SLOT, existingOutput);
+            return;
+        }
+        if (this.level != null) {
+            Containers.dropItemStack(
+                    this.level,
+                    this.worldPosition.getX() + 0.5D,
+                    this.worldPosition.getY() + 1.0D,
+                    this.worldPosition.getZ() + 0.5D,
+                    output
+            );
+        }
+    }
+
+    private void resetBrewSession() {
         this.refining = false;
         this.activeRecipeId = null;
         this.refiningTicks = 0;
+        this.hitTicks = 0;
+        this.effectiveDuration = 0;
+        this.environmentMultiplier = 1.0D;
+        this.rootScore = 0.0D;
+        this.soulScore = 0.0D;
+        this.realmScore = 0.0D;
+        this.environmentScore = 1.0D;
+        this.rootQuality = 0.0D;
+        this.scentPlanTicks = -1;
+        this.scentSent = false;
+        this.refinerId = null;
+        releaseHeatControl();
+        resetFeedState();
+    }
+
+    private void resetFeedState() {
+        this.openFeedMask = 0;
+        this.fedFeedMask = 0;
+        this.missedFeedMask = 0;
+        this.lateFeedMask = 0;
+        this.feedScoreTotal = 0.0D;
+        this.feedScoreCount = 0;
+    }
+
+    private void burnIngredients() {
+        resetBrewSession();
         this.heat = 0;
         clearIngredientSlots();
         this.setChangedAndSynchronize();
     }
 
+    private void updateEnvironmentCache() {
+        Optional<AlchemyRecipeDefinition> recipe;
+        if (this.refining && this.activeRecipeId != null) {
+            recipe = AlchemyRecipeManager.INSTANCE.getRecipe(this.activeRecipeId);
+        } else if (this.selectedRecipeId != null) {
+            recipe = AlchemyRecipeManager.INSTANCE.getRecipe(this.selectedRecipeId);
+        } else {
+            recipe = getMatchingRecipe();
+        }
+        ElementType primaryElement = recipe.flatMap(AlchemyRecipeDefinition::getPrimaryElement).orElse(null);
+        if (primaryElement == null || this.level == null) {
+            this.cachedPrimaryElementOrdinal = 0;
+            this.cachedEnvironmentMultiplierX100 = 100;
+            return;
+        }
+        double multiplier = this.refining
+                ? this.environmentMultiplier
+                : ElementEnvironmentManager.INSTANCE.getEnvironmentMultiplier(
+                        this.level,
+                        this.worldPosition,
+                        primaryElement
+                );
+        this.cachedPrimaryElementOrdinal = primaryElement.ordinal() + 1;
+        this.cachedEnvironmentMultiplierX100 = (int) Math.round(multiplier * 100.0D);
+    }
+
     private Optional<AlchemyRecipeDefinition> getMatchingRecipe() {
         return AlchemyRecipeManager.INSTANCE.getRecipes().stream()
+                .filter(recipe -> recipe.feedPlan().isEmpty())
                 .filter(this::matchesRecipe)
                 .findFirst();
+    }
+
+    private boolean matchesInitialIngredients(AlchemyRecipeDefinition recipe) {
+        for (AlchemyIngredientSlot slot : AlchemyIngredientSlot.values()) {
+            ItemStack itemStack = getItem(slot.getSlotIndex());
+            if (recipe.getFeedStep(slot).isPresent()) {
+                if (!itemStack.isEmpty()) {
+                    return false;
+                }
+            } else if (!matchesIngredient(slot.getSlotIndex(), recipe.getIngredient(slot))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean canSelectWithCurrentContents(AlchemyRecipeDefinition recipe) {
+        for (AlchemyIngredientSlot slot : AlchemyIngredientSlot.values()) {
+            ItemStack itemStack = getItem(slot.getSlotIndex());
+            if (itemStack.isEmpty()) {
+                continue;
+            }
+            if (recipe.getFeedStep(slot).isPresent()
+                    || !matchesIngredientItem(itemStack, recipe.getIngredient(slot))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private boolean matchesRecipe(AlchemyRecipeDefinition recipe) {
@@ -241,9 +1022,22 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
     }
 
     private boolean matchesIngredient(int slot, AlchemyIngredient ingredient) {
-        ItemStack itemStack = getItem(slot);
+        return matchesIngredientStack(getItem(slot), ingredient);
+    }
+
+    private static boolean matchesIngredientStack(
+            ItemStack itemStack,
+            AlchemyIngredient ingredient
+    ) {
         return itemStack.getCount() >= ingredient.count()
-                && BuiltInRegistries.ITEM.getKey(itemStack.getItem()).equals(ingredient.item());
+                && matchesIngredientItem(itemStack, ingredient);
+    }
+
+    private static boolean matchesIngredientItem(
+            ItemStack itemStack,
+            AlchemyIngredient ingredient
+    ) {
+        return BuiltInRegistries.ITEM.getKey(itemStack.getItem()).equals(ingredient.item());
     }
 
     private boolean canAcceptOutput(AlchemyRecipeDefinition recipe) {
@@ -251,11 +1045,7 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
         if (outputItem == Items.AIR) {
             return false;
         }
-        ItemStack expectedOutput = AlchemyPillUtility.createStack(
-                outputItem,
-                recipe.outputCount(),
-                recipe.grade()
-        );
+        ItemStack expectedOutput = createPillOutputStack(recipe, recipe.grade(), recipe.outputCount());
         ItemStack output = getItem(AlchemyFurnaceMenu.OUTPUT_SLOT);
         return output.isEmpty()
                 || (ItemStack.isSameItemSameTags(output, expectedOutput)
@@ -316,6 +1106,11 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
 
     @Override
     public ItemStack removeItem(int slot, int amount) {
+        if (this.refining
+                && slot >= AlchemyFurnaceMenu.MAIN_INGREDIENT_SLOT
+                && slot < AlchemyFurnaceMenu.OUTPUT_SLOT) {
+            return ItemStack.EMPTY;
+        }
         ItemStack result = ContainerHelper.removeItem(this.items, slot, amount);
         if (!result.isEmpty()) {
             setChangedAndSynchronize();
@@ -334,6 +1129,7 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
         if (!itemStack.isEmpty() && itemStack.getCount() > getMaxStackSize()) {
             itemStack.setCount(getMaxStackSize());
         }
+        captureDelayedFeed(slot, itemStack);
         setChangedAndSynchronize();
     }
 
@@ -356,7 +1152,30 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
 
     @Override
     public boolean canPlaceItem(int slot, ItemStack itemStack) {
-        if (this.refining || slot == AlchemyFurnaceMenu.OUTPUT_SLOT) {
+        if (slot == AlchemyFurnaceMenu.OUTPUT_SLOT
+                || slot < AlchemyFurnaceMenu.MAIN_INGREDIENT_SLOT
+                || slot >= AlchemyFurnaceMenu.OUTPUT_SLOT) {
+            return false;
+        }
+        AlchemyRecipeDefinition selectedRecipe = null;
+        ResourceLocation recipeId = this.refining ? this.activeRecipeId : this.selectedRecipeId;
+        if (recipeId != null) {
+            selectedRecipe = AlchemyRecipeManager.INSTANCE.getRecipe(recipeId).orElse(null);
+        }
+        if (selectedRecipe != null) {
+            AlchemyIngredientSlot ingredientSlot = AlchemyIngredientSlot.fromSlotIndex(slot);
+            if (!matchesIngredientItem(itemStack, selectedRecipe.getIngredient(ingredientSlot))) {
+                return false;
+            }
+            if (!this.refining) {
+                return selectedRecipe.getFeedStep(ingredientSlot).isEmpty();
+            }
+            int slotMask = 1 << slot;
+            return (this.openFeedMask & slotMask) != 0
+                    && (this.fedFeedMask & slotMask) == 0
+                    && (this.missedFeedMask & slotMask) == 0;
+        }
+        if (this.refining) {
             return false;
         }
         return AlchemyRecipeManager.INSTANCE.getRecipes().stream()
@@ -386,6 +1205,14 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
             case HEAT_DATA_INDEX -> this.heat;
             case MAXIMUM_HEAT_DATA_INDEX -> MAXIMUM_HEAT;
             case REFINING_DATA_INDEX -> this.refining ? 1 : 0;
+            case ENVIRONMENT_MULTIPLIER_X100_DATA_INDEX -> this.cachedEnvironmentMultiplierX100;
+            case PRIMARY_ELEMENT_DATA_INDEX -> this.cachedPrimaryElementOrdinal;
+            case OPEN_FEED_MASK_DATA_INDEX -> this.openFeedMask;
+            case MISSED_FEED_MASK_DATA_INDEX -> this.missedFeedMask;
+            case FED_FEED_MASK_DATA_INDEX -> this.fedFeedMask;
+            case LATE_FEED_MASK_DATA_INDEX -> this.lateFeedMask;
+            case HEAT_CONTROL_MODE_DATA_INDEX -> this.heatControlMode.ordinal();
+            case PLANNED_FEED_MASK_DATA_INDEX -> this.plannedFeedMask;
             default -> 0;
         };
     }
@@ -395,6 +1222,17 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
         switch (index) {
             case HEAT_DATA_INDEX -> this.heat = value;
             case REFINING_DATA_INDEX -> this.refining = value != 0;
+            case ENVIRONMENT_MULTIPLIER_X100_DATA_INDEX -> this.cachedEnvironmentMultiplierX100 = value;
+            case PRIMARY_ELEMENT_DATA_INDEX -> this.cachedPrimaryElementOrdinal = value;
+            case OPEN_FEED_MASK_DATA_INDEX -> this.openFeedMask = value;
+            case MISSED_FEED_MASK_DATA_INDEX -> this.missedFeedMask = value;
+            case FED_FEED_MASK_DATA_INDEX -> this.fedFeedMask = value;
+            case LATE_FEED_MASK_DATA_INDEX -> this.lateFeedMask = value;
+            case HEAT_CONTROL_MODE_DATA_INDEX -> this.heatControlMode =
+                    value >= 0 && value < HeatControlMode.values().length
+                            ? HeatControlMode.values()[value]
+                            : HeatControlMode.NONE;
+            case PLANNED_FEED_MASK_DATA_INDEX -> this.plannedFeedMask = value;
             default -> {
             }
         }
@@ -410,11 +1248,34 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
         super.saveAdditional(tag);
         ContainerHelper.saveAllItems(tag, this.items);
         tag.putBoolean(REFINING_KEY, this.refining);
-        if (this.activeRecipeId != null) {
-            tag.putString(ACTIVE_RECIPE_KEY, this.activeRecipeId.toString());
-        }
         tag.putInt(REFINING_TICKS_KEY, this.refiningTicks);
         tag.putInt(HEAT_KEY, this.heat);
+        tag.putInt(HIT_TICKS_KEY, this.hitTicks);
+        tag.putInt(EFFECTIVE_DURATION_KEY, this.effectiveDuration);
+        tag.putDouble(ENVIRONMENT_MULTIPLIER_KEY, this.environmentMultiplier);
+        tag.putDouble(ROOT_SCORE_KEY, this.rootScore);
+        tag.putDouble(SOUL_SCORE_KEY, this.soulScore);
+        tag.putDouble(REALM_SCORE_KEY, this.realmScore);
+        tag.putDouble(ENVIRONMENT_SCORE_KEY, this.environmentScore);
+        tag.putDouble(ROOT_QUALITY_KEY, this.rootQuality);
+        tag.putInt(SCENT_PLAN_KEY, this.scentPlanTicks);
+        tag.putBoolean(SCENT_SENT_KEY, this.scentSent);
+        if (this.refinerId != null) {
+            tag.putUUID(REFINER_KEY, this.refinerId);
+        }
+        AlchemyFurnaceSessionState.save(
+                tag,
+                new AlchemyFurnaceSessionState.PersistedState(
+                        this.selectedRecipeId,
+                        this.activeRecipeId,
+                        this.fedFeedMask,
+                        this.missedFeedMask,
+                        this.lateFeedMask,
+                        this.feedScoreTotal,
+                        this.feedScoreCount,
+                        this.plannedFeedMask
+                )
+        );
     }
 
     @Override
@@ -423,9 +1284,10 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
         clearAllItemsWithoutUpdates();
         ContainerHelper.loadAllItems(tag, this.items);
         this.refining = tag.getBoolean(REFINING_KEY);
-        this.activeRecipeId = tag.contains(ACTIVE_RECIPE_KEY)
-                ? ResourceLocation.tryParse(tag.getString(ACTIVE_RECIPE_KEY))
-                : null;
+        AlchemyFurnaceSessionState.PersistedState sessionState =
+                AlchemyFurnaceSessionState.load(tag);
+        this.selectedRecipeId = sessionState.selectedRecipeId();
+        this.activeRecipeId = sessionState.activeRecipeId();
         this.refiningTicks = Math.max(
                 0,
                 tag.contains(REFINING_TICKS_KEY)
@@ -433,11 +1295,48 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
                         : tag.getInt(LEGACY_BREW_PROGRESS_KEY)
         );
         this.heat = Math.max(0, Math.min(MAXIMUM_HEAT, tag.getInt(HEAT_KEY)));
+        this.hitTicks = Math.max(0, tag.getInt(HIT_TICKS_KEY));
+        this.effectiveDuration = Math.max(0, tag.getInt(EFFECTIVE_DURATION_KEY));
+        this.environmentMultiplier = tag.contains(ENVIRONMENT_MULTIPLIER_KEY)
+                ? tag.getDouble(ENVIRONMENT_MULTIPLIER_KEY)
+                : 1.0D;
+        this.rootScore = tag.getDouble(ROOT_SCORE_KEY);
+        this.soulScore = tag.getDouble(SOUL_SCORE_KEY);
+        this.realmScore = tag.getDouble(REALM_SCORE_KEY);
+        this.environmentScore = tag.contains(ENVIRONMENT_SCORE_KEY)
+                ? tag.getDouble(ENVIRONMENT_SCORE_KEY)
+                : 1.0D;
+        this.rootQuality = tag.getDouble(ROOT_QUALITY_KEY);
+        this.scentPlanTicks = tag.contains(SCENT_PLAN_KEY) ? tag.getInt(SCENT_PLAN_KEY) : -1;
+        this.scentSent = tag.getBoolean(SCENT_SENT_KEY);
+        this.refinerId = tag.hasUUID(REFINER_KEY) ? tag.getUUID(REFINER_KEY) : null;
+        this.fedFeedMask = sessionState.fedFeedMask();
+        this.missedFeedMask = sessionState.missedFeedMask();
+        this.lateFeedMask = sessionState.lateFeedMask();
+        this.feedScoreTotal = sessionState.feedScoreTotal();
+        this.feedScoreCount = sessionState.feedScoreCount();
+        this.plannedFeedMask = sessionState.plannedFeedMask();
+        this.openFeedMask = 0;
+        releaseHeatControl();
     }
 
     @Override
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
+        CompoundTag tag = new CompoundTag();
+        ContainerHelper.saveAllItems(tag, this.items);
+        tag.putBoolean(REFINING_KEY, this.refining);
+        tag.putInt(HEAT_KEY, this.heat);
+        if (this.selectedRecipeId != null) {
+            tag.putString(
+                    AlchemyFurnaceSessionState.SELECTED_RECIPE_KEY,
+                    this.selectedRecipeId.toString()
+            );
+        }
+        tag.putInt(
+                AlchemyFurnaceSessionState.PLANNED_FEED_MASK_KEY,
+                this.plannedFeedMask
+        );
+        return tag;
     }
 
     @Nullable
@@ -468,6 +1367,10 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
 
     private void setChangedAndSynchronize() {
         setChanged();
+        synchronizeToClients();
+    }
+
+    private void synchronizeToClients() {
         if (this.level != null && !this.level.isClientSide) {
             this.level.sendBlockUpdated(
                     this.worldPosition,

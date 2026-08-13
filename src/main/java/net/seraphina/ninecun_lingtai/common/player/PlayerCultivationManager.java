@@ -66,11 +66,9 @@ public final class PlayerCultivationManager {
         if (spiritualRoot.isEmpty()) {
             return false;
         }
-        return CultivationUtility.areAllSpiritualRootsComplete(
-                targetStage,
-                spiritualRoot.get(),
-                PlayerSpiritualEnergyData.getAllEnergy(player)
-        );
+        double requiredEnergy = getDiscountedRequirement(player, targetStage);
+        return SpiritualRootUtility.getIndependentRootElements(spiritualRoot.get()).stream()
+                .allMatch(element -> PlayerSpiritualEnergyData.getEnergy(player, element) >= requiredEnergy);
     }
 
     public static boolean consumeEnergyForTarget(Player player, CultivationStage targetStage) {
@@ -79,11 +77,33 @@ public final class PlayerCultivationManager {
             return false;
         }
         Set<ElementType> rootElements = SpiritualRootUtility.getIndependentRootElements(spiritualRoot.get());
-        return PlayerSpiritualEnergyData.consumeEnergy(
+        boolean consumed = PlayerSpiritualEnergyData.consumeEnergy(
                 player,
                 rootElements,
-                CultivationUtility.getRequiredSpiritualEnergy(targetStage).doubleValue()
+                getDiscountedRequirement(player, targetStage)
         );
+        if (consumed && isRealmBreakthrough(player, targetStage)) {
+            PlayerBreakthroughDiscountData.clearDiscount(player);
+        }
+        return consumed;
+    }
+
+    private static double getDiscountedRequirement(Player player, CultivationStage targetStage) {
+        double requiredEnergy = CultivationUtility.getRequiredSpiritualEnergy(targetStage).doubleValue();
+        if (!isRealmBreakthrough(player, targetStage)) {
+            return requiredEnergy;
+        }
+        double discount = PlayerBreakthroughDiscountData.getDiscount(
+                player,
+                player.level().getGameTime()
+        );
+        return requiredEnergy * (1.0D - discount);
+    }
+
+    private static boolean isRealmBreakthrough(Player player, CultivationStage targetStage) {
+        return PlayerCultivationData.getStage(player)
+                .map(stage -> stage.realm() != targetStage.realm())
+                .orElse(false);
     }
 
     private static BreakthroughResult tryReachStage(Player player, CultivationStage targetStage) {

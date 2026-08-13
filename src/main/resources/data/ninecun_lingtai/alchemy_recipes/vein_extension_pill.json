@@ -1,0 +1,65 @@
+{
+  "name": "续脉丹",
+  "description": "二阶三品延寿丹方，金苹果续命，温养寿元二十载。",
+  "content": "金苹果贵重，此丹炼的便是一个\"稳\"字。七成光阴皆在文火中温养，灵力维持须绵绵不绝，收尾转中火定形。延寿虽好，丹毒亦重，两日之内莫再服丹，否则寿未续而毒先发。",
+  "grade": {
+    "tier": 2,
+    "rank": 3
+  },
+  "allowed_realms": [
+    "qi_refining",
+    "foundation_establishment",
+    "golden_core",
+    "nascent_soul"
+  ],
+  "minimum_refining_realm": "foundation_establishment",
+  "ingredients": {
+    "primary": {
+      "item": "minecraft:golden_apple",
+      "count": 1
+    },
+    "secondary": [
+      {
+        "item": "minecraft:glistering_melon_slice",
+        "count": 4
+      },
+      {
+        "item": "minecraft:honeycomb",
+        "count": 4
+      }
+    ],
+    "auxiliary": [
+      {
+        "item": "minecraft:azalea_leaves",
+        "count": 8
+      },
+      {
+        "item": "minecraft:dried_kelp",
+        "count": 8
+      }
+    ]
+  },
+  "output_item": "ninecun_lingtai:vein_extension_pill",
+  "output_count": 1,
+  "brewing_duration": 1000,
+  "element_profile": {
+    "primary_element": "wood"
+  },
+  "heat_stages": [
+    {
+      "band": "gentle",
+      "portion": 0.7
+    },
+    {
+      "band": "medium",
+      "portion": 0.3
+    }
+  ],
+  "pill_toxin": 20,
+  "effects": [
+    {
+      "type": "lifespan_add",
+      "years": 20
+    }
+  ]
+}

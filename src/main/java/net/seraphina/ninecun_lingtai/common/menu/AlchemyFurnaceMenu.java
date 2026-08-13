@@ -1,10 +1,12 @@
 package net.seraphina.ninecun_lingtai.common.menu;
 
+import net.seraphina.ninecun_lingtai.api.alchemy.HeatControlMode;
 import net.seraphina.ninecun_lingtai.common.block.entity.AlchemyFurnaceBlockEntity;
 import net.seraphina.ninecun_lingtai.common.registry.ModBlocks;
 import net.seraphina.ninecun_lingtai.common.registry.ModMenuTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
@@ -130,6 +132,47 @@ public final class AlchemyFurnaceMenu extends AbstractContainerMenu {
         return this.furnaceData.get(AlchemyFurnaceBlockEntity.REFINING_DATA_INDEX) != 0;
     }
 
+    public int getEnvironmentMultiplierX100() {
+        return this.furnaceData.get(AlchemyFurnaceBlockEntity.ENVIRONMENT_MULTIPLIER_X100_DATA_INDEX);
+    }
+
+    public int getPrimaryElementOrdinal() {
+        return this.furnaceData.get(AlchemyFurnaceBlockEntity.PRIMARY_ELEMENT_DATA_INDEX);
+    }
+
+    public int getOpenFeedMask() {
+        return this.furnaceData.get(AlchemyFurnaceBlockEntity.OPEN_FEED_MASK_DATA_INDEX);
+    }
+
+    public int getMissedFeedMask() {
+        return this.furnaceData.get(AlchemyFurnaceBlockEntity.MISSED_FEED_MASK_DATA_INDEX);
+    }
+
+    public int getFedFeedMask() {
+        return this.furnaceData.get(AlchemyFurnaceBlockEntity.FED_FEED_MASK_DATA_INDEX);
+    }
+
+    public int getLateFeedMask() {
+        return this.furnaceData.get(AlchemyFurnaceBlockEntity.LATE_FEED_MASK_DATA_INDEX);
+    }
+
+    public int getPlannedFeedMask() {
+        return this.furnaceData.get(AlchemyFurnaceBlockEntity.PLANNED_FEED_MASK_DATA_INDEX);
+    }
+
+    public HeatControlMode getHeatControlMode() {
+        int ordinal = this.furnaceData.get(AlchemyFurnaceBlockEntity.HEAT_CONTROL_MODE_DATA_INDEX);
+        return ordinal >= 0 && ordinal < HeatControlMode.values().length
+                ? HeatControlMode.values()[ordinal]
+                : HeatControlMode.NONE;
+    }
+
+    public ResourceLocation getSelectedRecipeId() {
+        return this.furnace instanceof AlchemyFurnaceBlockEntity blockEntity
+                ? blockEntity.getSelectedRecipeId()
+                : null;
+    }
+
     @Override
     public boolean stillValid(Player player) {
         return player.level() == this.level
@@ -184,7 +227,13 @@ public final class AlchemyFurnaceMenu extends AbstractContainerMenu {
 
         @Override
         public boolean mayPlace(ItemStack itemStack) {
-            return !isRefining() && furnace.canPlaceItem(this.getSlotIndex(), itemStack);
+            if (level.isClientSide) {
+                int slotMask = 1 << this.getSlotIndex();
+                return isRefining()
+                        ? (getOpenFeedMask() & slotMask) != 0
+                        : (getPlannedFeedMask() & slotMask) == 0;
+            }
+            return furnace.canPlaceItem(this.getSlotIndex(), itemStack);
         }
 
         @Override

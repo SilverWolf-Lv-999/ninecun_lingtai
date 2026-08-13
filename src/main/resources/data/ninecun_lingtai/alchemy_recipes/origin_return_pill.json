@@ -1,0 +1,63 @@
+{
+  "name": "回元丹",
+  "description": "三阶一品回灵丹方，下界烈物入炉，一丹回灵如江河倒灌。",
+  "content": "恶魂泪与烈焰粉皆是至阳至烈之物，前半程武火猛攻正合其性，后半转中火收浆凝丹。两次点火，火火相接，中途断火必前功尽弃。在下界炼此丹火灵气爆表，只是那里无水可救急——高收益，高压力。",
+  "grade": {
+    "tier": 3,
+    "rank": 1
+  },
+  "allowed_realms": [
+    "golden_core",
+    "nascent_soul"
+  ],
+  "minimum_refining_realm": "golden_core",
+  "ingredients": {
+    "primary": {
+      "item": "minecraft:ghast_tear",
+      "count": 2
+    },
+    "secondary": [
+      {
+        "item": "minecraft:blaze_powder",
+        "count": 4
+      },
+      {
+        "item": "minecraft:nether_wart",
+        "count": 8
+      }
+    ],
+    "auxiliary": [
+      {
+        "item": "minecraft:glowstone_dust",
+        "count": 8
+      },
+      {
+        "item": "minecraft:honeycomb",
+        "count": 4
+      }
+    ]
+  },
+  "output_item": "ninecun_lingtai:origin_return_pill",
+  "output_count": 1,
+  "brewing_duration": 1200,
+  "element_profile": {
+    "primary_element": "fire"
+  },
+  "heat_stages": [
+    {
+      "band": "fierce",
+      "portion": 0.5
+    },
+    {
+      "band": "medium",
+      "portion": 0.5
+    }
+  ],
+  "pill_toxin": 12,
+  "effects": [
+    {
+      "type": "restore_spirit",
+      "amount": 250
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "name": "灵露丹",
+  "description": "二阶一品回灵丹方，凝水泽灵机如晨露，控火修士的弹药工厂。",
+  "content": "大叶滴水草承露而生，最喜阴柔文火。前半程以灵力锁定文火慢煨，后半转中火收浆。雨天临水而炼，水行灵气助力，事半功倍。此丹自产自销：炼丹耗灵，服丹回灵，控火之道由此循环不息。",
+  "grade": {
+    "tier": 2,
+    "rank": 1
+  },
+  "allowed_realms": [
+    "foundation_establishment",
+    "golden_core"
+  ],
+  "minimum_refining_realm": "foundation_establishment",
+  "ingredients": {
+    "primary": {
+      "item": "minecraft:big_dripleaf",
+      "count": 6
+    },
+    "secondary": [
+      {
+        "item": "minecraft:kelp",
+        "count": 8
+      },
+      {
+        "item": "minecraft:sea_pickle",
+        "count": 4
+      }
+    ],
+    "auxiliary": [
+      {
+        "item": "minecraft:sweet_berries",
+        "count": 8
+      },
+      {
+        "item": "minecraft:sugar_cane",
+        "count": 4
+      }
+    ]
+  },
+  "output_item": "ninecun_lingtai:spirit_dew_pill",
+  "output_count": 2,
+  "brewing_duration": 800,
+  "element_profile": {
+    "primary_element": "water"
+  },
+  "heat_stages": [
+    {
+      "band": "gentle",
+      "portion": 0.5
+    },
+    {
+      "band": "medium",
+      "portion": 0.5
+    }
+  ],
+  "pill_toxin": 5,
+  "effects": [
+    {
+      "type": "restore_spirit",
+      "amount": 80
+    }
+  ]
+}

@@ -1,9 +1,8 @@
 package net.seraphina.ninecun_lingtai.common.network.packet;
 
 import net.seraphina.ninecun_lingtai.api.technique.TechniqueClientData;
-import net.seraphina.ninecun_lingtai.client.screen.TechniqueImprintScreen;
+import net.seraphina.ninecun_lingtai.client.player.ClientTechniqueManager;
 import net.seraphina.ninecun_lingtai.utility.TechniqueNetworkUtility;
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.InteractionHand;
 import net.minecraftforge.api.distmarker.Dist;
@@ -39,9 +38,7 @@ public record OpenTechniqueImprintScreenPacket(
     ) {
         DistExecutor.unsafeRunWhenOn(
                 Dist.CLIENT,
-                () -> () -> Minecraft.getInstance().setScreen(
-                        new TechniqueImprintScreen(packet.hand, packet.techniques)
-                )
+                () -> () -> ClientTechniqueManager.openImprintScreen(packet.hand, packet.techniques)
         );
     }
 }

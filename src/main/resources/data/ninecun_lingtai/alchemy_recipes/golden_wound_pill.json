@@ -1,0 +1,70 @@
+{
+  "name": "金创玉肌丹",
+  "description": "三阶二品疗伤丹方，真金入药，剑伤刀创一夕平复。",
+  "content": "金锭熔炼须武火开路，恶魂之泪调和其燥，转中火使金气浸润药浆，文火收官凝作金丹。三段火候各占其时，两次半点火，数着火候走完全程便是。金行灵气浓郁处（沙漠、恶地）炼之更佳。",
+  "grade": {
+    "tier": 3,
+    "rank": 2
+  },
+  "allowed_realms": [
+    "golden_core",
+    "nascent_soul"
+  ],
+  "minimum_refining_realm": "golden_core",
+  "ingredients": {
+    "primary": {
+      "item": "minecraft:gold_ingot",
+      "count": 4
+    },
+    "secondary": [
+      {
+        "item": "minecraft:glistering_melon_slice",
+        "count": 4
+      },
+      {
+        "item": "minecraft:ghast_tear",
+        "count": 1
+      }
+    ],
+    "auxiliary": [
+      {
+        "item": "minecraft:glow_berries",
+        "count": 8
+      },
+      {
+        "item": "minecraft:honeycomb",
+        "count": 4
+      }
+    ]
+  },
+  "output_item": "ninecun_lingtai:golden_wound_pill",
+  "output_count": 1,
+  "brewing_duration": 1500,
+  "element_profile": {
+    "primary_element": "metal"
+  },
+  "heat_stages": [
+    {
+      "band": "fierce",
+      "portion": 0.3
+    },
+    {
+      "band": "medium",
+      "portion": 0.4
+    },
+    {
+      "band": "gentle",
+      "portion": 0.3
+    }
+  ],
+  "pill_toxin": 10,
+  "effects": [
+    {
+      "type": "heal",
+      "max_health_fraction": 0.35,
+      "flat_healing": 10.0,
+      "regeneration_duration": 200,
+      "regeneration_amplifier": 1
+    }
+  ]
+}

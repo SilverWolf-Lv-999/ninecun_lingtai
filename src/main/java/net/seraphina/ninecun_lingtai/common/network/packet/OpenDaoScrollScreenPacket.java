@@ -1,9 +1,8 @@
 package net.seraphina.ninecun_lingtai.common.network.packet;
 
-import net.seraphina.ninecun_lingtai.client.screen.DaoScrollScreen;
+import net.seraphina.ninecun_lingtai.client.screen.ClientDaoScrollScreenManager;
 import net.seraphina.ninecun_lingtai.common.debug.DaoScrollSnapshot;
 import net.seraphina.ninecun_lingtai.common.network.DaoScrollPacketUtility;
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
@@ -30,9 +29,7 @@ public record OpenDaoScrollScreenPacket(DaoScrollSnapshot snapshot, boolean edit
     ) {
         DistExecutor.unsafeRunWhenOn(
                 Dist.CLIENT,
-                () -> () -> Minecraft.getInstance().setScreen(
-                        new DaoScrollScreen(packet.snapshot(), packet.editingSelf())
-                )
+                () -> () -> ClientDaoScrollScreenManager.open(packet.snapshot(), packet.editingSelf())
         );
     }
 }

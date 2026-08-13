@@ -1,0 +1,84 @@
+{
+  "name": "结金丹",
+  "description": "三阶三品突破丹方，八枚灵石铸一炉金精，问鼎金丹的敲门砖。",
+  "content": "灵石八枚为主，金刚翠玉为佐，紫晶与石英另置，此丹金气之重全书罕见。中火起手匀炼，中程催至武火时投入紫晶锻其金精；末段收回中火，再投入石英收束。恶地金灵气浓郁，灵石矿亦出于斯——挖矿、选址、炼丹，三位一体。服后三日内冲击金丹，灵力需求可省一成半。",
+  "grade": {
+    "tier": 3,
+    "rank": 3
+  },
+  "allowed_realms": [
+    "foundation_establishment",
+    "golden_core"
+  ],
+  "minimum_refining_realm": "golden_core",
+  "ingredients": {
+    "primary": {
+      "item": "ninecun_lingtai:spiritual_stone",
+      "count": 8
+    },
+    "secondary": [
+      {
+        "item": "minecraft:diamond",
+        "count": 1
+      },
+      {
+        "item": "minecraft:emerald",
+        "count": 2
+      }
+    ],
+    "auxiliary": [
+      {
+        "item": "minecraft:amethyst_shard",
+        "count": 4
+      },
+      {
+        "item": "minecraft:quartz",
+        "count": 8
+      }
+    ]
+  },
+  "output_item": "ninecun_lingtai:core_formation_pill",
+  "output_count": 1,
+  "brewing_duration": 1800,
+  "element_profile": {
+    "primary_element": "metal"
+  },
+  "heat_stages": [
+    {
+      "band": "medium",
+      "portion": 0.4
+    },
+    {
+      "band": "fierce",
+      "portion": 0.3
+    },
+    {
+      "band": "medium",
+      "portion": 0.3
+    }
+  ],
+  "feed_plan": [
+    {
+      "slot": "auxiliary_1",
+      "stage": 2,
+      "window_start": 0.2,
+      "ideal": 0.45,
+      "window_end": 0.7
+    },
+    {
+      "slot": "auxiliary_2",
+      "stage": 3,
+      "window_start": 0.2,
+      "ideal": 0.55,
+      "window_end": 0.8
+    }
+  ],
+  "pill_toxin": 25,
+  "effects": [
+    {
+      "type": "breakthrough_energy_discount",
+      "discount": 0.15,
+      "duration_ticks": 72000
+    }
+  ]
+}

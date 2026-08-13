@@ -3,10 +3,13 @@ package net.seraphina.ninecun_lingtai.common.event;
 import net.seraphina.ninecun_lingtai.ModMain;
 import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import net.seraphina.ninecun_lingtai.common.player.PlayerAptitudeData;
+import net.seraphina.ninecun_lingtai.common.player.PlayerBreakthroughDiscountData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerCultivationData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerDefenseResourceData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerImprintedTechniqueData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerLearnedAlchemyRecipeData;
+import net.seraphina.ninecun_lingtai.common.player.PlayerPillToxinData;
+import net.seraphina.ninecun_lingtai.common.player.PlayerSpiritInfusionData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerSelectedSpellData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerSpiritualEnergyData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerTechniqueData;
@@ -39,6 +42,9 @@ public final class PlayerAptitudeEventHandler {
         PlayerTechniqueProficiencyData.copy(event.getOriginal(), event.getEntity());
         PlayerSelectedSpellData.copy(event.getOriginal(), event.getEntity());
         PlayerValueControlData.copy(event.getOriginal(), event.getEntity());
+        PlayerPillToxinData.copy(event.getOriginal(), event.getEntity());
+        PlayerBreakthroughDiscountData.copy(event.getOriginal(), event.getEntity());
+        PlayerSpiritInfusionData.copy(event.getOriginal(), event.getEntity());
     }
 
     @SubscribeEvent

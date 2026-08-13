@@ -23,6 +23,7 @@ import net.seraphina.ninecun_lingtai.common.network.packet.ImprintTechniqueToJad
 import net.seraphina.ninecun_lingtai.common.network.packet.ImprintAlchemyRecipeToFormulaSlipPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.LearnTechniquePacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.LearnAlchemyRecipePacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.MaintainHeatPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.MountSwordFlightPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.OpenAptitudeScreenPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.AlchemyFurnaceActionPacket;
@@ -40,6 +41,7 @@ import net.seraphina.ninecun_lingtai.common.network.packet.RequestCultivationInf
 import net.seraphina.ninecun_lingtai.common.network.packet.RequestPlayerValueControlSettingsPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.RequestAlchemyRecipeLibraryPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.RequestTechniqueLibraryPacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.SelectAlchemyRecipePacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.SelectSpellPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.SetStorageRingImmersionPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.SoulInteractionPacket;
@@ -110,7 +112,7 @@ import java.util.Set;
 import java.util.UUID;
 
 public final class ModNetwork {
-    private static final String PROTOCOL_VERSION = "67676767";
+    private static final String PROTOCOL_VERSION = "67676768";
     private static final SimpleChannel CHANNEL = NetworkRegistry.ChannelBuilder
             .named(ResourceLocation.fromNamespaceAndPath(ModMain.MOD_ID, "main"))
             .networkProtocolVersion(() -> PROTOCOL_VERSION)
@@ -129,6 +131,24 @@ public final class ModNetwork {
                 .encoder(AlchemyFurnaceActionPacket::encode)
                 .decoder(AlchemyFurnaceActionPacket::decode)
                 .consumerMainThread(AlchemyFurnaceActionPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        MaintainHeatPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(MaintainHeatPacket::encode)
+                .decoder(MaintainHeatPacket::decode)
+                .consumerMainThread(MaintainHeatPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        SelectAlchemyRecipePacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(SelectAlchemyRecipePacket::encode)
+                .decoder(SelectAlchemyRecipePacket::decode)
+                .consumerMainThread(SelectAlchemyRecipePacket::handle)
                 .add();
         CHANNEL.messageBuilder(
                         OpenAptitudeScreenPacket.class,

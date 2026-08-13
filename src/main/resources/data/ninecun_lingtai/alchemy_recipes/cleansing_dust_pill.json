@@ -1,0 +1,60 @@
+{
+  "name": "清尘丹",
+  "description": "一阶一品解毒丹方，以毒攻毒，涤荡丹毒淤积。",
+  "content": "铃兰有毒，正合以毒攻毒之道。此丹通篇文火，急不得半分：点火后须耐心待炉温落尽方可起炉，其后全程以灵力锁住文火，一丝武火便前功尽弃。练气后期灵力充盈者方能撑完全程，故解毒丹市面稀贵。",
+  "grade": {
+    "tier": 1,
+    "rank": 1
+  },
+  "allowed_realms": [
+    "qi_refining",
+    "foundation_establishment",
+    "golden_core"
+  ],
+  "minimum_refining_realm": "qi_refining",
+  "ingredients": {
+    "primary": {
+      "item": "minecraft:lily_of_the_valley",
+      "count": 4
+    },
+    "secondary": [
+      {
+        "item": "minecraft:brown_mushroom",
+        "count": 4
+      },
+      {
+        "item": "minecraft:red_mushroom",
+        "count": 4
+      }
+    ],
+    "auxiliary": [
+      {
+        "item": "minecraft:honeycomb",
+        "count": 2
+      },
+      {
+        "item": "minecraft:glow_lichen",
+        "count": 4
+      }
+    ]
+  },
+  "output_item": "ninecun_lingtai:cleansing_dust_pill",
+  "output_count": 1,
+  "brewing_duration": 500,
+  "element_profile": {
+    "primary_element": "wood"
+  },
+  "heat_stages": [
+    {
+      "band": "gentle",
+      "portion": 1.0
+    }
+  ],
+  "pill_toxin": 0,
+  "effects": [
+    {
+      "type": "toxin_cleanse",
+      "amount": 30
+    }
+  ]
+}

@@ -1,0 +1,79 @@
+{
+  "name": "玉髓丹",
+  "description": "二阶二品疗伤丹方，紫晶入药，生肌续骨如玉髓复生。",
+  "content": "紫水晶碎片须先以文火化其锋芒，孢子花另置；以灵力催火转入中火后，再投入孢子花，令晶粉与药液交融，末了收火复归文火凝丹。一次点火撑不满全程，尾段文火宜以稳火维持——再用凡火续燃只会把温度打回武火，前功尽弃。伤筋动骨者服之，生肌如玉。",
+  "grade": {
+    "tier": 2,
+    "rank": 2
+  },
+  "allowed_realms": [
+    "foundation_establishment",
+    "golden_core"
+  ],
+  "minimum_refining_realm": "foundation_establishment",
+  "ingredients": {
+    "primary": {
+      "item": "minecraft:amethyst_shard",
+      "count": 4
+    },
+    "secondary": [
+      {
+        "item": "minecraft:glow_lichen",
+        "count": 8
+      },
+      {
+        "item": "minecraft:spore_blossom",
+        "count": 1
+      }
+    ],
+    "auxiliary": [
+      {
+        "item": "minecraft:glistering_melon_slice",
+        "count": 2
+      },
+      {
+        "item": "minecraft:golden_carrot",
+        "count": 2
+      }
+    ]
+  },
+  "output_item": "ninecun_lingtai:jade_marrow_pill",
+  "output_count": 1,
+  "brewing_duration": 900,
+  "element_profile": {
+    "primary_element": "earth"
+  },
+  "heat_stages": [
+    {
+      "band": "gentle",
+      "portion": 0.3
+    },
+    {
+      "band": "medium",
+      "portion": 0.4
+    },
+    {
+      "band": "gentle",
+      "portion": 0.3
+    }
+  ],
+  "feed_plan": [
+    {
+      "slot": "secondary_2",
+      "stage": 2,
+      "window_start": 0.2,
+      "ideal": 0.5,
+      "window_end": 0.75
+    }
+  ],
+  "pill_toxin": 6,
+  "effects": [
+    {
+      "type": "heal",
+      "max_health_fraction": 0.2,
+      "flat_healing": 6.0,
+      "regeneration_duration": 100,
+      "regeneration_amplifier": 0
+    }
+  ]
+}

@@ -89,6 +89,21 @@ public final class CommonConfig {
     public static final ForgeConfigSpec.EnumValue<AiProvider> AI_PROVIDER;
     public static final ForgeConfigSpec.ConfigValue<String> AI_API_KEY;
     public static final ForgeConfigSpec.ConfigValue<String> AI_MODEL;
+    public static final ForgeConfigSpec.DoubleValue ALCHEMY_FIRE_SCORE_WEIGHT;
+    public static final ForgeConfigSpec.DoubleValue ALCHEMY_ENVIRONMENT_SCORE_WEIGHT;
+    public static final ForgeConfigSpec.DoubleValue ALCHEMY_ROOT_SCORE_WEIGHT;
+    public static final ForgeConfigSpec.DoubleValue ALCHEMY_SOUL_SCORE_WEIGHT;
+    public static final ForgeConfigSpec.DoubleValue ALCHEMY_REALM_SCORE_WEIGHT;
+    public static final ForgeConfigSpec.DoubleValue ALCHEMY_MAINTAIN_BASE_COST;
+    public static final ForgeConfigSpec.DoubleValue ALCHEMY_MAINTAIN_TIER_GROWTH;
+    public static final ForgeConfigSpec.IntValue ALCHEMY_STOKE_HEAT_PER_TICK;
+    public static final ForgeConfigSpec.IntValue ALCHEMY_VENT_HEAT_PER_TICK;
+    public static final ForgeConfigSpec.DoubleValue ALCHEMY_STOKE_COST_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue ALCHEMY_VENT_COST_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue ALCHEMY_MAINTAIN_COST_MULTIPLIER;
+    public static final ForgeConfigSpec.BooleanValue ALCHEMY_EXPLOSION_BREAKS_BLOCKS;
+    public static final ForgeConfigSpec.DoubleValue ALCHEMY_TOXIN_DECAY_PER_DAY;
+    public static final ForgeConfigSpec.DoubleValue ALCHEMY_TOXIN_MEDITATION_DECAY_PER_MINUTE;
     public static final ForgeConfigSpec SPEC;
 
     static {
@@ -423,6 +438,44 @@ public final class CommonConfig {
                 .defineInRange("cultivatorChance", 0.05D, 0.0D, 1.0D);
         BUILDER.pop();
 
+        BUILDER.push("alchemy");
+        ALCHEMY_FIRE_SCORE_WEIGHT = defineAlchemyScoreWeight("fireScoreWeight", 0.35D);
+        ALCHEMY_ENVIRONMENT_SCORE_WEIGHT = defineAlchemyScoreWeight("envScoreWeight", 0.20D);
+        ALCHEMY_ROOT_SCORE_WEIGHT = defineAlchemyScoreWeight("rootScoreWeight", 0.15D);
+        ALCHEMY_SOUL_SCORE_WEIGHT = defineAlchemyScoreWeight("soulScoreWeight", 0.15D);
+        ALCHEMY_REALM_SCORE_WEIGHT = defineAlchemyScoreWeight("realmScoreWeight", 0.15D);
+        ALCHEMY_MAINTAIN_BASE_COST = BUILDER
+                .comment("Spiritual energy per second to maintain medium heat for a tier-one recipe")
+                .defineInRange("maintainBaseCost", 0.4D, 0.0D, MAXIMUM_BASE_ABSORPTION_PER_SECOND);
+        ALCHEMY_MAINTAIN_TIER_GROWTH = BUILDER
+                .comment("Heat maintenance cost multiplier applied for every recipe tier above one")
+                .defineInRange("maintainTierGrowth", 1.9D, 1.0D, 10.0D);
+        ALCHEMY_STOKE_HEAT_PER_TICK = BUILDER
+                .comment("Heat added per tick while the player holds the stoke control")
+                .defineInRange("stokeHeatPerTick", 3, 1, 100);
+        ALCHEMY_VENT_HEAT_PER_TICK = BUILDER
+                .comment("Heat removed per tick while the player holds the vent control")
+                .defineInRange("ventHeatPerTick", 4, 1, 100);
+        ALCHEMY_STOKE_COST_MULTIPLIER = BUILDER
+                .comment("Spiritual-energy cost multiplier for stoking")
+                .defineInRange("stokeCostMultiplier", 1.4D, 0.0D, 10.0D);
+        ALCHEMY_VENT_COST_MULTIPLIER = BUILDER
+                .comment("Spiritual-energy cost multiplier for venting")
+                .defineInRange("ventCostMultiplier", 1.0D, 0.0D, 10.0D);
+        ALCHEMY_MAINTAIN_COST_MULTIPLIER = BUILDER
+                .comment("Spiritual-energy cost multiplier for maintaining the target heat band")
+                .defineInRange("maintainCostMultiplier", 1.0D, 0.0D, 10.0D);
+        ALCHEMY_EXPLOSION_BREAKS_BLOCKS = BUILDER
+                .comment("Whether a furnace explosion caused by harvesting too early destroys blocks")
+                .define("explosionBreaksBlocks", false);
+        ALCHEMY_TOXIN_DECAY_PER_DAY = BUILDER
+                .comment("Pill toxin naturally dissipated per full game day")
+                .defineInRange("toxinDecayPerDay", 10.0D, 0.0D, MAXIMUM_BASE_ABSORPTION_PER_SECOND);
+        ALCHEMY_TOXIN_MEDITATION_DECAY_PER_MINUTE = BUILDER
+                .comment("Additional pill toxin dissipated per minute while meditating")
+                .defineInRange("toxinMeditationDecayPerMinute", 2.0D, 0.0D, MAXIMUM_BASE_ABSORPTION_PER_SECOND);
+        BUILDER.pop();
+
         BUILDER.push("ai");
         AI_PROVIDER = BUILDER
                 .comment("AI provider used to assess technique comprehension. Supported values: OPENAI, DEEPSEEK")
@@ -452,6 +505,12 @@ public final class CommonConfig {
     private static ForgeConfigSpec.DoubleValue defineDefenseSpellPoints(String name, double defaultValue) {
         return BUILDER.comment("Base defense points gained per cultivation strength before mastery scaling")
                 .defineInRange(name, defaultValue, 0.1D, MAXIMUM_BASE_ABSORPTION_PER_SECOND);
+    }
+
+    private static ForgeConfigSpec.DoubleValue defineAlchemyScoreWeight(String name, double defaultValue) {
+        return BUILDER
+                .comment("Alchemy score weight; the five weights should sum to one or defaults are used")
+                .defineInRange(name, defaultValue, 0.0D, 1.0D);
     }
 
     private static ForgeConfigSpec.IntValue defineLifespanYears(

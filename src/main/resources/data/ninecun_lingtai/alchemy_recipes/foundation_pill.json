@@ -1,0 +1,68 @@
+{
+  "name": "筑基丹",
+  "description": "二阶三品突破丹方，聚灵石之精铸道基，冲击筑基前的最后一份底气。",
+  "content": "灵石为主药，人品即可，贵在其中灵气未散。先以文火缓缓引出石中灵机，中火匀炼过半，收尾时投薪拉起武火一鼓作气冲刺凝丹。阴阳灵气浓郁之地（沼泽、蘑菇岛）炼此丹事半功倍。服后三日之内冲击筑基，所需灵力可省一成。",
+  "grade": {
+    "tier": 2,
+    "rank": 3
+  },
+  "allowed_realms": [
+    "qi_refining",
+    "foundation_establishment"
+  ],
+  "minimum_refining_realm": "foundation_establishment",
+  "ingredients": {
+    "primary": {
+      "item": "ninecun_lingtai:spiritual_stone",
+      "count": 4
+    },
+    "secondary": [
+      {
+        "item": "minecraft:amethyst_shard",
+        "count": 2
+      },
+      {
+        "item": "minecraft:quartz",
+        "count": 4
+      }
+    ],
+    "auxiliary": [
+      {
+        "item": "minecraft:golden_carrot",
+        "count": 2
+      },
+      {
+        "item": "minecraft:glow_berries",
+        "count": 4
+      }
+    ]
+  },
+  "output_item": "ninecun_lingtai:foundation_pill",
+  "output_count": 1,
+  "brewing_duration": 1200,
+  "element_profile": {
+    "primary_element": "yin_yang"
+  },
+  "heat_stages": [
+    {
+      "band": "gentle",
+      "portion": 0.25
+    },
+    {
+      "band": "medium",
+      "portion": 0.5
+    },
+    {
+      "band": "fierce",
+      "portion": 0.25
+    }
+  ],
+  "pill_toxin": 15,
+  "effects": [
+    {
+      "type": "breakthrough_energy_discount",
+      "discount": 0.1,
+      "duration_ticks": 72000
+    }
+  ]
+}

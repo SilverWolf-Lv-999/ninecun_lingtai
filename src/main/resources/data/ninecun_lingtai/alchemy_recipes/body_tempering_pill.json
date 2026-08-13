@@ -1,0 +1,63 @@
+{
+  "name": "淬体丹",
+  "description": "三阶二品护体丹方，龟甲海晶淬其身，护体屏障一朝复原。",
+  "content": "海龟鳞甲得水行至坚之性，先以文火化其韧，再以长中火淬其刚。文四中六，节奏平缓却极耗心神——中火一段占了大半，锁温的灵力断不得。临海而炼得水行之助，护体之效更沛。",
+  "grade": {
+    "tier": 3,
+    "rank": 2
+  },
+  "allowed_realms": [
+    "golden_core",
+    "nascent_soul"
+  ],
+  "minimum_refining_realm": "golden_core",
+  "ingredients": {
+    "primary": {
+      "item": "minecraft:scute",
+      "count": 4
+    },
+    "secondary": [
+      {
+        "item": "minecraft:prismarine_shard",
+        "count": 4
+      },
+      {
+        "item": "minecraft:iron_ingot",
+        "count": 4
+      }
+    ],
+    "auxiliary": [
+      {
+        "item": "minecraft:kelp",
+        "count": 8
+      },
+      {
+        "item": "minecraft:moss_block",
+        "count": 4
+      }
+    ]
+  },
+  "output_item": "ninecun_lingtai:body_tempering_pill",
+  "output_count": 1,
+  "brewing_duration": 1500,
+  "element_profile": {
+    "primary_element": "water"
+  },
+  "heat_stages": [
+    {
+      "band": "gentle",
+      "portion": 0.4
+    },
+    {
+      "band": "medium",
+      "portion": 0.6
+    }
+  ],
+  "pill_toxin": 10,
+  "effects": [
+    {
+      "type": "defense_repair",
+      "fraction": 0.5
+    }
+  ]
+}

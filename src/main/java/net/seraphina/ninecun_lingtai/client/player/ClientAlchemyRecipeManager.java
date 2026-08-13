@@ -3,6 +3,7 @@ package net.seraphina.ninecun_lingtai.client.player;
 import net.seraphina.ninecun_lingtai.api.alchemy.AlchemyRecipeClientData;
 import net.seraphina.ninecun_lingtai.api.alchemy.AlchemyRecipeJeiData;
 import net.seraphina.ninecun_lingtai.client.compat.jei.AlchemyRecipeJeiRuntimeManager;
+import net.seraphina.ninecun_lingtai.client.screen.AlchemyRecipeImprintScreen;
 import net.seraphina.ninecun_lingtai.client.screen.AlchemyRecipeReadingScreen;
 import net.seraphina.ninecun_lingtai.client.utility.ClientCreativeTabUtility;
 import net.seraphina.ninecun_lingtai.common.item.AlchemyRecipeCreativeTabCache;
@@ -10,6 +11,7 @@ import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import net.seraphina.ninecun_lingtai.common.network.packet.RequestAlchemyRecipeLibraryPacket;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.InteractionHand;
 import net.minecraftforge.fml.ModList;
 
 import java.util.Comparator;
@@ -61,6 +63,10 @@ public final class ClientAlchemyRecipeManager {
         AlchemyRecipeCreativeTabCache.setRecipes(updatedRecipes);
         ClientCreativeTabUtility.rebuildCreativeTabs();
         synchronizeJeiRecipes();
+    }
+
+    public static void openImprintScreen(InteractionHand hand, List<AlchemyRecipeClientData> imprintableRecipes) {
+        Minecraft.getInstance().setScreen(new AlchemyRecipeImprintScreen(hand, imprintableRecipes));
     }
 
     public static void openRecipe(AlchemyRecipeClientData recipe, boolean learned) {

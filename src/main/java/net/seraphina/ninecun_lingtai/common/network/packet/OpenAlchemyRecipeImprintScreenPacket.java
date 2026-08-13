@@ -1,9 +1,8 @@
 package net.seraphina.ninecun_lingtai.common.network.packet;
 
 import net.seraphina.ninecun_lingtai.api.alchemy.AlchemyRecipeClientData;
-import net.seraphina.ninecun_lingtai.client.screen.AlchemyRecipeImprintScreen;
+import net.seraphina.ninecun_lingtai.client.player.ClientAlchemyRecipeManager;
 import net.seraphina.ninecun_lingtai.utility.AlchemyRecipeNetworkUtility;
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.InteractionHand;
 import net.minecraftforge.api.distmarker.Dist;
@@ -42,9 +41,7 @@ public record OpenAlchemyRecipeImprintScreenPacket(
     ) {
         DistExecutor.unsafeRunWhenOn(
                 Dist.CLIENT,
-                () -> () -> Minecraft.getInstance().setScreen(
-                        new AlchemyRecipeImprintScreen(packet.hand, packet.recipes)
-                )
+                () -> () -> ClientAlchemyRecipeManager.openImprintScreen(packet.hand, packet.recipes)
         );
     }
 }

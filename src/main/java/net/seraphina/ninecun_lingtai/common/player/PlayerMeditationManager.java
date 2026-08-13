@@ -172,6 +172,12 @@ public final class PlayerMeditationManager {
             }
             return;
         }
+        if (player.tickCount % ABSORPTION_INTERVAL_TICKS == 0) {
+            PlayerPillToxinData.reduceToxin(
+                    player,
+                    CommonConfig.ALCHEMY_TOXIN_MEDITATION_DECAY_PER_MINUTE.get() / 60.0D
+            );
+        }
         if (session.techniqueId() == null) {
             // Plain meditation has no technique training or spiritual-energy absorption.
             if (player.tickCount % ABSORPTION_INTERVAL_TICKS == 0) {
@@ -300,7 +306,8 @@ public final class PlayerMeditationManager {
         }
         double baseAbsorption = CommonConfig.MEDITATION_BASE_ABSORPTION_PER_SECOND.get()
                 * breathingMultiplier
-                * getRealmAbsorptionMultiplier(player);
+                * getRealmAbsorptionMultiplier(player)
+                * PlayerPillToxinData.getAbsorptionMultiplier(player);
         Map<ElementType, Double> absorbableEnergy = calculateAbsorbableEnergy(
                 player,
                 absorptionProfile.absorptionRates(),
@@ -334,7 +341,8 @@ public final class PlayerMeditationManager {
         double baseAbsorption = CommonConfig.MEDITATION_BASE_ABSORPTION_PER_SECOND.get()
                 * breathingMultiplier
                 * getRealmAbsorptionMultiplier(player)
-                * SpiritualStoneUtility.getAbsorptionMultiplier(spiritualStone);
+                * SpiritualStoneUtility.getAbsorptionMultiplier(spiritualStone)
+                * PlayerPillToxinData.getAbsorptionMultiplier(player);
         Map<ElementType, Double> absorbableEnergy = calculateAbsorbableEnergy(
                 player,
                 absorptionRates,

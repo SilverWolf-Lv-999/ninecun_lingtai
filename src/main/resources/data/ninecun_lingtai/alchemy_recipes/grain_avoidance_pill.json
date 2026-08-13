@@ -1,0 +1,60 @@
+{
+  "name": "辟谷丹",
+  "description": "一阶一品辟谷丹方，一丹入腹，终日不饥。",
+  "content": "五谷为主，根菜作辅，本是凡厨之物，以中火烘炼即成仙家干粮。待炉温落入中火起炉，前半程自然命中；温度将坠出中火之际，提前以灵力锁温撑完后半——学会了提前锁温，控火便入了门。",
+  "grade": {
+    "tier": 1,
+    "rank": 1
+  },
+  "allowed_realms": [
+    "qi_refining",
+    "foundation_establishment"
+  ],
+  "minimum_refining_realm": "qi_refining",
+  "ingredients": {
+    "primary": {
+      "item": "minecraft:wheat",
+      "count": 8
+    },
+    "secondary": [
+      {
+        "item": "minecraft:carrot",
+        "count": 4
+      },
+      {
+        "item": "minecraft:beetroot",
+        "count": 4
+      }
+    ],
+    "auxiliary": [
+      {
+        "item": "minecraft:dried_kelp",
+        "count": 4
+      },
+      {
+        "item": "minecraft:sweet_berries",
+        "count": 4
+      }
+    ]
+  },
+  "output_item": "ninecun_lingtai:grain_avoidance_pill",
+  "output_count": 2,
+  "brewing_duration": 400,
+  "element_profile": {
+    "primary_element": "earth"
+  },
+  "heat_stages": [
+    {
+      "band": "medium",
+      "portion": 1.0
+    }
+  ],
+  "pill_toxin": 2,
+  "effects": [
+    {
+      "type": "food",
+      "nutrition": 20,
+      "saturation": 12.0
+    }
+  ]
+}

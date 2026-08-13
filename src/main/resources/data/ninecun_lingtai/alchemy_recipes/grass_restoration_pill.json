@@ -1,7 +1,7 @@
 {
   "name": "草还丹",
   "description": "一阶一品疗伤丹方，以草木生机温养心脉，可供练气、筑基修士服用。",
-  "content": "以新采青草为主药，先以文火烘去露气；继而投入蕨叶与青苔为次药，待草木精华交融成碧色药液。最后添入两份杜鹃叶作辅药，缓缓收火，见炉中药气不散而聚，便以温养之法结成丹丸。此丹不求激发潜力，只为扶正回元，伤重时可先护住心脉，再使生机自行流转。",
+  "content": "以新采青草为主药，花叶另置勿先入炉。中火烘去露气，见药液转碧便撤去柴薪；炉温落入文火后，将花叶投入，以温养之法结成丹丸。切忌大火催逼——草木之性喜温不喜烈，火将熄时药香自出，此时开炉取丹，恰得生机圆满。",
   "grade": {
     "tier": 1,
     "rank": 1
@@ -39,9 +39,36 @@
   },
   "output_item": "ninecun_lingtai:grass_restoration_pill",
   "output_count": 1,
-  "brewing_duration": 200,
-  "pill_effect": {
-    "max_health_fraction": 0.10,
-    "flat_healing": 3.0
-  }
+  "brewing_duration": 500,
+  "element_profile": {
+    "primary_element": "wood"
+  },
+  "base_success_rate": 0.95,
+  "heat_stages": [
+    {
+      "band": "medium",
+      "portion": 0.4
+    },
+    {
+      "band": "gentle",
+      "portion": 0.6
+    }
+  ],
+  "feed_plan": [
+    {
+      "slot": "auxiliary_2",
+      "stage": 2,
+      "window_start": 0.25,
+      "ideal": 0.5,
+      "window_end": 0.75
+    }
+  ],
+  "pill_toxin": 5,
+  "effects": [
+    {
+      "type": "heal",
+      "max_health_fraction": 0.1,
+      "flat_healing": 3.0
+    }
+  ]
 }

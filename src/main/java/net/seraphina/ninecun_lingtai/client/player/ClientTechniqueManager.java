@@ -2,6 +2,7 @@ package net.seraphina.ninecun_lingtai.client.player;
 
 import net.seraphina.ninecun_lingtai.api.technique.LearnedTechniqueClientData;
 import net.seraphina.ninecun_lingtai.api.technique.TechniqueClientData;
+import net.seraphina.ninecun_lingtai.client.screen.TechniqueImprintScreen;
 import net.seraphina.ninecun_lingtai.client.screen.TechniqueReadingScreen;
 import net.seraphina.ninecun_lingtai.client.utility.ClientCreativeTabUtility;
 import net.seraphina.ninecun_lingtai.common.item.TechniqueCreativeTabCache;
@@ -9,6 +10,7 @@ import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import net.seraphina.ninecun_lingtai.common.network.packet.RequestTechniqueLibraryPacket;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.InteractionHand;
 
 import java.util.Comparator;
 import java.util.HashSet;
@@ -57,6 +59,10 @@ public final class ClientTechniqueManager {
         revision++;
         TechniqueCreativeTabCache.setTechniques(updatedTechniques);
         ClientCreativeTabUtility.rebuildCreativeTabs();
+    }
+
+    public static void openImprintScreen(InteractionHand hand, List<TechniqueClientData> imprintableTechniques) {
+        Minecraft.getInstance().setScreen(new TechniqueImprintScreen(hand, imprintableTechniques));
     }
 
     public static void openTechnique(TechniqueClientData technique, boolean imprinted) {

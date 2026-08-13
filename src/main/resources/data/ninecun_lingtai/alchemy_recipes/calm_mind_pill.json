@@ -1,0 +1,67 @@
+{
+  "name": "静心丹",
+  "description": "二阶二品悟道丹方，先激后静，如当头棒喝后的长夜青灯。",
+  "content": "火把花性烈，起手便要武火激出其锋，转中火调和片刻，而后长长的文火——半数光阴都在这一段静养中度过，灵力维持不可有片刻松懈。服之心神澄澈，修习功法如有名师在侧。",
+  "grade": {
+    "tier": 2,
+    "rank": 2
+  },
+  "allowed_realms": [
+    "foundation_establishment",
+    "golden_core"
+  ],
+  "minimum_refining_realm": "foundation_establishment",
+  "ingredients": {
+    "primary": {
+      "item": "minecraft:torchflower",
+      "count": 2
+    },
+    "secondary": [
+      {
+        "item": "minecraft:pink_petals",
+        "count": 4
+      },
+      {
+        "item": "minecraft:spore_blossom",
+        "count": 1
+      }
+    ],
+    "auxiliary": [
+      {
+        "item": "minecraft:amethyst_shard",
+        "count": 1
+      },
+      {
+        "item": "minecraft:honeycomb",
+        "count": 2
+      }
+    ]
+  },
+  "output_item": "ninecun_lingtai:calm_mind_pill",
+  "output_count": 1,
+  "brewing_duration": 900,
+  "element_profile": {
+    "primary_element": "fire"
+  },
+  "heat_stages": [
+    {
+      "band": "fierce",
+      "portion": 0.2
+    },
+    {
+      "band": "medium",
+      "portion": 0.25
+    },
+    {
+      "band": "gentle",
+      "portion": 0.55
+    }
+  ],
+  "pill_toxin": 10,
+  "effects": [
+    {
+      "type": "proficiency_gain",
+      "technique_proficiency": 15
+    }
+  ]
+}

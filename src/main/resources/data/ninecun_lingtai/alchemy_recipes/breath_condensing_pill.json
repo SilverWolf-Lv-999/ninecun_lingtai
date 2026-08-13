@@ -1,0 +1,63 @@
+{
+  "name": "凝息丹",
+  "description": "一阶二品修为丹方，凝天地灵机入丹田，服之如打坐半日。",
+  "content": "荧光浆果最忌烈火——点火之后须待炉温落至中火方可起炉，中火匀炼前半程，余下半程收入文火温养。火候将断时以灵力续之，莫使武火反扑。丹力虽好，一层之内不可贪服，丹力代不了坐功。",
+  "grade": {
+    "tier": 1,
+    "rank": 2
+  },
+  "allowed_realms": [
+    "qi_refining",
+    "foundation_establishment"
+  ],
+  "minimum_refining_realm": "qi_refining",
+  "ingredients": {
+    "primary": {
+      "item": "minecraft:glow_berries",
+      "count": 6
+    },
+    "secondary": [
+      {
+        "item": "minecraft:moss_block",
+        "count": 2
+      },
+      {
+        "item": "minecraft:sea_pickle",
+        "count": 2
+      }
+    ],
+    "auxiliary": [
+      {
+        "item": "minecraft:azalea_leaves",
+        "count": 4
+      },
+      {
+        "item": "minecraft:flowering_azalea_leaves",
+        "count": 2
+      }
+    ]
+  },
+  "output_item": "ninecun_lingtai:breath_condensing_pill",
+  "output_count": 1,
+  "brewing_duration": 500,
+  "element_profile": {
+    "primary_element": "wood"
+  },
+  "heat_stages": [
+    {
+      "band": "medium",
+      "portion": 0.5
+    },
+    {
+      "band": "gentle",
+      "portion": 0.5
+    }
+  ],
+  "pill_toxin": 8,
+  "effects": [
+    {
+      "type": "spirit_infusion",
+      "fraction_of_next_layer": 0.05
+    }
+  ]
+}

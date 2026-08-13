@@ -1,10 +1,15 @@
 package net.seraphina.ninecun_lingtai.utility;
 
+import net.seraphina.ninecun_lingtai.api.alchemy.AlchemyFeedStep;
 import net.seraphina.ninecun_lingtai.api.alchemy.AlchemyGrade;
 import net.seraphina.ninecun_lingtai.api.alchemy.AlchemyIngredient;
+import net.seraphina.ninecun_lingtai.api.alchemy.AlchemyIngredientSlot;
 import net.seraphina.ninecun_lingtai.api.alchemy.AlchemyRecipeClientData;
 import net.seraphina.ninecun_lingtai.api.alchemy.AlchemyRecipeJeiData;
+import net.seraphina.ninecun_lingtai.api.alchemy.HeatBand;
+import net.seraphina.ninecun_lingtai.api.alchemy.HeatStage;
 import net.seraphina.ninecun_lingtai.api.cultivation.CultivationRealm;
+import net.seraphina.ninecun_lingtai.api.element.ElementType;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 
@@ -17,6 +22,8 @@ public final class AlchemyRecipeNetworkUtility {
     private static final int MAXIMUM_NAME_LENGTH = 256;
     private static final int MAXIMUM_DESCRIPTION_LENGTH = 4096;
     private static final int MAXIMUM_CONTENT_LENGTH = 131072;
+    private static final int MAXIMUM_HEAT_STAGES = 32;
+    private static final int MAXIMUM_FEED_STEPS = AlchemyIngredientSlot.values().length;
 
     public static void writeRecipe(FriendlyByteBuf buffer, AlchemyRecipeClientData recipe) {
         buffer.writeResourceLocation(recipe.id());
@@ -29,6 +36,18 @@ public final class AlchemyRecipeNetworkUtility {
         recipe.allowedRealms().stream()
                 .sorted()
                 .forEach(realm -> buffer.writeUtf(realm.getSerializedName(), MAXIMUM_NAME_LENGTH));
+        buffer.writeBoolean(recipe.primaryElement() != null);
+        if (recipe.primaryElement() != null) {
+            buffer.writeEnum(recipe.primaryElement());
+        }
+        buffer.writeVarInt(recipe.heatStages().size());
+        for (HeatStage heatStage : recipe.heatStages()) {
+            buffer.writeEnum(heatStage.band());
+            buffer.writeDouble(heatStage.portion());
+        }
+        writeFeedPlan(buffer, recipe.feedPlan());
+        buffer.writeVarInt(recipe.brewingDuration());
+        buffer.writeDouble(recipe.pillToxin());
     }
 
     public static AlchemyRecipeClientData readRecipe(FriendlyByteBuf buffer) {
@@ -50,7 +69,31 @@ public final class AlchemyRecipeNetworkUtility {
                     ));
             allowedRealms.add(realm);
         }
-        return new AlchemyRecipeClientData(recipeId, name, description, content, grade, allowedRealms);
+        ElementType primaryElement = buffer.readBoolean() ? buffer.readEnum(ElementType.class) : null;
+        int stageCount = buffer.readVarInt();
+        if (stageCount < 0 || stageCount > MAXIMUM_HEAT_STAGES) {
+            throw new IllegalArgumentException("Invalid synchronized heat stage count: " + stageCount);
+        }
+        List<HeatStage> heatStages = new ArrayList<>(stageCount);
+        for (int stageIndex = 0; stageIndex < stageCount; stageIndex++) {
+            heatStages.add(new HeatStage(buffer.readEnum(HeatBand.class), buffer.readDouble()));
+        }
+        List<AlchemyFeedStep> feedPlan = readFeedPlan(buffer);
+        int brewingDuration = buffer.readVarInt();
+        double pillToxin = buffer.readDouble();
+        return new AlchemyRecipeClientData(
+                recipeId,
+                name,
+                description,
+                content,
+                grade,
+                allowedRealms,
+                primaryElement,
+                heatStages,
+                feedPlan,
+                brewingDuration,
+                pillToxin
+        );
     }
 
     public static void writeRecipes(FriendlyByteBuf buffer, List<AlchemyRecipeClientData> recipes) {
@@ -136,6 +179,43 @@ public final class AlchemyRecipeNetworkUtility {
 
     private static AlchemyIngredient readIngredient(FriendlyByteBuf buffer) {
         return new AlchemyIngredient(buffer.readResourceLocation(), buffer.readVarInt());
+    }
+
+    private static void writeFeedPlan(
+            FriendlyByteBuf buffer,
+            List<AlchemyFeedStep> feedPlan
+    ) {
+        if (feedPlan.size() > MAXIMUM_FEED_STEPS) {
+            throw new IllegalArgumentException("Too many synchronized alchemy feed steps");
+        }
+        buffer.writeVarInt(feedPlan.size());
+        for (AlchemyFeedStep step : feedPlan) {
+            buffer.writeEnum(step.slot());
+            buffer.writeVarInt(step.stageIndex());
+            buffer.writeDouble(step.windowStart());
+            buffer.writeDouble(step.idealPoint());
+            buffer.writeDouble(step.windowEnd());
+        }
+    }
+
+    private static List<AlchemyFeedStep> readFeedPlan(FriendlyByteBuf buffer) {
+        int stepCount = buffer.readVarInt();
+        if (stepCount < 0 || stepCount > MAXIMUM_FEED_STEPS) {
+            throw new IllegalArgumentException(
+                    "Invalid synchronized alchemy feed step count: " + stepCount
+            );
+        }
+        List<AlchemyFeedStep> feedPlan = new ArrayList<>(stepCount);
+        for (int stepIndex = 0; stepIndex < stepCount; stepIndex++) {
+            feedPlan.add(new AlchemyFeedStep(
+                    buffer.readEnum(AlchemyIngredientSlot.class),
+                    buffer.readVarInt(),
+                    buffer.readDouble(),
+                    buffer.readDouble(),
+                    buffer.readDouble()
+            ));
+        }
+        return List.copyOf(feedPlan);
     }
 
     public static int getMaximumRecipes() {
