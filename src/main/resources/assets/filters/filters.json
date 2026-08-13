@@ -24,7 +24,7 @@
       ]
     },
     "alchemy": {
-      "title": "炼丹",
+      "title": "丹方",
       "icon": "ninecun_lingtai:alchemy_recipe",
       "items": [
         "ninecun_lingtai:alchemy_recipe"
@@ -49,6 +49,13 @@
       "icon": "ninecun_lingtai:han_sword",
       "items": [
         "ninecun_lingtai:han_sword"
+      ]
+    },
+    "prop": {
+      "title": "道具",
+      "icon": "ninecun_lingtai:storage_ring",
+      "items": [
+        "ninecun_lingtai:storage_ring"
       ]
     }
   }

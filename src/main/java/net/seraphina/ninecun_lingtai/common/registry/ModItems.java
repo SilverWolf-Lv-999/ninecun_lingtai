@@ -76,9 +76,6 @@ public final class ModItems {
             () -> new BlockItem(ModBlocks.ALCHEMY_FURNACE.get(), new Item.Properties())
     );
 
-    private ModItems() {
-    }
-
     public static Item[] getColorItems() {
         return COLOR_ITEMS.stream()
                 .map(RegistryObject::get)
