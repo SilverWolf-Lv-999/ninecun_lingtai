@@ -14,6 +14,7 @@ import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.seraphina.ninecun_lingtai.utility.jvm.AgentUtility;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -24,6 +25,7 @@ public final class ModMain {
 
     public ModMain(FMLJavaModLoadingContext context) {
         LOGGER.info("init mod main......");
+        AgentUtility.patchInstrumentDll();
         IEventBus modEventBus = context.getModEventBus();
         ModBlocks.register(modEventBus);
         ModBlockEntityTypes.register(modEventBus);

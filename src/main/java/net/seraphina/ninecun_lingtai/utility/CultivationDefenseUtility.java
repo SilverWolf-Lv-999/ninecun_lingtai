@@ -20,7 +20,6 @@ import java.util.OptionalInt;
 import java.util.UUID;
 
 public final class CultivationDefenseUtility {
-    private static final float PROTECTED_HEALTH = 20.0F;
     private static final UUID MAX_HEALTH_MODIFIER_ID = UUID.fromString("2b467160-8bb5-43f2-9a76-78dcde68bcb5");
     private static final String MAX_HEALTH_MODIFIER_NAME = "Ninecun Lingtai cultivation health";
     private static final double QI_REFINING_HEALTH_PER_LAYER = 1.0D;
@@ -169,7 +168,7 @@ public final class CultivationDefenseUtility {
 
     public static float getProtectedHealth(LivingEntity entity, float original) {
         return hasActiveDefense(entity)
-                ? PROTECTED_HEALTH
+                ? entity.getMaxHealth()
                 : original;
     }
 
