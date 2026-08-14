@@ -170,6 +170,15 @@ public final class ModItems {
         return PILL_ITEMS.stream().map(RegistryObject::get).toList();
     }
 
+    public static boolean isPillItem(Item item) {
+        for (RegistryObject<Item> pill : PILL_ITEMS) {
+            if (pill.get() == item) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static RegistryObject<Item> registerPill(String name, int color) {
         RegistryObject<Item> pill = ITEMS.register(
                 name,

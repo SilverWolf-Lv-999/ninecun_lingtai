@@ -1,13 +1,14 @@
 package net.seraphina.ninecun_lingtai.utility.jvm;
 
+import net.minecraft.client.gui.components.LogoRenderer;
+import net.minecraft.client.gui.components.SplashRenderer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.food.FoodData;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.unsafe.UnsafeHacks;
-import net.seraphina.ninecun_lingtai.common.myminecraft.ForgeHacksHook;
-import net.seraphina.ninecun_lingtai.common.myminecraft.MyFoodData;
-import net.seraphina.ninecun_lingtai.common.myminecraft.MyLivingEntity;
+import net.seraphina.ninecun_lingtai.Static;
+import net.seraphina.ninecun_lingtai.common.myminecraft.*;
 
 public class HookUtility {
     public static void commonHooks() {
@@ -26,6 +27,9 @@ public class HookUtility {
 
     @OnlyIn(Dist.CLIENT)
     public static void clientReplaceMethod() {
-
+        if (Static.isApfDay()) {
+            SeraphinaHook.replaceMethod(LogoRenderer.class, MyLogoRenderer.class);
+            SeraphinaHook.replaceMethod(SplashRenderer.class, MySplashRenderer.class);
+        }
     }
 }

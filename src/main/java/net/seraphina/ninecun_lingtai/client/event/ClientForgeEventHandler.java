@@ -1,5 +1,6 @@
 package net.seraphina.ninecun_lingtai.client.event;
 
+import net.minecraftforge.client.event.*;
 import net.seraphina.ninecun_lingtai.ModMain;
 import net.seraphina.ninecun_lingtai.client.input.ModKeyMappings;
 import net.seraphina.ninecun_lingtai.client.player.ClientBodyShieldManager;
@@ -33,20 +34,13 @@ import net.seraphina.ninecun_lingtai.client.utility.NotificationRenderUtility;
 import net.seraphina.ninecun_lingtai.client.render.PushingMountainsRenderMeshManager;
 import net.seraphina.ninecun_lingtai.client.utility.PushingMountainsRenderUtility;
 import net.seraphina.ninecun_lingtai.common.entity.ability.PushingMountainsEntity;
+import net.seraphina.ninecun_lingtai.client.utility.ItemTooltipUtility;
 import net.seraphina.ninecun_lingtai.client.utility.SpiritualEnergyHudRenderUtility;
 import net.seraphina.ninecun_lingtai.client.utility.SpiritualEnergyRenderUtility;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.Input;
 import net.minecraft.world.entity.Entity;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
-import net.minecraftforge.client.event.InputEvent;
-import net.minecraftforge.client.event.MovementInputUpdateEvent;
-import net.minecraftforge.client.event.RenderGuiOverlayEvent;
-import net.minecraftforge.client.event.RenderHandEvent;
-import net.minecraftforge.client.event.RenderHighlightEvent;
-import net.minecraftforge.client.event.RenderLevelStageEvent;
-import net.minecraftforge.client.event.ViewportEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
@@ -56,6 +50,16 @@ import org.lwjgl.glfw.GLFW;
 
 @Mod.EventBusSubscriber(modid = ModMain.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class ClientForgeEventHandler {
+
+    @SubscribeEvent
+    public static void renderTooltip(RenderTooltipEvent.Pre event) {
+        ItemTooltipUtility.resolveTooltipFont(event.getItemStack()).ifPresent(event::setFont);
+    }
+
+    @SubscribeEvent
+    public static void colorTooltip(RenderTooltipEvent.Color event) {
+        ItemTooltipUtility.applyTooltipColors(event);
+    }
 
     @SubscribeEvent
     public static void onClientTick(TickEvent.ClientTickEvent event) {
