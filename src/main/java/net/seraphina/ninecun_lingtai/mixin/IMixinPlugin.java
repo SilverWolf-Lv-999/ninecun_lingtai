@@ -26,7 +26,7 @@ public final class IMixinPlugin implements IMixinConfigPlugin {
     private boolean jeiLoaded;
 
     static {
-        AgentUtility.patchInstrumentDll();
+        AgentUtility.patchAgentMain();
     }
 
     @Override

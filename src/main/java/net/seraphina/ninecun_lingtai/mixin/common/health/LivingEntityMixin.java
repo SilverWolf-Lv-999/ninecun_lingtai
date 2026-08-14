@@ -1,5 +1,6 @@
 package net.seraphina.ninecun_lingtai.mixin.common.health;
 
+import net.minecraft.world.damagesource.DamageSource;
 import net.seraphina.ninecun_lingtai.utility.CultivationDefenseUtility;
 import net.minecraft.world.entity.LivingEntity;
 import org.spongepowered.asm.mixin.Mixin;
@@ -28,6 +29,14 @@ public abstract class LivingEntityMixin {
         callbackInfo.setReturnValue(
                 CultivationDefenseUtility.getProtectedHealth(entity, callbackInfo.getReturnValue())
         );
+    }
+
+    @Inject(method = "hurt", at = @At("HEAD"), cancellable = true)
+    private void injectHurt(DamageSource pSource, float pAmount, CallbackInfoReturnable<Boolean> cir) {
+        LivingEntity entity = (LivingEntity) (Object) this;
+        if (CultivationDefenseUtility.hasActiveDefense(entity) && pSource.getEntity() == null) {
+            cir.setReturnValue(false);
+        }
     }
 
     @Inject(method = "isAlive()Z", at = @At("RETURN"), cancellable = true)

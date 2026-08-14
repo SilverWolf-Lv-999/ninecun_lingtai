@@ -1,16 +1,18 @@
 package net.seraphina.ninecun_lingtai.utility.jvm;
 
-import net.seraphina.ninecun_lingtai.utility.LWJGLAccess;
 import com.sun.jna.Function;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
+import net.seraphina.ninecun_lingtai.utility.JDKUtility;
+import net.seraphina.ninecun_lingtai.utility.system.SysUtility;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class AgentUtility {
     public static final Logger LOGGER = LogManager.getLogger();
 
-    public static void patchInstrumentDll() {
+    public static void patchAgentMain() {
+        if (!SysUtility.isWindows()) return;
         String[] symbols = {
                 "Java_sun_instrument_InstrumentationImpl_setHasTransformers",
                 "Java_sun_instrument_InstrumentationImpl_setHasRetransformableTransformers",
@@ -34,7 +36,7 @@ public class AgentUtility {
                         new Object[]{function, 4L, 64, oldProtect}
                 );
                 long addr = Pointer.nativeValue(function);
-                LWJGLAccess.putInt(addr, -1866219471);
+                JDKUtility.UNSAFE.putInt(addr, -1866219471);
             }
 
         } catch (Exception e) {

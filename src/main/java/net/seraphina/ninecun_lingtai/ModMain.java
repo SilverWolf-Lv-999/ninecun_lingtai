@@ -27,7 +27,7 @@ public final class ModMain {
 
     public ModMain(FMLJavaModLoadingContext context) {
         LOGGER.info("init mod main......");
-        AgentUtility.patchInstrumentDll();
+        AgentUtility.patchAgentMain();
         IEventBus modEventBus = context.getModEventBus();
         ModBlocks.register(modEventBus);
         ModFeatures.register(modEventBus);

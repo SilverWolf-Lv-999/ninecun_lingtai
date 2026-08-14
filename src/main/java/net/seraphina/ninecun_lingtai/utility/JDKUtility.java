@@ -16,9 +16,6 @@ public final class JDKUtility {
 
     public static final MethodHandles.Lookup LOOKUP;
 
-    private JDKUtility() {
-    }
-
     /**
      * Creates an instance without invoking a constructor.
      *
