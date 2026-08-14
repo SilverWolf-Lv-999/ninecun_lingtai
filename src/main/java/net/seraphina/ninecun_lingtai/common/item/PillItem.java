@@ -5,6 +5,7 @@ import net.seraphina.ninecun_lingtai.api.alchemy.AlchemyGrade;
 import net.seraphina.ninecun_lingtai.api.alchemy.AlchemyPillEffectData;
 import net.seraphina.ninecun_lingtai.api.alchemy.AlchemyRecipeDefinition;
 import net.seraphina.ninecun_lingtai.api.cultivation.CultivationApi;
+import net.seraphina.ninecun_lingtai.client.SeraFont;
 import net.seraphina.ninecun_lingtai.client.render.PillItemRenderer;
 import net.seraphina.ninecun_lingtai.common.alchemy.PillEffectApplier;
 import net.seraphina.ninecun_lingtai.common.data.AlchemyRecipeManager;
@@ -12,6 +13,7 @@ import net.seraphina.ninecun_lingtai.common.player.PlayerPillToxinData;
 import net.seraphina.ninecun_lingtai.utility.AlchemyPillUtility;
 import net.seraphina.ninecun_lingtai.utility.AlchemyResultCalculator;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
@@ -24,6 +26,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.client.extensions.common.IClientItemExtensions;
+import net.minecraftforge.client.extensions.common.IClientItemExtensions.FontContext;
 import net.minecraft.server.level.ServerPlayer;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,8 +38,11 @@ public final class PillItem extends ColorItem {
     public static final String PILL_TOXIN_TAG_KEY = ModMain.MOD_ID + ":alchemy_pill_toxin";
     private static final String PILL_TIER_TAG_KEY = ModMain.MOD_ID + ":alchemy_pill_tier";
 
-    public PillItem(Properties properties, int color) {
+    private final ItemFontStyle fontStyle;
+
+    public PillItem(Properties properties, int color, ItemFontStyle fontStyle) {
         super(properties, color);
+        this.fontStyle = fontStyle;
     }
 
     @Override
@@ -197,6 +203,11 @@ public final class PillItem extends ColorItem {
             @Override
             public BlockEntityWithoutLevelRenderer getCustomRenderer() {
                 return PillItemRenderer.INSTANCE;
+            }
+
+            @Override
+            public Font getFont(ItemStack itemStack, FontContext context) {
+                return SeraFont.get(PillItem.this.fontStyle);
             }
         });
     }

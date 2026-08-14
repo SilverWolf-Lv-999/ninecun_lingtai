@@ -1,7 +1,9 @@
 package net.seraphina.ninecun_lingtai.common.item;
 
+import net.seraphina.ninecun_lingtai.client.SeraFont;
 import net.seraphina.ninecun_lingtai.client.render.PillItemRenderer;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -12,6 +14,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.client.extensions.common.IClientItemExtensions;
+import net.minecraftforge.client.extensions.common.IClientItemExtensions.FontContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -46,6 +49,11 @@ public final class DregsPillItem extends ColorItem {
             @Override
             public BlockEntityWithoutLevelRenderer getCustomRenderer() {
                 return PillItemRenderer.INSTANCE;
+            }
+
+            @Override
+            public Font getFont(ItemStack itemStack, FontContext context) {
+                return SeraFont.get(ItemFontStyle.DREGS_PILL);
             }
         });
     }

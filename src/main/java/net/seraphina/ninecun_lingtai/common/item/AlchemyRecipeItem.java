@@ -2,10 +2,12 @@ package net.seraphina.ninecun_lingtai.common.item;
 
 import net.seraphina.ninecun_lingtai.common.data.AlchemyRecipeManager;
 import net.seraphina.ninecun_lingtai.api.alchemy.AlchemyRecipeClientData;
+import net.seraphina.ninecun_lingtai.client.SeraFont;
 import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import net.seraphina.ninecun_lingtai.common.player.PlayerLearnedAlchemyRecipeData;
 import net.seraphina.ninecun_lingtai.utility.AlchemyRecipeItemUtility;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -16,9 +18,12 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
+import net.minecraftforge.client.extensions.common.IClientItemExtensions;
+import net.minecraftforge.client.extensions.common.IClientItemExtensions.FontContext;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 public final class AlchemyRecipeItem extends Item {
     public AlchemyRecipeItem(Properties properties) {
@@ -107,5 +112,15 @@ public final class AlchemyRecipeItem extends Item {
             tooltip.add(Component.literal(recipeId.get().toString())
                     .withStyle(ChatFormatting.DARK_GRAY));
         }
+    }
+
+    @Override
+    public void initializeClient(Consumer<IClientItemExtensions> consumer) {
+        consumer.accept(new IClientItemExtensions() {
+            @Override
+            public Font getFont(ItemStack itemStack, FontContext context) {
+                return SeraFont.get(ItemFontStyle.ALCHEMY_RECIPE);
+            }
+        });
     }
 }

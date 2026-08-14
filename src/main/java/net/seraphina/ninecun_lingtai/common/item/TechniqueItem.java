@@ -1,6 +1,7 @@
 package net.seraphina.ninecun_lingtai.common.item;
 
 import net.seraphina.ninecun_lingtai.api.technique.TechniqueClientData;
+import net.seraphina.ninecun_lingtai.client.SeraFont;
 import net.seraphina.ninecun_lingtai.client.render.TechniqueItemCustomModel;
 import net.seraphina.ninecun_lingtai.common.data.TechniqueManager;
 import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
@@ -8,6 +9,7 @@ import net.seraphina.ninecun_lingtai.common.player.PlayerImprintedTechniqueData;
 import net.seraphina.ninecun_lingtai.utility.TechniqueItemUtility;
 import net.seraphina.ninecun_lingtai.utility.TechniqueUtility;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -20,6 +22,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.client.extensions.common.IClientItemExtensions;
+import net.minecraftforge.client.extensions.common.IClientItemExtensions.FontContext;
 
 import java.util.List;
 import java.util.Optional;
@@ -106,6 +109,11 @@ public final class TechniqueItem extends Item {
             @Override
             public BlockEntityWithoutLevelRenderer getCustomRenderer() {
                 return TechniqueItemCustomModel.INSTANCE;
+            }
+
+            @Override
+            public Font getFont(ItemStack itemStack, FontContext context) {
+                return SeraFont.get(ItemFontStyle.JADE_SLIP);
             }
         });
     }

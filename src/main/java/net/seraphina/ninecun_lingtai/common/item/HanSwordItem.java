@@ -2,8 +2,10 @@ package net.seraphina.ninecun_lingtai.common.item;
 
 import net.seraphina.ninecun_lingtai.api.item.ISpiritualItem;
 import net.seraphina.ninecun_lingtai.api.item.SpiritualItemGrade;
+import net.seraphina.ninecun_lingtai.client.SeraFont;
 import net.seraphina.ninecun_lingtai.client.render.HanSwordRenderer;
 import net.seraphina.ninecun_lingtai.utility.SpiritualItemUtility;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.LivingEntity;
@@ -13,6 +15,7 @@ import net.minecraft.world.item.Tiers;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.client.extensions.common.IClientItemExtensions;
+import net.minecraftforge.client.extensions.common.IClientItemExtensions.FontContext;
 import software.bernie.geckolib.animatable.GeoItem;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.AnimatableManager;
@@ -105,6 +108,11 @@ public final class HanSwordItem extends SwordItem implements ISpiritualItem, Geo
             @Override
             public BlockEntityWithoutLevelRenderer getCustomRenderer() {
                 return new HanSwordRenderer();
+            }
+
+            @Override
+            public Font getFont(ItemStack itemStack, FontContext context) {
+                return SeraFont.get(ItemFontStyle.HAN_SWORD);
             }
         });
     }

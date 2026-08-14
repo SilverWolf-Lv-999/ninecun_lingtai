@@ -1,7 +1,9 @@
 package net.seraphina.ninecun_lingtai.common.item;
 
+import net.seraphina.ninecun_lingtai.client.SeraFont;
 import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import net.seraphina.ninecun_lingtai.utility.DaoScrollUtility;
+import net.minecraft.client.gui.Font;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -10,6 +12,10 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.seraphina.ninecun_lingtai.common.registry.ModItems;
+import net.minecraftforge.client.extensions.common.IClientItemExtensions;
+import net.minecraftforge.client.extensions.common.IClientItemExtensions.FontContext;
+
+import java.util.function.Consumer;
 
 public final class DaoScrollItem extends Item {
     public DaoScrollItem(Properties properties) {
@@ -42,5 +48,15 @@ public final class DaoScrollItem extends Item {
     public static boolean isHeldBy(ServerPlayer player) {
         return player.getMainHandItem().is(ModItems.DAO_SCROLL.get())
                 || player.getOffhandItem().is(ModItems.DAO_SCROLL.get());
+    }
+
+    @Override
+    public void initializeClient(Consumer<IClientItemExtensions> consumer) {
+        consumer.accept(new IClientItemExtensions() {
+            @Override
+            public Font getFont(ItemStack itemStack, FontContext context) {
+                return SeraFont.get(ItemFontStyle.DAO_SCROLL);
+            }
+        });
     }
 }
