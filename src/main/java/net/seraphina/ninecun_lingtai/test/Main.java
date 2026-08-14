@@ -4,6 +4,9 @@ import net.seraphina.ninecun_lingtai.utility.jvm.SeraphinaHook;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
@@ -40,6 +43,10 @@ public class Main {
         SeraphinaHook.addMethod(System.class, "testPrint", () -> System.out.println("123"));
 
         try {
+            MethodHandle methodHandle = MethodHandles.publicLookup()
+                    .findStatic(System.class, "testPrint", MethodType.methodType(void.class));
+            assertOutput("123" + System.lineSeparator(), () -> invokeMethodHandle(methodHandle));
+
             Method method = System.class.getMethod("testPrint");
             if (method.getDeclaringClass() != System.class
                     || !Modifier.isPublic(method.getModifiers())
@@ -54,8 +61,16 @@ public class Main {
                     throw new AssertionError("Could not invoke System.testPrint()", exception);
                 }
             });
-        } catch (NoSuchMethodException exception) {
-            throw new AssertionError("JVM did not expose System.testPrint()", exception);
+        } catch (NoSuchMethodException | IllegalAccessException exception) {
+            throw new AssertionError("JVM did not expose System.testPrint() to reflection or MethodHandle", exception);
+        }
+    }
+
+    private static void invokeMethodHandle(MethodHandle methodHandle) {
+        try {
+            methodHandle.invokeExact();
+        } catch (Throwable throwable) {
+            throw new AssertionError("Could not invoke MethodHandle for System.testPrint()", throwable);
         }
     }
 

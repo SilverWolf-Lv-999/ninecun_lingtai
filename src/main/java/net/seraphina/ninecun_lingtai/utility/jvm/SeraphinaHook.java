@@ -88,13 +88,6 @@ public class SeraphinaHook {
         }
     }
 
-    /**
-     * Adds a public static {@code void methodName()} to a bootstrap-loaded JDK class.
-     *
-     * <p>This only supports the local 64-bit HotSpot JDK 17 layout. Static methods do not
-     * have vtable entries, so the generated {@code Method*} is added to the target
-     * {@code InstanceKlass::_methods} array and the reflection cache is invalidated.</p>
-     */
     public static void addMethod(Class<?> klass, String methodName, Runnable methodBody) {
         Objects.requireNonNull(klass, "klass");
         Objects.requireNonNull(methodName, "methodName");
@@ -172,10 +165,6 @@ public class SeraphinaHook {
         }
     }
 
-    /**
-     * Entry point used by generated donor methods after their constant-pool call site has
-     * resolved against this class loader.
-     */
     public static void runInjected(String callbackId) {
         Runnable methodBody = INJECTED_METHOD_BODIES.get(callbackId);
         if (methodBody == null) {
@@ -537,15 +526,9 @@ public class SeraphinaHook {
             throw new IllegalArgumentException(
                     "Interface method replacement is not supported: " + target.getName());
         }
-        if (target.getClassLoader() != now.getClassLoader()) {
-            throw new IllegalArgumentException(
-                    target.getName() + " and " + now.getName()
-                            + " must be loaded by the same class loader");
-        }
-
         int replacedCount = 0;
         for (Method replacement : now.getDeclaredMethods()) {
-            Method targetMethod = findMatchingDeclaredMethod(target, replacement);
+            Method targetMethod = findMatchingMethodInHierarchy(target, replacement);
             if (targetMethod == null) {
                 continue;
             }
@@ -672,6 +655,16 @@ public class SeraphinaHook {
         return null;
     }
 
+    private static Method findMatchingMethodInHierarchy(Class<?> klass, Method template) {
+        for (Class<?> current = klass; current != null; current = current.getSuperclass()) {
+            Method method = findMatchingDeclaredMethod(current, template);
+            if (method != null) {
+                return method;
+            }
+        }
+        return null;
+    }
+
     private static void makeAccessible(Method method) {
         if (!method.trySetAccessible()) {
             throw new IllegalArgumentException("Cannot access method " + method);
@@ -769,15 +762,14 @@ public class SeraphinaHook {
         try {
             initialize();
             long replacementMethodAddress = locate(replacement).methodAddress;
-            replaceVtableEntry(targetClass, targetMethod, replacementMethodAddress);
+            if (!replaceVtableEntry(targetClass, targetMethod, replacementMethodAddress)) {
+                throw new IllegalStateException(
+                        "Target vtable slot is not initialized for "
+                                + targetClass.getName() + "." + targetMethod.getName());
+            }
 
             for (Class<?> subclass : findLoadedSubclasses(targetClass)) {
-                Method declaredMethod = findMatchingDeclaredMethod(subclass, targetMethod);
-                if (declaredMethod != null) {
-                    replaceVtableEntry(subclass, declaredMethod, replacementMethodAddress);
-                } else {
-                    replaceVtableEntry(subclass, targetMethod, replacementMethodAddress);
-                }
+                replaceVtableEntry(subclass, targetMethod, replacementMethodAddress);
             }
         } catch (Exception e) {
             throw new IllegalStateException(
@@ -786,7 +778,7 @@ public class SeraphinaHook {
         }
     }
 
-    private static void replaceVtableEntry(
+    private static boolean replaceVtableEntry(
             Class<?> klass, Method method, long replacementMethodAddress) {
         MethodLocation methodLocation;
         try {
@@ -805,12 +797,14 @@ public class SeraphinaHook {
 
         long vtableEntryAddress = klassAddress + vtableStartOffset
                 + (long) vtableIndex * Long.BYTES;
-        if (JDKUtility.UNSAFE.getLong(vtableEntryAddress) != methodLocation.methodAddress) {
-            throw new IllegalStateException(
-                    "Vtable slot does not contain " + klass.getName() + "." + method.getName());
+        if (JDKUtility.UNSAFE.getLong(vtableEntryAddress) == 0L) {
+            // A class may be visible from the HotSpot subclass chain before linking
+            // initializes its vtable. It will inherit the patched parent slot when linked.
+            return false;
         }
         JDKUtility.UNSAFE.putLongVolatile(
                 null, vtableEntryAddress, replacementMethodAddress);
+        return true;
     }
 
     private static long findVtableEntry(long klassAddress, long methodAddress) {
