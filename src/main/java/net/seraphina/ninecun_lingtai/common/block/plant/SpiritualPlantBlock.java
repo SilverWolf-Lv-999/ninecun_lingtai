@@ -29,7 +29,10 @@ import java.util.Objects;
 public abstract class SpiritualPlantBlock extends Block implements ISpiritualPlant {
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
 
-    private static final VoxelShape PLANT_SHAPE = Block.box(3.0D, 0.0D, 2.0D, 13.0D, 7.0D, 10.0D);
+    private static final VoxelShape NORTH_PLANT_SHAPE = Block.box(3.0D, 0.0D, 7.0D, 13.0D, 7.0D, 16.0D);
+    private static final VoxelShape SOUTH_PLANT_SHAPE = Block.box(3.0D, 0.0D, 0.0D, 13.0D, 7.0D, 9.0D);
+    private static final VoxelShape WEST_PLANT_SHAPE = Block.box(7.0D, 0.0D, 3.0D, 16.0D, 7.0D, 13.0D);
+    private static final VoxelShape EAST_PLANT_SHAPE = Block.box(0.0D, 0.0D, 3.0D, 9.0D, 7.0D, 13.0D);
 
     private final ElementType primaryElement;
     private final SpiritualPlantGrade baseGrade;
@@ -117,7 +120,13 @@ public abstract class SpiritualPlantBlock extends Block implements ISpiritualPla
             BlockPos blockPosition,
             CollisionContext collisionContext
     ) {
-        return PLANT_SHAPE;
+        return switch (blockState.getValue(FACING)) {
+            case NORTH -> NORTH_PLANT_SHAPE;
+            case SOUTH -> SOUTH_PLANT_SHAPE;
+            case WEST -> WEST_PLANT_SHAPE;
+            case EAST -> EAST_PLANT_SHAPE;
+            default -> throw new IllegalStateException("Unexpected horizontal direction");
+        };
     }
 
     @Override
