@@ -3,6 +3,7 @@ package net.seraphina.ninecun_lingtai.common.item;
 import net.seraphina.ninecun_lingtai.api.technique.TechniqueClientData;
 import net.seraphina.ninecun_lingtai.client.SeraFont;
 import net.seraphina.ninecun_lingtai.client.render.TechniqueItemCustomModel;
+import net.seraphina.ninecun_lingtai.client.utility.ItemFontStyleResolver;
 import net.seraphina.ninecun_lingtai.common.data.TechniqueManager;
 import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import net.seraphina.ninecun_lingtai.common.player.PlayerImprintedTechniqueData;
@@ -113,7 +114,7 @@ public final class TechniqueItem extends Item {
 
             @Override
             public Font getFont(ItemStack itemStack, FontContext context) {
-                return SeraFont.get(ItemFontStyle.JADE_SLIP);
+                return SeraFont.get(ItemFontStyleResolver.resolveTechnique(itemStack));
             }
         });
     }

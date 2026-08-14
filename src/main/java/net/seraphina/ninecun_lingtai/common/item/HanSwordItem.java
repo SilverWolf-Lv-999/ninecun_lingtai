@@ -4,7 +4,9 @@ import net.seraphina.ninecun_lingtai.api.item.ISpiritualItem;
 import net.seraphina.ninecun_lingtai.api.item.SpiritualItemGrade;
 import net.seraphina.ninecun_lingtai.client.SeraFont;
 import net.seraphina.ninecun_lingtai.client.render.HanSwordRenderer;
+import net.seraphina.ninecun_lingtai.client.utility.ItemFontStyleResolver;
 import net.seraphina.ninecun_lingtai.utility.SpiritualItemUtility;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.network.chat.Component;
@@ -46,7 +48,7 @@ public final class HanSwordItem extends SwordItem implements ISpiritualItem, Geo
         tooltip.add(Component.translatable(
                 "tooltip.ninecun_lingtai.spiritual_item.grade",
                 getGrade(itemStack).getDisplayName()
-        ));
+        ).withStyle(ChatFormatting.GRAY));
         super.appendHoverText(itemStack, level, tooltip, tooltipFlag);
     }
 
@@ -112,7 +114,7 @@ public final class HanSwordItem extends SwordItem implements ISpiritualItem, Geo
 
             @Override
             public Font getFont(ItemStack itemStack, FontContext context) {
-                return SeraFont.get(ItemFontStyle.HAN_SWORD);
+                return SeraFont.get(ItemFontStyleResolver.resolveSpiritualItem(itemStack));
             }
         });
     }

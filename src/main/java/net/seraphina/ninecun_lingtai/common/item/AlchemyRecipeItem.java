@@ -3,6 +3,7 @@ package net.seraphina.ninecun_lingtai.common.item;
 import net.seraphina.ninecun_lingtai.common.data.AlchemyRecipeManager;
 import net.seraphina.ninecun_lingtai.api.alchemy.AlchemyRecipeClientData;
 import net.seraphina.ninecun_lingtai.client.SeraFont;
+import net.seraphina.ninecun_lingtai.client.utility.ItemFontStyleResolver;
 import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import net.seraphina.ninecun_lingtai.common.player.PlayerLearnedAlchemyRecipeData;
 import net.seraphina.ninecun_lingtai.utility.AlchemyRecipeItemUtility;
@@ -119,7 +120,7 @@ public final class AlchemyRecipeItem extends Item {
         consumer.accept(new IClientItemExtensions() {
             @Override
             public Font getFont(ItemStack itemStack, FontContext context) {
-                return SeraFont.get(ItemFontStyle.ALCHEMY_RECIPE);
+                return SeraFont.get(ItemFontStyleResolver.resolveAlchemyRecipe(itemStack));
             }
         });
     }

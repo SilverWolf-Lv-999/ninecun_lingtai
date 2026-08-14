@@ -2,6 +2,7 @@ package net.seraphina.ninecun_lingtai.common.item;
 
 import net.seraphina.ninecun_lingtai.client.SeraFont;
 import net.seraphina.ninecun_lingtai.common.ring.RingStorageManager;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -39,7 +40,8 @@ public final class StorageRingItem extends Item {
             List<Component> tooltipComponents,
             TooltipFlag tooltipFlag
     ) {
-        tooltipComponents.add(Component.translatable("tooltip.ninecun_lingtai.storage_ring"));
+        tooltipComponents.add(Component.translatable("tooltip.ninecun_lingtai.storage_ring")
+                .withStyle(ChatFormatting.GRAY));
     }
 
     @Override

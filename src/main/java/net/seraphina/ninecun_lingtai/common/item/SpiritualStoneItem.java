@@ -1,6 +1,7 @@
 package net.seraphina.ninecun_lingtai.common.item;
 
 import net.seraphina.ninecun_lingtai.client.SeraFont;
+import net.seraphina.ninecun_lingtai.client.utility.ItemFontStyleResolver;
 import net.seraphina.ninecun_lingtai.utility.SpiritualStoneUtility;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.Font;
@@ -57,7 +58,7 @@ public final class SpiritualStoneItem extends Item {
         consumer.accept(new IClientItemExtensions() {
             @Override
             public Font getFont(ItemStack itemStack, FontContext context) {
-                return SeraFont.get(ItemFontStyle.SPIRITUAL_STONE);
+                return SeraFont.get(ItemFontStyleResolver.resolveSpiritualStone(itemStack));
             }
         });
     }

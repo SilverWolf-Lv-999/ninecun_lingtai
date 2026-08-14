@@ -60,81 +60,66 @@ public final class ModItems {
 
     public static final RegistryObject<Item> GRASS_RESTORATION_PILL = registerPill(
             "grass_restoration_pill",
-            0x609A4A,
-            ItemFontStyle.GRASS_RESTORATION_PILL
+            0x609A4A
     );
 
     public static final RegistryObject<Item> QI_GATHERING_POWDER = registerPill(
             "qi_gathering_powder",
-            0x86C166,
-            ItemFontStyle.QI_GATHERING_POWDER
+            0x86C166
     );
     public static final RegistryObject<Item> BREATH_CONDENSING_PILL = registerPill(
             "breath_condensing_pill",
-            0xA8C256,
-            ItemFontStyle.BREATH_CONDENSING_PILL
+            0xA8C256
     );
     public static final RegistryObject<Item> CLEANSING_DUST_PILL = registerPill(
             "cleansing_dust_pill",
-            0xE8F0E0,
-            ItemFontStyle.CLEANSING_DUST_PILL
+            0xE8F0E0
     );
     public static final RegistryObject<Item> GRAIN_AVOIDANCE_PILL = registerPill(
             "grain_avoidance_pill",
-            0xD8B75A,
-            ItemFontStyle.GRAIN_AVOIDANCE_PILL
+            0xD8B75A
     );
 
     public static final RegistryObject<Item> JADE_MARROW_PILL = registerPill(
             "jade_marrow_pill",
-            0xB48FD8,
-            ItemFontStyle.JADE_MARROW_PILL
+            0xB48FD8
     );
     public static final RegistryObject<Item> FOUNDATION_PILL = registerPill(
             "foundation_pill",
-            0xC8C8D8,
-            ItemFontStyle.FOUNDATION_PILL
+            0xC8C8D8
     );
     public static final RegistryObject<Item> SPIRIT_DEW_PILL = registerPill(
             "spirit_dew_pill",
-            0x6FAED9,
-            ItemFontStyle.SPIRIT_DEW_PILL
+            0x6FAED9
     );
     public static final RegistryObject<Item> CALM_MIND_PILL = registerPill(
             "calm_mind_pill",
-            0xE0784A,
-            ItemFontStyle.CALM_MIND_PILL
+            0xE0784A
     );
     public static final RegistryObject<Item> VEIN_EXTENSION_PILL = registerPill(
             "vein_extension_pill",
-            0xE8C84A,
-            ItemFontStyle.VEIN_EXTENSION_PILL
+            0xE8C84A
     );
 
     public static final RegistryObject<Item> GOLDEN_WOUND_PILL = registerPill(
             "golden_wound_pill",
-            0xF0D060,
-            ItemFontStyle.GOLDEN_WOUND_PILL
+            0xF0D060
     );
     public static final RegistryObject<Item> CORE_FORMATION_PILL = registerPill(
             "core_formation_pill",
-            0x86D8D0,
-            ItemFontStyle.CORE_FORMATION_PILL
+            0x86D8D0
     );
     public static final RegistryObject<Item> ORIGIN_RETURN_PILL = registerPill(
             "origin_return_pill",
-            0xD86050,
-            ItemFontStyle.ORIGIN_RETURN_PILL
+            0xD86050
     );
     public static final RegistryObject<Item> BODY_TEMPERING_PILL = registerPill(
             "body_tempering_pill",
-            0x58A89A,
-            ItemFontStyle.BODY_TEMPERING_PILL
+            0x58A89A
     );
     public static final RegistryObject<Item> SPIRIT_CONDENSING_PILL = registerPill(
             "spirit_condensing_pill",
-            0x3E5C68,
-            ItemFontStyle.SPIRIT_CONDENSING_PILL
+            0x3E5C68
     );
 
     public static final RegistryObject<Item> DREGS_PILL = registerDregs();
@@ -185,10 +170,10 @@ public final class ModItems {
         return PILL_ITEMS.stream().map(RegistryObject::get).toList();
     }
 
-    private static RegistryObject<Item> registerPill(String name, int color, ItemFontStyle fontStyle) {
+    private static RegistryObject<Item> registerPill(String name, int color) {
         RegistryObject<Item> pill = ITEMS.register(
                 name,
-                () -> new PillItem(new Item.Properties().stacksTo(16), color, fontStyle)
+                () -> new PillItem(new Item.Properties().stacksTo(16), color)
         );
         COLOR_ITEMS.add(pill);
         PILL_ITEMS.add(pill);

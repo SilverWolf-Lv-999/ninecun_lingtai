@@ -7,6 +7,7 @@ import net.seraphina.ninecun_lingtai.api.alchemy.AlchemyRecipeDefinition;
 import net.seraphina.ninecun_lingtai.api.cultivation.CultivationApi;
 import net.seraphina.ninecun_lingtai.client.SeraFont;
 import net.seraphina.ninecun_lingtai.client.render.PillItemRenderer;
+import net.seraphina.ninecun_lingtai.client.utility.ItemFontStyleResolver;
 import net.seraphina.ninecun_lingtai.common.alchemy.PillEffectApplier;
 import net.seraphina.ninecun_lingtai.common.data.AlchemyRecipeManager;
 import net.seraphina.ninecun_lingtai.common.player.PlayerPillToxinData;
@@ -38,11 +39,8 @@ public final class PillItem extends ColorItem {
     public static final String PILL_TOXIN_TAG_KEY = ModMain.MOD_ID + ":alchemy_pill_toxin";
     private static final String PILL_TIER_TAG_KEY = ModMain.MOD_ID + ":alchemy_pill_tier";
 
-    private final ItemFontStyle fontStyle;
-
-    public PillItem(Properties properties, int color, ItemFontStyle fontStyle) {
+    public PillItem(Properties properties, int color) {
         super(properties, color);
-        this.fontStyle = fontStyle;
     }
 
     @Override
@@ -207,7 +205,7 @@ public final class PillItem extends ColorItem {
 
             @Override
             public Font getFont(ItemStack itemStack, FontContext context) {
-                return SeraFont.get(PillItem.this.fontStyle);
+                return SeraFont.get(ItemFontStyleResolver.resolvePill(itemStack));
             }
         });
     }

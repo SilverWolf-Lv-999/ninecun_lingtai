@@ -16,6 +16,7 @@ public record AlchemyRecipeClientData(
         String name,
         String description,
         String content,
+        ResourceLocation outputItem,
         AlchemyGrade grade,
         Set<CultivationRealm> allowedRealms,
         @Nullable ElementType primaryElement,
@@ -29,6 +30,7 @@ public record AlchemyRecipeClientData(
         name = requireText(name, "name");
         description = Objects.requireNonNull(description, "description");
         content = requireText(content, "content");
+        Objects.requireNonNull(outputItem, "outputItem");
         Objects.requireNonNull(grade, "grade");
         allowedRealms = Set.copyOf(allowedRealms);
         if (allowedRealms.isEmpty()) {
@@ -55,6 +57,7 @@ public record AlchemyRecipeClientData(
                 recipe.name(),
                 recipe.description(),
                 recipe.content(),
+                recipe.outputItem(),
                 recipe.grade(),
                 recipe.allowedRealms(),
                 recipe.primaryElement(),

@@ -1,11 +1,14 @@
 package net.seraphina.ninecun_lingtai.utility;
 
+import net.seraphina.ninecun_lingtai.api.element.ElementType;
 import net.seraphina.ninecun_lingtai.api.technique.TechniqueClientData;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 public final class TechniqueNetworkUtility {
     private static final int MAXIMUM_TECHNIQUES = 2048;
@@ -18,6 +21,10 @@ public final class TechniqueNetworkUtility {
         buffer.writeUtf(technique.name(), MAXIMUM_NAME_LENGTH);
         buffer.writeUtf(technique.description(), MAXIMUM_DESCRIPTION_LENGTH);
         buffer.writeUtf(technique.content(), MAXIMUM_CONTENT_LENGTH);
+        buffer.writeVarInt(technique.compatibleElements().size());
+        technique.compatibleElements().stream()
+                .sorted()
+                .forEach(buffer::writeEnum);
         buffer.writeDouble(technique.breathingAbsorptionMultiplier());
         buffer.writeVarInt(technique.spellGrade());
         buffer.writeUtf(technique.spellCategory(), MAXIMUM_NAME_LENGTH);
@@ -28,6 +35,16 @@ public final class TechniqueNetworkUtility {
         String name = buffer.readUtf(MAXIMUM_NAME_LENGTH);
         String description = buffer.readUtf(MAXIMUM_DESCRIPTION_LENGTH);
         String content = buffer.readUtf(MAXIMUM_CONTENT_LENGTH);
+        int compatibleElementCount = buffer.readVarInt();
+        if (compatibleElementCount < 0 || compatibleElementCount > ElementType.values().length) {
+            throw new IllegalArgumentException(
+                    "Invalid synchronized compatible element count: " + compatibleElementCount
+            );
+        }
+        Set<ElementType> compatibleElements = EnumSet.noneOf(ElementType.class);
+        for (int elementIndex = 0; elementIndex < compatibleElementCount; elementIndex++) {
+            compatibleElements.add(buffer.readEnum(ElementType.class));
+        }
         double breathingAbsorptionMultiplier = buffer.readDouble();
         int spellGrade = buffer.readVarInt();
         String spellCategory = buffer.readUtf(MAXIMUM_NAME_LENGTH);
@@ -36,6 +53,7 @@ public final class TechniqueNetworkUtility {
                 name,
                 description,
                 content,
+                compatibleElements,
                 breathingAbsorptionMultiplier,
                 spellGrade,
                 spellCategory

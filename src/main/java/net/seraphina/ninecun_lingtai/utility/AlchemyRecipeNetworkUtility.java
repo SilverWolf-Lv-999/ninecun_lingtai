@@ -30,6 +30,7 @@ public final class AlchemyRecipeNetworkUtility {
         buffer.writeUtf(recipe.name(), MAXIMUM_NAME_LENGTH);
         buffer.writeUtf(recipe.description(), MAXIMUM_DESCRIPTION_LENGTH);
         buffer.writeUtf(recipe.content(), MAXIMUM_CONTENT_LENGTH);
+        buffer.writeResourceLocation(recipe.outputItem());
         buffer.writeVarInt(recipe.grade().tier());
         buffer.writeVarInt(recipe.grade().rank());
         buffer.writeVarInt(recipe.allowedRealms().size());
@@ -55,6 +56,7 @@ public final class AlchemyRecipeNetworkUtility {
         String name = buffer.readUtf(MAXIMUM_NAME_LENGTH);
         String description = buffer.readUtf(MAXIMUM_DESCRIPTION_LENGTH);
         String content = buffer.readUtf(MAXIMUM_CONTENT_LENGTH);
+        ResourceLocation outputItem = buffer.readResourceLocation();
         AlchemyGrade grade = new AlchemyGrade(buffer.readVarInt(), buffer.readVarInt());
         int realmCount = buffer.readVarInt();
         if (realmCount <= 0 || realmCount > CultivationRealm.values().length) {
@@ -86,6 +88,7 @@ public final class AlchemyRecipeNetworkUtility {
                 name,
                 description,
                 content,
+                outputItem,
                 grade,
                 allowedRealms,
                 primaryElement,

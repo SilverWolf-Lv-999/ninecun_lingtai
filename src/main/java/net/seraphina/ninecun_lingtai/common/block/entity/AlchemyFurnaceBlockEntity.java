@@ -873,7 +873,8 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
         ItemStack outputStack = AlchemyPillUtility.createStack(
                 BuiltInRegistries.ITEM.get(recipe.outputItem()),
                 count,
-                grade
+                grade,
+                recipe.primaryElement()
         );
         double pillToxin = AlchemyResultCalculator.calculateToxin(recipe, grade.rank());
         if (pillToxin > 0.0D) {

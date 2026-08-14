@@ -1,16 +1,20 @@
 package net.seraphina.ninecun_lingtai.api.technique;
 
+import net.seraphina.ninecun_lingtai.api.element.ElementType;
 import net.seraphina.ninecun_lingtai.api.spell.SpellCategory;
 import net.minecraft.resources.ResourceLocation;
 
+import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 public record TechniqueClientData(
         ResourceLocation id,
         String name,
         String description,
         String content,
+        Set<ElementType> compatibleElements,
         double breathingAbsorptionMultiplier,
         int spellGrade,
         String spellCategory
@@ -27,6 +31,7 @@ public record TechniqueClientData(
         name = requireText(name, "name");
         description = Objects.requireNonNull(description, "description");
         content = requireText(content, "content");
+        compatibleElements = Set.copyOf(compatibleElements);
         if (!Double.isFinite(breathingAbsorptionMultiplier) || breathingAbsorptionMultiplier < 0.0D) {
             breathingAbsorptionMultiplier = NOT_BREATHING;
         }
@@ -49,11 +54,15 @@ public record TechniqueClientData(
     }
 
     public static TechniqueClientData fromDefinition(TechniqueDefinition technique) {
+        Set<ElementType> compatibleElements = EnumSet.noneOf(ElementType.class);
+        compatibleElements.addAll(technique.compatibleElements());
+        compatibleElements.addAll(technique.requirements().requiredElements());
         return new TechniqueClientData(
                 technique.id(),
                 technique.name(),
                 technique.description(),
                 technique.content(),
+                compatibleElements,
                 technique.breathing()
                         .map(TechniqueBreathing::absorptionMultiplier)
                         .orElse(NOT_BREATHING),

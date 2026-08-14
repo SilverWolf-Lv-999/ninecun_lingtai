@@ -25,6 +25,7 @@ import java.util.Set;
 
 public final class ClientAlchemyRecipeManager {
     private static Map<ResourceLocation, AlchemyRecipeClientData> recipes = Map.of();
+    private static Map<ResourceLocation, AlchemyRecipeClientData> recipesByOutputItem = Map.of();
     private static Set<ResourceLocation> learnedRecipeIds = Set.of();
     private static Map<ResourceLocation, AlchemyRecipeJeiData> learnedJeiRecipes = Map.of();
     private static boolean initialized;
@@ -51,6 +52,7 @@ public final class ClientAlchemyRecipeManager {
                 .sorted(Comparator.comparing(recipe -> recipe.id().toString()))
                 .forEach(recipe -> recipeMap.put(recipe.id(), recipe));
         recipes = Map.copyOf(recipeMap);
+        recipesByOutputItem = createOutputItemMap(recipeMap.values());
         learnedRecipeIds = Set.copyOf(updatedLearnedRecipeIds);
         Map<ResourceLocation, AlchemyRecipeJeiData> jeiRecipeMap = new LinkedHashMap<>();
         updatedLearnedJeiRecipes.stream()
@@ -73,6 +75,11 @@ public final class ClientAlchemyRecipeManager {
         Map<ResourceLocation, AlchemyRecipeClientData> recipeMap = new LinkedHashMap<>(recipes);
         recipeMap.put(recipe.id(), recipe);
         recipes = Map.copyOf(recipeMap);
+        Map<ResourceLocation, AlchemyRecipeClientData> outputItemMap = new LinkedHashMap<>(
+                recipesByOutputItem
+        );
+        outputItemMap.put(recipe.outputItem(), recipe);
+        recipesByOutputItem = Map.copyOf(outputItemMap);
         if (learned) {
             HashSet<ResourceLocation> updatedLearnedRecipes = new HashSet<>(learnedRecipeIds);
             updatedLearnedRecipes.add(recipe.id());
@@ -83,6 +90,10 @@ public final class ClientAlchemyRecipeManager {
 
     public static Optional<AlchemyRecipeClientData> getRecipe(ResourceLocation recipeId) {
         return Optional.ofNullable(recipes.get(recipeId));
+    }
+
+    public static Optional<AlchemyRecipeClientData> getRecipeForOutputItem(ResourceLocation outputItem) {
+        return Optional.ofNullable(recipesByOutputItem.get(outputItem));
     }
 
     public static List<AlchemyRecipeClientData> getLearnedRecipes() {
@@ -114,6 +125,7 @@ public final class ClientAlchemyRecipeManager {
 
     public static void reset() {
         recipes = Map.of();
+        recipesByOutputItem = Map.of();
         learnedRecipeIds = Set.of();
         learnedJeiRecipes = Map.of();
         initialized = false;
@@ -126,5 +138,15 @@ public final class ClientAlchemyRecipeManager {
         if (ModList.get().isLoaded("jei")) {
             AlchemyRecipeJeiRuntimeManager.synchronizeRecipes(getLearnedJeiRecipes());
         }
+    }
+
+    private static Map<ResourceLocation, AlchemyRecipeClientData> createOutputItemMap(
+            Iterable<AlchemyRecipeClientData> recipes
+    ) {
+        Map<ResourceLocation, AlchemyRecipeClientData> outputItemMap = new LinkedHashMap<>();
+        for (AlchemyRecipeClientData recipe : recipes) {
+            outputItemMap.putIfAbsent(recipe.outputItem(), recipe);
+        }
+        return Map.copyOf(outputItemMap);
     }
 }
