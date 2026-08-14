@@ -1,19 +1,19 @@
 {
   "variants": {
     "facing=south": {
-      "model": "ninecun_lingtai:block/fire_lingzhi"
-    },
-    "facing=west": {
-      "model": "ninecun_lingtai:block/fire_lingzhi",
-      "y": 90
-    },
-    "facing=north": {
       "model": "ninecun_lingtai:block/fire_lingzhi",
       "y": 180
     },
-    "facing=east": {
+    "facing=west": {
       "model": "ninecun_lingtai:block/fire_lingzhi",
       "y": 270
+    },
+    "facing=north": {
+      "model": "ninecun_lingtai:block/fire_lingzhi"
+    },
+    "facing=east": {
+      "model": "ninecun_lingtai:block/fire_lingzhi",
+      "y": 90
     }
   }
 }
