@@ -30,6 +30,7 @@ import net.seraphina.ninecun_lingtai.common.network.packet.AlchemyFurnaceActionP
 import net.seraphina.ninecun_lingtai.common.network.packet.OpenAlchemyRecipeImprintScreenPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.OpenAlchemyRecipeScreenPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.OpenDaoScrollScreenPacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.OpenThreeThousandRealmScreenPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.OpenTechniqueImprintScreenPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.OpenTechniqueScreenPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.PushingMountainsClearSelectionPacket;
@@ -73,6 +74,9 @@ import net.seraphina.ninecun_lingtai.common.network.packet.SyncSwordFlightPacket
 import net.seraphina.ninecun_lingtai.common.network.packet.SyncTechniqueLibraryPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.SyncAlchemyRecipesPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.SyncTribulationStatePacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.SyncThreeThousandRealmCatalogPacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.ThreeThousandRealmTravelResultPacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.TravelToThreeThousandRealmPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.TriggerBodyShieldPacket;
 import net.seraphina.ninecun_lingtai.common.flight.LightFlightManager;
 import net.seraphina.ninecun_lingtai.common.player.PlayerLightFlightData;
@@ -104,6 +108,7 @@ import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 import net.seraphina.ninecun_lingtai.common.tribulation.TribulationSession;
+import net.seraphina.ninecun_lingtai.common.realm.ThreeThousandRealmCatalogSnapshot;
 
 import java.util.List;
 import java.util.Map;
@@ -112,7 +117,7 @@ import java.util.Set;
 import java.util.UUID;
 
 public final class ModNetwork {
-    private static final String PROTOCOL_VERSION = "67676768";
+    private static final String PROTOCOL_VERSION = "67676770";
     private static final SimpleChannel CHANNEL = NetworkRegistry.ChannelBuilder
             .named(ResourceLocation.fromNamespaceAndPath(ModMain.MOD_ID, "main"))
             .networkProtocolVersion(() -> PROTOCOL_VERSION)
@@ -637,6 +642,42 @@ public final class ModNetwork {
                 .consumerMainThread(SubmitDaoScrollPacket::handle)
                 .add();
         CHANNEL.messageBuilder(
+                        OpenThreeThousandRealmScreenPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(OpenThreeThousandRealmScreenPacket::encode)
+                .decoder(OpenThreeThousandRealmScreenPacket::decode)
+                .consumerMainThread(OpenThreeThousandRealmScreenPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        SyncThreeThousandRealmCatalogPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(SyncThreeThousandRealmCatalogPacket::encode)
+                .decoder(SyncThreeThousandRealmCatalogPacket::decode)
+                .consumerMainThread(SyncThreeThousandRealmCatalogPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        TravelToThreeThousandRealmPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(TravelToThreeThousandRealmPacket::encode)
+                .decoder(TravelToThreeThousandRealmPacket::decode)
+                .consumerMainThread(TravelToThreeThousandRealmPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        ThreeThousandRealmTravelResultPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(ThreeThousandRealmTravelResultPacket::encode)
+                .decoder(ThreeThousandRealmTravelResultPacket::decode)
+                .consumerMainThread(ThreeThousandRealmTravelResultPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
                         CloseStorageRingPacket.class,
                         getId(),
                         NetworkDirection.PLAY_TO_SERVER
@@ -846,6 +887,36 @@ public final class ModNetwork {
         CHANNEL.send(
                 PacketDistributor.PLAYER.with(() -> player),
                 new OpenDaoScrollScreenPacket(snapshot, editingSelf)
+        );
+    }
+
+    public static void sendThreeThousandRealmCatalog(
+            ServerPlayer player,
+            ThreeThousandRealmCatalogSnapshot snapshot
+    ) {
+        CHANNEL.send(
+                PacketDistributor.PLAYER.with(() -> player),
+                new SyncThreeThousandRealmCatalogPacket(snapshot)
+        );
+    }
+
+    public static void sendOpenThreeThousandRealmScreen(
+            ServerPlayer player,
+            ThreeThousandRealmCatalogSnapshot snapshot
+    ) {
+        CHANNEL.send(
+                PacketDistributor.PLAYER.with(() -> player),
+                new OpenThreeThousandRealmScreenPacket(snapshot)
+        );
+    }
+
+    public static void sendThreeThousandRealmTravelResult(
+            ServerPlayer player,
+            boolean successful
+    ) {
+        CHANNEL.send(
+                PacketDistributor.PLAYER.with(() -> player),
+                new ThreeThousandRealmTravelResultPacket(successful)
         );
     }
 

@@ -12,14 +12,18 @@ import net.seraphina.ninecun_lingtai.utility.RealmNameUtility;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CancellationException;
+import java.util.function.IntConsumer;
 
 public final class ThreeThousandRealmState {
     private static final int FORMAT_VERSION = 1;
@@ -52,59 +56,161 @@ public final class ThreeThousandRealmState {
         return state;
     }
 
-    public List<RealmDefinition> getRealms() {
+    public synchronized List<RealmDefinition> getRealms() {
         return List.copyOf(this.thisRealms.values());
     }
 
-    public Optional<RealmDefinition> getRealm(ResourceLocation realmId) {
+    public synchronized Optional<RealmDefinition> getRealm(ResourceLocation realmId) {
         return Optional.ofNullable(this.thisRealms.get(realmId));
     }
 
-    public int getRealmCount() {
+    public synchronized int getRealmCount() {
         return this.thisRealms.size();
     }
 
-    public RealmDefinition createRealm(Random random, int maximumRealmCount) {
-        if (maximumRealmCount < 1 || maximumRealmCount > MAXIMUM_REALM_CAPACITY) {
-            throw new IllegalArgumentException(
-                    "maximumRealmCount must be between 1 and " + MAXIMUM_REALM_CAPACITY
-            );
-        }
+    public synchronized RealmDefinition createRealm(Random random, int maximumRealmCount) {
+        Objects.requireNonNull(random, "random");
+        validateMaximumRealmCount(maximumRealmCount);
         if (this.thisRealms.size() >= maximumRealmCount) {
             throw new IllegalStateException("The configured three-thousand-realm limit has been reached");
         }
 
-        Set<String> existingDisplayNames = new HashSet<>();
-        for (RealmDefinition realm : this.thisRealms.values()) {
-            existingDisplayNames.add(realm.getDisplayName());
-        }
-
-        RealmNameUtility.RealmName realmName = RealmNameUtility.createRandomName(existingDisplayNames, random);
-        ResourceLocation realmId = ResourceLocation.fromNamespaceAndPath(
-                ModMain.MOD_ID,
-                realmName.getPathPrefix() + "_" + UUID.randomUUID()
+        RealmDefinition realmDefinition = createRealmDefinition(
+                random,
+                createExistingDisplayNames()
         );
-        RealmDefinition realmDefinition = new RealmDefinition(
-                realmId,
-                realmName.getDisplayName(),
-                random.nextLong(),
-                System.currentTimeMillis()
-        );
-        this.thisRealms.put(realmId, realmDefinition);
+        this.thisRealms.put(realmDefinition.getId(), realmDefinition);
         if (!this.save()) {
-            this.thisRealms.remove(realmId);
+            this.thisRealms.remove(realmDefinition.getId());
             throw new IllegalStateException("Unable to persist the three-thousand-realm state");
         }
         return realmDefinition;
     }
 
-    public boolean save() {
+    public synchronized List<RealmDefinition> createRealmBatch(
+            Random random,
+            int maximumRealmCount,
+            int maximumBatchSize
+    ) {
+        Objects.requireNonNull(random, "random");
+        validateMaximumRealmCount(maximumRealmCount);
+        if (maximumBatchSize < 1) {
+            throw new IllegalArgumentException("maximumBatchSize must be at least 1");
+        }
+        if (this.thisRealms.size() >= maximumRealmCount) {
+            return List.of();
+        }
+
+        int batchEndRealmCount = Math.min(
+                maximumRealmCount,
+                this.thisRealms.size() + maximumBatchSize
+        );
+        Set<String> existingDisplayNames = createExistingDisplayNames();
+        List<RealmDefinition> createdRealms = new ArrayList<>(
+                batchEndRealmCount - this.thisRealms.size()
+        );
+        try {
+            while (this.thisRealms.size() < batchEndRealmCount) {
+                if (Thread.currentThread().isInterrupted()) {
+                    throw new CancellationException("Three-thousand-realm catalog initialization was interrupted");
+                }
+                RealmDefinition realmDefinition = createRealmDefinition(random, existingDisplayNames);
+                this.thisRealms.put(realmDefinition.getId(), realmDefinition);
+                createdRealms.add(realmDefinition);
+            }
+            if (!this.save()) {
+                throw new IllegalStateException("Unable to persist the three-thousand-realm state");
+            }
+            return List.copyOf(createdRealms);
+        } catch (RuntimeException exception) {
+            for (RealmDefinition realm : createdRealms) {
+                this.thisRealms.remove(realm.getId());
+            }
+            throw exception;
+        }
+    }
+
+    public synchronized List<RealmDefinition> ensureRealmCount(
+            Random random,
+            int maximumRealmCount,
+            IntConsumer progressConsumer
+    ) {
+        Objects.requireNonNull(random, "random");
+        Objects.requireNonNull(progressConsumer, "progressConsumer");
+        validateMaximumRealmCount(maximumRealmCount);
+
+        if (this.thisRealms.size() >= maximumRealmCount) {
+            return List.copyOf(this.thisRealms.values());
+        }
+
+        Set<String> existingDisplayNames = createExistingDisplayNames();
+        List<ResourceLocation> newlyCreatedRealmIds = new ArrayList<>();
+        try {
+            while (this.thisRealms.size() < maximumRealmCount) {
+                if (Thread.currentThread().isInterrupted()) {
+                    throw new CancellationException("Three-thousand-realm catalog initialization was interrupted");
+                }
+                RealmDefinition realmDefinition = createRealmDefinition(random, existingDisplayNames);
+                this.thisRealms.put(realmDefinition.getId(), realmDefinition);
+                newlyCreatedRealmIds.add(realmDefinition.getId());
+                progressConsumer.accept(this.thisRealms.size());
+            }
+            if (!this.save()) {
+                throw new IllegalStateException("Unable to persist the three-thousand-realm state");
+            }
+            return List.copyOf(this.thisRealms.values());
+        } catch (RuntimeException exception) {
+            for (ResourceLocation realmId : newlyCreatedRealmIds) {
+                this.thisRealms.remove(realmId);
+            }
+            throw exception;
+        }
+    }
+
+    public synchronized boolean save() {
         try {
             JsonFileUtility.write(this.thisFilePath, this.createJson());
             return true;
         } catch (IOException exception) {
             ModMain.LOGGER.error("Unable to save three-thousand-realm state to {}", this.thisFilePath, exception);
             return false;
+        }
+    }
+
+    private RealmDefinition createRealmDefinition(
+            Random random,
+            Set<String> existingDisplayNames
+    ) {
+        RealmNameUtility.RealmName realmName = RealmNameUtility.createRandomName(
+                existingDisplayNames,
+                random
+        );
+        existingDisplayNames.add(realmName.getDisplayName());
+        ResourceLocation realmId = ResourceLocation.fromNamespaceAndPath(
+                ModMain.MOD_ID,
+                realmName.getPathPrefix() + "_" + UUID.randomUUID()
+        );
+        return new RealmDefinition(
+                realmId,
+                realmName.getDisplayName(),
+                random.nextLong(),
+                System.currentTimeMillis()
+        );
+    }
+
+    private Set<String> createExistingDisplayNames() {
+        Set<String> existingDisplayNames = new HashSet<>();
+        for (RealmDefinition realm : this.thisRealms.values()) {
+            existingDisplayNames.add(realm.getDisplayName());
+        }
+        return existingDisplayNames;
+    }
+
+    private static void validateMaximumRealmCount(int maximumRealmCount) {
+        if (maximumRealmCount < 1 || maximumRealmCount > MAXIMUM_REALM_CAPACITY) {
+            throw new IllegalArgumentException(
+                    "maximumRealmCount must be between 1 and " + MAXIMUM_REALM_CAPACITY
+            );
         }
     }
 
