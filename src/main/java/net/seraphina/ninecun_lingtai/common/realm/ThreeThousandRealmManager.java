@@ -21,11 +21,14 @@ import net.minecraft.world.level.storage.ServerLevelData;
 import net.minecraft.world.phys.Vec3;
 import net.seraphina.ninecun_lingtai.ModMain;
 import net.seraphina.ninecun_lingtai.common.config.CommonConfig;
+import net.seraphina.ninecun_lingtai.common.player.PlayerThreeThousandRealmReturnPosition;
+import net.seraphina.ninecun_lingtai.common.player.PlayerThreeThousandRealmReturnState;
 import net.seraphina.ninecun_lingtai.utility.RealmSpawnUtility;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.ITeleporter;
 import net.minecraftforge.event.level.LevelEvent;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -40,6 +43,8 @@ import java.util.function.Function;
 public final class ThreeThousandRealmManager {
     private static final String STATE_DIRECTORY_NAME = ModMain.MOD_ID;
     private static final String STATE_FILE_NAME = "three_thousand_realms.json";
+    private static final String PLAYER_RETURN_STATE_FILE_NAME =
+            "three_thousand_realm_player_returns.json";
     private static final Map<MinecraftServer, ThreeThousandRealmManager> MANAGERS = new WeakHashMap<>();
     private static final ChunkProgressListener NO_OP_CHUNK_PROGRESS_LISTENER = new ChunkProgressListener() {
         @Override
@@ -61,11 +66,15 @@ public final class ThreeThousandRealmManager {
 
     private final MinecraftServer thisServer;
     private final ThreeThousandRealmState thisState;
+    private final PlayerThreeThousandRealmReturnState thisPlayerReturnState;
     private final Map<ResourceKey<Level>, Long> thisEmptyRealmTicks = new HashMap<>();
 
     private ThreeThousandRealmManager(MinecraftServer server) {
         this.thisServer = server;
         this.thisState = ThreeThousandRealmState.load(getStateFilePath(server));
+        this.thisPlayerReturnState = PlayerThreeThousandRealmReturnState.load(
+                getPlayerReturnStateFilePath(server)
+        );
     }
 
     public static void initialize(MinecraftServer server) {
@@ -169,6 +178,75 @@ public final class ThreeThousandRealmManager {
                 realmLevel,
                 createRealmTeleporter(spawnPosition, player.getYRot(), player.getXRot())
         ) != null;
+    }
+
+    public synchronized boolean savePlayerRealmReturnPosition(ServerPlayer player) {
+        Objects.requireNonNull(player, "player");
+        ResourceKey<Level> realmLevelKey = player.serverLevel().dimension();
+        if (!this.isThreeThousandRealm(realmLevelKey)) {
+            return false;
+        }
+
+        boolean saved = this.thisPlayerReturnState.putReturnPosition(
+                player.getUUID(),
+                new PlayerThreeThousandRealmReturnPosition(
+                        realmLevelKey.location(),
+                        player.getX(),
+                        player.getY(),
+                        player.getZ(),
+                        player.getYRot(),
+                        player.getXRot()
+                )
+        );
+        if (!saved) {
+            ModMain.LOGGER.error(
+                    "Unable to persist three-thousand-realm return position for player {}",
+                    player.getGameProfile().getName()
+            );
+        }
+        return saved;
+    }
+
+    @Nullable
+    public synchronized Entity returnPlayerToSavedRealm(ServerPlayer player) {
+        Objects.requireNonNull(player, "player");
+        PlayerThreeThousandRealmReturnPosition returnPosition = this.thisPlayerReturnState
+                .getReturnPosition(player.getUUID())
+                .orElse(null);
+        if (returnPosition == null) {
+            return null;
+        }
+
+        if (this.thisState.getRealm(returnPosition.getRealmId()).isEmpty()) {
+            ModMain.LOGGER.warn(
+                    "Discarding unavailable three-thousand-realm return position {} for player {}",
+                    returnPosition.getRealmId(),
+                    player.getGameProfile().getName()
+            );
+            this.thisPlayerReturnState.removeReturnPosition(player.getUUID());
+            return null;
+        }
+
+        ServerLevel realmLevel = this.getOrLoadRealm(returnPosition.getRealmId());
+        Entity returnedPlayer = player.changeDimension(
+                realmLevel,
+                createRealmTeleporter(
+                        new Vec3(
+                                returnPosition.getX(),
+                                returnPosition.getY(),
+                                returnPosition.getZ()
+                        ),
+                        returnPosition.getYRot(),
+                        returnPosition.getXRot()
+                )
+        );
+        if (returnedPlayer != null && !this.thisPlayerReturnState.removeReturnPosition(player.getUUID())) {
+            ModMain.LOGGER.error(
+                    "Unable to clear three-thousand-realm return position for player {}",
+                    player.getGameProfile().getName()
+            );
+        }
+        return returnedPlayer;
     }
 
     public synchronized int getRealmCount() {
@@ -288,5 +366,11 @@ public final class ThreeThousandRealmManager {
         return server.getWorldPath(new LevelResource("data"))
                 .resolve(STATE_DIRECTORY_NAME)
                 .resolve(STATE_FILE_NAME);
+    }
+
+    private static Path getPlayerReturnStateFilePath(MinecraftServer server) {
+        return server.getWorldPath(new LevelResource("data"))
+                .resolve(STATE_DIRECTORY_NAME)
+                .resolve(PLAYER_RETURN_STATE_FILE_NAME);
     }
 }
