@@ -17,7 +17,8 @@
     "common.ring.BrewingStandBlockEntityMixin",
     "common.ring.EnderChestBlockEntityMixin",
     "common.ring.RandomizableContainerBlockEntityMixin",
-    "common.ring.ServerLevelMixin"
+    "common.ring.ServerLevelMixin",
+    "common.realm.ServerLevelRealmSeedMixin"
   ],
   "client": [
     "client.AbstractClientPlayerMixin",
