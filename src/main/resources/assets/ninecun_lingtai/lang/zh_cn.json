@@ -327,6 +327,8 @@
   "notification.ninecun_lingtai.alchemy_success_title": "丹成",
   "notification.ninecun_lingtai.alchemy_success": "%1$s（%2$s）×%3$s 出炉",
   "notification.ninecun_lingtai.alchemy_failure_title": "炼丹失败",
+  "notification.ninecun_lingtai.three_thousand_realm_entry_title": "踏入界域",
+  "notification.ninecun_lingtai.three_thousand_realm_entry": "你已踏入 %s",
   "screen.ninecun_lingtai.alchemy_furnace.environment_badge": "%s ×%s",
   "screen.ninecun_lingtai.alchemy_furnace.environment_dead": "此地灵气死寂，无法起炉",
   "tooltip.ninecun_lingtai.alchemy_pill.toxin": "丹毒：+%s",

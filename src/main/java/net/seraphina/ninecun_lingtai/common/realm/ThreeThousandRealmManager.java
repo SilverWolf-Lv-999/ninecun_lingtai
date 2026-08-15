@@ -5,19 +5,25 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.progress.ChunkProgressListener;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.CustomSpawner;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.BiomeManager;
 import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.dimension.LevelStem;
+import net.minecraft.world.level.portal.PortalInfo;
 import net.minecraft.world.level.storage.DerivedLevelData;
 import net.minecraft.world.level.storage.LevelResource;
 import net.minecraft.world.level.storage.ServerLevelData;
+import net.minecraft.world.phys.Vec3;
 import net.seraphina.ninecun_lingtai.ModMain;
 import net.seraphina.ninecun_lingtai.common.config.CommonConfig;
+import net.seraphina.ninecun_lingtai.utility.RealmSpawnUtility;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.util.ITeleporter;
 import net.minecraftforge.event.level.LevelEvent;
 
 import java.io.IOException;
@@ -26,8 +32,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Random;
 import java.util.WeakHashMap;
+import java.util.function.Function;
 
 public final class ThreeThousandRealmManager {
     private static final String STATE_DIRECTORY_NAME = ModMain.MOD_ID;
@@ -127,7 +135,40 @@ public final class ThreeThousandRealmManager {
     }
 
     public synchronized boolean isThreeThousandRealm(ResourceKey<Level> levelKey) {
-        return this.thisState.getRealm(levelKey.location()).isPresent();
+        return this.getRealmDefinition(levelKey).isPresent();
+    }
+
+    public synchronized Optional<RealmDefinition> getRealmDefinition(ResourceKey<Level> levelKey) {
+        Objects.requireNonNull(levelKey, "levelKey");
+        return this.thisState.getRealm(levelKey.location());
+    }
+
+    public synchronized boolean placePlayerInRandomRealm(ServerPlayer player, Random random) {
+        Objects.requireNonNull(player, "player");
+        Objects.requireNonNull(random, "random");
+
+        ServerLevel realmLevel = this.getOrCreateRandomRealm(random);
+        Vec3 spawnPosition = RealmSpawnUtility.findSafeSpawnPosition(
+                realmLevel,
+                random,
+                CommonConfig.THREE_THOUSAND_REALMS_RANDOM_SPAWN_RADIUS.get()
+        );
+        if (player.serverLevel() == realmLevel) {
+            player.teleportTo(
+                    realmLevel,
+                    spawnPosition.x,
+                    spawnPosition.y,
+                    spawnPosition.z,
+                    player.getYRot(),
+                    player.getXRot()
+            );
+            return true;
+        }
+
+        return player.changeDimension(
+                realmLevel,
+                createRealmTeleporter(spawnPosition, player.getYRot(), player.getXRot())
+        ) != null;
     }
 
     public synchronized int getRealmCount() {
@@ -208,6 +249,39 @@ public final class ThreeThousandRealmManager {
         } catch (IOException | RuntimeException exception) {
             ModMain.LOGGER.error("Unable to unload three-thousand realm {}", levelKey.location(), exception);
         }
+    }
+
+    private static ITeleporter createRealmTeleporter(Vec3 destination, float yRot, float xRot) {
+        return new ITeleporter() {
+            @Override
+            public PortalInfo getPortalInfo(
+                    Entity entity,
+                    ServerLevel destinationLevel,
+                    Function<ServerLevel, PortalInfo> defaultPortalInfo
+            ) {
+                return new PortalInfo(destination, Vec3.ZERO, yRot, xRot);
+            }
+
+            @Override
+            public Entity placeEntity(
+                    Entity entity,
+                    ServerLevel currentLevel,
+                    ServerLevel destinationLevel,
+                    float yaw,
+                    Function<Boolean, Entity> repositionEntity
+            ) {
+                return repositionEntity.apply(false);
+            }
+
+            @Override
+            public boolean playTeleportSound(
+                    ServerPlayer player,
+                    ServerLevel sourceLevel,
+                    ServerLevel destinationLevel
+            ) {
+                return false;
+            }
+        };
     }
 
     private static Path getStateFilePath(MinecraftServer server) {

@@ -327,6 +327,8 @@
   "notification.ninecun_lingtai.alchemy_success_title": "Pill Complete",
   "notification.ninecun_lingtai.alchemy_success": "%1$s (%2$s) ×%3$s produced",
   "notification.ninecun_lingtai.alchemy_failure_title": "Alchemy Failed",
+  "notification.ninecun_lingtai.three_thousand_realm_entry_title": "Realm Reached",
+  "notification.ninecun_lingtai.three_thousand_realm_entry": "You have entered %s",
   "screen.ninecun_lingtai.alchemy_furnace.environment_badge": "%s ×%s",
   "screen.ninecun_lingtai.alchemy_furnace.environment_dead": "The spiritual qi here is dead; the furnace cannot be lit",
   "tooltip.ninecun_lingtai.alchemy_pill.toxin": "Toxin: +%s",
