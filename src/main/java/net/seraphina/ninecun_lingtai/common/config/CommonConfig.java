@@ -104,6 +104,10 @@ public final class CommonConfig {
     public static final ForgeConfigSpec.BooleanValue ALCHEMY_EXPLOSION_BREAKS_BLOCKS;
     public static final ForgeConfigSpec.DoubleValue ALCHEMY_TOXIN_DECAY_PER_DAY;
     public static final ForgeConfigSpec.DoubleValue ALCHEMY_TOXIN_MEDITATION_DECAY_PER_MINUTE;
+    public static final ForgeConfigSpec.IntValue THREE_THOUSAND_REALMS_MAXIMUM_REALM_COUNT;
+    public static final ForgeConfigSpec.BooleanValue THREE_THOUSAND_REALMS_RANDOMIZE_ON_RESPAWN;
+    public static final ForgeConfigSpec.IntValue THREE_THOUSAND_REALMS_RANDOM_SPAWN_RADIUS;
+    public static final ForgeConfigSpec.IntValue THREE_THOUSAND_REALMS_UNLOAD_DELAY_TICKS;
     public static final ForgeConfigSpec SPEC;
 
     static {
@@ -474,6 +478,21 @@ public final class CommonConfig {
         ALCHEMY_TOXIN_MEDITATION_DECAY_PER_MINUTE = BUILDER
                 .comment("Additional pill toxin dissipated per minute while meditating")
                 .defineInRange("toxinMeditationDecayPerMinute", 2.0D, 0.0D, MAXIMUM_BASE_ABSORPTION_PER_SECOND);
+        BUILDER.pop();
+
+        BUILDER.push("threeThousandRealms");
+        THREE_THOUSAND_REALMS_MAXIMUM_REALM_COUNT = BUILDER
+                .comment("Maximum number of dynamically created realms. This hard-caps at 3000")
+                .defineInRange("maximumRealmCount", 3000, 1, 3000);
+        THREE_THOUSAND_REALMS_RANDOMIZE_ON_RESPAWN = BUILDER
+                .comment("Whether player respawns are redirected to a random realm")
+                .define("randomizeOnRespawn", false);
+        THREE_THOUSAND_REALMS_RANDOM_SPAWN_RADIUS = BUILDER
+                .comment("Maximum horizontal distance from the realm origin used for random player placement")
+                .defineInRange("randomSpawnRadius", 10000, 128, 1000000);
+        THREE_THOUSAND_REALMS_UNLOAD_DELAY_TICKS = BUILDER
+                .comment("Ticks an empty dynamically created realm stays loaded before it is unloaded")
+                .defineInRange("unloadDelayTicks", 20 * 30, 20, 20 * 60 * 60);
         BUILDER.pop();
 
         BUILDER.push("ai");
