@@ -27,4 +27,5 @@ public final class StyledBlockItem extends BlockItem {
             }
         });
     }
+
 }

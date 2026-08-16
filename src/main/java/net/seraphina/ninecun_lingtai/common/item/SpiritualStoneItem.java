@@ -6,7 +6,6 @@ import net.seraphina.ninecun_lingtai.utility.SpiritualStoneUtility;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
@@ -17,7 +16,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.function.Consumer;
 
-public final class SpiritualStoneItem extends Item {
+public final class SpiritualStoneItem extends LuminousItem {
     public SpiritualStoneItem(Properties properties) {
         super(properties);
     }

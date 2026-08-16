@@ -29,6 +29,7 @@ import java.util.Objects;
 public abstract class SpiritualPlantBlock extends Block implements ISpiritualPlant {
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
 
+    private static final int SPIRITUAL_PLANT_LIGHT_LEVEL = 12;
     private static final VoxelShape NORTH_PLANT_SHAPE = Block.box(3.0D, 0.0D, 7.0D, 13.0D, 7.0D, 16.0D);
     private static final VoxelShape SOUTH_PLANT_SHAPE = Block.box(3.0D, 0.0D, 0.0D, 13.0D, 7.0D, 9.0D);
     private static final VoxelShape WEST_PLANT_SHAPE = Block.box(7.0D, 0.0D, 3.0D, 16.0D, 7.0D, 13.0D);
@@ -42,7 +43,7 @@ public abstract class SpiritualPlantBlock extends Block implements ISpiritualPla
             SpiritualPlantGrade baseGrade,
             BlockBehaviour.Properties properties
     ) {
-        super(properties.noCollission());
+        super(properties.noCollission().lightLevel(blockState -> SPIRITUAL_PLANT_LIGHT_LEVEL));
         this.primaryElement = Objects.requireNonNull(primaryElement, "primaryElement");
         this.baseGrade = Objects.requireNonNull(baseGrade, "baseGrade");
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH));

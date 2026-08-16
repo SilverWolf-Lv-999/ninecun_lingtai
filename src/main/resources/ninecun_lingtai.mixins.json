@@ -32,6 +32,7 @@
     "client.ClientPacketListenerMixin",
     "client.CreativeModeInventoryScreenFiltersMixin",
     "client.GameRendererMixin",
+    "client.ItemRendererMixin",
     "client.LevelRendererMixin",
     "client.LightTextureMixin",
     "client.LivingEntityRendererMixin",

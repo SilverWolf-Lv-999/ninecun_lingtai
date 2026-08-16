@@ -1,24 +1,34 @@
 package net.seraphina.ninecun_lingtai.client.utility;
 
+import net.seraphina.ninecun_lingtai.api.alchemy.AlchemyRecipeClientData;
+import net.seraphina.ninecun_lingtai.api.element.ElementType;
+import net.seraphina.ninecun_lingtai.api.plant.ISpiritualPlant;
+import net.seraphina.ninecun_lingtai.api.technique.TechniqueClientData;
 import net.seraphina.ninecun_lingtai.client.ItemFontTheme;
 import net.seraphina.ninecun_lingtai.client.SeraFont;
+import net.seraphina.ninecun_lingtai.client.player.ClientAlchemyRecipeManager;
+import net.seraphina.ninecun_lingtai.client.player.ClientTechniqueManager;
 import net.seraphina.ninecun_lingtai.common.item.ItemFontStyle;
 import net.seraphina.ninecun_lingtai.common.registry.ModItems;
+import net.seraphina.ninecun_lingtai.utility.AlchemyPillUtility;
+import net.seraphina.ninecun_lingtai.utility.AlchemyRecipeItemUtility;
+import net.seraphina.ninecun_lingtai.utility.TechniqueItemUtility;
 import net.minecraft.Util;
 import net.minecraft.client.gui.Font;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.client.event.RenderTooltipEvent;
 
+import java.util.EnumSet;
 import java.util.Optional;
+import java.util.Set;
 
 public final class ItemTooltipUtility {
     private static final int BACKGROUND_BASE_COLOR = 0x09070F;
     private static final int BACKGROUND_ALPHA = 0xEE;
     private static final int BORDER_ALPHA = 0xFF;
-
-    private ItemTooltipUtility() {
-    }
 
     public static Optional<Font> resolveTooltipFont(ItemStack itemStack) {
         return resolveTooltipTheme(itemStack).map(SeraFont::get);
@@ -52,6 +62,26 @@ public final class ItemTooltipUtility {
             event.setBorderStart(withAlpha(mixColors(primaryColor, 0xFFFFFF, 0.18F), BORDER_ALPHA));
             event.setBorderEnd(withAlpha(mixColors(accentColor, 0xFFFFFF, 0.24F), BORDER_ALPHA));
         });
+    }
+
+    public static Optional<Set<ElementType>> resolveFiveElementTooltipElements(ItemStack itemStack) {
+        if (itemStack.isEmpty()) {
+            return Optional.empty();
+        }
+        if (itemStack.is(ModItems.JADE_SLIP.get())) {
+            return resolveTechniqueElements(itemStack);
+        }
+        if (itemStack.is(ModItems.ALCHEMY_RECIPE.get())) {
+            return resolveAlchemyRecipeElement(itemStack);
+        }
+        if (ModItems.isPillItem(itemStack.getItem())) {
+            return resolvePillElement(itemStack);
+        }
+        if (itemStack.getItem() instanceof BlockItem blockItem
+                && blockItem.getBlock() instanceof ISpiritualPlant spiritualPlant) {
+            return resolvePrimaryElement(Optional.of(spiritualPlant.getPrimaryElement()));
+        }
+        return Optional.empty();
     }
 
     public static Optional<ItemFontTheme> resolveTooltipTheme(ItemStack itemStack) {
@@ -96,6 +126,53 @@ public final class ItemTooltipUtility {
             return Optional.of(ItemFontTheme.of(ItemFontStyle.FIRE_LINGZHI));
         }
         return Optional.empty();
+    }
+
+    private static Optional<Set<ElementType>> resolveTechniqueElements(ItemStack itemStack) {
+        Set<ElementType> compatibleElements = TechniqueItemUtility.getCompatibleElements(itemStack);
+        if (compatibleElements.isEmpty()) {
+            compatibleElements = TechniqueItemUtility.getTechniqueId(itemStack)
+                    .flatMap(ClientTechniqueManager::getTechnique)
+                    .map(TechniqueClientData::compatibleElements)
+                    .orElse(Set.of());
+        }
+        return filterFiveElements(compatibleElements);
+    }
+
+    private static Optional<Set<ElementType>> resolveAlchemyRecipeElement(ItemStack itemStack) {
+        Optional<ElementType> primaryElement = AlchemyRecipeItemUtility.getPrimaryElement(itemStack);
+        if (primaryElement.isEmpty()) {
+            primaryElement = AlchemyRecipeItemUtility.getRecipeId(itemStack)
+                    .flatMap(ClientAlchemyRecipeManager::getRecipe)
+                    .flatMap(AlchemyRecipeClientData::getPrimaryElement);
+        }
+        return resolvePrimaryElement(primaryElement);
+    }
+
+    private static Optional<Set<ElementType>> resolvePillElement(ItemStack itemStack) {
+        Optional<ElementType> primaryElement = AlchemyPillUtility.getPrimaryElement(itemStack);
+        if (primaryElement.isEmpty()) {
+            primaryElement = ClientAlchemyRecipeManager
+                    .getRecipeForOutputItem(BuiltInRegistries.ITEM.getKey(itemStack.getItem()))
+                    .flatMap(AlchemyRecipeClientData::getPrimaryElement);
+        }
+        return resolvePrimaryElement(primaryElement);
+    }
+
+    private static Optional<Set<ElementType>> resolvePrimaryElement(Optional<ElementType> primaryElement) {
+        return primaryElement
+                .filter(ElementType::isFiveElement)
+                .map(Set::of);
+    }
+
+    private static Optional<Set<ElementType>> filterFiveElements(Set<ElementType> elements) {
+        EnumSet<ElementType> fiveElements = EnumSet.noneOf(ElementType.class);
+        for (ElementType element : elements) {
+            if (element.isFiveElement()) {
+                fiveElements.add(element);
+            }
+        }
+        return fiveElements.isEmpty() ? Optional.empty() : Optional.of(Set.copyOf(fiveElements));
     }
 
     private static float getColorWave(ItemFontStyle fontStyle, float phaseOffset) {

@@ -25,9 +25,6 @@ import java.util.Set;
 public final class ItemFontStyleResolver {
     private static final Set<ElementType> FIVE_ELEMENTS = Set.copyOf(ElementType.FIVE_ELEMENTS);
 
-    private ItemFontStyleResolver() {
-    }
-
     public static ItemFontTheme resolveTechnique(ItemStack itemStack) {
         Set<ElementType> compatibleElements = TechniqueItemUtility.getCompatibleElements(itemStack);
         if (compatibleElements.isEmpty()) {

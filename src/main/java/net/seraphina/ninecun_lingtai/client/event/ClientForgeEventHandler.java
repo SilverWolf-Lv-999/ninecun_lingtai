@@ -1,5 +1,6 @@
 package net.seraphina.ninecun_lingtai.client.event;
 
+import com.mojang.datafixers.util.Either;
 import net.minecraftforge.client.event.*;
 import net.seraphina.ninecun_lingtai.ModMain;
 import net.seraphina.ninecun_lingtai.client.input.ModKeyMappings;
@@ -34,6 +35,7 @@ import net.seraphina.ninecun_lingtai.client.utility.NotificationRenderUtility;
 import net.seraphina.ninecun_lingtai.client.render.PushingMountainsRenderMeshManager;
 import net.seraphina.ninecun_lingtai.client.utility.PushingMountainsRenderUtility;
 import net.seraphina.ninecun_lingtai.common.entity.ability.PushingMountainsEntity;
+import net.seraphina.ninecun_lingtai.client.tooltip.FiveElementWheelTooltipComponent;
 import net.seraphina.ninecun_lingtai.client.utility.ItemTooltipUtility;
 import net.seraphina.ninecun_lingtai.client.utility.SpiritualEnergyHudRenderUtility;
 import net.seraphina.ninecun_lingtai.client.utility.SpiritualEnergyRenderUtility;
@@ -50,6 +52,14 @@ import org.lwjgl.glfw.GLFW;
 
 @Mod.EventBusSubscriber(modid = ModMain.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class ClientForgeEventHandler {
+
+    @SubscribeEvent
+    public static void gatherTooltipComponents(RenderTooltipEvent.GatherComponents event) {
+        ItemTooltipUtility.resolveFiveElementTooltipElements(event.getItemStack())
+                .ifPresent(elements -> event.getTooltipElements().add(Either.right(
+                        new FiveElementWheelTooltipComponent(elements)
+                )));
+    }
 
     @SubscribeEvent
     public static void renderTooltip(RenderTooltipEvent.Pre event) {

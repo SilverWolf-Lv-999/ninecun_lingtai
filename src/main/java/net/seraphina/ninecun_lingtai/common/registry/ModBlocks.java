@@ -15,6 +15,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 
 public final class ModBlocks {
+    private static final int SPIRITUAL_STONE_LIGHT_LEVEL = 12;
     private static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(
             ForgeRegistries.BLOCKS,
             ModMain.MOD_ID
@@ -23,7 +24,8 @@ public final class ModBlocks {
     public static final RegistryObject<Block> SPIRITUAL_STONE_ORE = BLOCKS.register(
             "spiritual_stone_ore",
             () -> new DropExperienceBlock(
-                    BlockBehaviour.Properties.copy(Blocks.DIAMOND_ORE),
+                    BlockBehaviour.Properties.copy(Blocks.DIAMOND_ORE)
+                            .lightLevel(blockState -> SPIRITUAL_STONE_LIGHT_LEVEL),
                     UniformInt.of(2, 5)
             )
     );
@@ -31,7 +33,8 @@ public final class ModBlocks {
     public static final RegistryObject<Block> DEEPSLATE_SPIRITUAL_STONE_ORE = BLOCKS.register(
             "deepslate_spiritual_stone_ore",
             () -> new DropExperienceBlock(
-                    BlockBehaviour.Properties.copy(Blocks.DEEPSLATE_DIAMOND_ORE),
+                    BlockBehaviour.Properties.copy(Blocks.DEEPSLATE_DIAMOND_ORE)
+                            .lightLevel(blockState -> SPIRITUAL_STONE_LIGHT_LEVEL),
                     UniformInt.of(2, 5)
             )
     );

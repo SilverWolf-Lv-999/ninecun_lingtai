@@ -6,6 +6,8 @@ import net.seraphina.ninecun_lingtai.client.animation.LightFlightAnimationManage
 import net.seraphina.ninecun_lingtai.client.animation.MeditationAnimationManager;
 import net.seraphina.ninecun_lingtai.client.config.ClientConfigScreenRegistrar;
 import net.seraphina.ninecun_lingtai.client.input.ModKeyMappings;
+import net.seraphina.ninecun_lingtai.client.tooltip.FiveElementWheelClientTooltipComponent;
+import net.seraphina.ninecun_lingtai.client.tooltip.FiveElementWheelTooltipComponent;
 import net.seraphina.ninecun_lingtai.client.inventorytab.CultivationInfoTabRegistrar;
 import net.seraphina.ninecun_lingtai.client.inventorytab.AlchemyRecipeLibraryTabRegistrar;
 import net.seraphina.ninecun_lingtai.client.inventorytab.PlayerValueControlTabRegistrar;
@@ -46,6 +48,7 @@ import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.client.event.RegisterColorHandlersEvent;
 import net.minecraftforge.client.event.RegisterShadersEvent;
+import net.minecraftforge.client.event.RegisterClientTooltipComponentFactoriesEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -118,6 +121,13 @@ public final class ClientModEventHandler {
         event.register(ModKeyMappings.CAST_SPELL);
         event.register(ModKeyMappings.PUSHING_MOUNTAINS);
         event.register(ModKeyMappings.STORAGE_RING_IMMERSION);
+    }
+
+    @SubscribeEvent
+    public static void onRegisterClientTooltipComponentFactories(
+            RegisterClientTooltipComponentFactoriesEvent event
+    ) {
+        event.register(FiveElementWheelTooltipComponent.class, FiveElementWheelClientTooltipComponent::new);
     }
 
     @SubscribeEvent

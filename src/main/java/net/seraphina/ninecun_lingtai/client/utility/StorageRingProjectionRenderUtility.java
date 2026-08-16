@@ -10,9 +10,6 @@ import net.minecraft.client.gui.GuiGraphics;
 import org.lwjgl.opengl.GL11;
 
 public final class StorageRingProjectionRenderUtility {
-    private StorageRingProjectionRenderUtility() {
-    }
-
     public static Viewport getGuiViewport(int guiLeft, int guiTop) {
         Minecraft minecraft = Minecraft.getInstance();
         Window window = minecraft.getWindow();

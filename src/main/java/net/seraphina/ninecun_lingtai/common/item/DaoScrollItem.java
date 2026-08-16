@@ -11,7 +11,6 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.seraphina.ninecun_lingtai.common.registry.ModItems;
@@ -20,7 +19,7 @@ import net.minecraftforge.client.extensions.common.IClientItemExtensions.FontCon
 
 import java.util.function.Consumer;
 
-public final class DaoScrollItem extends Item {
+public final class DaoScrollItem extends LuminousItem {
     public DaoScrollItem(Properties properties) {
         super(properties);
     }
