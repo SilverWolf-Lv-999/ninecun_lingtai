@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:overworld",
+  "generator": {
+    "type": "ninecun_lingtai:spiritual_realm",
+    "biome_source": {
+      "type": "ninecun_lingtai:spiritual_realm",
+      "preset": "minecraft:overworld",
+      "region_size": 65536
+    },
+    "settings": "minecraft:overworld"
+  }
+}

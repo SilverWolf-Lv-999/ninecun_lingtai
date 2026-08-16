@@ -11,6 +11,7 @@ import net.seraphina.ninecun_lingtai.common.registry.ModItems;
 import net.seraphina.ninecun_lingtai.common.registry.ModMenuTypes;
 import net.seraphina.ninecun_lingtai.common.registry.ModSpells;
 import net.seraphina.ninecun_lingtai.common.registry.ModSounds;
+import net.seraphina.ninecun_lingtai.common.registry.ModWorldgenSerializers;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
@@ -33,6 +34,7 @@ public final class ModMain {
         IEventBus modEventBus = context.getModEventBus();
         ModBlocks.register(modEventBus);
         ModFeatures.register(modEventBus);
+        ModWorldgenSerializers.register(modEventBus);
         ModBlockEntityTypes.register(modEventBus);
         ModMenuTypes.register(modEventBus);
         ModItems.register(modEventBus);

@@ -17,6 +17,18 @@
     },
     {
       "dimensions": [
+        "ninecun_lingtai:spiritual_realm"
+      ],
+      "multipliers": {
+        "metal": 1.5,
+        "wood": 1.5,
+        "water": 1.5,
+        "fire": 1.5,
+        "earth": 1.5
+      }
+    },
+    {
+      "dimensions": [
         "minecraft:the_nether"
       ],
       "multipliers": {

@@ -380,5 +380,6 @@
   "tooltip.ninecun_lingtai.alchemy.control.vent": "Hold to consume spiritual energy and rapidly lower heat",
   "tooltip.ninecun_lingtai.alchemy.control.maintain": "Hold to stabilize heat at the midpoint of its current band",
   "jei.ninecun_lingtai.alchemy.feed.initial_short": "Init",
-  "jei.ninecun_lingtai.alchemy.feed.stage_short": "S%s"
+  "jei.ninecun_lingtai.alchemy.feed.stage_short": "S%s",
+  "dimension.ninecun_lingtai.spiritual_realm": "Spiritual Realm"
 }

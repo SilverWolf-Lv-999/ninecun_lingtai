@@ -7,9 +7,6 @@ public final class SpiritualPlantUtility {
     public static final int MINIMUM_GRADE_OFFSET = -2;
     public static final int MAXIMUM_GRADE_OFFSET = 4;
 
-    private SpiritualPlantUtility() {
-    }
-
     public static SpiritualPlantGrade calculateGrade(
             SpiritualPlantGrade baseGrade,
             double elementEnvironmentMultiplier
