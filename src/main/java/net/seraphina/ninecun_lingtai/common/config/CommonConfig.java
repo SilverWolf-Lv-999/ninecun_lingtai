@@ -485,7 +485,10 @@ public final class CommonConfig {
                 .comment("Maximum number of dynamically created realms. This hard-caps at 10")
                 .defineInRange("maximumRealmCount", 10, 1, 10);
         THREE_THOUSAND_REALMS_RANDOMIZE_ON_RESPAWN = BUILDER
-                .comment("Whether player respawns are redirected to a random realm")
+                .comment(
+                        "Whether player respawns are redirected to a random realm instead of",
+                        "returning to the three-thousand realm where they died"
+                )
                 .define("randomizeOnRespawn", false);
         THREE_THOUSAND_REALMS_RANDOM_SPAWN_RADIUS = BUILDER
                 .comment("Maximum horizontal distance from the realm origin used for random player placement")

@@ -41,4 +41,12 @@ class RealmSpawnUtilityTest {
                 () -> RealmSpawnUtility.createRandomSpawnPosition(new Random(1L), -1)
         );
     }
+
+    @Test
+    void rejectsNullRandomSources() {
+        assertThrows(
+                NullPointerException.class,
+                () -> RealmSpawnUtility.createRandomSpawnPosition(null, 10)
+        );
+    }
 }

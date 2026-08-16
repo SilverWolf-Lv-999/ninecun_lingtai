@@ -1,6 +1,7 @@
 package net.seraphina.ninecun_lingtai.common.event;
 
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
@@ -53,6 +54,19 @@ public final class ThreeThousandRealmEventHandler {
     @SubscribeEvent
     public static void onPlayerClone(PlayerEvent.Clone event) {
         PlayerThreeThousandRealmData.copy(event.getOriginal(), event.getEntity());
+        if (!event.isWasDeath()
+                || !(event.getOriginal() instanceof ServerPlayer originalPlayer)
+                || !(event.getEntity() instanceof ServerPlayer clonedPlayer)) {
+            return;
+        }
+
+        ThreeThousandRealmManager realmManager = ThreeThousandRealmManager.get(originalPlayer.server);
+        if (realmManager.isThreeThousandRealm(originalPlayer.serverLevel().dimension())) {
+            PlayerThreeThousandRealmData.setDeathRealmId(
+                    clonedPlayer,
+                    originalPlayer.serverLevel().dimension().location().toString()
+            );
+        }
     }
 
     @SubscribeEvent
@@ -65,9 +79,52 @@ public final class ThreeThousandRealmEventHandler {
 
     @SubscribeEvent
     public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player
-                && CommonConfig.THREE_THOUSAND_REALMS_RANDOMIZE_ON_RESPAWN.get()) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) {
+            return;
+        }
+        if (CommonConfig.THREE_THOUSAND_REALMS_RANDOMIZE_ON_RESPAWN.get()) {
             placePlayerInRandomRealm(player, false);
+            PlayerThreeThousandRealmData.clearDeathRealmId(player);
+            return;
+        }
+
+        placePlayerInDeathRealm(player);
+    }
+
+    private static void placePlayerInDeathRealm(ServerPlayer player) {
+        String realmId = PlayerThreeThousandRealmData.getDeathRealmId(player).orElse(null);
+        PlayerThreeThousandRealmData.clearDeathRealmId(player);
+        if (realmId == null) {
+            return;
+        }
+
+        ResourceLocation realmLocation = ResourceLocation.tryParse(realmId);
+        if (realmLocation == null) {
+            ModMain.LOGGER.warn(
+                    "Discarding malformed three-thousand-realm death location {} for player {}",
+                    realmId,
+                    player.getGameProfile().getName()
+            );
+            return;
+        }
+
+        try {
+            boolean placed = ThreeThousandRealmManager.get(player.server)
+                    .placePlayerInRealm(player, realmLocation, new Random());
+            if (!placed) {
+                ModMain.LOGGER.warn(
+                        "Unable to return player {} to their three-thousand realm {} after respawning",
+                        player.getGameProfile().getName(),
+                        realmLocation
+                );
+            }
+        } catch (RuntimeException exception) {
+            ModMain.LOGGER.error(
+                    "Unable to return player {} to their three-thousand realm {} after respawning",
+                    player.getGameProfile().getName(),
+                    realmLocation,
+                    exception
+            );
         }
     }
 
