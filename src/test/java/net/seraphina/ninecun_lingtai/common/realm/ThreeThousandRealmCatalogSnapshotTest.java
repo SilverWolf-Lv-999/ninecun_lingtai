@@ -51,4 +51,24 @@ class ThreeThousandRealmCatalogSnapshotTest {
                 )
         );
     }
+
+    @Test
+    void rejectsReadyCatalogWithMissingConfiguredRealms() {
+        List<ThreeThousandRealmCatalogEntry> realms = List.of(
+                new ThreeThousandRealmCatalogEntry(
+                        ResourceLocation.fromNamespaceAndPath("ninecun_lingtai", "qixing_jie"),
+                        "七星界"
+                )
+        );
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new ThreeThousandRealmCatalogSnapshot(
+                        ThreeThousandRealmCatalogStatus.READY,
+                        1,
+                        10,
+                        realms
+                )
+        );
+    }
 }

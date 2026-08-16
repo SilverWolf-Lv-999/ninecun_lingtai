@@ -33,7 +33,10 @@ public final class ThreeThousandRealmCatalogSnapshot {
         if (status == ThreeThousandRealmCatalogStatus.FAILED && !this.thisRealms.isEmpty()) {
             throw new IllegalArgumentException("A failed catalog must not contain realm entries");
         }
-
+        if (status == ThreeThousandRealmCatalogStatus.READY
+                && completedRealmCount != targetRealmCount) {
+            throw new IllegalArgumentException("A ready catalog must contain every configured realm");
+        }
         this.thisCompletedRealmCount = completedRealmCount;
         this.thisTargetRealmCount = targetRealmCount;
     }

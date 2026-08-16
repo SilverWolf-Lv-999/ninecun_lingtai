@@ -22,12 +22,10 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.CancellationException;
-import java.util.function.IntConsumer;
 
 public final class ThreeThousandRealmState {
     private static final int FORMAT_VERSION = 1;
-    private static final int MAXIMUM_REALM_CAPACITY = 3000;
+    private static final int MAXIMUM_REALM_CAPACITY = 10;
     private static final String FORMAT_VERSION_KEY = "formatVersion";
     private static final String REALMS_KEY = "realms";
     private static final String ID_KEY = "id";
@@ -87,84 +85,18 @@ public final class ThreeThousandRealmState {
         return realmDefinition;
     }
 
-    public synchronized List<RealmDefinition> createRealmBatch(
+    public synchronized List<RealmDefinition> createMissingRealms(
             Random random,
-            int maximumRealmCount,
-            int maximumBatchSize
+            int targetRealmCount
     ) {
         Objects.requireNonNull(random, "random");
-        validateMaximumRealmCount(maximumRealmCount);
-        if (maximumBatchSize < 1) {
-            throw new IllegalArgumentException("maximumBatchSize must be at least 1");
-        }
-        if (this.thisRealms.size() >= maximumRealmCount) {
-            return List.of();
-        }
+        validateMaximumRealmCount(targetRealmCount);
 
-        int batchEndRealmCount = Math.min(
-                maximumRealmCount,
-                this.thisRealms.size() + maximumBatchSize
-        );
-        Set<String> existingDisplayNames = createExistingDisplayNames();
-        List<RealmDefinition> createdRealms = new ArrayList<>(
-                batchEndRealmCount - this.thisRealms.size()
-        );
-        try {
-            while (this.thisRealms.size() < batchEndRealmCount) {
-                if (Thread.currentThread().isInterrupted()) {
-                    throw new CancellationException("Three-thousand-realm catalog initialization was interrupted");
-                }
-                RealmDefinition realmDefinition = createRealmDefinition(random, existingDisplayNames);
-                this.thisRealms.put(realmDefinition.getId(), realmDefinition);
-                createdRealms.add(realmDefinition);
-            }
-            if (!this.save()) {
-                throw new IllegalStateException("Unable to persist the three-thousand-realm state");
-            }
-            return List.copyOf(createdRealms);
-        } catch (RuntimeException exception) {
-            for (RealmDefinition realm : createdRealms) {
-                this.thisRealms.remove(realm.getId());
-            }
-            throw exception;
+        List<RealmDefinition> createdRealms = new ArrayList<>();
+        while (this.thisRealms.size() < targetRealmCount) {
+            createdRealms.add(this.createRealm(random, targetRealmCount));
         }
-    }
-
-    public synchronized List<RealmDefinition> ensureRealmCount(
-            Random random,
-            int maximumRealmCount,
-            IntConsumer progressConsumer
-    ) {
-        Objects.requireNonNull(random, "random");
-        Objects.requireNonNull(progressConsumer, "progressConsumer");
-        validateMaximumRealmCount(maximumRealmCount);
-
-        if (this.thisRealms.size() >= maximumRealmCount) {
-            return List.copyOf(this.thisRealms.values());
-        }
-
-        Set<String> existingDisplayNames = createExistingDisplayNames();
-        List<ResourceLocation> newlyCreatedRealmIds = new ArrayList<>();
-        try {
-            while (this.thisRealms.size() < maximumRealmCount) {
-                if (Thread.currentThread().isInterrupted()) {
-                    throw new CancellationException("Three-thousand-realm catalog initialization was interrupted");
-                }
-                RealmDefinition realmDefinition = createRealmDefinition(random, existingDisplayNames);
-                this.thisRealms.put(realmDefinition.getId(), realmDefinition);
-                newlyCreatedRealmIds.add(realmDefinition.getId());
-                progressConsumer.accept(this.thisRealms.size());
-            }
-            if (!this.save()) {
-                throw new IllegalStateException("Unable to persist the three-thousand-realm state");
-            }
-            return List.copyOf(this.thisRealms.values());
-        } catch (RuntimeException exception) {
-            for (ResourceLocation realmId : newlyCreatedRealmIds) {
-                this.thisRealms.remove(realmId);
-            }
-            throw exception;
-        }
+        return List.copyOf(createdRealms);
     }
 
     public synchronized boolean save() {

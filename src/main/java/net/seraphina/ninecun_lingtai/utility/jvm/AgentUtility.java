@@ -9,10 +9,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class AgentUtility {
+    private static final String DISABLE_INSTRUMENT_PATCH_PROPERTY =
+            "ninecun_lingtai.disableInstrumentPatch";
+
     public static final Logger LOGGER = LogManager.getLogger();
 
     public static void patchAgentMain() {
-        if (!SysUtility.isWindows()) return;
+        if (Boolean.getBoolean(DISABLE_INSTRUMENT_PATCH_PROPERTY) || !SysUtility.isWindows()) return;
         String[] symbols = {
                 "Java_sun_instrument_InstrumentationImpl_setHasTransformers",
                 "Java_sun_instrument_InstrumentationImpl_setHasRetransformableTransformers",

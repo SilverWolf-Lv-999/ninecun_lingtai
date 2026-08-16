@@ -18,6 +18,10 @@
     "common.ring.EnderChestBlockEntityMixin",
     "common.ring.RandomizableContainerBlockEntityMixin",
     "common.ring.ServerLevelMixin",
+    "common.realm.DimensionArgumentRealmAccessMixin",
+    "common.realm.MinecraftServerRealmLoaderMixin",
+    "common.realm.MinecraftServerRealmSaveMixin",
+    "common.realm.PlayerListRealmLoadMixin",
     "common.realm.ServerLevelRealmSeedMixin",
     "common.realm.ServerPlayerRealmReturnMixin"
   ],

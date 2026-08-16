@@ -24,6 +24,8 @@ import org.apache.logging.log4j.Logger;
 public final class ModMain {
     public static final String MOD_ID = "ninecun_lingtai";
     public static final Logger LOGGER = LogManager.getLogger();
+    private static final String DISABLE_RUNTIME_HOOKS_PROPERTY =
+            "ninecun_lingtai.disableRuntimeHooks";
 
     public ModMain(FMLJavaModLoadingContext context) {
         LOGGER.info("init mod main......");
@@ -40,6 +42,9 @@ public final class ModMain {
         ModCreativeModeTabs.register(modEventBus);
         context.registerConfig(ModConfig.Type.COMMON, CommonConfig.SPEC);
         ModNetwork.register();
+        if (Boolean.getBoolean(DISABLE_RUNTIME_HOOKS_PROPERTY)) {
+            return;
+        }
         if (Static.isClient()) {
             HookUtility.clientHooks();
             HookUtility.clientReplaceMethod();

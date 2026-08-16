@@ -8,6 +8,7 @@ import net.minecraft.world.RandomSequences;
 import net.minecraft.world.level.CustomSpawner;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.dimension.LevelStem;
+import net.minecraft.world.level.levelgen.WorldOptions;
 import net.minecraft.world.level.storage.LevelStorageSource;
 import net.minecraft.world.level.storage.ServerLevelData;
 import net.seraphina.ninecun_lingtai.common.realm.ThreeThousandRealmSeedContext;
@@ -15,7 +16,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
@@ -57,17 +58,16 @@ public abstract class ServerLevelRealmSeedMixin {
         }
     }
 
-    @ModifyArg(
+    @Redirect(
             method = "<init>",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/world/level/levelgen/structure/StructureCheck;<init>(Lnet/minecraft/world/level/chunk/storage/ChunkScanAccess;Lnet/minecraft/core/RegistryAccess;Lnet/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplateManager;Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/level/chunk/ChunkGenerator;Lnet/minecraft/world/level/levelgen/RandomState;Lnet/minecraft/world/level/LevelHeightAccessor;Lnet/minecraft/world/level/biome/BiomeSource;JLcom/mojang/datafixers/DataFixer;)V"
-            ),
-            index = 8
+                    target = "Lnet/minecraft/world/level/levelgen/WorldOptions;seed()J"
+            )
     )
-    private long useThreeThousandRealmSeedForStructureCheck(long originalSeed) {
+    private long useThreeThousandRealmSeed(WorldOptions worldOptions) {
         OptionalLong realmSeed = ThreeThousandRealmSeedContext.getCurrentSeed();
-        return realmSeed.orElse(originalSeed);
+        return realmSeed.orElseGet(worldOptions::seed);
     }
 
     @Inject(method = "getSeed", at = @At("HEAD"), cancellable = true)

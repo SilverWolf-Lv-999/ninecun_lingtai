@@ -13,6 +13,7 @@ import net.seraphina.ninecun_lingtai.utility.NotificationUtility;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.server.ServerAboutToStartEvent;
+import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -29,6 +30,12 @@ public final class ThreeThousandRealmEventHandler {
     @SubscribeEvent
     public static void onServerAboutToStart(ServerAboutToStartEvent event) {
         ThreeThousandRealmManager.initialize(event.getServer());
+        ThreeThousandRealmManager.generateConfiguredRealmDefinitions(event.getServer());
+    }
+
+    @SubscribeEvent
+    public static void onServerStarting(ServerStartingEvent event) {
+        ThreeThousandRealmManager.registerPersistedRealmDefinitions(event.getServer());
     }
 
     @SubscribeEvent

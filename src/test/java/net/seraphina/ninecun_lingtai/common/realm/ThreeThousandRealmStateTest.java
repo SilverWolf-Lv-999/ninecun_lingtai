@@ -4,104 +4,80 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ThreeThousandRealmStateTest {
     @TempDir
     private Path thisTemporaryDirectory;
 
     @Test
-    void createsPersistsAndDoesNotDuplicateTheRealmCatalog() {
+    void createsAndPersistsRealmsOneAtATime() {
         Path filePath = this.thisTemporaryDirectory.resolve("three_thousand_realms.json");
         ThreeThousandRealmState state = ThreeThousandRealmState.load(filePath);
-        List<Integer> progress = new ArrayList<>();
 
-        List<RealmDefinition> createdRealms = state.ensureRealmCount(
-                new Random(12345L),
-                12,
-                progress::add
+        RealmDefinition firstRealm = state.createRealm(new Random(12345L), 10);
+        RealmDefinition secondRealm = state.createRealm(new Random(67890L), 10);
+
+        assertEquals(2, state.getRealmCount());
+        assertThrows(
+                UnsupportedOperationException.class,
+                () -> state.getRealms().add(firstRealm)
         );
-
-        assertEquals(12, createdRealms.size());
-        assertEquals(12, state.getRealmCount());
-        assertEquals(12, progress.size());
-        assertEquals(1, progress.get(0));
-        assertEquals(12, progress.get(progress.size() - 1));
-
-        Set<String> displayNames = createdRealms.stream()
-                .map(RealmDefinition::getDisplayName)
-                .collect(Collectors.toCollection(HashSet::new));
-        assertEquals(createdRealms.size(), displayNames.size());
 
         ThreeThousandRealmState reloadedState = ThreeThousandRealmState.load(filePath);
-        assertEquals(12, reloadedState.getRealmCount());
         assertEquals(
-                createdRealms.stream().map(RealmDefinition::getId).toList(),
+                List.of(firstRealm.getId(), secondRealm.getId()),
                 reloadedState.getRealms().stream().map(RealmDefinition::getId).toList()
         );
-
-        List<Integer> repeatedProgress = new ArrayList<>();
-        List<RealmDefinition> unchangedRealms = reloadedState.ensureRealmCount(
-                new Random(67890L),
-                12,
-                repeatedProgress::add
-        );
-        assertEquals(createdRealms.stream().map(RealmDefinition::getId).toList(),
-                unchangedRealms.stream().map(RealmDefinition::getId).toList());
-        assertTrue(repeatedProgress.isEmpty());
     }
 
     @Test
-    void rollsBackNewRealmMetadataWhenBatchCreationFails() {
+    void rejectsCreationAfterConfiguredRealmLimit() {
         Path filePath = this.thisTemporaryDirectory.resolve("three_thousand_realms.json");
         ThreeThousandRealmState state = ThreeThousandRealmState.load(filePath);
-        RealmDefinition originalRealm = state.createRealm(new Random(24680L), 4);
+        RealmDefinition realm = state.createRealm(new Random(24680L), 1);
 
         assertThrows(
                 IllegalStateException.class,
-                () -> state.ensureRealmCount(
-                        new Random(13579L),
-                        4,
-                        completedRealmCount -> {
-                            if (completedRealmCount == 3) {
-                                throw new IllegalStateException("test failure");
-                            }
-                        }
-                )
+                () -> state.createRealm(new Random(13579L), 1)
         );
 
         assertEquals(1, state.getRealmCount());
-        assertEquals(originalRealm.getId(), state.getRealms().get(0).getId());
+        assertEquals(realm.getId(), state.getRealms().get(0).getId());
         ThreeThousandRealmState reloadedState = ThreeThousandRealmState.load(filePath);
         assertEquals(1, reloadedState.getRealmCount());
-        assertEquals(originalRealm.getId(), reloadedState.getRealms().get(0).getId());
+        assertEquals(realm.getId(), reloadedState.getRealms().get(0).getId());
     }
 
     @Test
-    void persistsEachIncrementalCatalogCreationBatch() {
+    void createsAndPersistsMissingRealmsToConfiguredCount() {
+        Path filePath = this.thisTemporaryDirectory.resolve("three_thousand_realms.json");
+        ThreeThousandRealmState state = ThreeThousandRealmState.load(filePath);
+        RealmDefinition existingRealm = state.createRealm(new Random(24680L), 10);
+
+        List<RealmDefinition> createdRealms = state.createMissingRealms(new Random(13579L), 10);
+
+        assertEquals(9, createdRealms.size());
+        assertEquals(10, state.getRealmCount());
+        assertEquals(existingRealm.getId(), state.getRealms().get(0).getId());
+        assertEquals(List.of(), state.createMissingRealms(new Random(98765L), 10));
+        assertEquals(10, ThreeThousandRealmState.load(filePath).getRealmCount());
+    }
+
+    @Test
+    void rejectsConfiguredRealmLimitAboveHardCapacity() {
         Path filePath = this.thisTemporaryDirectory.resolve("three_thousand_realms.json");
         ThreeThousandRealmState state = ThreeThousandRealmState.load(filePath);
 
-        List<RealmDefinition> firstBatch = state.createRealmBatch(new Random(98765L), 5, 2);
-        assertEquals(2, firstBatch.size());
-        assertEquals(2, state.getRealmCount());
-        assertEquals(2, ThreeThousandRealmState.load(filePath).getRealmCount());
-
-        List<RealmDefinition> secondBatch = state.createRealmBatch(new Random(56789L), 5, 2);
-        List<RealmDefinition> finalBatch = state.createRealmBatch(new Random(12345L), 5, 2);
-        assertEquals(2, secondBatch.size());
-        assertEquals(1, finalBatch.size());
-        assertEquals(5, state.getRealmCount());
-        assertTrue(state.createRealmBatch(new Random(67890L), 5, 2).isEmpty());
-        assertEquals(5, ThreeThousandRealmState.load(filePath).getRealmCount());
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> state.createRealm(new Random(24680L), 11)
+        );
+        assertEquals(0, state.getRealmCount());
     }
+
 }

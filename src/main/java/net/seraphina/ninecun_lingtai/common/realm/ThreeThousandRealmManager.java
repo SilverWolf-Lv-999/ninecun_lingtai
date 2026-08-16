@@ -1,23 +1,20 @@
 package net.seraphina.ninecun_lingtai.common.realm;
 
+import com.mojang.serialization.Lifecycle;
+import net.minecraft.core.MappedRegistry;
+import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.level.progress.ChunkProgressListener;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.CustomSpawner;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.biome.BiomeManager;
-import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.dimension.LevelStem;
 import net.minecraft.world.level.portal.PortalInfo;
-import net.minecraft.world.level.storage.DerivedLevelData;
 import net.minecraft.world.level.storage.LevelResource;
-import net.minecraft.world.level.storage.ServerLevelData;
 import net.minecraft.world.phys.Vec3;
 import net.seraphina.ninecun_lingtai.ModMain;
 import net.seraphina.ninecun_lingtai.common.config.CommonConfig;
@@ -32,21 +29,16 @@ import net.minecraftforge.event.level.LevelEvent;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
-import java.util.UUID;
 import java.util.WeakHashMap;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.function.Function;
 
 public final class ThreeThousandRealmManager {
@@ -54,38 +46,13 @@ public final class ThreeThousandRealmManager {
     private static final String STATE_FILE_NAME = "three_thousand_realms.json";
     private static final String PLAYER_RETURN_STATE_FILE_NAME =
             "three_thousand_realm_player_returns.json";
-    private static final String CATALOG_THREAD_NAME = "ninecun-lingtai-realm-catalog";
-    private static final int CATALOG_CREATION_BATCH_SIZE = 32;
-    private static final long CATALOG_PROGRESS_DELAY_MILLIS = 60L;
     private static final Map<MinecraftServer, ThreeThousandRealmManager> MANAGERS = new WeakHashMap<>();
-    private static final ChunkProgressListener NO_OP_CHUNK_PROGRESS_LISTENER = new ChunkProgressListener() {
-        @Override
-        public void updateSpawnPos(ChunkPos center) {
-        }
-
-        @Override
-        public void onStatusChange(ChunkPos chunkPosition, ChunkStatus chunkStatus) {
-        }
-
-        @Override
-        public void start() {
-        }
-
-        @Override
-        public void stop() {
-        }
-    };
 
     private final MinecraftServer thisServer;
     private final ThreeThousandRealmState thisState;
     private final PlayerThreeThousandRealmReturnState thisPlayerReturnState;
+    private final ThreeThousandRealmDataPackGenerator thisDataPackGenerator;
     private final Map<ResourceKey<Level>, Long> thisEmptyRealmTicks = new HashMap<>();
-    private final ExecutorService thisCatalogExecutor;
-    private final Set<UUID> thisCatalogObservers = new HashSet<>();
-    private ThreeThousandRealmCatalogSnapshot thisCatalogSnapshot;
-    @Nullable
-    private Future<?> thisCatalogTask;
-    private volatile boolean thisClosed;
 
     private ThreeThousandRealmManager(MinecraftServer server) {
         this.thisServer = server;
@@ -93,17 +60,9 @@ public final class ThreeThousandRealmManager {
         this.thisPlayerReturnState = PlayerThreeThousandRealmReturnState.load(
                 getPlayerReturnStateFilePath(server)
         );
-        int currentRealmCount = this.thisState.getRealmCount();
-        this.thisCatalogSnapshot = createCatalogSnapshot(
-                ThreeThousandRealmCatalogStatus.LOADING,
-                currentRealmCount,
-                Math.max(1, currentRealmCount)
+        this.thisDataPackGenerator = new ThreeThousandRealmDataPackGenerator(
+                server.getWorldPath(LevelResource.DATAPACK_DIR)
         );
-        this.thisCatalogExecutor = Executors.newSingleThreadExecutor(runnable -> {
-            Thread thread = new Thread(runnable, CATALOG_THREAD_NAME);
-            thread.setDaemon(true);
-            return thread;
-        });
     }
 
     public static void initialize(MinecraftServer server) {
@@ -124,13 +83,41 @@ public final class ThreeThousandRealmManager {
         get(server).tick();
     }
 
-    public static void clear(MinecraftServer server) {
-        ThreeThousandRealmManager manager;
+    public static void registerPersistedRealmDefinitions(MinecraftServer server) {
+        get(server).registerPersistedRealmDefinitions();
+    }
+
+    public static void generateConfiguredRealmDefinitions(MinecraftServer server) {
+        get(server).generateConfiguredRealmDefinitions();
+    }
+
+    public static RegistryAccess.Frozen createWorldSaveRegistryAccess(
+            MinecraftServer server,
+            RegistryAccess registryAccess
+    ) {
+        Objects.requireNonNull(server, "server");
+        Objects.requireNonNull(registryAccess, "registryAccess");
         synchronized (MANAGERS) {
-            manager = MANAGERS.remove(server);
+            ThreeThousandRealmManager manager = MANAGERS.get(server);
+            if (manager == null) {
+                return freezeRegistryAccess(registryAccess);
+            }
+            return manager.createWorldSaveRegistryAccess(registryAccess);
         }
-        if (manager != null) {
-            manager.shutdown();
+    }
+
+    public static Set<Map.Entry<ResourceKey<LevelStem>, LevelStem>> excludeManagedRealmStemsFromInitialLoad(
+            MinecraftServer server,
+            Set<Map.Entry<ResourceKey<LevelStem>, LevelStem>> levelStemEntries
+    ) {
+        Objects.requireNonNull(server, "server");
+        Objects.requireNonNull(levelStemEntries, "levelStemEntries");
+        return get(server).excludeManagedRealmStemsFromInitialLoad(levelStemEntries);
+    }
+
+    public static void clear(MinecraftServer server) {
+        synchronized (MANAGERS) {
+            MANAGERS.remove(server);
         }
     }
 
@@ -163,10 +150,14 @@ public final class ThreeThousandRealmManager {
             return loadedRealm;
         }
 
-        ServerLevel createdRealm = this.createServerLevel(realmDefinition, levelKey);
-        worlds.put(levelKey, createdRealm);
-        this.thisServer.markWorldsDirty();
-        MinecraftForge.EVENT_BUS.post(new LevelEvent.Load(createdRealm));
+        this.registerRealmDefinition(realmDefinition);
+        if (!(this.thisServer instanceof ThreeThousandRealmServerAccess serverAccess)) {
+            throw new IllegalStateException("Three-thousand-realm lazy loading bridge is unavailable");
+        }
+        ServerLevel createdRealm = serverAccess.ninecunLingtai$loadRegisteredRealm(
+                levelKey,
+                realmDefinition.getSeed()
+        );
         ModMain.LOGGER.info(
                 "Loaded three-thousand realm {} ({}) with seed {}",
                 realmDefinition.getDisplayName(),
@@ -217,12 +208,14 @@ public final class ThreeThousandRealmManager {
         Objects.requireNonNull(player, "player");
         ThreeThousandRealmCatalogSnapshot snapshot;
         synchronized (this) {
-            if (this.thisClosed) {
-                return;
-            }
-            this.thisCatalogObservers.add(player.getUUID());
-            this.startRealmCatalogInitializationIfNeeded();
-            snapshot = this.thisCatalogSnapshot;
+            int targetRealmCount = Math.max(
+                    CommonConfig.THREE_THOUSAND_REALMS_MAXIMUM_REALM_COUNT.get(),
+                    this.thisState.getRealmCount()
+            );
+            snapshot = createReadyCatalogSnapshot(
+                    this.thisState.getRealms(),
+                    targetRealmCount
+            );
         }
         ModNetwork.sendOpenThreeThousandRealmScreen(player, snapshot);
     }
@@ -336,164 +329,6 @@ public final class ThreeThousandRealmManager {
         return this.thisState.getRealmCount();
     }
 
-    private synchronized void startRealmCatalogInitializationIfNeeded() {
-        int configuredRealmCount = CommonConfig.THREE_THOUSAND_REALMS_MAXIMUM_REALM_COUNT.get();
-        int existingRealmCount = this.thisState.getRealmCount();
-        int targetRealmCount = Math.max(configuredRealmCount, existingRealmCount);
-        if (existingRealmCount >= targetRealmCount) {
-            this.thisCatalogSnapshot = createReadyCatalogSnapshot(
-                    this.thisState.getRealms(),
-                    targetRealmCount
-            );
-            return;
-        }
-        if (this.thisCatalogTask != null && !this.thisCatalogTask.isDone()) {
-            return;
-        }
-
-        this.thisCatalogSnapshot = createCatalogSnapshot(
-                ThreeThousandRealmCatalogStatus.LOADING,
-                existingRealmCount,
-                targetRealmCount
-        );
-        this.thisCatalogTask = this.thisCatalogExecutor.submit(
-                () -> initializeRealmCatalog(targetRealmCount, existingRealmCount)
-        );
-    }
-
-    private void initializeRealmCatalog(int targetRealmCount, int initialRealmCount) {
-        try {
-            Random random = new Random();
-            int completedRealmCount = initialRealmCount;
-            while (completedRealmCount < targetRealmCount) {
-                this.thisState.createRealmBatch(
-                        random,
-                        targetRealmCount,
-                        CATALOG_CREATION_BATCH_SIZE
-                );
-                completedRealmCount = this.thisState.getRealmCount();
-                int publishedRealmCount = completedRealmCount;
-                executeOnServerAndWait(
-                        () -> publishRealmCatalogProgress(
-                                publishedRealmCount,
-                                targetRealmCount
-                        )
-                );
-                if (completedRealmCount < targetRealmCount) {
-                    Thread.sleep(CATALOG_PROGRESS_DELAY_MILLIS);
-                }
-            }
-            List<RealmDefinition> realms = this.thisState.getRealms();
-            ThreeThousandRealmCatalogSnapshot readySnapshot = createReadyCatalogSnapshot(
-                    realms,
-                    targetRealmCount
-            );
-            executeOnServer(() -> completeRealmCatalogInitialization(readySnapshot));
-        } catch (InterruptedException exception) {
-            Thread.currentThread().interrupt();
-            ModMain.LOGGER.debug("Three-thousand-realm catalog initialization was interrupted");
-        } catch (CancellationException exception) {
-            ModMain.LOGGER.debug("Three-thousand-realm catalog initialization was cancelled");
-        } catch (RuntimeException exception) {
-            ModMain.LOGGER.error("Unable to initialize the three-thousand-realm catalog", exception);
-            executeOnServer(() -> failRealmCatalogInitialization(targetRealmCount));
-        }
-    }
-
-    private void executeOnServer(Runnable task) {
-        if (this.thisClosed) {
-            return;
-        }
-        this.thisServer.execute(() -> {
-            if (!this.thisClosed) {
-                task.run();
-            }
-        });
-    }
-
-    private void executeOnServerAndWait(Runnable task) throws InterruptedException {
-        if (this.thisClosed) {
-            throw new CancellationException("Three-thousand-realm catalog initialization was cancelled");
-        }
-        CountDownLatch completionLatch = new CountDownLatch(1);
-        this.thisServer.execute(() -> {
-            try {
-                if (!this.thisClosed) {
-                    task.run();
-                }
-            } finally {
-                completionLatch.countDown();
-            }
-        });
-        completionLatch.await();
-        if (this.thisClosed) {
-            throw new CancellationException("Three-thousand-realm catalog initialization was cancelled");
-        }
-    }
-
-    private synchronized void publishRealmCatalogProgress(
-            int completedRealmCount,
-            int targetRealmCount
-    ) {
-        if (this.thisClosed || this.thisCatalogSnapshot.getTargetRealmCount() != targetRealmCount) {
-            return;
-        }
-        this.thisCatalogSnapshot = createCatalogSnapshot(
-                ThreeThousandRealmCatalogStatus.LOADING,
-                completedRealmCount,
-                targetRealmCount
-        );
-        sendRealmCatalogToObservers();
-    }
-
-    private synchronized void completeRealmCatalogInitialization(
-            ThreeThousandRealmCatalogSnapshot readySnapshot
-    ) {
-        if (this.thisClosed) {
-            return;
-        }
-        this.thisCatalogSnapshot = readySnapshot;
-        this.thisCatalogTask = null;
-        sendRealmCatalogToObservers();
-    }
-
-    private synchronized void failRealmCatalogInitialization(int targetRealmCount) {
-        if (this.thisClosed || this.thisCatalogSnapshot.getTargetRealmCount() != targetRealmCount) {
-            return;
-        }
-        this.thisCatalogSnapshot = new ThreeThousandRealmCatalogSnapshot(
-                ThreeThousandRealmCatalogStatus.FAILED,
-                this.thisState.getRealmCount(),
-                targetRealmCount,
-                List.of()
-        );
-        this.thisCatalogTask = null;
-        sendRealmCatalogToObservers();
-    }
-
-    private void sendRealmCatalogToObservers() {
-        this.thisCatalogObservers.removeIf(playerId -> {
-            ServerPlayer player = this.thisServer.getPlayerList().getPlayer(playerId);
-            if (player == null) {
-                return true;
-            }
-            ModNetwork.sendThreeThousandRealmCatalog(player, this.thisCatalogSnapshot);
-            return false;
-        });
-    }
-
-    private void shutdown() {
-        synchronized (this) {
-            this.thisClosed = true;
-            this.thisCatalogObservers.clear();
-            if (this.thisCatalogTask != null) {
-                this.thisCatalogTask.cancel(true);
-                this.thisCatalogTask = null;
-            }
-        }
-        this.thisCatalogExecutor.shutdownNow();
-    }
-
     private static ThreeThousandRealmCatalogSnapshot createReadyCatalogSnapshot(
             List<RealmDefinition> realms,
             int targetRealmCount
@@ -502,25 +337,6 @@ public final class ThreeThousandRealmManager {
         return new ThreeThousandRealmCatalogSnapshot(
                 ThreeThousandRealmCatalogStatus.READY,
                 catalogEntries.size(),
-                targetRealmCount,
-                catalogEntries
-        );
-    }
-
-    private ThreeThousandRealmCatalogSnapshot createCatalogSnapshot(
-            ThreeThousandRealmCatalogStatus status,
-            int completedRealmCount,
-            int targetRealmCount
-    ) {
-        List<ThreeThousandRealmCatalogEntry> catalogEntries = createCatalogEntries(
-                this.thisState.getRealms()
-        );
-        if (catalogEntries.size() != completedRealmCount) {
-            throw new IllegalStateException("Three-thousand-realm catalog progress is inconsistent");
-        }
-        return new ThreeThousandRealmCatalogSnapshot(
-                status,
-                completedRealmCount,
                 targetRealmCount,
                 catalogEntries
         );
@@ -560,34 +376,18 @@ public final class ThreeThousandRealmManager {
         }
     }
 
-    private ServerLevel createServerLevel(RealmDefinition realmDefinition, ResourceKey<Level> levelKey) {
-        LevelStem overworldStem = this.thisServer.registryAccess()
-                .registryOrThrow(Registries.LEVEL_STEM)
-                .get(LevelStem.OVERWORLD);
-        if (overworldStem == null) {
-            throw new IllegalStateException("The overworld level stem is unavailable");
-        }
-
-        LevelStem realmStem = new LevelStem(overworldStem.type(), overworldStem.generator());
-        ServerLevelData realmLevelData = new DerivedLevelData(
-                this.thisServer.getWorldData(),
-                this.thisServer.getWorldData().overworldData()
-        );
-        try (ThreeThousandRealmSeedContext.RealmSeedScope ignored =
-                     ThreeThousandRealmSeedContext.push(realmDefinition.getSeed())) {
-            return new ServerLevel(
-                    this.thisServer,
-                    this.thisServer.executor,
-                    this.thisServer.storageSource,
-                    realmLevelData,
-                    levelKey,
-                    realmStem,
-                    NO_OP_CHUNK_PROGRESS_LISTENER,
-                    this.thisServer.getWorldData().isDebugWorld(),
-                    BiomeManager.obfuscateSeed(realmDefinition.getSeed()),
-                    List.of(),
-                    false,
-                    null
+    private synchronized void generateConfiguredRealmDefinitions() {
+        int configuredRealmCount = CommonConfig.THREE_THOUSAND_REALMS_MAXIMUM_REALM_COUNT.get();
+        int targetRealmCount = Math.max(configuredRealmCount, this.thisState.getRealmCount());
+        this.thisState.createMissingRealms(new Random(), targetRealmCount);
+        try {
+            for (RealmDefinition realmDefinition : this.thisState.getRealms()) {
+                this.thisDataPackGenerator.ensureRealmDefinition(realmDefinition);
+            }
+        } catch (IOException exception) {
+            throw new IllegalStateException(
+                    "Unable to generate configured three-thousand-realm data definitions",
+                    exception
             );
         }
     }
@@ -644,6 +444,107 @@ public final class ThreeThousandRealmManager {
                 return false;
             }
         };
+    }
+
+    private synchronized void registerPersistedRealmDefinitions() {
+        for (RealmDefinition realmDefinition : this.thisState.getRealms()) {
+            if (!this.thisDataPackGenerator.hasRealmDefinition(realmDefinition)) {
+                ModMain.LOGGER.warn(
+                        "Deferring missing three-thousand-realm data definition {} until the Dao Scroll is opened",
+                        realmDefinition.getId()
+                );
+                continue;
+            }
+            this.registerRealmDefinition(realmDefinition, false);
+        }
+    }
+
+    private void registerRealmDefinition(RealmDefinition realmDefinition) {
+        this.registerRealmDefinition(realmDefinition, true);
+    }
+
+    private void registerRealmDefinition(
+            RealmDefinition realmDefinition,
+            boolean createMissingDataDefinition
+    ) {
+        try {
+            ResourceKey<LevelStem> levelStemKey = ResourceKey.create(
+                    Registries.LEVEL_STEM,
+                    realmDefinition.getId()
+            );
+            Registry<LevelStem> levelStemRegistry = this.thisServer.registryAccess()
+                    .registryOrThrow(Registries.LEVEL_STEM);
+            if (levelStemRegistry.containsKey(levelStemKey)) {
+                return;
+            }
+
+            if (createMissingDataDefinition) {
+                this.thisDataPackGenerator.ensureRealmDefinition(realmDefinition);
+            }
+            LevelStem levelStem = this.thisDataPackGenerator.readRealmLevelStem(
+                    realmDefinition.getId(),
+                    this.thisServer.registryAccess()
+            );
+            MappedRegistry<LevelStem> mutableLevelStemRegistry =
+                    getMutableLevelStemRegistry(levelStemRegistry);
+            mutableLevelStemRegistry.unfreeze();
+            try {
+                if (!mutableLevelStemRegistry.containsKey(levelStemKey)) {
+                    mutableLevelStemRegistry.register(levelStemKey, levelStem, Lifecycle.stable());
+                }
+            } finally {
+                mutableLevelStemRegistry.freeze();
+            }
+        } catch (IOException exception) {
+            throw new IllegalStateException(
+                    "Unable to generate three-thousand-realm dimension " + realmDefinition.getId(),
+                    exception
+            );
+        }
+    }
+
+    private synchronized RegistryAccess.Frozen createWorldSaveRegistryAccess(
+            RegistryAccess registryAccess
+    ) {
+        return ThreeThousandRealmRegistryUtility.createWorldSaveRegistryAccess(
+                registryAccess,
+                this.createManagedRealmIdSet()
+        );
+    }
+
+    private synchronized Set<Map.Entry<ResourceKey<LevelStem>, LevelStem>> excludeManagedRealmStemsFromInitialLoad(
+            Set<Map.Entry<ResourceKey<LevelStem>, LevelStem>> levelStemEntries
+    ) {
+        return ThreeThousandRealmRegistryUtility.excludeRealmLevelStemEntries(
+                levelStemEntries,
+                this.createManagedRealmIdSet()
+        );
+    }
+
+    private Set<ResourceLocation> createManagedRealmIdSet() {
+        Set<ResourceLocation> realmIds = new LinkedHashSet<>();
+        for (RealmDefinition realmDefinition : this.thisState.getRealms()) {
+            realmIds.add(realmDefinition.getId());
+        }
+        realmIds.addAll(this.thisDataPackGenerator.getPersistedRealmDefinitionIds());
+        return Collections.unmodifiableSet(realmIds);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static MappedRegistry<LevelStem> getMutableLevelStemRegistry(
+            Registry<LevelStem> levelStemRegistry
+    ) {
+        if (!(levelStemRegistry instanceof MappedRegistry<?>)) {
+            throw new IllegalStateException("The level-stem registry is not mutable");
+        }
+        return (MappedRegistry<LevelStem>) levelStemRegistry;
+    }
+
+    private static RegistryAccess.Frozen freezeRegistryAccess(RegistryAccess registryAccess) {
+        if (registryAccess instanceof RegistryAccess.Frozen frozenRegistryAccess) {
+            return frozenRegistryAccess;
+        }
+        return registryAccess.freeze();
     }
 
     private static Path getStateFilePath(MinecraftServer server) {

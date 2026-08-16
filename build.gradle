@@ -158,6 +158,8 @@ tasks.named('compileTestJava', JavaCompile).configure {
     dependsOn tasks.named('transformationServiceClasses')
 }
 
+def serverRegression = project.hasProperty('serverRegression')
+
 def devTransformationServiceJar = tasks.register('devTransformationServiceJar', Jar) {
     archiveFileName = "${mod_id}-dev-transformation-service.jar"
     destinationDirectory = layout.buildDirectory.dir('dev')
@@ -172,6 +174,10 @@ tasks.matching {
     dependsOn(devTransformationServiceJar)
     classpath(devTransformationServiceJar)
     systemProperty 'ninecun_lingtai.devTransformationService', 'true'
+    if (serverRegression) {
+        systemProperty 'ninecun_lingtai.disableInstrumentPatch', 'true'
+        systemProperty 'ninecun_lingtai.disableRuntimeHooks', 'true'
+    }
 }
 
 repositories {
@@ -249,8 +255,6 @@ repositories {
     //     dir 'libs'
     // }
 }
-
-def serverRegression = project.hasProperty('serverRegression')
 
 dependencies {
     // Specify the version of Minecraft to use.

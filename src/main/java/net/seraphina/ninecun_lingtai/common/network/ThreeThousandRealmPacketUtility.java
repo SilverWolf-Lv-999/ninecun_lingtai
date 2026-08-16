@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class ThreeThousandRealmPacketUtility {
-    private static final int MAXIMUM_REALM_COUNT = 3000;
+    private static final int MAXIMUM_REALM_COUNT = 10;
     private static final int MAXIMUM_DISPLAY_NAME_LENGTH = 128;
 
     private ThreeThousandRealmPacketUtility() {
