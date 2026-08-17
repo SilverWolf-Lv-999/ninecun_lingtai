@@ -3,6 +3,7 @@ package net.seraphina.ninecun_lingtai.common.event;
 import net.seraphina.ninecun_lingtai.ModMain;
 import net.seraphina.ninecun_lingtai.common.player.PlayerMeditationManager;
 import net.seraphina.ninecun_lingtai.common.player.PlayerSoulRoamingManager;
+import net.seraphina.ninecun_lingtai.common.ascension.AscensionManager;
 import net.seraphina.ninecun_lingtai.common.tribulation.TribulationManager;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.TickEvent;
@@ -78,6 +79,7 @@ public final class PlayerMeditationEventHandler {
         if (event.getEntity() instanceof ServerPlayer player
                 && !PlayerSoulRoamingManager.isSoulRoaming(player)) {
             TribulationManager.fail(player);
+            AscensionManager.fail(player);
             if (PlayerMeditationManager.isMeditating(player)) {
                 PlayerMeditationManager.stopMeditating(player);
             }

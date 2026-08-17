@@ -9,6 +9,9 @@ import net.seraphina.ninecun_lingtai.api.alchemy.AlchemyRecipeJeiData;
 import net.seraphina.ninecun_lingtai.api.technique.LearnedTechniqueClientData;
 import net.seraphina.ninecun_lingtai.api.technique.TechniqueClientData;
 import net.seraphina.ninecun_lingtai.api.technique.TechniqueProgress;
+import net.seraphina.ninecun_lingtai.common.ascension.AscensionPhase;
+import net.seraphina.ninecun_lingtai.common.ascension.AscensionManager;
+import net.seraphina.ninecun_lingtai.common.ascension.AscensionSession;
 import net.seraphina.ninecun_lingtai.common.data.TechniqueManager;
 import net.seraphina.ninecun_lingtai.common.data.AlchemyRecipeManager;
 import net.seraphina.ninecun_lingtai.common.data.BookManager;
@@ -31,6 +34,7 @@ import net.seraphina.ninecun_lingtai.common.network.packet.OpenAptitudeScreenPac
 import net.seraphina.ninecun_lingtai.common.network.packet.AlchemyFurnaceActionPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.OpenAlchemyRecipeImprintScreenPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.OpenAlchemyRecipeScreenPacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.OpenAscensionQuestionScreenPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.OpenBookReadingScreenPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.OpenDaoScrollScreenPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.OpenThreeThousandRealmScreenPacket;
@@ -58,6 +62,7 @@ import net.seraphina.ninecun_lingtai.common.network.packet.SetLightFlightPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.SetMeditationStatePacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.SetPressureStatePacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.SubmitAptitudePacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.SubmitAscensionAnswerPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.SubmitDaoScrollPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.StorageRingCameraPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.StorageRingInteractionPacket;
@@ -113,6 +118,7 @@ import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 import net.seraphina.ninecun_lingtai.common.tribulation.TribulationSession;
+import net.seraphina.ninecun_lingtai.common.tribulation.TribulationPhase;
 import net.seraphina.ninecun_lingtai.common.realm.ThreeThousandRealmCatalogSnapshot;
 
 import java.util.List;
@@ -122,7 +128,9 @@ import java.util.Set;
 import java.util.UUID;
 
 public final class ModNetwork {
-    private static final String PROTOCOL_VERSION = "67676770";
+    private static final String PROTOCOL_VERSION = "67676771";
+    private static final float ASCENSION_TRIBULATION_RADIUS = 24.0F;
+    private static final float ASCENSION_TRIBULATION_INTENSITY = 1.65F;
     private static final SimpleChannel CHANNEL = NetworkRegistry.ChannelBuilder
             .named(ResourceLocation.fromNamespaceAndPath(ModMain.MOD_ID, "main"))
             .networkProtocolVersion(() -> PROTOCOL_VERSION)
@@ -222,6 +230,15 @@ public final class ModNetwork {
                 .encoder(SyncTribulationStatePacket::encode)
                 .decoder(SyncTribulationStatePacket::decode)
                 .consumerMainThread(SyncTribulationStatePacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        OpenAscensionQuestionScreenPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(OpenAscensionQuestionScreenPacket::encode)
+                .decoder(OpenAscensionQuestionScreenPacket::decode)
+                .consumerMainThread(OpenAscensionQuestionScreenPacket::handle)
                 .add();
         CHANNEL.messageBuilder(
                         RequestCultivationInfoPacket.class,
@@ -366,6 +383,15 @@ public final class ModNetwork {
                 .encoder(BreakthroughRequestPacket::encode)
                 .decoder(BreakthroughRequestPacket::decode)
                 .consumerMainThread(BreakthroughRequestPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        SubmitAscensionAnswerPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(SubmitAscensionAnswerPacket::encode)
+                .decoder(SubmitAscensionAnswerPacket::decode)
+                .consumerMainThread(SubmitAscensionAnswerPacket::handle)
                 .add();
         CHANNEL.messageBuilder(
                         CultivationFeedbackPacket.class,
@@ -1035,6 +1061,47 @@ public final class ModNetwork {
         );
     }
 
+    public static void sendAscensionState(
+            ServerPlayer player,
+            AscensionSession session
+    ) {
+        sendAscensionState(player, session, true);
+    }
+
+    public static void sendAscensionState(
+            ServerPlayer player,
+            AscensionSession session,
+            boolean active
+    ) {
+        SyncTribulationStatePacket packet = createAscensionStatePacket(session, active);
+        CHANNEL.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> player), packet);
+    }
+
+    public static void sendAscensionStateTo(
+            ServerPlayer recipient,
+            AscensionSession session
+    ) {
+        CHANNEL.send(
+                PacketDistributor.PLAYER.with(() -> recipient),
+                createAscensionStatePacket(session, true)
+        );
+    }
+
+    public static void sendOpenAscensionQuestion(
+            ServerPlayer player,
+            AscensionSession session
+    ) {
+        CHANNEL.send(
+                PacketDistributor.PLAYER.with(() -> player),
+                new OpenAscensionQuestionScreenPacket(
+                        session.questionIndex(),
+                        session.questions().size(),
+                        session.currentQuestion().title(),
+                        session.currentQuestion().prompt()
+                )
+        );
+    }
+
     private static SyncTribulationStatePacket createTribulationStatePacket(
             TribulationSession session,
             boolean active
@@ -1052,6 +1119,33 @@ public final class ModNetwork {
                 (float) session.radius(),
                 (float) session.type().strengthMultiplier()
         );
+    }
+
+    private static SyncTribulationStatePacket createAscensionStatePacket(
+            AscensionSession session,
+            boolean active
+    ) {
+        return new SyncTribulationStatePacket(
+                session.playerId(),
+                active,
+                getAscensionTribulationPhase(session.phase()).ordinal(),
+                session.phaseRemainingTicks(),
+                AscensionManager.TOTAL_STRIKES,
+                session.completedStrikes(),
+                session.center().x,
+                session.center().y,
+                session.center().z,
+                ASCENSION_TRIBULATION_RADIUS,
+                ASCENSION_TRIBULATION_INTENSITY
+        );
+    }
+
+    private static TribulationPhase getAscensionTribulationPhase(AscensionPhase phase) {
+        return switch (phase) {
+            case PREPARING -> TribulationPhase.PREPARING;
+            case STRIKING -> TribulationPhase.STRIKING;
+            case QUESTIONS -> TribulationPhase.AFTERMATH;
+        };
     }
 
     public static void sendCultivationInfo(ServerPlayer player) {

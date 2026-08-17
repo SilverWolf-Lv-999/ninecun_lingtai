@@ -1,6 +1,7 @@
 package net.seraphina.ninecun_lingtai.client.tribulation;
 
 import net.seraphina.ninecun_lingtai.client.screen.CultivationScreen;
+import net.seraphina.ninecun_lingtai.client.screen.ClientAscensionQuestionScreenManager;
 import net.seraphina.ninecun_lingtai.common.network.packet.SyncTribulationStatePacket;
 import net.seraphina.ninecun_lingtai.common.tribulation.TribulationPhase;
 import net.minecraft.client.Minecraft;
@@ -27,6 +28,10 @@ public final class ClientTribulationManager {
     public static void accept(SyncTribulationStatePacket packet) {
         if (!packet.active()) {
             STATES.remove(packet.playerId());
+            LocalPlayer localPlayer = Minecraft.getInstance().player;
+            if (localPlayer != null && localPlayer.getUUID().equals(packet.playerId())) {
+                ClientAscensionQuestionScreenManager.close();
+            }
             return;
         }
         LocalPlayer localPlayer = Minecraft.getInstance().player;

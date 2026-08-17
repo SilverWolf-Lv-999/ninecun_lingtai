@@ -27,6 +27,7 @@ import net.seraphina.ninecun_lingtai.client.player.ClientAlchemyRecipeManager;
 import net.seraphina.ninecun_lingtai.client.ring.ClientStorageRingImmersionManager;
 import net.seraphina.ninecun_lingtai.client.ring.ClientStorageRingProjectionManager;
 import net.seraphina.ninecun_lingtai.client.screen.ClientAptitudeScreenManager;
+import net.seraphina.ninecun_lingtai.client.screen.ClientAscensionQuestionScreenManager;
 import net.seraphina.ninecun_lingtai.client.utility.BodyShieldRenderUtility;
 import net.seraphina.ninecun_lingtai.client.utility.AlchemyFurnaceHighlightRenderUtility;
 import net.seraphina.ninecun_lingtai.client.utility.DefenseBarRenderUtility;
@@ -258,6 +259,7 @@ public final class ClientForgeEventHandler {
     @SubscribeEvent
     public static void onLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
         ClientAptitudeScreenManager.reset();
+        ClientAscensionQuestionScreenManager.reset();
         ClientBookManager.reset();
         ClientCultivationInfoManager.reset();
         ClientTechniqueManager.reset();

@@ -11,6 +11,7 @@ import net.seraphina.ninecun_lingtai.common.config.CommonConfig;
 import net.seraphina.ninecun_lingtai.common.data.ElementEnvironmentManager;
 import net.seraphina.ninecun_lingtai.common.data.TechniqueManager;
 import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
+import net.seraphina.ninecun_lingtai.common.ascension.AscensionManager;
 import net.seraphina.ninecun_lingtai.common.tribulation.TribulationManager;
 import net.seraphina.ninecun_lingtai.utility.CultivationDefenseUtility;
 import net.seraphina.ninecun_lingtai.utility.CultivationUtility;
@@ -52,6 +53,9 @@ public final class PlayerMeditationManager {
         if (TribulationManager.isInTribulation(player)) {
             return startTribulationMeditating(player);
         }
+        if (AscensionManager.isInAscension(player)) {
+            return startAscensionMeditating(player);
+        }
         if (techniqueId != null && !canCultivateTechnique(player, techniqueId)) {
             player.displayClientMessage(
                     Component.translatable("message.ninecun_lingtai.technique_not_learned"),
@@ -88,6 +92,14 @@ public final class PlayerMeditationManager {
     }
 
     public static boolean startTribulationMeditating(ServerPlayer player) {
+        return startSpecialMeditating(player);
+    }
+
+    public static boolean startAscensionMeditating(ServerPlayer player) {
+        return startSpecialMeditating(player);
+    }
+
+    private static boolean startSpecialMeditating(ServerPlayer player) {
         MeditationSession existingSession = MEDITATING_PLAYERS.get(player.getUUID());
         if (existingSession != null) {
             existingSession.setCultivation(null, false);
@@ -109,7 +121,7 @@ public final class PlayerMeditationManager {
     }
 
     public static void stopMeditating(ServerPlayer player) {
-        if (TribulationManager.isInTribulation(player)) {
+        if (TribulationManager.isInTribulation(player) || AscensionManager.isInAscension(player)) {
             syncStateToTrackingAndSelf(player, true);
             return;
         }
@@ -117,6 +129,10 @@ public final class PlayerMeditationManager {
     }
 
     public static void finishTribulationMeditating(ServerPlayer player) {
+        stopMeditatingInternal(player);
+    }
+
+    public static void finishAscensionMeditating(ServerPlayer player) {
         stopMeditatingInternal(player);
     }
 
@@ -160,13 +176,17 @@ public final class PlayerMeditationManager {
             return;
         }
         if (!canContinueMeditating(player)) {
+            if (AscensionManager.isInAscension(player)) {
+                AscensionManager.fail(player);
+                return;
+            }
             stopMeditating(player);
             return;
         }
         player.stopUsingItem();
         stopMovement(player);
         lockRotation(player);
-        if (TribulationManager.isInTribulation(player)) {
+        if (TribulationManager.isInTribulation(player) || AscensionManager.isInAscension(player)) {
             if (player.tickCount % ABSORPTION_INTERVAL_TICKS == 0) {
                 syncStateToTrackingAndSelf(player, true);
             }
@@ -508,6 +528,7 @@ public final class PlayerMeditationManager {
     private static MeditationSyncData createMeditationSyncData(ServerPlayer player, boolean meditating) {
         if (!meditating
                 || TribulationManager.isInTribulation(player)
+                || AscensionManager.isInAscension(player)
                 || !isCultivatingRealm(player)
                 || isAbsorbingFromHeldSpiritualStone(player)) {
             return MeditationSyncData.EMPTY;
