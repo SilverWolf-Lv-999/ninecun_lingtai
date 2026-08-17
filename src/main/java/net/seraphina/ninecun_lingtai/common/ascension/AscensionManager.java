@@ -31,6 +31,7 @@ import net.seraphina.ninecun_lingtai.common.player.PlayerDefenseSpellData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerMeditationManager;
 import net.seraphina.ninecun_lingtai.common.player.PlayerSpiritualEnergyData;
 import net.seraphina.ninecun_lingtai.common.registry.ModEntityTypes;
+import net.seraphina.ninecun_lingtai.common.registry.ModItems;
 import net.seraphina.ninecun_lingtai.common.tribulation.TribulationManager;
 import net.seraphina.ninecun_lingtai.utility.AscensionPromptUtility;
 import net.seraphina.ninecun_lingtai.utility.ChineseNumeralUtility;
@@ -63,6 +64,11 @@ public final class AscensionManager {
         }
         if (!isAscensionRequired(player)) {
             return StartResult.NOT_REQUIRED;
+        }
+        if (player.getInventory().items.stream()
+                .anyMatch(itemStack -> itemStack.is(ModItems.DAO_SCROLL.get()))) {
+            complete(player, null);
+            return StartResult.STARTED;
         }
         if (TribulationManager.isInTribulation(player)) {
             return StartResult.TRIBULATION_ACTIVE;
@@ -401,9 +407,11 @@ public final class AscensionManager {
         ModNetwork.sendCultivationInfo(player);
         ModNetwork.sendDefenseResource(player);
 
-        SESSIONS.remove(player.getUUID());
-        PlayerMeditationManager.finishAscensionMeditating(player);
-        ModNetwork.sendAscensionState(player, session, false);
+        if (session != null) {
+            SESSIONS.remove(player.getUUID());
+            PlayerMeditationManager.finishAscensionMeditating(player);
+            ModNetwork.sendAscensionState(player, session, false);
+        }
         Component title = Component.literal("恭喜 " + player.getGameProfile().getName() + " 道友，得道飞升");
         for (ServerPlayer sourcePlayer : sourcePlayers) {
             NotificationUtility.send(sourcePlayer, title, Component.empty(), 20 * 3);
