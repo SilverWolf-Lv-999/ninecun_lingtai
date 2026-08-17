@@ -101,6 +101,9 @@ public final class ItemTooltipUtility {
         if (item == ModItems.DAO_SCROLL.get()) {
             return Optional.of(ItemFontTheme.of(ItemFontStyle.DAO_SCROLL));
         }
+        if (item == ModItems.BOOK.get()) {
+            return Optional.of(ItemFontTheme.of(ItemFontStyle.BOOK));
+        }
         if (item == ModItems.HAN_SWORD.get()) {
             return Optional.of(ItemFontStyleResolver.resolveSpiritualItem(itemStack));
         }

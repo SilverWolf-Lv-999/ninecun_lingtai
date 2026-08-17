@@ -6,6 +6,8 @@ import net.seraphina.ninecun_lingtai.client.animation.LightFlightAnimationManage
 import net.seraphina.ninecun_lingtai.client.animation.MeditationAnimationManager;
 import net.seraphina.ninecun_lingtai.client.config.ClientConfigScreenRegistrar;
 import net.seraphina.ninecun_lingtai.client.input.ModKeyMappings;
+import net.seraphina.ninecun_lingtai.client.tooltip.BookClientTooltipComponent;
+import net.seraphina.ninecun_lingtai.client.tooltip.BookTooltipComponent;
 import net.seraphina.ninecun_lingtai.client.tooltip.FiveElementWheelClientTooltipComponent;
 import net.seraphina.ninecun_lingtai.client.tooltip.FiveElementWheelTooltipComponent;
 import net.seraphina.ninecun_lingtai.client.inventorytab.CultivationInfoTabRegistrar;
@@ -15,6 +17,7 @@ import net.seraphina.ninecun_lingtai.client.inventorytab.TechniqueLibraryTabRegi
 import net.seraphina.ninecun_lingtai.client.model.BodyDefenseSpellModel;
 import net.seraphina.ninecun_lingtai.client.render.AptitudeFormationShader;
 import net.seraphina.ninecun_lingtai.client.render.AlchemyFurnaceBlockRenderer;
+import net.seraphina.ninecun_lingtai.client.render.BookRenderer;
 import net.seraphina.ninecun_lingtai.client.screen.AlchemyFurnaceScreen;
 import net.seraphina.ninecun_lingtai.client.screen.StorageRingScreen;
 import net.seraphina.ninecun_lingtai.client.render.DefenseBarShader;
@@ -25,6 +28,8 @@ import net.seraphina.ninecun_lingtai.client.render.SoulConstellationShader;
 import net.seraphina.ninecun_lingtai.client.render.SoulRenderer;
 import net.seraphina.ninecun_lingtai.client.render.SpiritualEnergyShader;
 import net.seraphina.ninecun_lingtai.client.render.TechniqueCloudShader;
+import net.seraphina.ninecun_lingtai.client.render.TestCloudEntityRenderer;
+import net.seraphina.ninecun_lingtai.client.render.TestCloudShader;
 import net.seraphina.ninecun_lingtai.client.render.TribulationCloudShader;
 import net.seraphina.ninecun_lingtai.client.render.PushingMountainsCollisionRenderer;
 import net.seraphina.ninecun_lingtai.client.render.PushingMountainsEntityRenderer;
@@ -45,6 +50,7 @@ import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.EntityRenderersEvent;
+import net.minecraftforge.client.event.ModelEvent;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.client.event.RegisterColorHandlersEvent;
 import net.minecraftforge.client.event.RegisterShadersEvent;
@@ -97,6 +103,10 @@ public final class ClientModEventHandler {
             ModMain.MOD_ID,
             "tribulation_cloud"
     );
+    private static final ResourceLocation TEST_CLOUD_SHADER = ResourceLocation.fromNamespaceAndPath(
+            ModMain.MOD_ID,
+            "test_cloud"
+    );
 
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
@@ -124,9 +134,15 @@ public final class ClientModEventHandler {
     }
 
     @SubscribeEvent
+    public static void onRegisterAdditionalModels(ModelEvent.RegisterAdditional event) {
+        event.register(BookRenderer.BASE_MODEL_ID);
+    }
+
+    @SubscribeEvent
     public static void onRegisterClientTooltipComponentFactories(
             RegisterClientTooltipComponentFactoriesEvent event
     ) {
+        event.register(BookTooltipComponent.class, BookClientTooltipComponent::new);
         event.register(FiveElementWheelTooltipComponent.class, FiveElementWheelClientTooltipComponent::new);
     }
 
@@ -162,6 +178,10 @@ public final class ClientModEventHandler {
         event.registerEntityRenderer(
                 ModEntityTypes.PUSHING_MOUNTAINS_COLLISION.get(),
                 PushingMountainsCollisionRenderer::new
+        );
+        event.registerEntityRenderer(
+                ModEntityTypes.TEST_CLOUD_ENTITY.get(),
+                TestCloudEntityRenderer::new
         );
     }
 
@@ -267,6 +287,14 @@ public final class ClientModEventHandler {
                         DefaultVertexFormat.POSITION_COLOR_TEX
                 ),
                 TribulationCloudShader::setTribulationCloudShader
+        );
+        event.registerShader(
+                new ShaderInstance(
+                        event.getResourceProvider(),
+                        TEST_CLOUD_SHADER,
+                        DefaultVertexFormat.POSITION_COLOR_TEX
+                ),
+                TestCloudShader::setTestCloudShader
         );
     }
 }

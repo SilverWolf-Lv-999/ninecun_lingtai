@@ -226,6 +226,7 @@
   "entity.ninecun_lingtai.defense_spell_guardian": "护法术灵",
   "entity.ninecun_lingtai.pushing_mountains_entity": "山岳之块",
   "entity.ninecun_lingtai.pushing_mountains_collision": "山岳碰撞体",
+  "entity.ninecun_lingtai.test_cloud_entity": "测试云",
   "message.ninecun_lingtai.soul_roaming.realm_too_low": "化神期及以上方可神游太虚",
   "message.ninecun_lingtai.soul_roaming.cannot_start": "此刻无法神游太虚",
   "message.ninecun_lingtai.soul_roaming.started": "魂魄离体，神游太虚",

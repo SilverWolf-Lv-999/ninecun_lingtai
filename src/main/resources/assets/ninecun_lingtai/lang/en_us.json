@@ -226,6 +226,7 @@
   "entity.ninecun_lingtai.defense_spell_guardian": "Defense Spell Guardian",
   "entity.ninecun_lingtai.pushing_mountains_entity": "Mountain Region",
   "entity.ninecun_lingtai.pushing_mountains_collision": "Mountain Collision",
+  "entity.ninecun_lingtai.test_cloud_entity": "Test Cloud",
   "message.ninecun_lingtai.soul_roaming.realm_too_low": "Soul roaming requires Spirit Transformation or higher",
   "message.ninecun_lingtai.soul_roaming.cannot_start": "You cannot roam the void right now",
   "message.ninecun_lingtai.soul_roaming.started": "Your soul leaves your body",

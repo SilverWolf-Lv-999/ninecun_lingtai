@@ -14,9 +14,6 @@ public final class ClientNotificationManager {
     private static Notification activeNotification;
     private static int elapsedTicks;
 
-    private ClientNotificationManager() {
-    }
-
     public static void accept(Component title, Component content, int durationTicks) {
         Notification notification = new Notification(
                 title.copy(),

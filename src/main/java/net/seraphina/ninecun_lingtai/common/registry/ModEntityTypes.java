@@ -5,6 +5,7 @@ import net.seraphina.ninecun_lingtai.common.entity.SoulEntity;
 import net.seraphina.ninecun_lingtai.common.entity.ability.PushingMountainsCollisionEntity;
 import net.seraphina.ninecun_lingtai.common.entity.ability.PushingMountainsEntity;
 import net.seraphina.ninecun_lingtai.common.entity.spell.DefenseSpellGuardianEntity;
+import net.seraphina.ninecun_lingtai.common.entity.test.TestCloudEntity;
 import net.seraphina.ninecun_lingtai.common.entity.tribulation.ThunderTribulationEntity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -71,6 +72,16 @@ public final class ModEntityTypes {
                             .updateInterval(1)
                     .build("pushing_mountains_collision")
             );
+
+    public static final RegistryObject<EntityType<TestCloudEntity>> TEST_CLOUD_ENTITY = ENTITY_TYPES.register(
+            "test_cloud_entity",
+            () -> EntityType.Builder
+                    .of(TestCloudEntity::new, MobCategory.MISC)
+                    .sized(7.0F, 4.0F)
+                    .clientTrackingRange(96)
+                    .updateInterval(3)
+                    .build("test_cloud_entity")
+    );
 
     public static void register(IEventBus modEventBus) {
         ENTITY_TYPES.register(modEventBus);

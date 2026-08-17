@@ -36,10 +36,12 @@ import net.seraphina.ninecun_lingtai.client.utility.NotificationRenderUtility;
 import net.seraphina.ninecun_lingtai.client.render.PushingMountainsRenderMeshManager;
 import net.seraphina.ninecun_lingtai.client.utility.PushingMountainsRenderUtility;
 import net.seraphina.ninecun_lingtai.common.entity.ability.PushingMountainsEntity;
+import net.seraphina.ninecun_lingtai.client.tooltip.BookTooltipComponent;
 import net.seraphina.ninecun_lingtai.client.tooltip.FiveElementWheelTooltipComponent;
 import net.seraphina.ninecun_lingtai.client.utility.ItemTooltipUtility;
 import net.seraphina.ninecun_lingtai.client.utility.SpiritualEnergyHudRenderUtility;
 import net.seraphina.ninecun_lingtai.client.utility.SpiritualEnergyRenderUtility;
+import net.seraphina.ninecun_lingtai.utility.BookItemUtility;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.Input;
 import net.minecraft.world.entity.Entity;
@@ -60,6 +62,12 @@ public final class ClientForgeEventHandler {
                 .ifPresent(elements -> event.getTooltipElements().add(Either.right(
                         new FiveElementWheelTooltipComponent(elements)
                 )));
+        BookItemUtility.getBookId(event.getItemStack()).ifPresent(bookId ->
+                event.getTooltipElements().add(Either.right(new BookTooltipComponent(
+                        BookItemUtility.getTitle(event.getItemStack()).orElse(bookId.toString()),
+                        BookItemUtility.getAuthor(event.getItemStack()).orElse("")
+                )))
+        );
     }
 
     @SubscribeEvent

@@ -1,6 +1,8 @@
 package net.seraphina.ninecun_lingtai.common.item;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -11,12 +13,17 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
+import net.minecraftforge.client.extensions.common.IClientItemExtensions;
+import net.seraphina.ninecun_lingtai.client.SeraFont;
+import net.seraphina.ninecun_lingtai.client.render.BookRenderer;
 import net.seraphina.ninecun_lingtai.common.data.BookManager;
 import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import net.seraphina.ninecun_lingtai.utility.BookItemUtility;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 public final class BookItem extends Item {
     public BookItem(Properties properties) {
@@ -24,7 +31,7 @@ public final class BookItem extends Item {
     }
 
     @Override
-    public Component getName(ItemStack itemStack) {
+    public @NotNull Component getName(@NotNull ItemStack itemStack) {
         Optional<String> title = BookItemUtility.getTitle(itemStack);
         if (title.isPresent()) {
             return Component.literal(title.get());
@@ -59,18 +66,25 @@ public final class BookItem extends Item {
             List<Component> tooltip,
             TooltipFlag tooltipFlag
     ) {
-        BookItemUtility.getAuthor(itemStack).ifPresent(author -> tooltip.add(
-                Component.translatable("tooltip.ninecun_lingtai.book.author", author)
-                        .withStyle(ChatFormatting.GRAY)
-        ));
-        if (BookItemUtility.getBookId(itemStack).isPresent()) {
-            tooltip.add(Component.translatable("tooltip.ninecun_lingtai.book.readable")
-                    .withStyle(ChatFormatting.DARK_GRAY));
-        }
         if (tooltipFlag.isAdvanced()) {
             BookItemUtility.getBookId(itemStack).ifPresent(bookId -> tooltip.add(
                     Component.literal(bookId.toString()).withStyle(ChatFormatting.DARK_GRAY)
             ));
         }
+    }
+
+    @Override
+    public void initializeClient(Consumer<IClientItemExtensions> consumer) {
+        consumer.accept(new IClientItemExtensions() {
+            @Override
+            public BlockEntityWithoutLevelRenderer getCustomRenderer() {
+                return BookRenderer.INSTANCE;
+            }
+
+            @Override
+            public Font getFont(ItemStack itemStack, FontContext context) {
+                return SeraFont.get(ItemFontStyle.BOOK);
+            }
+        });
     }
 }

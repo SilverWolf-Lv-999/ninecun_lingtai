@@ -19,8 +19,6 @@ public final class ClientTribulationManager {
     private static final int DISSIPATION_TICKS = 100;
     private static final Map<UUID, ClientTribulationState> STATES = new HashMap<>();
 
-    private ClientTribulationManager() {
-    }
 
     public static void tick() {
         STATES.values().forEach(ClientTribulationState::tick);
