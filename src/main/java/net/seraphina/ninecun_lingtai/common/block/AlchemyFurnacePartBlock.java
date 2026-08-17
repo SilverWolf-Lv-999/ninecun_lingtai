@@ -18,7 +18,9 @@ import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.NotNull;
 
+@SuppressWarnings("alls")
 public final class AlchemyFurnacePartBlock extends Block {
     public static final IntegerProperty X_OFFSET = IntegerProperty.create(
             "x_offset",
@@ -41,13 +43,13 @@ public final class AlchemyFurnacePartBlock extends Block {
     }
 
     @Override
-    public RenderShape getRenderShape(BlockState blockState) {
+    public @NotNull RenderShape getRenderShape(@NotNull BlockState blockState) {
         return RenderShape.INVISIBLE;
     }
 
     @Override
-    public VoxelShape getShape(
-            BlockState blockState,
+    public @NotNull VoxelShape getShape(
+            @NotNull BlockState blockState,
             BlockGetter blockGetter,
             BlockPos blockPosition,
             CollisionContext collisionContext
@@ -56,11 +58,11 @@ public final class AlchemyFurnacePartBlock extends Block {
     }
 
     @Override
-    public VoxelShape getCollisionShape(
-            BlockState blockState,
-            BlockGetter blockGetter,
-            BlockPos blockPosition,
-            CollisionContext collisionContext
+    public @NotNull VoxelShape getCollisionShape(
+            @NotNull BlockState blockState,
+            @NotNull BlockGetter blockGetter,
+            @NotNull BlockPos blockPosition,
+            @NotNull CollisionContext collisionContext
     ) {
         return getFurnaceStructureShape(blockState);
     }

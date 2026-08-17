@@ -31,9 +31,11 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.seraphina.ninecun_lingtai.common.registry.ModBlockEntityTypes;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 
+@SuppressWarnings("all")
 public final class AlchemyFurnaceBlock extends BaseEntityBlock {
     public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
 
@@ -43,16 +45,16 @@ public final class AlchemyFurnaceBlock extends BaseEntityBlock {
     }
 
     @Override
-    public RenderShape getRenderShape(BlockState blockState) {
+    public @NotNull RenderShape getRenderShape(@NotNull BlockState blockState) {
         return RenderShape.ENTITYBLOCK_ANIMATED;
     }
 
     @Override
-    public VoxelShape getShape(
-            BlockState blockState,
-            BlockGetter blockGetter,
-            BlockPos blockPosition,
-            CollisionContext collisionContext
+    public @NotNull VoxelShape getShape(
+            @NotNull BlockState blockState,
+            @NotNull BlockGetter blockGetter,
+            @NotNull BlockPos blockPosition,
+            @NotNull CollisionContext collisionContext
     ) {
         return AlchemyFurnaceStructureUtility.getFurnaceStructureShape(0, 0);
     }

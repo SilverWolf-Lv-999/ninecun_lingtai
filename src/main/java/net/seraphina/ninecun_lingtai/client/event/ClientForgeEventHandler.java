@@ -5,6 +5,7 @@ import net.minecraftforge.client.event.*;
 import net.seraphina.ninecun_lingtai.ModMain;
 import net.seraphina.ninecun_lingtai.client.input.ModKeyMappings;
 import net.seraphina.ninecun_lingtai.client.player.ClientBodyShieldManager;
+import net.seraphina.ninecun_lingtai.client.player.ClientBookManager;
 import net.seraphina.ninecun_lingtai.client.notification.ClientNotificationManager;
 import net.seraphina.ninecun_lingtai.client.player.ClientCultivationFeedbackManager;
 import net.seraphina.ninecun_lingtai.client.player.ClientCultivationInfoManager;
@@ -249,6 +250,7 @@ public final class ClientForgeEventHandler {
     @SubscribeEvent
     public static void onLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
         ClientAptitudeScreenManager.reset();
+        ClientBookManager.reset();
         ClientCultivationInfoManager.reset();
         ClientTechniqueManager.reset();
         ClientAlchemyRecipeManager.reset();

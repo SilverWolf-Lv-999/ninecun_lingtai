@@ -15,6 +15,9 @@ Filters API 的分类数据只保存 `Item`，刷新创意栏时会用 `new Item
 - 基础物品：`ninecun_lingtai:han_sword`
 - 复杂 NBT 变体来源：`SpiritualItemUtility.getCreativeItemStacks(ModItems.HAN_SWORD.get())`
 - 结果：当“兵器”分类启用并显示汉剑时，自动补入凡品、灵品、仙品汉剑。
+- 基础物品：`ninecun_lingtai:book`
+- 复杂 NBT 变体来源：`BookCreativeTabCache.getItemStacks()`
+- 结果：当“书籍”分类启用并显示基础书籍时，自动补入数据包同步的全部带书籍 id、标题和作者 NBT 的书籍。
 
 行为约束：
 
@@ -24,3 +27,5 @@ Filters API 的分类数据只保存 `Item`，刷新创意栏时会用 `new Item
 - 补入后按物品注册 id 排序，并由 mixin 重新应用当前滚动位置，让可见槽位和列表内容保持一致。
 
 以后如果有其他“同一个物品、不同 NBT”的创意栏变体，可以在 `COMPLEX_NBT_ITEM_PROVIDERS` 中添加新的基础物品和变体列表来源。
+
+书籍数据包变体会在客户端收到书籍目录同步后写入 `BookCreativeTabCache`，随后重建创意栏；Filters API 重建基础 `ItemStack` 后，`ComplexNbtCreativeTabUtility` 会再次补回这些书籍 NBT 变体。

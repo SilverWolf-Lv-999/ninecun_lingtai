@@ -2,6 +2,7 @@ package net.seraphina.ninecun_lingtai.common.network;
 
 import net.seraphina.ninecun_lingtai.ModMain;
 import net.seraphina.ninecun_lingtai.api.alchemy.AlchemyRecipeDefinition;
+import net.seraphina.ninecun_lingtai.api.book.BookClientData;
 import net.seraphina.ninecun_lingtai.api.element.FiveElementValues;
 import net.seraphina.ninecun_lingtai.api.alchemy.AlchemyRecipeClientData;
 import net.seraphina.ninecun_lingtai.api.alchemy.AlchemyRecipeJeiData;
@@ -10,6 +11,7 @@ import net.seraphina.ninecun_lingtai.api.technique.TechniqueClientData;
 import net.seraphina.ninecun_lingtai.api.technique.TechniqueProgress;
 import net.seraphina.ninecun_lingtai.common.data.TechniqueManager;
 import net.seraphina.ninecun_lingtai.common.data.AlchemyRecipeManager;
+import net.seraphina.ninecun_lingtai.common.data.BookManager;
 import net.seraphina.ninecun_lingtai.common.entity.spell.DefenseSpellGuardianEntity;
 import net.seraphina.ninecun_lingtai.common.debug.DaoScrollSnapshot;
 import net.seraphina.ninecun_lingtai.common.network.packet.BreakthroughRequestPacket;
@@ -29,6 +31,7 @@ import net.seraphina.ninecun_lingtai.common.network.packet.OpenAptitudeScreenPac
 import net.seraphina.ninecun_lingtai.common.network.packet.AlchemyFurnaceActionPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.OpenAlchemyRecipeImprintScreenPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.OpenAlchemyRecipeScreenPacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.OpenBookReadingScreenPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.OpenDaoScrollScreenPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.OpenThreeThousandRealmScreenPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.OpenTechniqueImprintScreenPacket;
@@ -41,6 +44,7 @@ import net.seraphina.ninecun_lingtai.common.network.packet.PushingMountainsThrow
 import net.seraphina.ninecun_lingtai.common.network.packet.RequestCultivationInfoPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.RequestPlayerValueControlSettingsPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.RequestAlchemyRecipeLibraryPacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.RequestBookPagePacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.RequestTechniqueLibraryPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.SelectAlchemyRecipePacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.SelectSpellPacket;
@@ -73,6 +77,7 @@ import net.seraphina.ninecun_lingtai.common.network.packet.SyncStorageRingProjec
 import net.seraphina.ninecun_lingtai.common.network.packet.SyncSwordFlightPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.SyncTechniqueLibraryPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.SyncAlchemyRecipesPacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.SyncBookCatalogPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.SyncTribulationStatePacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.SyncThreeThousandRealmCatalogPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.ThreeThousandRealmTravelResultPacket;
@@ -722,6 +727,33 @@ public final class ModNetwork {
                 .decoder(SyncStorageRingProjectionPacket::decode)
                 .consumerMainThread(SyncStorageRingProjectionPacket::handle)
                 .add();
+        CHANNEL.messageBuilder(
+                        OpenBookReadingScreenPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(OpenBookReadingScreenPacket::encode)
+                .decoder(OpenBookReadingScreenPacket::decode)
+                .consumerMainThread(OpenBookReadingScreenPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        RequestBookPagePacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(RequestBookPagePacket::encode)
+                .decoder(RequestBookPagePacket::decode)
+                .consumerMainThread(RequestBookPagePacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        SyncBookCatalogPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(SyncBookCatalogPacket::encode)
+                .decoder(SyncBookCatalogPacket::decode)
+                .consumerMainThread(SyncBookCatalogPacket::handle)
+                .add();
     }
 
     public static int getId() {
@@ -877,6 +909,24 @@ public final class ModNetwork {
 
     public static void sendAptitudeScreenRequest(ServerPlayer player) {
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), OpenAptitudeScreenPacket.INSTANCE);
+    }
+
+    public static void sendBookCatalog(ServerPlayer player) {
+        CHANNEL.send(
+                PacketDistributor.PLAYER.with(() -> player),
+                new SyncBookCatalogPacket(
+                        BookManager.INSTANCE.getBooks().stream()
+                                .map(BookClientData::fromDefinition)
+                                .toList()
+                )
+        );
+    }
+
+    public static void sendBookPage(ServerPlayer player, ResourceLocation bookId, int pageIndex) {
+        BookManager.INSTANCE.getPage(bookId, pageIndex).ifPresent(page -> CHANNEL.send(
+                PacketDistributor.PLAYER.with(() -> player),
+                new OpenBookReadingScreenPacket(page)
+        ));
     }
 
     public static void sendOpenDaoScrollScreen(

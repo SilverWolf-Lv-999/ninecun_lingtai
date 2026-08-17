@@ -25,9 +25,6 @@ import java.util.Random;
 public final class ThreeThousandRealmEventHandler {
     private static final int REALM_ENTRY_NOTIFICATION_DURATION_TICKS = 20 * 3;
 
-    private ThreeThousandRealmEventHandler() {
-    }
-
     @SubscribeEvent
     public static void onServerAboutToStart(ServerAboutToStartEvent event) {
         ThreeThousandRealmManager.initialize(event.getServer());

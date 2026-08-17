@@ -2,6 +2,7 @@ package net.seraphina.ninecun_lingtai.common.registry;
 
 import net.seraphina.ninecun_lingtai.ModMain;
 import net.seraphina.ninecun_lingtai.common.item.AlchemyRecipeCreativeTabCache;
+import net.seraphina.ninecun_lingtai.common.item.BookCreativeTabCache;
 import net.seraphina.ninecun_lingtai.common.item.TechniqueCreativeTabCache;
 import net.seraphina.ninecun_lingtai.utility.AlchemyPillUtility;
 import net.seraphina.ninecun_lingtai.utility.SpiritualStoneUtility;
@@ -38,6 +39,7 @@ public final class ModCreativeModeTabs {
                         output.acceptAll(SpiritualStoneUtility.getCreativeItemStacks());
                         output.acceptAll(TechniqueCreativeTabCache.getItemStacks());
                         output.acceptAll(AlchemyRecipeCreativeTabCache.getItemStacks());
+                        output.acceptAll(BookCreativeTabCache.getItemStacks());
                     })
                     .build()
     );

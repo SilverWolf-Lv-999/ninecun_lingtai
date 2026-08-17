@@ -2,6 +2,7 @@ package net.seraphina.ninecun_lingtai.common.registry;
 
 import net.seraphina.ninecun_lingtai.ModMain;
 import net.seraphina.ninecun_lingtai.common.item.AlchemyRecipeItem;
+import net.seraphina.ninecun_lingtai.common.item.BookItem;
 import net.seraphina.ninecun_lingtai.common.item.DaoScrollItem;
 import net.seraphina.ninecun_lingtai.common.item.DregsPillItem;
 import net.seraphina.ninecun_lingtai.common.item.HanSwordItem;
@@ -46,6 +47,11 @@ public final class ModItems {
     public static final RegistryObject<Item> DAO_SCROLL = ITEMS.register(
             "dao_scroll",
             () -> new DaoScrollItem(new Item.Properties().stacksTo(1))
+    );
+
+    public static final RegistryObject<Item> BOOK = ITEMS.register(
+            "book",
+            () -> new BookItem(new Item.Properties().stacksTo(1))
     );
 
     public static final RegistryObject<Item> HAN_SWORD = ITEMS.register(

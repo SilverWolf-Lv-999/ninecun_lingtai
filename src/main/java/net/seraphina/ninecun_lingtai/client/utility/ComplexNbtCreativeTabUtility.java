@@ -1,6 +1,7 @@
 package net.seraphina.ninecun_lingtai.client.utility;
 
 import net.seraphina.ninecun_lingtai.common.item.AlchemyRecipeCreativeTabCache;
+import net.seraphina.ninecun_lingtai.common.item.BookCreativeTabCache;
 import net.seraphina.ninecun_lingtai.common.item.TechniqueCreativeTabCache;
 import net.seraphina.ninecun_lingtai.common.registry.ModCreativeModeTabs;
 import net.seraphina.ninecun_lingtai.common.registry.ModItems;
@@ -28,6 +29,10 @@ public final class ComplexNbtCreativeTabUtility {
             new ComplexNbtItemProvider(
                     ModItems.ALCHEMY_RECIPE::get,
                     AlchemyRecipeCreativeTabCache::getItemStacks
+            ),
+            new ComplexNbtItemProvider(
+                    ModItems.BOOK::get,
+                    BookCreativeTabCache::getItemStacks
             )
     );
 

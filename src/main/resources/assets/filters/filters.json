@@ -52,6 +52,13 @@
         "ninecun_lingtai:han_sword"
       ]
     },
+    "books": {
+      "title": "书籍",
+      "icon": "ninecun_lingtai:book",
+      "items": [
+        "ninecun_lingtai:book"
+      ]
+    },
     "prop": {
       "title": "道具",
       "icon": "ninecun_lingtai:storage_ring",
