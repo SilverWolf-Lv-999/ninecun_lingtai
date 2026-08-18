@@ -59,26 +59,38 @@ public final class ClientForgeEventHandler {
 
     @SubscribeEvent
     public static void gatherTooltipComponents(RenderTooltipEvent.GatherComponents event) {
+        if (BookItemUtility.getBookId(event.getItemStack()).isPresent()) {
+            event.getTooltipElements().clear();
+            addBookTooltip(event);
+            return;
+        }
         ItemTooltipUtility.resolveFiveElementTooltipElements(event.getItemStack())
                 .ifPresent(elements -> event.getTooltipElements().add(Either.right(
                         new FiveElementWheelTooltipComponent(elements)
                 )));
-        BookItemUtility.getBookId(event.getItemStack()).ifPresent(bookId ->
-                event.getTooltipElements().add(Either.right(new BookTooltipComponent(
-                        BookItemUtility.getTitle(event.getItemStack()).orElse(bookId.toString()),
-                        BookItemUtility.getAuthor(event.getItemStack()).orElse("")
-                )))
-        );
     }
 
     @SubscribeEvent
     public static void renderTooltip(RenderTooltipEvent.Pre event) {
+        if (BookItemUtility.getBookId(event.getItemStack()).isPresent()) {
+            event.setFont(Minecraft.getInstance().font);
+            return;
+        }
         ItemTooltipUtility.resolveTooltipFont(event.getItemStack()).ifPresent(event::setFont);
     }
 
     @SubscribeEvent
     public static void colorTooltip(RenderTooltipEvent.Color event) {
         ItemTooltipUtility.applyTooltipColors(event);
+    }
+
+    private static void addBookTooltip(RenderTooltipEvent.GatherComponents event) {
+        BookItemUtility.getBookId(event.getItemStack()).ifPresent(bookId ->
+                event.getTooltipElements().add(Either.right(new BookTooltipComponent(
+                        BookItemUtility.getTitle(event.getItemStack()).orElse(bookId.toString()),
+                        BookItemUtility.getAuthor(event.getItemStack()).orElse("")
+                )))
+        );
     }
 
     @SubscribeEvent

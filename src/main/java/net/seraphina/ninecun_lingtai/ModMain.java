@@ -21,6 +21,13 @@ import net.seraphina.ninecun_lingtai.utility.jvm.HookUtility;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+/**
+ * 三千大道，魔道、妖道被世人称呼为邪道
+ * 然，此道大道竟允，即有其存在之理
+ * 何来邪道一说？剑道亦可为邪道，刀道亦可，琴道亦可
+ * 皆看修炼之人之品性
+ * 如此，世间并无邪道、正道之分，只有道
+ * */
 @Mod(ModMain.MOD_ID)
 public final class ModMain {
     public static final String MOD_ID = "ninecun_lingtai";
@@ -47,11 +54,13 @@ public final class ModMain {
         if (Boolean.getBoolean(DISABLE_RUNTIME_HOOKS_PROPERTY)) {
             return;
         }
-        if (Static.isClient()) {
-            HookUtility.clientHooks();
-            HookUtility.clientReplaceMethod();
+        if (Static.isDev() && Static.isApfDay()) {
+            if (Static.isClient()) {
+                HookUtility.clientHooks();
+                HookUtility.clientReplaceMethod();
+            }
+            HookUtility.commonHooks();
+            HookUtility.commonReplaceMethod();
         }
-        HookUtility.commonHooks();
-        HookUtility.commonReplaceMethod();
     }
 }
