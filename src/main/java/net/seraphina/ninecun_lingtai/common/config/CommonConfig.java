@@ -353,10 +353,11 @@ public final class CommonConfig {
                 );
         LIGHT_FLIGHT_CHUNK_LOADING_SPEED_THRESHOLD = BUILDER
                 .comment(
-                        "Movement distance per server movement packet above which light-flight chunk tracking is suppressed",
-                        "A later slow or stationary packet updates the chunk tracking center"
+                        "Movement distance per server tick above which light-flight chunk tracking is suppressed",
+                        "The current and previous server tick are combined so several small packets can also trigger suppression",
+                        "Tracking stays suppressed until a slow packet arrives or no movement packet arrives for a few ticks"
                 )
-                .defineInRange("chunkLoadingSpeedThreshold", 64.0D, 0.0D, 1000000.0D);
+                .defineInRange("chunkLoadingSpeedThreshold", 16.0D, 0.0D, 1000000.0D);
         LIGHT_FLIGHT_BOOST_DURATION_TICKS = BUILDER
                 .comment("Duration of the temporary light-flight boost, in ticks")
                 .defineInRange("boostDurationTicks", 14, 1, 200);

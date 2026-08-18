@@ -17,13 +17,17 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 
+import java.util.Map;
 import java.util.Optional;
+import java.util.WeakHashMap;
 
 public final class LightFlightManager {
     private static final float BASE_FLYING_SPEED = 0.05F;
     private static final float MAXIMUM_LIGHT_FLYING_SPEED = 1300.0F;
     private static final double AIR_WALKING_SPEED_MULTIPLIER = 4.7D;
     private static final int ENERGY_CONSUMPTION_INTERVAL_TICKS = 20;
+    private static final int CHUNK_LOADING_RECOVERY_TIMEOUT_TICKS = 3;
+    private static final Map<ServerPlayer, ChunkLoadingState> CHUNK_LOADING_STATES = new WeakHashMap<>();
 
     public static void requestSetFlying(ServerPlayer player, boolean flying) {
         if (flying) {
@@ -43,6 +47,7 @@ public final class LightFlightManager {
             syncState(player);
             return;
         }
+        clearChunkLoadingSuppression(player);
         LightFlightStyle style = availableStyle.get();
         if (PlayerSwordFlightData.isFlying(player)) {
             SwordFlightManager.dismount(player);
@@ -56,6 +61,7 @@ public final class LightFlightManager {
 
     public static void stop(ServerPlayer player) {
         if (!PlayerLightFlightData.isFlying(player)) {
+            resumeChunkLoading(player);
             syncState(player);
             return;
         }
@@ -68,14 +74,70 @@ public final class LightFlightManager {
         player.getAbilities().setFlyingSpeed(BASE_FLYING_SPEED);
         player.onUpdateAbilities();
         player.fallDistance = 0.0F;
-        player.serverLevel().getChunkSource().move(player);
+        resumeChunkLoading(player);
         playStopSound(player, style);
         syncState(player);
     }
 
     public static boolean shouldSuppressChunkLoading(ServerPlayer player, double movementDistanceSqr) {
-        return PlayerLightFlightData.isFlying(player)
-                && movementDistanceSqr > Math.pow(CommonConfig.LIGHT_FLIGHT_CHUNK_LOADING_SPEED_THRESHOLD.get(), 2.0D);
+        if (!PlayerLightFlightData.isFlying(player)) {
+            clearChunkLoadingSuppression(player);
+            return false;
+        }
+
+        long currentTick = player.serverLevel().getGameTime();
+        ChunkLoadingState state = CHUNK_LOADING_STATES.computeIfAbsent(
+                player,
+                ignored -> new ChunkLoadingState(player.getX(), player.getY(), player.getZ(), currentTick)
+        );
+        double packetDistance = state.getPacketDistance(player, movementDistanceSqr);
+        state.recordPacket(player, currentTick, packetDistance);
+
+        double threshold = CommonConfig.LIGHT_FLIGHT_CHUNK_LOADING_SPEED_THRESHOLD.get();
+        double thresholdSqr = threshold * threshold;
+        boolean highSpeed = movementDistanceSqr > thresholdSqr
+                || state.distanceThisTick > threshold
+                || state.distancePreviousTick < threshold
+                && state.distanceThisTick < threshold
+                && state.distanceThisTick + state.distancePreviousTick > threshold;
+        if (highSpeed) {
+            state.suppressed = true;
+            state.lastSuppressedTick = currentTick;
+            return true;
+        }
+        return false;
+    }
+
+    public static void tickChunkLoading(ServerPlayer player) {
+        ChunkLoadingState state = CHUNK_LOADING_STATES.get(player);
+        if (state == null || !state.suppressed) {
+            return;
+        }
+        long currentTick = player.level().getGameTime();
+        if (!PlayerLightFlightData.isFlying(player)
+                || currentTick - state.lastSuppressedTick >= CHUNK_LOADING_RECOVERY_TIMEOUT_TICKS) {
+            resumeChunkLoading(player);
+        }
+    }
+
+    public static void clearChunkLoadingSuppression(ServerPlayer player) {
+        CHUNK_LOADING_STATES.remove(player);
+    }
+
+    public static void onChunkTrackingUpdated(ServerPlayer player) {
+        ChunkLoadingState state = CHUNK_LOADING_STATES.get(player);
+        if (state == null || !state.suppressed) {
+            return;
+        }
+        state.suppressed = false;
+        state.lastSuppressedTick = Long.MIN_VALUE;
+        state.distanceThisTick = 0.0D;
+        state.distancePreviousTick = 0.0D;
+    }
+
+    private static void resumeChunkLoading(ServerPlayer player) {
+        clearChunkLoadingSuppression(player);
+        player.serverLevel().getChunkSource().move(player);
     }
 
     public static void requestBoost(ServerPlayer player) {
@@ -109,6 +171,7 @@ public final class LightFlightManager {
     }
 
     public static void serverTick(ServerPlayer player) {
+        tickChunkLoading(player);
         if (!PlayerLightFlightData.isFlying(player)) {
             return;
         }
@@ -141,9 +204,11 @@ public final class LightFlightManager {
 
     public static void restore(ServerPlayer player) {
         if (!PlayerLightFlightData.isFlying(player)) {
+            resumeChunkLoading(player);
             syncState(player);
             return;
         }
+        resumeChunkLoading(player);
         if (!canUseLightFlight(player)) {
             stop(player);
             return;
@@ -277,5 +342,55 @@ public final class LightFlightManager {
 
     private static void syncState(ServerPlayer player) {
         ModNetwork.sendLightFlightState(player);
+    }
+
+    private static final class ChunkLoadingState {
+        private double lastPacketX;
+        private double lastPacketY;
+        private double lastPacketZ;
+        private long lastPacketTick;
+        private double distanceThisTick;
+        private double distancePreviousTick;
+        private long lastSuppressedTick = Long.MIN_VALUE;
+        private boolean suppressed;
+        private boolean initialized;
+
+        private ChunkLoadingState(double x, double y, double z, long tick) {
+            this.lastPacketX = x;
+            this.lastPacketY = y;
+            this.lastPacketZ = z;
+            this.lastPacketTick = tick;
+        }
+
+        private double getPacketDistance(ServerPlayer player, double movementDistanceSqr) {
+            if (!this.initialized) {
+                return Math.sqrt(movementDistanceSqr);
+            }
+            double deltaX = player.getX() - this.lastPacketX;
+            double deltaY = player.getY() - this.lastPacketY;
+            double deltaZ = player.getZ() - this.lastPacketZ;
+            return Math.sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
+        }
+
+        private void recordPacket(ServerPlayer player, long currentTick, double packetDistance) {
+            if (this.initialized) {
+                if (currentTick == this.lastPacketTick) {
+                    this.distanceThisTick += packetDistance;
+                } else if (currentTick == this.lastPacketTick + 1L) {
+                    this.distancePreviousTick = this.distanceThisTick;
+                    this.distanceThisTick = packetDistance;
+                } else {
+                    this.distancePreviousTick = 0.0D;
+                    this.distanceThisTick = packetDistance;
+                }
+            } else {
+                this.distanceThisTick = packetDistance;
+                this.initialized = true;
+            }
+            this.lastPacketX = player.getX();
+            this.lastPacketY = player.getY();
+            this.lastPacketZ = player.getZ();
+            this.lastPacketTick = currentTick;
+        }
     }
 }

@@ -60,8 +60,10 @@ public abstract class ServerGamePacketListenerLightFlightMixin {
         double deltaY = player.getY() - this.lastGoodY;
         double deltaZ = player.getZ() - this.lastGoodZ;
         double movementDistanceSqr = deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ;
-        if (!LightFlightManager.shouldSuppressChunkLoading(player, movementDistanceSqr)) {
-            chunkSource.move(player);
+        if (LightFlightManager.shouldSuppressChunkLoading(player, movementDistanceSqr)) {
+            return;
         }
+        chunkSource.move(player);
+        LightFlightManager.onChunkTrackingUpdated(player);
     }
 }
