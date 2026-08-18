@@ -147,12 +147,32 @@ sourceSets {
             srcDir 'src/main/transformationServiceResources'
         }
     }
+    agent {
+        java {
+            srcDir 'src/agent/java'
+        }
+    }
 }
 
 sourceSets.transformationService.compileClasspath += sourceSets.main.compileClasspath
 sourceSets.transformationService.runtimeClasspath += sourceSets.main.runtimeClasspath
 sourceSets.test.compileClasspath += sourceSets.transformationService.output
 sourceSets.test.runtimeClasspath += sourceSets.transformationService.output
+
+def agentJar = tasks.register('agentJar', Jar) {
+    archiveFileName = 'agent.jar'
+    destinationDirectory = layout.buildDirectory.dir('generated/agent')
+    dependsOn tasks.named('agentClasses')
+    from(sourceSets.agent.output)
+    manifest {
+        attributes([
+                'Manifest-Version'       : '1.0',
+                'Agent-Class'            : 'net.seraphina.ninecun_lingtai.coremod.CoreMain',
+                'Can-Redefine-Classes'   : 'true',
+                'Can-Retransform-Classes': 'true',
+        ])
+    }
+}
 
 tasks.named('compileTestJava', JavaCompile).configure {
     dependsOn tasks.named('transformationServiceClasses')
@@ -351,6 +371,9 @@ tasks.named('test', Test).configure {
 // See https://docs.gradle.org/current/dsl/org.gradle.language.jvm.tasks.ProcessResources.html
 tasks.named('processResources', ProcessResources).configure {
     filteringCharset = 'UTF-8'
+    from(agentJar) {
+        into "assets/${mod_id}/coremod"
+    }
     var replaceProperties = [minecraft_version   : minecraft_version, minecraft_version_range: minecraft_version_range,
                              forge_version       : forge_version, forge_version_range: forge_version_range,
                              loader_version_range: loader_version_range,
