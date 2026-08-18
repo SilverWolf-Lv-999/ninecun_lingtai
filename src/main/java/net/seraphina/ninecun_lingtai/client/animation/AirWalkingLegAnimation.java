@@ -8,14 +8,17 @@ import net.minecraft.world.phys.Vec3;
 
 final class AirWalkingLegAnimation extends PlayerAnimationFrame {
     private static final float MAX_LEG_ROTATION_DEGREES = 10.0F;
+    private static final float MAX_SIDE_LEG_ROTATION_DEGREES = 5.0F;
     private static final float ROTATION_RESPONSE = 0.35F;
     private static final double FLYING_SPEED_MULTIPLIER = 2.0D;
     private static final float MINIMUM_FLYING_SPEED = 0.05F;
 
     private final Player player;
     private boolean active;
-    private float previousRotation;
-    private float rotation;
+    private float previousForwardRotation;
+    private float forwardRotation;
+    private float previousSideRotation;
+    private float sideRotation;
 
     AirWalkingLegAnimation(Player player) {
         this.player = player;
@@ -24,8 +27,10 @@ final class AirWalkingLegAnimation extends PlayerAnimationFrame {
     void setActive(boolean active) {
         this.active = active;
         if (!active) {
-            this.previousRotation = 0.0F;
-            this.rotation = 0.0F;
+            this.previousForwardRotation = 0.0F;
+            this.forwardRotation = 0.0F;
+            this.previousSideRotation = 0.0F;
+            this.sideRotation = 0.0F;
             clearPose();
         }
     }
@@ -35,8 +40,18 @@ final class AirWalkingLegAnimation extends PlayerAnimationFrame {
         if (!this.active) {
             return;
         }
-        this.previousRotation = this.rotation;
-        this.rotation = Mth.lerp(ROTATION_RESPONSE, this.rotation, getTargetRotation());
+        this.previousForwardRotation = this.forwardRotation;
+        this.forwardRotation = Mth.lerp(
+                ROTATION_RESPONSE,
+                this.forwardRotation,
+                getTargetForwardRotation()
+        );
+        this.previousSideRotation = this.sideRotation;
+        this.sideRotation = Mth.lerp(
+                ROTATION_RESPONSE,
+                this.sideRotation,
+                getTargetSideRotation()
+        );
     }
 
     @Override
@@ -45,13 +60,37 @@ final class AirWalkingLegAnimation extends PlayerAnimationFrame {
             clearPose();
             return;
         }
-        float interpolatedRotation = Mth.lerp(tickDelta, this.previousRotation, this.rotation);
-        float rotationRadians = interpolatedRotation * Mth.DEG_TO_RAD;
-        this.rightLeg.rot = new Vec3f(rotationRadians, 0.0F, 0.0F);
-        this.leftLeg.rot = new Vec3f(rotationRadians, 0.0F, 0.0F);
+        float interpolatedForwardRotation = Mth.lerp(
+                tickDelta,
+                this.previousForwardRotation,
+                this.forwardRotation
+        );
+        float interpolatedSideRotation = Mth.lerp(
+                tickDelta,
+                this.previousSideRotation,
+                this.sideRotation
+        );
+        this.rightLeg.rot = new Vec3f(
+                interpolatedForwardRotation * Mth.DEG_TO_RAD,
+                0.0F,
+                interpolatedSideRotation * Mth.DEG_TO_RAD
+        );
+        this.leftLeg.rot = new Vec3f(
+                interpolatedForwardRotation * Mth.DEG_TO_RAD,
+                0.0F,
+                interpolatedSideRotation * Mth.DEG_TO_RAD
+        );
     }
 
-    private float getTargetRotation() {
+    private float getTargetForwardRotation() {
+        return getHorizontalSpeedRatio(true) * MAX_LEG_ROTATION_DEGREES;
+    }
+
+    private float getTargetSideRotation() {
+        return getHorizontalSpeedRatio(false) * MAX_SIDE_LEG_ROTATION_DEGREES;
+    }
+
+    private float getHorizontalSpeedRatio(boolean forward) {
         double flyingSpeed = Math.max(
                 this.player.getAbilities().getFlyingSpeed(),
                 MINIMUM_FLYING_SPEED
@@ -73,12 +112,15 @@ final class AirWalkingLegAnimation extends PlayerAnimationFrame {
                 0.0D,
                 this.player.getDeltaMovement().z
         );
+        Vec3 direction = forward
+                ? horizontalLook
+                : new Vec3(horizontalLook.z, 0.0D, -horizontalLook.x);
         float speedRatio = (float) Mth.clamp(
-                horizontalMovement.dot(horizontalLook) / flyingSpeed,
+                horizontalMovement.dot(direction) / flyingSpeed,
                 -1.0D,
                 1.0D
         );
-        return speedRatio * MAX_LEG_ROTATION_DEGREES;
+        return speedRatio;
     }
 
     private void clearPose() {
