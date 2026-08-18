@@ -12,6 +12,7 @@ import net.seraphina.ninecun_lingtai.api.technique.TechniqueProgress;
 import net.seraphina.ninecun_lingtai.common.ascension.AscensionPhase;
 import net.seraphina.ninecun_lingtai.common.ascension.AscensionManager;
 import net.seraphina.ninecun_lingtai.common.ascension.AscensionSession;
+import net.seraphina.ninecun_lingtai.common.config.CommonConfig;
 import net.seraphina.ninecun_lingtai.common.data.TechniqueManager;
 import net.seraphina.ninecun_lingtai.common.data.AlchemyRecipeManager;
 import net.seraphina.ninecun_lingtai.common.data.BookManager;
@@ -934,6 +935,9 @@ public final class ModNetwork {
     }
 
     public static void sendAptitudeScreenRequest(ServerPlayer player) {
+        if (CommonConfig.RANDOMIZE_PLAYER_APTITUDE.get()) {
+            return;
+        }
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), OpenAptitudeScreenPacket.INSTANCE);
     }
 

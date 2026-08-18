@@ -1,6 +1,7 @@
 package net.seraphina.ninecun_lingtai.common.event;
 
 import net.seraphina.ninecun_lingtai.ModMain;
+import net.seraphina.ninecun_lingtai.common.config.CommonConfig;
 import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import net.seraphina.ninecun_lingtai.common.player.PlayerAptitudeData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerBreakthroughDiscountData;
@@ -15,6 +16,7 @@ import net.seraphina.ninecun_lingtai.common.player.PlayerSpiritualEnergyData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerTechniqueData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerTechniqueProficiencyData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerValueControlData;
+import net.seraphina.ninecun_lingtai.utility.PlayerAptitudeUtility;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.event.entity.player.PlayerEvent;
@@ -26,6 +28,11 @@ public final class PlayerAptitudeEventHandler {
 
     @SubscribeEvent
     public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
+        if (event.getEntity() instanceof ServerPlayer serverPlayer
+                && CommonConfig.RANDOMIZE_PLAYER_APTITUDE.get()
+                && !PlayerAptitudeData.hasCompleteAptitude(serverPlayer)) {
+            PlayerAptitudeUtility.assignRandomAptitude(serverPlayer);
+        }
         syncCultivationInfo(event.getEntity());
         requestScreenWhenMissing(event.getEntity());
     }
@@ -64,6 +71,7 @@ public final class PlayerAptitudeEventHandler {
 
     private static void requestScreenWhenMissing(Player player) {
         if (player instanceof ServerPlayer serverPlayer
+                && !CommonConfig.RANDOMIZE_PLAYER_APTITUDE.get()
                 && !PlayerAptitudeData.hasCompleteAptitude(serverPlayer)) {
             ModNetwork.sendAptitudeScreenRequest(serverPlayer);
         }

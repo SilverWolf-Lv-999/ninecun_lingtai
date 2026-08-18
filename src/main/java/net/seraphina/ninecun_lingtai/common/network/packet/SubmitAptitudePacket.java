@@ -2,6 +2,7 @@ package net.seraphina.ninecun_lingtai.common.network.packet;
 
 import net.seraphina.ninecun_lingtai.api.aptitude.SoulStrength;
 import net.seraphina.ninecun_lingtai.api.aptitude.SpiritualRoot;
+import net.seraphina.ninecun_lingtai.common.config.CommonConfig;
 import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import net.seraphina.ninecun_lingtai.common.player.PlayerAptitudeData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerSoulRoamingManager;
@@ -26,6 +27,7 @@ public record SubmitAptitudePacket(int elementMask, float lengthInches, int illu
     public static void handle(SubmitAptitudePacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
         ServerPlayer player = contextSupplier.get().getSender();
         if (player == null
+                || CommonConfig.RANDOMIZE_PLAYER_APTITUDE.get()
                 || PlayerSoulRoamingManager.isSoulRoaming(player)
                 || PlayerAptitudeData.hasCompleteAptitude(player)) {
             return;

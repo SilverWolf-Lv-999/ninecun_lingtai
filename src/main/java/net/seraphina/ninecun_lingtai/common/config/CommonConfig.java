@@ -48,6 +48,7 @@ public final class CommonConfig {
     public static final ForgeConfigSpec.DoubleValue MEDITATION_GENERATED_BY_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue MEDITATION_OVERCOMES_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue MEDITATION_OVERCOME_BY_MULTIPLIER;
+    public static final ForgeConfigSpec.BooleanValue RANDOMIZE_PLAYER_APTITUDE;
     public static final ForgeConfigSpec.DoubleValue TRIBULATION_ROOT_QUALITY_WEIGHT;
     public static final ForgeConfigSpec.DoubleValue TRIBULATION_SOUL_QUALITY_WEIGHT;
     public static final ForgeConfigSpec.DoubleValue TRIBULATION_FOUR_NINE_THRESHOLD;
@@ -278,6 +279,15 @@ public final class CommonConfig {
         MEDITATION_OVERCOME_BY_MULTIPLIER = BUILDER
                 .comment("Absorption multiplier when another element in a multi-element root overcomes the incoming element")
                 .defineInRange("overcomeByMultiplier", 0.65D, MINIMUM_MULTIPLIER, MAXIMUM_MULTIPLIER);
+        BUILDER.pop();
+
+        BUILDER.push("aptitude");
+        RANDOMIZE_PLAYER_APTITUDE = BUILDER
+                .comment(
+                        "Whether players without a complete aptitude receive a random aptitude",
+                        "instead of choosing their spiritual root and soul strength"
+                )
+                .define("randomizePlayerAptitude", true);
         BUILDER.pop();
 
         BUILDER.push("tribulation");
