@@ -1,0 +1,22 @@
+{
+  "display": {
+    "icon": {
+      "item": "ninecun_lingtai:dao_scroll"
+    },
+    "title": {
+      "translate": "advancements.ninecun_lingtai.step_into_immortal_path.title"
+    },
+    "description": {
+      "translate": "advancements.ninecun_lingtai.step_into_immortal_path.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "joined_world": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}
