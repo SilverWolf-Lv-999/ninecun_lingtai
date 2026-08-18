@@ -1,7 +1,11 @@
 package net.seraphina.ninecun_lingtai.mixin.common.health;
 
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.player.Player;
 import net.seraphina.ninecun_lingtai.utility.CultivationDefenseUtility;
+import net.seraphina.ninecun_lingtai.utility.StackTraceEffectImmunityUtility;
 import net.minecraft.world.entity.LivingEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -36,6 +40,38 @@ public abstract class LivingEntityMixin {
         LivingEntity entity = (LivingEntity) (Object) this;
         if (CultivationDefenseUtility.hasActiveDefense(entity) && pSource.getEntity() == null) {
             cir.setReturnValue(false);
+        }
+    }
+
+    @Inject(
+            method = "addEffect(Lnet/minecraft/world/effect/MobEffectInstance;)Z",
+            at = @At("HEAD"),
+            cancellable = true
+    )
+    private void ninecunLingtai$blockGeneratedSlowness(
+            MobEffectInstance effectInstance,
+            CallbackInfoReturnable<Boolean> callbackInfo
+    ) {
+        LivingEntity entity = (LivingEntity) (Object) this;
+        if (entity instanceof Player player
+                && StackTraceEffectImmunityUtility.shouldBlockSlowness(player, effectInstance)) {
+            callbackInfo.setReturnValue(false);
+        }
+    }
+
+    @Inject(
+            method = "removeEffect(Lnet/minecraft/world/effect/MobEffect;)Z",
+            at = @At("HEAD"),
+            cancellable = true
+    )
+    private void ninecunLingtai$blockGeneratedBeneficialEffectRemoval(
+            MobEffect effect,
+            CallbackInfoReturnable<Boolean> callbackInfo
+    ) {
+        LivingEntity entity = (LivingEntity) (Object) this;
+        if (entity instanceof Player player
+                && StackTraceEffectImmunityUtility.shouldBlockBeneficialEffectRemoval(player, effect)) {
+            callbackInfo.setReturnValue(false);
         }
     }
 
