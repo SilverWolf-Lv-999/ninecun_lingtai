@@ -1,8 +1,12 @@
 package net.seraphina.ninecun_lingtai.utility;
 
+import net.seraphina.ninecun_lingtai.api.aptitude.SpiritualRoot;
+import net.seraphina.ninecun_lingtai.api.element.ElementType;
 import net.seraphina.ninecun_lingtai.api.technique.TechniqueSpell;
 
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
 public final class SpellCostUtility {
 
@@ -19,5 +23,22 @@ public final class SpellCostUtility {
         return spellData.baseCost()
                 * spellData.grade().getCostMultiplier()
                 * SpellPowerUtility.getPowerMultiplier(cultivationStrength, powerEfficiency);
+    }
+
+    /**
+     * Resolves the spiritual-energy pools that should pay for a spell.
+     * Chaos spiritual roots use their chaos energy to drive spells with a
+     * specific elemental cost.
+     */
+    public static Set<ElementType> getEffectiveCostElements(
+            TechniqueSpell spellData,
+            Optional<SpiritualRoot> spiritualRoot
+    ) {
+        Objects.requireNonNull(spellData, "spellData");
+        Objects.requireNonNull(spiritualRoot, "spiritualRoot");
+        if (!spellData.consumesAnyElement() && spiritualRoot.filter(SpiritualRoot::isChaos).isPresent()) {
+            return Set.of(ElementType.CHAOS);
+        }
+        return spellData.costElements();
     }
 }

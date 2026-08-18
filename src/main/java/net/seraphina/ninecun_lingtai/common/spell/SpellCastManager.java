@@ -27,6 +27,7 @@ import net.minecraft.server.level.ServerPlayer;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public final class SpellCastManager {
@@ -122,22 +123,26 @@ public final class SpellCastManager {
                 cultivationStrength,
                 powerEfficiency
         );
+        Set<ElementType> costElements = SpellCostUtility.getEffectiveCostElements(
+                spellData,
+                PlayerAptitudeData.getSpiritualRoot(player)
+        );
         Map<ElementType, Double> anyElementConsumption = null;
-        if (spellData.consumesAnyElement()) {
+        if (costElements.isEmpty()) {
             anyElementConsumption = PlayerSpiritualEnergyData.consumeEnergyAny(player, cost);
             if (anyElementConsumption == null) {
                 sendActionBar(player, String.format(
                         "灵力不足，施展《%s》需%s",
                         technique.name(),
-                        describeCost(spellData, cost)
+                        describeCost(costElements, cost)
                 ));
                 return;
             }
-        } else if (!PlayerSpiritualEnergyData.consumeEnergy(player, spellData.costElements(), cost)) {
+        } else if (!PlayerSpiritualEnergyData.consumeEnergy(player, costElements, cost)) {
             sendActionBar(player, String.format(
                     "灵力不足，施展《%s》需%s",
                     technique.name(),
-                    describeCost(spellData, cost)
+                    describeCost(costElements, cost)
             ));
             return;
         }
@@ -155,7 +160,7 @@ public final class SpellCastManager {
                     PlayerSpiritualEnergyData.addEnergy(player, entry.getKey(), entry.getValue());
                 }
             } else {
-                for (ElementType element : spellData.costElements()) {
+                for (ElementType element : costElements) {
                     PlayerSpiritualEnergyData.addEnergy(player, element, cost);
                 }
             }
@@ -169,7 +174,7 @@ public final class SpellCastManager {
                 "施展《%s》（%s），耗去%s",
                 technique.name(),
                 masteryStage.getChineseName(),
-                describeCost(spellData, cost)
+                describeCost(costElements, cost)
         ));
     }
 
@@ -177,15 +182,18 @@ public final class SpellCastManager {
         return stage.realm().ordinal() * CultivationStage.MAXIMUM_LAYER + stage.layer();
     }
 
-    private static String describeCost(TechniqueSpell spellData, double cost) {
-        if (spellData.consumesAnyElement()) {
+    private static String describeCost(Set<ElementType> costElements, double cost) {
+        if (costElements.isEmpty()) {
             return formatCost(cost) + " 点灵力（不拘属性）";
         }
-        String elementNames = spellData.costElements().stream()
+        if (costElements.size() == 1 && costElements.contains(ElementType.CHAOS)) {
+            return formatCost(cost) + " 点混沌灵力";
+        }
+        String elementNames = costElements.stream()
                 .map(SpiritualRootUtility::getElementName)
                 .collect(Collectors.joining("、"));
         String costText = formatCost(cost) + " 点" + elementNames + "系灵力";
-        return spellData.costElements().size() > 1 ? "各 " + costText : costText;
+        return costElements.size() > 1 ? "各 " + costText : costText;
     }
 
     private static String formatCost(double cost) {
