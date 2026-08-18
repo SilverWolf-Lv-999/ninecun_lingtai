@@ -4,7 +4,6 @@ import net.seraphina.ninecun_lingtai.ModMain;
 import net.seraphina.ninecun_lingtai.client.player.ClientLightFlightManager;
 import net.seraphina.ninecun_lingtai.common.flight.LightFlightStyle;
 import dev.kosmx.playerAnim.api.firstPerson.FirstPersonMode;
-import dev.kosmx.playerAnim.api.layered.AnimationContainer;
 import dev.kosmx.playerAnim.api.layered.AnimationStack;
 import dev.kosmx.playerAnim.api.layered.IAnimation;
 import dev.kosmx.playerAnim.api.layered.KeyframeAnimationPlayer;
@@ -55,7 +54,7 @@ public final class LightFlightAnimationManager {
     }
 
     private static void registerPlayerLayer(AbstractClientPlayer player, AnimationStack animationStack) {
-        LightFlightAnimationLayer lightFlightLayer = new LightFlightAnimationLayer();
+        LightFlightAnimationLayer lightFlightLayer = new LightFlightAnimationLayer(player);
         animationStack.addAnimLayer(LIGHT_FLIGHT_LAYER_PRIORITY, lightFlightLayer);
         PlayerAnimationAccess.getPlayerAssociatedData(player).set(LIGHT_FLIGHT_LAYER_ID, lightFlightLayer);
         if (ClientLightFlightManager.isFlying(player.getUUID())) {
@@ -69,8 +68,7 @@ public final class LightFlightAnimationManager {
             return;
         }
         if (!flying) {
-            lightFlightLayer.setAnim(null);
-            lightFlightLayer.setStyle(null);
+            lightFlightLayer.setAnimation(null, null);
             return;
         }
         LightFlightStyle sanitizedStyle = style == null ? LightFlightStyle.LIGHT : style;
@@ -83,23 +81,39 @@ public final class LightFlightAnimationManager {
         }
         HoldOnLastFrameAnimationPlayer animationPlayer = new HoldOnLastFrameAnimationPlayer(lightFlightAnimation);
         animationPlayer.setFirstPersonMode(FirstPersonMode.DISABLED);
-        lightFlightLayer.setAnim(animationPlayer);
-        lightFlightLayer.setStyle(sanitizedStyle);
+        lightFlightLayer.setAnimation(animationPlayer, sanitizedStyle);
     }
 
     private static ResourceLocation getAnimationId(LightFlightStyle style) {
         return style == LightFlightStyle.AIR_WALKING ? AIR_WALKING_ANIMATION_ID : LIGHT_FLIGHT_ANIMATION_ID;
     }
 
-    private static final class LightFlightAnimationLayer extends AnimationContainer<IAnimation> {
+    private static final class LightFlightAnimationLayer extends AnimationStack {
+        private final AirWalkingLegAnimation airWalkingLegAnimation;
+        private KeyframeAnimationPlayer animationPlayer;
         private LightFlightStyle style;
+
+        private LightFlightAnimationLayer(AbstractClientPlayer player) {
+            this.airWalkingLegAnimation = new AirWalkingLegAnimation(player);
+            addAnimLayer(1, this.airWalkingLegAnimation);
+        }
 
         private LightFlightStyle getStyle() {
             return this.style;
         }
 
-        private void setStyle(LightFlightStyle style) {
+        private void setAnimation(KeyframeAnimationPlayer animationPlayer, LightFlightStyle style) {
+            if (this.animationPlayer != null) {
+                removeLayer(this.animationPlayer);
+            }
+            this.animationPlayer = animationPlayer;
+            if (animationPlayer != null) {
+                addAnimLayer(0, animationPlayer);
+            }
             this.style = style;
+            this.airWalkingLegAnimation.setActive(
+                    animationPlayer != null && style == LightFlightStyle.AIR_WALKING
+            );
         }
     }
 

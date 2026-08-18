@@ -68,8 +68,14 @@ public final class LightFlightManager {
         player.getAbilities().setFlyingSpeed(BASE_FLYING_SPEED);
         player.onUpdateAbilities();
         player.fallDistance = 0.0F;
+        player.serverLevel().getChunkSource().move(player);
         playStopSound(player, style);
         syncState(player);
+    }
+
+    public static boolean shouldSuppressChunkLoading(ServerPlayer player, double movementDistanceSqr) {
+        return PlayerLightFlightData.isFlying(player)
+                && movementDistanceSqr > Math.pow(CommonConfig.LIGHT_FLIGHT_CHUNK_LOADING_SPEED_THRESHOLD.get(), 2.0D);
     }
 
     public static void requestBoost(ServerPlayer player) {

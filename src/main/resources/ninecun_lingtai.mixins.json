@@ -8,6 +8,7 @@
     "common.ChatFormattingMixin",
     "common.CommandsMixin",
     "common.StyleMixin",
+    "common.flight.ServerGamePacketListenerLightFlightMixin",
     "common.food.FoodDataMixin",
     "common.food.PlayerMixin",
     "common.health.EntityMixin",

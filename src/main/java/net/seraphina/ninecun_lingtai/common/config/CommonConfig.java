@@ -66,6 +66,7 @@ public final class CommonConfig {
     public static final ForgeConfigSpec.DoubleValue LIGHT_FLIGHT_SPEED_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue LIGHT_FLIGHT_BOOST_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue LIGHT_FLIGHT_ENERGY_COST_PER_SECOND;
+    public static final ForgeConfigSpec.DoubleValue LIGHT_FLIGHT_CHUNK_LOADING_SPEED_THRESHOLD;
     public static final ForgeConfigSpec.DoubleValue SHRINK_EARTH_ENERGY_COST_PER_SECOND;
     public static final ForgeConfigSpec.IntValue LIGHT_FLIGHT_BOOST_DURATION_TICKS;
     public static final ForgeConfigSpec.IntValue LIGHT_FLIGHT_BOOST_COOLDOWN_TICKS;
@@ -350,6 +351,12 @@ public final class CommonConfig {
                         MINIMUM_MULTIPLIER,
                         MAXIMUM_BASE_ABSORPTION_PER_SECOND
                 );
+        LIGHT_FLIGHT_CHUNK_LOADING_SPEED_THRESHOLD = BUILDER
+                .comment(
+                        "Movement distance per server movement packet above which light-flight chunk tracking is suppressed",
+                        "A later slow or stationary packet updates the chunk tracking center"
+                )
+                .defineInRange("chunkLoadingSpeedThreshold", 64.0D, 0.0D, 1000000.0D);
         LIGHT_FLIGHT_BOOST_DURATION_TICKS = BUILDER
                 .comment("Duration of the temporary light-flight boost, in ticks")
                 .defineInRange("boostDurationTicks", 14, 1, 200);
