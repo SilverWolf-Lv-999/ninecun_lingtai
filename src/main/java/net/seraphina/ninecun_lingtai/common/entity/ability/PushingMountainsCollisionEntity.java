@@ -83,11 +83,11 @@ public final class PushingMountainsCollisionEntity extends Entity implements IEn
     }
 
     @Override
-    protected void defineSynchedData() {
+    public void defineSynchedData() {
     }
 
     @Override
-    protected void readAdditionalSaveData(CompoundTag compoundTag) {
+    public void readAdditionalSaveData(CompoundTag compoundTag) {
         if (compoundTag.contains(ROOT_UUID_KEY, Tag.TAG_INT_ARRAY)) {
             this.rootUuid = compoundTag.getUUID(ROOT_UUID_KEY);
         }
@@ -98,7 +98,7 @@ public final class PushingMountainsCollisionEntity extends Entity implements IEn
     }
 
     @Override
-    protected void addAdditionalSaveData(CompoundTag compoundTag) {
+    public void addAdditionalSaveData(CompoundTag compoundTag) {
         if (this.rootUuid != null) {
             compoundTag.putUUID(ROOT_UUID_KEY, this.rootUuid);
         }

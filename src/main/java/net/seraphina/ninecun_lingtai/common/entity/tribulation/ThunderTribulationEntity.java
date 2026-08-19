@@ -97,7 +97,7 @@ public final class ThunderTribulationEntity extends LightningBolt {
     }
 
     @Override
-    protected void defineSynchedData() {
+    public void defineSynchedData() {
         this.entityData.define(OWNER_UUID, Optional.empty());
         this.entityData.define(STRIKE_INDEX, 1);
         this.entityData.define(DAMAGE, 1.0F);
@@ -138,7 +138,7 @@ public final class ThunderTribulationEntity extends LightningBolt {
     }
 
     @Override
-    protected void readAdditionalSaveData(CompoundTag compoundTag) {
+    public void readAdditionalSaveData(CompoundTag compoundTag) {
         if (compoundTag.hasUUID(OWNER_UUID_KEY)) {
             this.entityData.set(OWNER_UUID, Optional.of(compoundTag.getUUID(OWNER_UUID_KEY)));
         }
@@ -151,7 +151,7 @@ public final class ThunderTribulationEntity extends LightningBolt {
     }
 
     @Override
-    protected void addAdditionalSaveData(CompoundTag compoundTag) {
+    public void addAdditionalSaveData(CompoundTag compoundTag) {
         this.getOwnerUuid().ifPresent(ownerUuid -> compoundTag.putUUID(OWNER_UUID_KEY, ownerUuid));
         compoundTag.putInt(STRIKE_INDEX_KEY, this.getStrikeIndex());
         compoundTag.putFloat(DAMAGE_KEY, this.getDamage());

@@ -165,7 +165,7 @@ public final class DefenseSpellGuardianEntity extends PathfinderMob {
     }
 
     @Override
-    protected void defineSynchedData() {
+    public void defineSynchedData() {
         super.defineSynchedData();
         this.entityData.define(OWNER_UUID, Optional.empty());
         this.entityData.define(KIND, DefenseSpellKind.WOOD_GUARDIAN.ordinal());
@@ -226,12 +226,12 @@ public final class DefenseSpellGuardianEntity extends PathfinderMob {
     }
 
     @Override
-    protected boolean shouldDropLoot() {
+    public boolean shouldDropLoot() {
         return false;
     }
 
     @Override
-    protected void dropEquipment() {
+    public void dropEquipment() {
     }
 
     @Override

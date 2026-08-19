@@ -168,11 +168,11 @@ public final class PushingMountainsEntity extends Entity implements IEntityAddit
     }
 
     @Override
-    protected void defineSynchedData() {
+    public void defineSynchedData() {
     }
 
     @Override
-    protected void readAdditionalSaveData(CompoundTag compoundTag) {
+    public void readAdditionalSaveData(CompoundTag compoundTag) {
         this.thrown = compoundTag.getBoolean(THROWN_KEY);
         this.age = compoundTag.getInt(AGE_KEY);
         if (compoundTag.contains(OWNER_UUID_KEY, Tag.TAG_INT_ARRAY)) {
@@ -185,7 +185,7 @@ public final class PushingMountainsEntity extends Entity implements IEntityAddit
     }
 
     @Override
-    protected void addAdditionalSaveData(CompoundTag compoundTag) {
+    public void addAdditionalSaveData(CompoundTag compoundTag) {
         compoundTag.putBoolean(THROWN_KEY, this.thrown);
         compoundTag.putInt(AGE_KEY, this.age);
         if (this.ownerUuid != null) {
