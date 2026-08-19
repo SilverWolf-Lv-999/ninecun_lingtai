@@ -20,6 +20,8 @@ import java.util.OptionalInt;
 import java.util.UUID;
 
 public final class CultivationDefenseUtility {
+    private static volatile ClientDefenseProvider clientDefenseProvider;
+
     private static final UUID MAX_HEALTH_MODIFIER_ID = UUID.fromString("2b467160-8bb5-43f2-9a76-78dcde68bcb5");
     private static final String MAX_HEALTH_MODIFIER_NAME = "Ninecun Lingtai cultivation health";
     private static final double QI_REFINING_HEALTH_PER_LAYER = 1.0D;
@@ -146,6 +148,18 @@ public final class CultivationDefenseUtility {
     }
 
     public static boolean hasActiveDefense(LivingEntity entity) {
+        ClientDefenseProvider provider = clientDefenseProvider;
+        if (provider != null && entity.level().isClientSide) {
+            return provider.hasActiveDefense(entity);
+        }
+        return hasActiveServerDefense(entity);
+    }
+
+    public static void installClientDefenseProvider(ClientDefenseProvider provider) {
+        clientDefenseProvider = provider;
+    }
+
+    private static boolean hasActiveServerDefense(LivingEntity entity) {
         Optional<CultivationStage> stage = CreatureCultivationData.getStage(entity);
         if (stage.isEmpty()) {
             return false;
@@ -346,5 +360,9 @@ public final class CultivationDefenseUtility {
             double verticalKnockback,
             boolean showsBodyShield
     ) {
+    }
+
+    public interface ClientDefenseProvider {
+        boolean hasActiveDefense(LivingEntity entity);
     }
 }

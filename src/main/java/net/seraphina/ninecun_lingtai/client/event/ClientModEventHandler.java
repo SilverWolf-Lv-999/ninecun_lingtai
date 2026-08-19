@@ -40,6 +40,8 @@ import net.seraphina.ninecun_lingtai.common.registry.ModEntityTypes;
 import net.seraphina.ninecun_lingtai.common.registry.ModBlockEntityTypes;
 import net.seraphina.ninecun_lingtai.common.registry.ModItems;
 import net.seraphina.ninecun_lingtai.common.registry.ModMenuTypes;
+import net.seraphina.ninecun_lingtai.client.utility.ClientCultivationDefenseUtility;
+import net.seraphina.ninecun_lingtai.utility.CultivationDefenseUtility;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -110,6 +112,9 @@ public final class ClientModEventHandler {
 
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
+        CultivationDefenseUtility.installClientDefenseProvider(
+                ClientCultivationDefenseUtility::hasActiveDefense
+        );
         ClientConfigScreenRegistrar.register();
         event.enqueueWork(() -> {
             MenuScreens.register(ModMenuTypes.ALCHEMY_FURNACE.get(), AlchemyFurnaceScreen::new);

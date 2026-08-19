@@ -1,8 +1,6 @@
 package net.seraphina.ninecun_lingtai.transform;
 
 import cpw.mods.modlauncher.serviceapi.ILaunchPluginService;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.fml.loading.FMLEnvironment;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
@@ -25,17 +23,6 @@ public final class HealthLaunchPluginService implements ILaunchPluginService {
     private static final String PROTECT_HEALTH_DESCRIPTOR =
             "(F)F";
     private static final String PROTECT_BOOLEAN_DESCRIPTOR = "(Z)Z";
-    private static final String CLIENT_DEFENSE_UTILITY_OWNER =
-            "net/seraphina/ninecun_lingtai/client/utility/ClientCultivationDefenseUtility";
-    private static final String CLIENT_PROTECT_HEALTH = "getProtectedHealth";
-    private static final String CLIENT_PROTECT_ALIVE = "getProtectedAlive";
-    private static final String CLIENT_PROTECT_DEAD_OR_DYING = "getProtectedDeadOrDying";
-    private static final String CLIENT_PROTECT_HEALTH_DESCRIPTOR =
-            "(Lnet/minecraft/world/entity/LivingEntity;F)F";
-    private static final String CLIENT_PROTECT_ALIVE_DESCRIPTOR =
-            "(Lnet/minecraft/world/entity/Entity;Z)Z";
-    private static final String CLIENT_PROTECT_DEAD_OR_DYING_DESCRIPTOR =
-            "(Lnet/minecraft/world/entity/LivingEntity;Z)Z";
 
     @Override
     public String name() {
@@ -97,51 +84,6 @@ public final class HealthLaunchPluginService implements ILaunchPluginService {
             MethodInsnNode call
     ) {
         instructions.insertBefore(call, new InsnNode(Opcodes.DUP));
-        if (FMLEnvironment.dist == Dist.CLIENT) {
-            addClientProtectionAroundCall(instructions, call);
-            return;
-        }
-        addServerProtectionAroundCall(instructions, call);
-    }
-
-    private static void addClientProtectionAroundCall(
-            org.objectweb.asm.tree.InsnList instructions,
-            MethodInsnNode call
-    ) {
-        if (HEALTH_DESCRIPTOR.equals(call.desc)) {
-            instructions.insert(call, new MethodInsnNode(
-                    Opcodes.INVOKESTATIC,
-                    CLIENT_DEFENSE_UTILITY_OWNER,
-                    CLIENT_PROTECT_HEALTH,
-                    CLIENT_PROTECT_HEALTH_DESCRIPTOR,
-                    false
-            ));
-            return;
-        }
-        if (LIVING_ENTITY_OWNER.equals(call.owner)
-                && isMethodName(call.name, OBFUSCATED_IS_DEAD_OR_DYING, "isDeadOrDying")) {
-            instructions.insert(call, new MethodInsnNode(
-                    Opcodes.INVOKESTATIC,
-                    CLIENT_DEFENSE_UTILITY_OWNER,
-                    CLIENT_PROTECT_DEAD_OR_DYING,
-                    CLIENT_PROTECT_DEAD_OR_DYING_DESCRIPTOR,
-                    false
-            ));
-            return;
-        }
-        instructions.insert(call, new MethodInsnNode(
-                Opcodes.INVOKESTATIC,
-                CLIENT_DEFENSE_UTILITY_OWNER,
-                CLIENT_PROTECT_ALIVE,
-                CLIENT_PROTECT_ALIVE_DESCRIPTOR,
-                false
-        ));
-    }
-
-    private static void addServerProtectionAroundCall(
-            org.objectweb.asm.tree.InsnList instructions,
-            MethodInsnNode call
-    ) {
         if (HEALTH_DESCRIPTOR.equals(call.desc)) {
             instructions.insert(call, new MethodInsnNode(
                     Opcodes.INVOKEVIRTUAL,
