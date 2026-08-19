@@ -8,9 +8,17 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 
 import java.lang.instrument.ClassFileTransformer;
+import java.lang.instrument.Instrumentation;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.ProtectionDomain;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.jar.JarFile;
 
 import static org.objectweb.asm.Opcodes.INVOKESTATIC;
 
@@ -28,10 +36,32 @@ public final class ReflectiveAccessTransformer implements ClassFileTransformer {
     private static final String METHOD_HANDLES_OWNER = "java/lang/invoke/MethodHandles";
     private static final String LOOKUP_OWNER = "java/lang/invoke/MethodHandles$Lookup";
     private static final String GUARD_OWNER = ReflectiveAccessGuard.GUARD_INTERNAL_NAME;
+    private static final String GUARD_CLASS_NAME = GUARD_OWNER.replace('/', '.');
     private static final String TARGET_PACKAGE_PREFIX = "net/seraphina/ninecun_lingtai/";
+    private static final String MODS_DIRECTORY_MARKER = "/mods/";
+
+    private static final Map<String, Boolean> MOD_SOURCE_CACHE = new ConcurrentHashMap<>();
 
     private static final Map<CallKey, String> STATIC_METHODS = createStaticMethods();
     private static final Map<CallKey, String> INSTANCE_METHODS = createInstanceMethods();
+
+    private final Instrumentation instrumentation;
+    private final Module guardModule;
+    private final Path ownCodeSource;
+    private final Set<Module> configuredModules = ConcurrentHashMap.newKeySet();
+
+    public ReflectiveAccessTransformer() {
+        this(null, null);
+    }
+
+    public ReflectiveAccessTransformer(
+            Instrumentation instrumentation,
+            ProtectionDomain ownProtectionDomain
+    ) {
+        this.instrumentation = instrumentation;
+        this.guardModule = resolveBootstrapGuardModule();
+        this.ownCodeSource = getCodeSourcePath(ownProtectionDomain);
+    }
 
     @Override
     public byte[] transform(
@@ -44,8 +74,13 @@ public final class ReflectiveAccessTransformer implements ClassFileTransformer {
     ) {
         if (loader == null
                 || className == null
-                || isOwnClass(loader, className, protectionDomain)
+                || isOwnClass(className, protectionDomain)
                 || classfileBuffer == null) {
+            return null;
+        }
+        if (this.instrumentation != null
+                && (!isExternalModClass(protectionDomain)
+                || !prepareModuleAccess(module))) {
             return null;
         }
 
@@ -97,28 +132,125 @@ public final class ReflectiveAccessTransformer implements ClassFileTransformer {
         return writer.toByteArray();
     }
 
-    private static boolean isOwnClass(
-            ClassLoader loader,
-            String className,
-            ProtectionDomain protectionDomain
-    ) {
-        if (!className.startsWith(TARGET_PACKAGE_PREFIX)
-                || protectionDomain == null
+    public static boolean isExternalModClass(ProtectionDomain protectionDomain) {
+        if (protectionDomain == null
                 || protectionDomain.getCodeSource() == null
                 || protectionDomain.getCodeSource().getLocation() == null) {
             return false;
         }
 
-        ProtectionDomain ownProtectionDomain =
-                ReflectiveAccessTransformer.class.getProtectionDomain();
-        if (ownProtectionDomain == null
-                || ownProtectionDomain.getCodeSource() == null
-                || ownProtectionDomain.getCodeSource().getLocation() == null
-                || loader != ReflectiveAccessTransformer.class.getClassLoader()) {
+        String location = protectionDomain.getCodeSource()
+                .getLocation()
+                .toExternalForm();
+        return MOD_SOURCE_CACHE.computeIfAbsent(location,
+                ignored -> isModCodeSource(getCodeSourcePath(protectionDomain)));
+    }
+
+    private boolean isOwnClass(
+            String className,
+            ProtectionDomain protectionDomain
+    ) {
+        if (!className.startsWith(TARGET_PACKAGE_PREFIX)
+                || this.ownCodeSource == null) {
             return false;
         }
-        return protectionDomain.getCodeSource().getLocation().equals(
-                ownProtectionDomain.getCodeSource().getLocation());
+
+        Path classCodeSource = getCodeSourcePath(protectionDomain);
+        if (classCodeSource == null) {
+            return false;
+        }
+        return this.ownCodeSource.equals(classCodeSource);
+    }
+
+    private static Module resolveBootstrapGuardModule() {
+        try {
+            return Class.forName(GUARD_CLASS_NAME, false, null).getModule();
+        } catch (ClassNotFoundException | LinkageError exception) {
+            return null;
+        }
+    }
+
+    private boolean prepareModuleAccess(Module module) {
+        if (this.guardModule == null) {
+            return false;
+        }
+        if (module == null
+                || !module.isNamed()
+                || module == this.guardModule
+                || module.canRead(this.guardModule)) {
+            return true;
+        }
+        if (!this.configuredModules.add(module)) {
+            return true;
+        }
+
+        try {
+            this.instrumentation.redefineModule(
+                    module,
+                    Set.of(this.guardModule),
+                    Map.of(),
+                    Map.of(),
+                    Set.of(),
+                    Map.of()
+            );
+            return true;
+        } catch (RuntimeException exception) {
+            this.configuredModules.remove(module);
+            return false;
+        }
+    }
+
+    private static Path getCodeSourcePath(ProtectionDomain protectionDomain) {
+        if (protectionDomain == null
+                || protectionDomain.getCodeSource() == null
+                || protectionDomain.getCodeSource().getLocation() == null) {
+            return null;
+        }
+        try {
+            URI location = protectionDomain.getCodeSource().getLocation().toURI();
+            return Path.of(location).toAbsolutePath().normalize();
+        } catch (Exception exception) {
+            return null;
+        }
+    }
+
+    private static boolean isModCodeSource(Path codeSource) {
+        if (codeSource == null) {
+            return false;
+        }
+
+        String normalizedPath = codeSource.toString()
+                .replace('\\', '/')
+                .toLowerCase(Locale.ROOT);
+        if (normalizedPath.contains("/libraries/")) {
+            return false;
+        }
+        if (normalizedPath.contains(MODS_DIRECTORY_MARKER)) {
+            return true;
+        }
+
+        if (Files.isDirectory(codeSource)) {
+            return containsModMetadata(codeSource);
+        }
+        if (!normalizedPath.endsWith(".jar")) {
+            return false;
+        }
+
+        try (JarFile jarFile = new JarFile(codeSource.toFile())) {
+            return jarFile.getEntry("META-INF/mods.toml") != null
+                    || jarFile.getEntry("META-INF/neoforge.mods.toml") != null
+                    || jarFile.getEntry("fabric.mod.json") != null
+                    || jarFile.getEntry("quilt.mod.json") != null;
+        } catch (Exception exception) {
+            return false;
+        }
+    }
+
+    private static boolean containsModMetadata(Path directory) {
+        return Files.isRegularFile(directory.resolve("META-INF/mods.toml"))
+                || Files.isRegularFile(directory.resolve("META-INF/neoforge.mods.toml"))
+                || Files.isRegularFile(directory.resolve("fabric.mod.json"))
+                || Files.isRegularFile(directory.resolve("quilt.mod.json"));
     }
 
     private static String prependReceiver(String owner, String descriptor) {

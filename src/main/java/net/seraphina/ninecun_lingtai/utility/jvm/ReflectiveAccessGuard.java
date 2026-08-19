@@ -1,5 +1,7 @@
 package net.seraphina.ninecun_lingtai.utility.jvm;
 
+import net.seraphina.ninecun_lingtai.utility.jvm.trans.ReflectiveAccessTransformer;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.invoke.MethodHandle;
@@ -16,7 +18,6 @@ import java.lang.reflect.Member;
 import java.net.URL;
 import java.util.Enumeration;
 import java.util.Objects;
-import java.util.Optional;
 
 /**
  * Runtime boundary used by {@link ReflectiveAccessTransformer}.
@@ -25,6 +26,7 @@ import java.util.Optional;
  * security model. Code with an already attached agent, JVMTI access, or
  * {@code Unsafe} access can still bypass this boundary.</p>
  */
+@SuppressWarnings("all")
 public final class ReflectiveAccessGuard {
     public static final String TARGET_PACKAGE_PREFIX =
             "net.seraphina.ninecun_lingtai.";
@@ -844,15 +846,20 @@ public final class ReflectiveAccessGuard {
     }
 
     private static boolean isTrustedCaller() {
-        Optional<Class<?>> caller = STACK_WALKER.walk(frames -> frames
-                .map(StackWalker.StackFrame::getDeclaringClass)
-                .filter(type -> type != ReflectiveAccessGuard.class)
-                .findFirst());
-        if (caller.isEmpty()) {
+        Class<?> callerClass = STACK_WALKER.<Class<?>>walk(frames -> {
+            var iterator = frames.iterator();
+            while (iterator.hasNext()) {
+                Class<?> type = iterator.next().getDeclaringClass();
+                if (type != ReflectiveAccessGuard.class) {
+                    return type;
+                }
+            }
+            return null;
+        });
+        if (callerClass == null) {
             return false;
         }
 
-        Class<?> callerClass = caller.get();
         if (!callerClass.getName().startsWith(TARGET_PACKAGE_PREFIX)) {
             return false;
         }

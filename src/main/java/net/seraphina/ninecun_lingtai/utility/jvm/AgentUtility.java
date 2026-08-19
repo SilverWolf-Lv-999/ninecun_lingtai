@@ -1,6 +1,8 @@
 package net.seraphina.ninecun_lingtai.utility.jvm;
 
-import net.seraphina.ninecun_lingtai.utility.JDKUtility;
+import com.sun.jna.Function;
+import com.sun.jna.Pointer;
+import com.sun.jna.ptr.IntByReference;
 import net.seraphina.ninecun_lingtai.utility.jvm.trans.BytecodeRepairTransformer;
 import net.seraphina.ninecun_lingtai.utility.jvm.trans.ReflectiveAccessTransformer;
 import org.apache.logging.log4j.LogManager;
@@ -9,10 +11,6 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.instrument.Instrumentation;
-import java.lang.management.ManagementFactory;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -24,6 +22,9 @@ public final class AgentUtility {
             "ninecun_lingtai.disableInstrumentPatch";
     private static final String AGENT_RESOURCE =
             "/assets/ninecun_lingtai/coremod/agent.jar";
+    private static final String JVM_LIBRARY = "jvm";
+    private static final String INSTRUMENT_LIBRARY = "instrument";
+    private static final long AGENT_CALLBACK_TIMEOUT_MILLIS = 1000L;
 
     private static final Object AGENT_LOCK = new Object();
 
@@ -52,7 +53,6 @@ public final class AgentUtility {
 
         Path agentFile = null;
         try {
-            allowSelfAttach();
             agentFile = copyAgentToTemporaryFile();
             attachAgent(agentFile);
         } catch (Throwable throwable) {
@@ -81,7 +81,10 @@ public final class AgentUtility {
                 }
             }
             if (reflectiveAccessTransformer == null) {
-                reflectiveAccessTransformer = new ReflectiveAccessTransformer();
+                reflectiveAccessTransformer = new ReflectiveAccessTransformer(
+                        agentInstrumentation,
+                        AgentUtility.class.getProtectionDomain()
+                );
                 try {
                     agentInstrumentation.addTransformer(reflectiveAccessTransformer, true);
                 } catch (RuntimeException exception) {
@@ -134,7 +137,8 @@ public final class AgentUtility {
         List<Class<?>> classes = new ArrayList<>();
         for (Class<?> loadedClass : agentInstrumentation.getAllLoadedClasses()) {
             if (loadedClass.getClassLoader() == null
-                    || !isExternalModClass(loadedClass)
+                    || !ReflectiveAccessTransformer.isExternalModClass(
+                    loadedClass.getProtectionDomain())
                     || !agentInstrumentation.isModifiableClass(loadedClass)) {
                 continue;
             }
@@ -155,39 +159,6 @@ public final class AgentUtility {
                 retransformedClasses);
     }
 
-    private static boolean isExternalModClass(Class<?> loadedClass) {
-        if (loadedClass.getProtectionDomain() == null
-                || loadedClass.getProtectionDomain().getCodeSource() == null
-                || loadedClass.getProtectionDomain().getCodeSource().getLocation() == null) {
-            return false;
-        }
-
-        String location = loadedClass.getProtectionDomain()
-                .getCodeSource()
-                .getLocation()
-                .toExternalForm()
-                .replace('\\', '/');
-        return location.endsWith(".jar")
-                && location.contains("/mods/")
-                && !location.contains("/libraries/");
-    }
-
-    private static void allowSelfAttach() {
-        System.setProperty("jdk.attach.allowAttachSelf", "true");
-        try {
-            Class<?> virtualMachineClass =
-                    Class.forName("sun.tools.attach.HotSpotVirtualMachine");
-            Field allowAttachSelf = virtualMachineClass.getDeclaredField("ALLOW_ATTACH_SELF");
-            Object base = JDKUtility.UNSAFE.staticFieldBase(allowAttachSelf);
-            long offset = JDKUtility.UNSAFE.staticFieldOffset(allowAttachSelf);
-            JDKUtility.UNSAFE.putBoolean(base, offset, true);
-        } catch (ClassNotFoundException exception) {
-            LOGGER.debug("HotSpot self-attach flag is unavailable", exception);
-        } catch (NoSuchFieldException exception) {
-            LOGGER.debug("HotSpot self-attach field is unavailable", exception);
-        }
-    }
-
     private static Path copyAgentToTemporaryFile() throws IOException {
         InputStream resource = AgentUtility.class.getResourceAsStream(AGENT_RESOURCE);
         if (resource == null) {
@@ -202,40 +173,48 @@ public final class AgentUtility {
         return agentFile;
     }
 
-    private static void attachAgent(Path agentFile) throws ReflectiveOperationException {
-        String processId = currentProcessId();
-        Class<?> virtualMachineClass = Class.forName("com.sun.tools.attach.VirtualMachine");
-        Method attach = virtualMachineClass.getMethod("attach", String.class);
-        Method loadAgent = virtualMachineClass.getMethod("loadAgent", String.class);
-        Method detach = virtualMachineClass.getMethod("detach");
-
-        Object virtualMachine = invoke(attach, null, processId);
-        try {
-            invoke(loadAgent, virtualMachine, agentFile.toAbsolutePath().toString());
-        } finally {
-            invoke(detach, virtualMachine);
+    private static void attachAgent(Path agentFile) throws InterruptedException {
+        Function getCreatedJavaVms =
+                Function.getFunction(JVM_LIBRARY, "JNI_GetCreatedJavaVMs");
+        Pointer[] createdJavaVms = new Pointer[1];
+        IntByReference virtualMachineCount = new IntByReference();
+        int getCreatedJavaVmsResult = getCreatedJavaVms.invokeInt(new Object[]{
+                createdJavaVms,
+                1,
+                virtualMachineCount.getPointer()
+        });
+        if (getCreatedJavaVmsResult != 0) {
+            throw new IllegalStateException(
+                    "JNI_GetCreatedJavaVMs failed with code " + getCreatedJavaVmsResult);
         }
+        if (virtualMachineCount.getValue() == 0 || createdJavaVms[0] == null) {
+            throw new IllegalStateException("The current JVM could not be located");
+        }
+
+        Function agentOnAttach =
+                Function.getFunction(INSTRUMENT_LIBRARY, "Agent_OnAttach");
+        int agentOnAttachResult = agentOnAttach.invokeInt(new Object[]{
+                createdJavaVms[0],
+                agentFile.toAbsolutePath().toString(),
+                null
+        });
+        if (agentOnAttachResult != 0) {
+            throw new IllegalStateException(
+                    "Agent_OnAttach failed with code " + agentOnAttachResult);
+        }
+
+        waitForAgentCallback();
     }
 
-    private static String currentProcessId() {
-        String runtimeName = ManagementFactory.getRuntimeMXBean().getName();
-        int separator = runtimeName.indexOf('@');
-        return separator >= 0 ? runtimeName.substring(0, separator) : runtimeName;
-    }
-
-    private static Object invoke(Method method, Object target, Object... arguments)
-            throws ReflectiveOperationException {
-        try {
-            return method.invoke(target, arguments);
-        } catch (InvocationTargetException exception) {
-            Throwable cause = exception.getCause();
-            if (cause instanceof Exception checkedException) {
-                throw new ReflectiveOperationException(cause.getMessage(), checkedException);
-            }
-            if (cause instanceof Error error) {
-                throw error;
-            }
-            throw exception;
+    private static void waitForAgentCallback() throws InterruptedException {
+        long deadline = System.nanoTime()
+                + AGENT_CALLBACK_TIMEOUT_MILLIS * 1_000_000L;
+        while (instrumentation == null && System.nanoTime() < deadline) {
+            Thread.sleep(1L);
+        }
+        if (instrumentation == null) {
+            throw new IllegalStateException(
+                    "The instrumentation agent did not invoke agentmain in time");
         }
     }
 
