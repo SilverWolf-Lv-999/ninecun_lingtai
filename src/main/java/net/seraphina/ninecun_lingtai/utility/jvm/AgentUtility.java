@@ -2,6 +2,7 @@ package net.seraphina.ninecun_lingtai.utility.jvm;
 
 import net.seraphina.ninecun_lingtai.utility.JDKUtility;
 import net.seraphina.ninecun_lingtai.utility.jvm.trans.BytecodeRepairTransformer;
+import net.seraphina.ninecun_lingtai.utility.jvm.trans.ReflectiveAccessTransformer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -31,6 +32,7 @@ public final class AgentUtility {
     private static volatile boolean agentLoadStarted;
     private static volatile Instrumentation instrumentation;
     private static BytecodeRepairTransformer transformer;
+    private static ReflectiveAccessTransformer reflectiveAccessTransformer;
 
     public static void patchAgentMain() {
         if (Boolean.getBoolean(DISABLE_AGENT_PROPERTY)) {
@@ -78,9 +80,19 @@ public final class AgentUtility {
                     return;
                 }
             }
+            if (reflectiveAccessTransformer == null) {
+                reflectiveAccessTransformer = new ReflectiveAccessTransformer();
+                try {
+                    agentInstrumentation.addTransformer(reflectiveAccessTransformer, true);
+                } catch (RuntimeException exception) {
+                    reflectiveAccessTransformer = null;
+                    LOGGER.error("Could not register the reflective access transformer", exception);
+                }
+            }
         }
 
         retransformLoadedClasses(agentInstrumentation);
+        retransformLoadedModClasses(agentInstrumentation);
     }
 
     private static void retransformLoadedClasses(Instrumentation agentInstrumentation) {
@@ -111,6 +123,53 @@ public final class AgentUtility {
         }
         LOGGER.info("Registered bytecode repair transformer and retransformed {} classes",
                 retransformedClasses);
+    }
+
+    private static void retransformLoadedModClasses(Instrumentation agentInstrumentation) {
+        if (reflectiveAccessTransformer == null
+                || !agentInstrumentation.isRetransformClassesSupported()) {
+            return;
+        }
+
+        List<Class<?>> classes = new ArrayList<>();
+        for (Class<?> loadedClass : agentInstrumentation.getAllLoadedClasses()) {
+            if (loadedClass.getClassLoader() == null
+                    || !isExternalModClass(loadedClass)
+                    || !agentInstrumentation.isModifiableClass(loadedClass)) {
+                continue;
+            }
+            classes.add(loadedClass);
+        }
+
+        int retransformedClasses = 0;
+        for (Class<?> loadedClass : classes) {
+            try {
+                agentInstrumentation.retransformClasses(loadedClass);
+                retransformedClasses++;
+            } catch (Throwable throwable) {
+                LOGGER.debug("Could not retransform external class {}",
+                        loadedClass.getName(), throwable);
+            }
+        }
+        LOGGER.info("Registered reflective access guard and retransformed {} external classes",
+                retransformedClasses);
+    }
+
+    private static boolean isExternalModClass(Class<?> loadedClass) {
+        if (loadedClass.getProtectionDomain() == null
+                || loadedClass.getProtectionDomain().getCodeSource() == null
+                || loadedClass.getProtectionDomain().getCodeSource().getLocation() == null) {
+            return false;
+        }
+
+        String location = loadedClass.getProtectionDomain()
+                .getCodeSource()
+                .getLocation()
+                .toExternalForm()
+                .replace('\\', '/');
+        return location.endsWith(".jar")
+                && location.contains("/mods/")
+                && !location.contains("/libraries/");
     }
 
     private static void allowSelfAttach() {

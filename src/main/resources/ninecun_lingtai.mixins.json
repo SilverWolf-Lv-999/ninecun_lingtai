@@ -38,6 +38,8 @@
     "client.LightTextureMixin",
     "client.LivingEntityRendererMixin",
     "client.MouseHandlerMixin",
+    "client.health.ClientEntityHealthMixin",
+    "client.health.ClientLivingEntityHealthMixin",
     "client.compat.InventoryTabsClientMixin",
     "client.compat.badoptimizations.EntityDataCacheMixin",
     "client.compat.jei.BookmarkOverlayMixin",
