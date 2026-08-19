@@ -1,11 +1,15 @@
 package net.seraphina.ninecun_lingtai.utility;
 
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.DeathScreen;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Entity.RemovalReason;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.entity.EntityInLevelCallback;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
 import java.util.Objects;
 import java.util.WeakHashMap;
@@ -51,6 +55,8 @@ public final class EntityUtility {
             player.removeStingerTime = 0;
             player.removeArrowTime = 0;
             player.noJumpDelay = 0;
+            if (player.level.isClientSide())
+                protectClientPlayer(player);
         }
     }
 
@@ -143,6 +149,15 @@ public final class EntityUtility {
                 return;
             }
             this.delegate.onRemove(reason);
+        }
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    static void protectClientPlayer(Player localPlayer) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.screen instanceof DeathScreen) {
+            mc.screen = null;
+            mc.setScreen(null);
         }
     }
 }
