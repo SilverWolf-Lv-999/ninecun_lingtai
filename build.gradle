@@ -298,6 +298,8 @@ dependencies {
 
     compileOnly fg.deobf("maven.modrinth:jade:${jade_version}")
     runtimeOnly fg.deobf("maven.modrinth:jade:${jade_version}")
+    runtimeOnly fg.deobf("maven.modrinth:QeB3NRC5:${re_avaritia}")
+    runtimeOnly fg.deobf("maven.modrinth:GkKw6pl3:${more_avaritia}")
     compileOnly fg.deobf("mezz.jei:jei-${minecraft_version}-common-api:${jei_version}")
     compileOnly fg.deobf("mezz.jei:jei-${minecraft_version}-forge-api:${jei_version}")
     runtimeOnly fg.deobf("mezz.jei:jei-${minecraft_version}-forge:${jei_version}")
@@ -311,7 +313,7 @@ dependencies {
     runtimeOnly fg.deobf("maven.modrinth:DYtfQEYj:${effortless_building_version}")
 
     if (!serverRegression) {
-        runtimeOnly fg.deobf("maven.modrinth:uCdwusMi:${distant_horizons_version}")
+//        runtimeOnly fg.deobf("maven.modrinth:uCdwusMi:${distant_horizons_version}")
         runtimeOnly fg.deobf("maven.modrinth:NNAgCjsB:${entityculling_version}")
         runtimeOnly fg.deobf("maven.modrinth:RSeLon5O:${particle_core_version}")
         runtimeOnly fg.deobf("maven.modrinth:g96Z4WVZ:${bad_optimizations_version}")
