@@ -40,15 +40,48 @@ public abstract class LivingEntityMixin {
     @Inject(method = "tick", at = @At("HEAD"))
     private void ninecunLingtai$protectHealth(CallbackInfo ci) {
         LivingEntity entity = (LivingEntity) (Object) this;
-        if (CultivationDefenseUtility.hasActiveDefense(entity))
+        EntityUtility.clearRemovalIntercepted(entity);
+        if (EntityUtility.hasActiveDefense(entity))
             EntityUtility.protectEntity(entity);
+    }
+
+    @Inject(method = "setHealth(F)V", at = @At("HEAD"), cancellable = true)
+    private void ninecunLingtai$protectSetHealth(float health, CallbackInfo callbackInfo) {
+        LivingEntity entity = (LivingEntity) (Object) this;
+        if (!EntityUtility.isRestoringHealth() && EntityUtility.hasActiveDefense(entity)) {
+            EntityUtility.protectEntity(entity);
+            callbackInfo.cancel();
+        }
     }
 
     @Inject(method = "hurt", at = @At("HEAD"), cancellable = true)
     private void injectHurt(DamageSource pSource, float pAmount, CallbackInfoReturnable<Boolean> cir) {
         LivingEntity entity = (LivingEntity) (Object) this;
-        if (CultivationDefenseUtility.hasActiveDefense(entity) && pSource.getEntity() == null) {
+        if (EntityUtility.hasActiveDefense(entity)) {
+            EntityUtility.protectEntity(entity);
             cir.setReturnValue(false);
+        }
+    }
+
+    @Inject(method = "actuallyHurt", at = @At("HEAD"), cancellable = true)
+    private void ninecunLingtai$blockDirectDamage(
+            DamageSource damageSource,
+            float amount,
+            CallbackInfo callbackInfo
+    ) {
+        LivingEntity entity = (LivingEntity) (Object) this;
+        if (EntityUtility.hasActiveDefense(entity)) {
+            EntityUtility.protectEntity(entity);
+            callbackInfo.cancel();
+        }
+    }
+
+    @Inject(method = "die", at = @At("HEAD"), cancellable = true)
+    private void ninecunLingtai$blockDeath(DamageSource damageSource, CallbackInfo callbackInfo) {
+        LivingEntity entity = (LivingEntity) (Object) this;
+        if (EntityUtility.hasActiveDefense(entity)) {
+            EntityUtility.protectEntity(entity);
+            callbackInfo.cancel();
         }
     }
 
