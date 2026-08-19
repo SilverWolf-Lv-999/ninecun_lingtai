@@ -10,12 +10,11 @@ import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import net.seraphina.ninecun_lingtai.common.registry.ModDamageTypes;
 import net.seraphina.ninecun_lingtai.utility.CultivationCombatUtility;
 import net.seraphina.ninecun_lingtai.utility.CultivationDefenseUtility;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.seraphina.ninecun_lingtai.utility.EntityUtility;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
@@ -126,15 +125,7 @@ public final class CultivationDefenseEventHandler {
             ModNetwork.sendDefenseResource(player);
         }
 
-        DamageSource executionSource = new DamageSource(
-                defender.level()
-                        .registryAccess()
-                        .registryOrThrow(Registries.DAMAGE_TYPE)
-                        .getHolderOrThrow(ModDamageTypes.REALM_EXECUTION),
-                event.getSource().getDirectEntity(),
-                attacker
-        );
-        defender.hurt(executionSource, Float.MAX_VALUE);
+        EntityUtility.killedEntity(defender, attacker);
         return true;
     }
 

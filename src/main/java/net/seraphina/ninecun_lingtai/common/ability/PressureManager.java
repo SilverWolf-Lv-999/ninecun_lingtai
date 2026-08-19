@@ -4,13 +4,11 @@ import net.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
 import net.seraphina.ninecun_lingtai.common.creature.CreatureCultivationData;
 import net.seraphina.ninecun_lingtai.common.defense.EntityDefenseResourceData;
 import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
-import net.seraphina.ninecun_lingtai.common.registry.ModDamageTypes;
+import net.seraphina.ninecun_lingtai.utility.EntityUtility;
 import net.seraphina.ninecun_lingtai.utility.PressureUtility;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.phys.AABB;
@@ -171,15 +169,6 @@ public final class PressureManager {
             ModNetwork.sendDefenseResource(player);
         }
 
-        DamageSource damageSource = new DamageSource(
-                target.level()
-                        .registryAccess()
-                        .registryOrThrow(Registries.DAMAGE_TYPE)
-                        .getHolderOrThrow(ModDamageTypes.PRESSURE_EXECUTION),
-                source,
-                source
-        );
-        target.setHealth(0.0F);
-        target.die(damageSource);
+        EntityUtility.killedEntity(target, source);
     }
 }

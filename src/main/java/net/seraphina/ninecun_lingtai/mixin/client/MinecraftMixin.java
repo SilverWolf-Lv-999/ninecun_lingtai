@@ -4,7 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.DeathScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.player.LocalPlayer;
-import net.seraphina.ninecun_lingtai.utility.CultivationDefenseUtility;
+import net.seraphina.ninecun_lingtai.client.utility.ClientCultivationDefenseUtility;
 import net.seraphina.ninecun_lingtai.utility.EntityUtility;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -26,7 +26,7 @@ public abstract class MinecraftMixin {
 
     @Inject(method = "setScreen", at = @At("HEAD"), cancellable = true)
     private void setScreen(Screen pGuiScreen, CallbackInfo ci) {
-        if (pGuiScreen instanceof DeathScreen && CultivationDefenseUtility.hasActiveDefense(player)) {
+        if (pGuiScreen instanceof DeathScreen && ClientCultivationDefenseUtility.hasActiveDefense(player)) {
             this.screen = null;
             EntityUtility.protectEntity(player);
             ci.cancel();
@@ -35,7 +35,7 @@ public abstract class MinecraftMixin {
 
     @Inject(method = "forceSetScreen", at = @At("HEAD"), cancellable = true)
     private void forceSetScreen(Screen pScreen, CallbackInfo ci) {
-        if (pScreen instanceof DeathScreen && CultivationDefenseUtility.hasActiveDefense(player)) {
+        if (pScreen instanceof DeathScreen && ClientCultivationDefenseUtility.hasActiveDefense(player)) {
             this.screen = null;
             EntityUtility.protectEntity(player);
             ci.cancel();

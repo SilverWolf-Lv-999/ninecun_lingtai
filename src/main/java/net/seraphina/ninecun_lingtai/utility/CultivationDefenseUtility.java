@@ -19,6 +19,7 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.UUID;
 
+@SuppressWarnings("all")
 public final class CultivationDefenseUtility {
     private static volatile ClientDefenseProvider clientDefenseProvider;
 
@@ -181,7 +182,9 @@ public final class CultivationDefenseUtility {
     }
 
     public static float getProtectedHealth(LivingEntity entity, float original) {
-        return hasActiveDefense(entity)
+        return EntityUtility.isKilledEntity(entity)
+                ? 0.0F
+                : hasActiveDefense(entity)
                 ? entity.getMaxHealth()
                 : original;
     }
@@ -191,9 +194,7 @@ public final class CultivationDefenseUtility {
     }
 
     public static boolean getProtectedAlive(Entity entity, boolean original) {
-        return entity instanceof LivingEntity livingEntity && hasActiveDefense(livingEntity)
-                ? true
-                : original;
+        return entity instanceof LivingEntity livingEntity && hasActiveDefense(livingEntity) || original;
     }
 
     public static boolean isDeadOrDying(LivingEntity entity) {

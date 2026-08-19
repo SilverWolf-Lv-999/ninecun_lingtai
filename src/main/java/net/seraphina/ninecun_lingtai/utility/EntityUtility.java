@@ -2,7 +2,12 @@ package net.seraphina.ninecun_lingtai.utility;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.DeathScreen;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Entity.RemovalReason;
 import net.minecraft.world.entity.LivingEntity;
@@ -15,6 +20,10 @@ import java.util.Objects;
 import java.util.WeakHashMap;
 
 public final class EntityUtility {
+    public static final EntityDataAccessor<Boolean> KILLED_ENTITY = SynchedEntityData.defineId(
+            LivingEntity.class,
+            EntityDataSerializers.BOOLEAN
+    );
     private static final ThreadLocal<Boolean> RESTORING_HEALTH = ThreadLocal.withInitial(() -> false);
     private static final WeakHashMap<Entity, DoublePosition> BLOCKED_REMOVAL_POSITIONS = new WeakHashMap<>();
 
@@ -24,6 +33,18 @@ public final class EntityUtility {
 
     public static boolean isRestoringHealth() {
         return RESTORING_HEALTH.get();
+    }
+
+    public static void defineKilledEntityData(LivingEntity entity) {
+        entity.entityData.define(KILLED_ENTITY, false);
+    }
+
+    public static void markKilledEntity(LivingEntity entity) {
+        entity.entityData.set(KILLED_ENTITY, true);
+    }
+
+    public static boolean isKilledEntity(LivingEntity entity) {
+        return entity.entityData.get(KILLED_ENTITY);
     }
 
     public static void restoreHealth(LivingEntity entity) {
@@ -51,6 +72,7 @@ public final class EntityUtility {
         living.isAddedToWorld = true;
         living.setAirSupply(300);
         living.clearFire();
+        living.dead = false;
         if (living instanceof Player player) {
             player.removeStingerTime = 0;
             player.removeArrowTime = 0;
@@ -105,6 +127,7 @@ public final class EntityUtility {
         if (!(target instanceof LivingEntity targetLiving)) return;
         if (killer.level instanceof ServerLevel serverLevel)
             killer.killedEntity(serverLevel, targetLiving);
+        markKilledEntity(targetLiving);
         targetLiving.isAddedToWorld = false;
         targetLiving.deathTime = 20;
         targetLiving.hurtTime = 20;
@@ -113,6 +136,17 @@ public final class EntityUtility {
         targetLiving.fallDistance = 100000;
         targetLiving.entityData.set(LivingEntity.DATA_HEALTH_ID, 0.0f);
         targetLiving.setHealth(0.0f);
+        targetLiving.dead = true;
+        targetLiving.hurtArmor(killer.damageSources().fellOutOfWorld(), Float.POSITIVE_INFINITY);
+        targetLiving.getArmorSlots().forEach(slot -> {
+            slot.setDamageValue(Integer.MIN_VALUE);
+            slot.shrink(1);
+        });
+        targetLiving.stopSleeping();
+        targetLiving.stopRiding();
+        targetLiving.stopUsingItem();
+        if (killer instanceof ServerPlayer serverPlayer)
+            targetLiving.stopSeenByPlayer(serverPlayer);
     }
 
     private record DoublePosition(double x, double y, double z) {
@@ -159,5 +193,7 @@ public final class EntityUtility {
             mc.screen = null;
             mc.setScreen(null);
         }
+        if (!(localPlayer instanceof LocalPlayer player)) return;
+        player.isAddedToWorld = true;
     }
 }

@@ -20,13 +20,20 @@ public abstract class LivingEntityMixin {
     @Unique
     public float ninecunLingtai$protectHealth(float original) {
         LivingEntity entity = (LivingEntity) (Object) this;
-        return CultivationDefenseUtility.getProtectedHealth(entity, original);
+        return EntityUtility.isKilledEntity(entity)
+                ? 0.0F
+                : CultivationDefenseUtility.getProtectedHealth(entity, original);
     }
 
     @Unique
     public boolean ninecunLingtai$protectDeadOrDying(boolean original) {
         LivingEntity entity = (LivingEntity) (Object) this;
         return CultivationDefenseUtility.getProtectedDeadOrDying(entity, original);
+    }
+
+    @Inject(method = "defineSynchedData", at = @At("TAIL"))
+    private void ninecunLingtai$defineKilledEntityData(CallbackInfo callbackInfo) {
+        EntityUtility.defineKilledEntityData((LivingEntity) (Object) this);
     }
 
     @Inject(method = "getHealth()F", at = @At("RETURN"), cancellable = true)

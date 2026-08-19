@@ -6,6 +6,7 @@ import net.seraphina.ninecun_lingtai.utility.CultivationDefenseUtility;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.client.Minecraft;
+import net.seraphina.ninecun_lingtai.utility.EntityUtility;
 
 public final class ClientCultivationDefenseUtility {
 
@@ -14,7 +15,11 @@ public final class ClientCultivationDefenseUtility {
     }
 
     public static float getProtectedHealth(LivingEntity entity, float original) {
-        return hasActiveDefense(entity) ? entity.getMaxHealth() : original;
+        return EntityUtility.isKilledEntity(entity)
+                ? 0.0F
+                : hasActiveDefense(entity)
+                ? entity.getMaxHealth()
+                : original;
     }
 
     public static boolean getProtectedAlive(Entity entity, boolean original) {

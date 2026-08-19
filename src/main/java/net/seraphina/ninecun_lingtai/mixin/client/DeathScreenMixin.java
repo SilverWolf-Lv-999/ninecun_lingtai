@@ -4,7 +4,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.DeathScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.seraphina.ninecun_lingtai.utility.CultivationDefenseUtility;
+import net.seraphina.ninecun_lingtai.client.utility.ClientCultivationDefenseUtility;
 import net.seraphina.ninecun_lingtai.utility.EntityUtility;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -19,7 +19,7 @@ public abstract class DeathScreenMixin extends Screen {
 
     @Inject(method = "render", at = @At("HEAD"), cancellable = true)
     private void render(GuiGraphics pGuiGraphics, int pMouseX, int pMouseY, float pPartialTick, CallbackInfo ci) {
-        if (this.minecraft != null && CultivationDefenseUtility.hasActiveDefense(this.minecraft.player)) {
+        if (this.minecraft != null && ClientCultivationDefenseUtility.hasActiveDefense(this.minecraft.player)) {
             EntityUtility.protectEntity(this.minecraft.player);
             ci.cancel();
         }
