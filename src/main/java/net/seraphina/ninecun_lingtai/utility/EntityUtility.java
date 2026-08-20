@@ -35,12 +35,16 @@ import java.util.*;
 
 public final class EntityUtility {
     private static final int KILLED_ENTITY_DEATH_TICKS = 20;
-    private static final EntityDataAccessor<Boolean> KILLED_ENTITY = SynchedEntityData.defineId(
-            LivingEntity.class,
-            EntityDataSerializers.BOOLEAN
-    );
+    private static EntityDataAccessor<Boolean> KILLED_ENTITY;
     private static final ThreadLocal<Boolean> RESTORING_HEALTH = ThreadLocal.withInitial(() -> false);
     private static final WeakHashMap<Entity, DoublePosition> BLOCKED_REMOVAL_POSITIONS = new WeakHashMap<>();
+
+    public static void initializeKilledEntityDataAccessor() {
+        KILLED_ENTITY = SynchedEntityData.defineId(
+                LivingEntity.class,
+                EntityDataSerializers.BOOLEAN
+        );
+    }
 
     public static boolean hasActiveDefense(LivingEntity entity) {
         return !isKilledEntity(entity) && CultivationDefenseUtility.hasActiveDefense(entity);

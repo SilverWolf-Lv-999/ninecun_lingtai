@@ -17,6 +17,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(value = LivingEntity.class, priority = Integer.MAX_VALUE)
 public abstract class LivingEntityMixin {
+    @Inject(method = "<clinit>", at = @At("TAIL"))
+    private static void ninecunLingtai$initializeEntityDataAccessors(CallbackInfo callbackInfo) {
+        EntityUtility.initializeKilledEntityDataAccessor();
+    }
+
     @Unique
     public float ninecunLingtai$protectHealth(float original) {
         LivingEntity entity = (LivingEntity) (Object) this;
