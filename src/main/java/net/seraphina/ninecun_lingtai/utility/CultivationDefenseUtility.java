@@ -149,6 +149,9 @@ public final class CultivationDefenseUtility {
     }
 
     public static boolean hasActiveDefense(LivingEntity entity) {
+        if (EntityUtility.isKilledEntity(entity)) {
+            return false;
+        }
         ClientDefenseProvider provider = clientDefenseProvider;
         if (provider != null && entity.level().isClientSide) {
             return provider.hasActiveDefense(entity);
@@ -194,7 +197,10 @@ public final class CultivationDefenseUtility {
     }
 
     public static boolean getProtectedAlive(Entity entity, boolean original) {
-        return entity instanceof LivingEntity livingEntity && hasActiveDefense(livingEntity) || original;
+        return !isKilledEntity(entity)
+                && entity instanceof LivingEntity livingEntity
+                && hasActiveDefense(livingEntity)
+                || original;
     }
 
     public static boolean isDeadOrDying(LivingEntity entity) {
@@ -202,9 +208,15 @@ public final class CultivationDefenseUtility {
     }
 
     public static boolean getProtectedDeadOrDying(LivingEntity entity, boolean original) {
-        return hasActiveDefense(entity)
+        return !isKilledEntity(entity)
+                && hasActiveDefense(entity)
                 ? false
                 : original;
+    }
+
+    private static boolean isKilledEntity(Entity entity) {
+        return entity instanceof LivingEntity livingEntity
+                && EntityUtility.isKilledEntity(livingEntity);
     }
 
     public static int getMaximumDefenseResource(Optional<CultivationStage> stage) {

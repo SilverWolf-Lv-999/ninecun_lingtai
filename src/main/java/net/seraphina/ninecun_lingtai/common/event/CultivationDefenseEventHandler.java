@@ -109,24 +109,12 @@ public final class CultivationDefenseEventHandler {
             }
             return false;
         }
-        if (event.getSource().is(ModDamageTypes.REALM_EXECUTION)
-                || !(event.getSource().getEntity() instanceof LivingEntity attacker)
-                || attacker == defender
-                || !CultivationCombatUtility.canInstantlyKillLowerRealmCultivator(
-                        CreatureCultivationData.getStage(attacker),
-                        CreatureCultivationData.getStage(defender)
-                )) {
+        if (!CultivationCombatUtility.canInstantlyKillLowerRealmCultivator(defender, event.getSource())) {
             return false;
         }
 
         event.setCanceled(true);
-        EntityDefenseResourceData.deplete(defender);
-        if (defender instanceof ServerPlayer player) {
-            ModNetwork.sendDefenseResource(player);
-        }
-
-        EntityUtility.killedEntity(defender, attacker);
-        return true;
+        return EntityUtility.tryInstantlyKillLowerRealmCultivator(defender, event.getSource());
     }
 
     private static boolean tryBlockHighDamageCommandAttack(

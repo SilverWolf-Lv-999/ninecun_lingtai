@@ -11,7 +11,9 @@ import net.seraphina.ninecun_lingtai.utility.EntityUtility;
 public final class ClientCultivationDefenseUtility {
 
     public static boolean hasActiveDefense(LivingEntity entity) {
-        return isLocalPlayer(entity) && hasActiveLocalDefense();
+        return !EntityUtility.isKilledEntity(entity)
+                && isLocalPlayer(entity)
+                && hasActiveLocalDefense();
     }
 
     public static float getProtectedHealth(LivingEntity entity, float original) {
@@ -23,13 +25,21 @@ public final class ClientCultivationDefenseUtility {
     }
 
     public static boolean getProtectedAlive(Entity entity, boolean original) {
-        return entity instanceof LivingEntity livingEntity
+        return !isKilledEntity(entity)
+                && entity instanceof LivingEntity livingEntity
                 && hasActiveDefense(livingEntity)
                 || original;
     }
 
     public static boolean getProtectedDeadOrDying(LivingEntity entity, boolean original) {
-        return hasActiveDefense(entity) ? false : original;
+        return !EntityUtility.isKilledEntity(entity) && hasActiveDefense(entity)
+                ? false
+                : original;
+    }
+
+    private static boolean isKilledEntity(Entity entity) {
+        return entity instanceof LivingEntity livingEntity
+                && EntityUtility.isKilledEntity(livingEntity);
     }
 
     private static boolean isLocalPlayer(Entity entity) {

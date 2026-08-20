@@ -8,7 +8,14 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.DeathScreen;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.level.gameevent.GameEvent;
 import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
+import net.seraphina.ninecun_lingtai.common.defense.EntityDefenseResourceData;
 import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -21,17 +28,22 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.entity.*;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.common.ForgeHooks;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
 public final class EntityUtility {
+    private static final int KILLED_ENTITY_DEATH_TICKS = 20;
+    private static final EntityDataAccessor<Boolean> KILLED_ENTITY = SynchedEntityData.defineId(
+            LivingEntity.class,
+            EntityDataSerializers.BOOLEAN
+    );
     private static final ThreadLocal<Boolean> RESTORING_HEALTH = ThreadLocal.withInitial(() -> false);
     private static final WeakHashMap<Entity, DoublePosition> BLOCKED_REMOVAL_POSITIONS = new WeakHashMap<>();
-    private static final WeakHashMap<LivingEntity, Boolean> KILLED_ENTITIES = new WeakHashMap<>();
 
     public static boolean hasActiveDefense(LivingEntity entity) {
-        return CultivationDefenseUtility.hasActiveDefense(entity);
+        return !isKilledEntity(entity) && CultivationDefenseUtility.hasActiveDefense(entity);
     }
 
     public static boolean isRestoringHealth() {
@@ -39,21 +51,34 @@ public final class EntityUtility {
     }
 
     public static void defineKilledEntityData(LivingEntity entity) {
-        synchronized (KILLED_ENTITIES) {
-            KILLED_ENTITIES.putIfAbsent(entity, false);
-        }
+        entity.entityData.define(KILLED_ENTITY, false);
     }
 
     public static void markKilledEntity(LivingEntity entity) {
-        synchronized (KILLED_ENTITIES) {
-            KILLED_ENTITIES.put(entity, true);
-        }
+        entity.entityData.set(KILLED_ENTITY, true);
     }
 
     public static boolean isKilledEntity(LivingEntity entity) {
-        synchronized (KILLED_ENTITIES) {
-            return Boolean.TRUE.equals(KILLED_ENTITIES.get(entity));
+        return entity.entityData.get(KILLED_ENTITY);
+    }
+
+    public static boolean tryInstantlyKillLowerRealmCultivator(
+            LivingEntity defender,
+            DamageSource damageSource
+    ) {
+        if (defender.level().isClientSide
+                || isKilledEntity(defender)
+                || !CultivationCombatUtility.canInstantlyKillLowerRealmCultivator(defender, damageSource)
+                || !(damageSource.getEntity() instanceof LivingEntity attacker)) {
+            return false;
         }
+
+        EntityDefenseResourceData.deplete(defender);
+        if (defender instanceof ServerPlayer player) {
+            ModNetwork.sendDefenseResource(player);
+        }
+        killedEntity(defender, attacker);
+        return true;
     }
 
     public static void restoreHealth(LivingEntity entity) {
@@ -134,29 +159,76 @@ public final class EntityUtility {
         Objects.requireNonNull(target);
         Objects.requireNonNull(killer);
         if (!(target instanceof LivingEntity targetLiving)) return;
-        if (killer.level instanceof ServerLevel serverLevel)
-            killer.killedEntity(serverLevel, targetLiving);
         markKilledEntity(targetLiving);
+        DamageSource damageSource = killer instanceof LivingEntity livingKiller
+                ? targetLiving.damageSources().mobAttack(livingKiller)
+                : targetLiving.damageSources().generic();
+        if (ForgeHooks.onLivingDeath(targetLiving, damageSource)) {
+            // The death event is intentionally observed but cannot veto absolute realm execution.
+        }
+        forceActuallyHurt(targetLiving, damageSource, Float.POSITIVE_INFINITY);
+        if (killer.level instanceof ServerLevel serverLevel) {
+            killer.killedEntity(serverLevel, targetLiving);
+        }
+        targetLiving.gameEvent(GameEvent.ENTITY_DIE);
+        targetLiving.level().broadcastEntityEvent(targetLiving, (byte) 3);
         targetLiving.isAddedToWorld = false;
-        targetLiving.deathTime = 20;
-        targetLiving.hurtTime = 20;
+        targetLiving.deathTime = 0;
+        targetLiving.hurtTime = 10;
         targetLiving.hurtDuration = 0;
         targetLiving.invulnerableTime = 20;
-        targetLiving.fallDistance = 100000;
-        targetLiving.entityData.set(LivingEntity.DATA_HEALTH_ID, 0.0f);
-        targetLiving.setHealth(0.0f);
         targetLiving.dead = true;
-        targetLiving.hurtArmor(killer.damageSources().fellOutOfWorld(), Float.POSITIVE_INFINITY);
-        targetLiving.getArmorSlots().forEach(slot -> {
-            slot.setDamageValue(Integer.MIN_VALUE);
-            slot.shrink(1);
-        });
         targetLiving.stopSleeping();
         targetLiving.stopRiding();
         targetLiving.stopUsingItem();
-        killer.onGround = true;
         if (killer instanceof ServerPlayer serverPlayer)
             targetLiving.stopSeenByPlayer(serverPlayer);
+    }
+
+    public static void forceActuallyHurt(
+            LivingEntity target,
+            DamageSource damageSource,
+            float amount
+    ) {
+        if (target.level().isClientSide || !(amount > 0.0F) || Float.isNaN(amount)) {
+            return;
+        }
+
+        ForgeHooks.onLivingHurt(target, damageSource, amount);
+        if (Float.isInfinite(amount)) {
+            target.setAbsorptionAmount(0.0F);
+            target.entityData.set(LivingEntity.DATA_HEALTH_ID, 0.0F);
+            target.gameEvent(GameEvent.ENTITY_DAMAGE);
+            return;
+        }
+
+        float absorption = target.getAbsorptionAmount();
+        float absorbedAmount = Math.min(absorption, amount);
+        float healthDamage = amount - absorbedAmount;
+        target.setAbsorptionAmount(absorption - absorbedAmount);
+        if (healthDamage <= 0.0F) {
+            return;
+        }
+
+        float currentHealth = target.entityData.get(LivingEntity.DATA_HEALTH_ID);
+        target.entityData.set(
+                LivingEntity.DATA_HEALTH_ID,
+                Math.max(0.0F, currentHealth - healthDamage)
+        );
+        target.gameEvent(GameEvent.ENTITY_DAMAGE);
+    }
+
+    public static void tickKilledEntity(LivingEntity entity) {
+        entity.entityData.set(LivingEntity.DATA_HEALTH_ID, 0.0F);
+        entity.setAbsorptionAmount(0.0F);
+        entity.dead = true;
+        entity.isAddedToWorld = false;
+        entity.deathTime++;
+        if (entity.deathTime >= KILLED_ENTITY_DEATH_TICKS
+                && !entity.isRemoved()
+                && !(entity instanceof Player)) {
+            entity.remove(RemovalReason.KILLED);
+        }
     }
 
     public static void forceRemoveEntity(Level level, Entity entity) {

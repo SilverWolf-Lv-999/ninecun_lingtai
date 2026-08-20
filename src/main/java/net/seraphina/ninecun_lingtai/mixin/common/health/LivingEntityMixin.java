@@ -44,10 +44,15 @@ public abstract class LivingEntityMixin {
         );
     }
 
-    @Inject(method = "tick", at = @At("HEAD"))
+    @Inject(method = "tick", at = @At("HEAD"), cancellable = true)
     private void ninecunLingtai$protectHealth(CallbackInfo ci) {
         LivingEntity entity = (LivingEntity) (Object) this;
         EntityUtility.clearRemovalIntercepted(entity);
+        if (EntityUtility.isKilledEntity(entity)) {
+            EntityUtility.tickKilledEntity(entity);
+            ci.cancel();
+            return;
+        }
         if (EntityUtility.hasActiveDefense(entity))
             EntityUtility.protectEntity(entity);
     }
@@ -64,6 +69,10 @@ public abstract class LivingEntityMixin {
     @Inject(method = "hurt", at = @At("HEAD"), cancellable = true)
     private void injectHurt(DamageSource pSource, float pAmount, CallbackInfoReturnable<Boolean> cir) {
         LivingEntity entity = (LivingEntity) (Object) this;
+        if (EntityUtility.tryInstantlyKillLowerRealmCultivator(entity, pSource)) {
+            cir.setReturnValue(false);
+            return;
+        }
         if (EntityUtility.hasActiveDefense(entity)) {
             EntityUtility.protectEntity(entity);
             cir.setReturnValue(false);
