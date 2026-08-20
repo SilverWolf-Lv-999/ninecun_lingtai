@@ -24,6 +24,7 @@ import net.seraphina.ninecun_lingtai.common.network.packet.CastSpellPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.CloseStorageRingPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.CultivationFeedbackPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.DismountSwordFlightPacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.ForceRemoveEntityPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.ImprintTechniquePacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.ImprintTechniqueToJadeSlipPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.ImprintAlchemyRecipeToFormulaSlipPacket;
@@ -110,7 +111,9 @@ import net.seraphina.ninecun_lingtai.utility.PlayerValueControlUnlockUtility;
 import net.seraphina.ninecun_lingtai.utility.DefenseSpellUtility;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.phys.Vec3;
@@ -548,6 +551,15 @@ public final class ModNetwork {
                 .consumerMainThread(TriggerBodyShieldPacket::handle)
                 .add();
         CHANNEL.messageBuilder(
+                        ForceRemoveEntityPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(ForceRemoveEntityPacket::encode)
+                .decoder(ForceRemoveEntityPacket::decode)
+                .consumerMainThread(ForceRemoveEntityPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
                         SyncDefenseResourcePacket.class,
                         getId(),
                         NetworkDirection.PLAY_TO_CLIENT
@@ -902,6 +914,13 @@ public final class ModNetwork {
         CHANNEL.send(
                 PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> entity),
                 new TriggerBodyShieldPacket(entity.getId())
+        );
+    }
+
+    public static void sendForceRemoveEntity(ServerLevel level, Entity entity) {
+        CHANNEL.send(
+                PacketDistributor.DIMENSION.with(level::dimension),
+                new ForceRemoveEntityPacket(entity.getId())
         );
     }
 
