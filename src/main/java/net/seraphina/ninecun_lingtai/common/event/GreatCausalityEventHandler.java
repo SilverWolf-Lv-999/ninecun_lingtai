@@ -7,6 +7,7 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.item.ItemTossEvent;
@@ -29,12 +30,13 @@ import net.seraphina.ninecun_lingtai.utility.GreatCausalityUtility;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @Mod.EventBusSubscriber(modid = ModMain.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class GreatCausalityEventHandler {
     private static final String ENHANCED_LOOT_KEY = ModMain.MOD_ID + ":causality_enhanced";
     private static final double MAXIMUM_LOOT_BONUS_CHANCE = 0.75D;
-    private static final Map<Integer, Long> LAST_MOVEMENT_RECORDS = new HashMap<>();
+    private static final Map<UUID, BlockPos> LAST_MOVEMENT_RECORDS = new HashMap<>();
 
     @SubscribeEvent
     public static void onAttackEntity(AttackEntityEvent event) {
@@ -42,7 +44,8 @@ public final class GreatCausalityEventHandler {
             CausalityHistoryManager.record(
                     player,
                     "combat",
-                    "攻击了 " + event.getTarget().getName().getString()
+                    "使用 " + player.getMainHandItem().getHoverName().getString()
+                            + " 攻击了 " + event.getTarget().getName().getString()
             );
         }
     }
@@ -73,9 +76,25 @@ public final class GreatCausalityEventHandler {
                 player,
                 "interaction",
                 "与方块 " + event.getLevel().getBlockState(event.getPos()).getBlock().getName().getString()
-                        + " 发生了交互"
+                        + " 发生了交互；使用物品："
+                        + event.getItemStack().getHoverName().getString()
+                        + "；结果：" + (event.isCanceled() ? "未完成" : "已提交")
         );
-        enhanceContainerLoot(player, event.getPos());
+        if (GreatCausalityUtility.hasTechnique(player)) {
+            enhanceContainerLoot(player, event.getPos());
+        }
+    }
+
+    @SubscribeEvent
+    public static void onRightClickItem(PlayerInteractEvent.RightClickItem event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            CausalityHistoryManager.record(
+                    player,
+                    "item",
+                    "使用了物品 " + event.getItemStack().getHoverName().getString()
+                            + "；结果：" + (event.isCanceled() ? "未完成" : "已提交")
+            );
+        }
     }
 
     @SubscribeEvent
@@ -84,7 +103,9 @@ public final class GreatCausalityEventHandler {
             CausalityHistoryManager.record(
                     player,
                     "interaction",
-                    "与实体 " + event.getTarget().getName().getString() + " 发生了交互"
+                    "与实体 " + event.getTarget().getName().getString()
+                            + " 发生了交互；使用物品："
+                            + event.getItemStack().getHoverName().getString()
             );
         }
     }
@@ -96,6 +117,21 @@ public final class GreatCausalityEventHandler {
                     player,
                     "block",
                     "破坏了方块 " + event.getState().getBlock().getName().getString()
+                            + "；工具：" + player.getMainHandItem().getHoverName().getString()
+                            + "；坐标：" + formatPosition(event.getPos())
+            );
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlaceBlock(BlockEvent.EntityPlaceEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            CausalityHistoryManager.record(
+                    player,
+                    "block",
+                    "放置了方块 " + event.getPlacedBlock().getBlock().getName().getString()
+                            + "；坐标：" + formatPosition(event.getPos())
+                            + "；手持物品：" + player.getMainHandItem().getHoverName().getString()
             );
         }
     }
@@ -107,6 +143,8 @@ public final class GreatCausalityEventHandler {
                     player,
                     "item",
                     "拾取了 " + event.getItem().getItem().getHoverName().getString()
+                            + " ×" + event.getItem().getItem().getCount()
+                            + "；物品实体坐标：" + formatPosition(event.getItem().blockPosition())
             );
         }
     }
@@ -129,28 +167,108 @@ public final class GreatCausalityEventHandler {
                     player,
                     "item",
                     "投掷了 " + event.getEntity().getItem().getHoverName().getString()
+                            + " ×" + event.getEntity().getItem().getCount()
             );
         }
     }
 
     @SubscribeEvent
     public static void onItemFished(ItemFishedEvent event) {
-        if (!(event.getEntity() instanceof ServerPlayer player)
-                || !GreatCausalityUtility.hasTechnique(player)) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) {
             return;
         }
-        int treasureCount = GreatCausalityUtility.getMasteryStage(player).ordinal() >= 2 ? 2 : 1;
-        event.getDrops().clear();
-        for (int index = 0; index < treasureCount; index++) {
-            event.getDrops().add(new ItemStack(getFishingTreasure(player)));
+        if (GreatCausalityUtility.hasTechnique(player)) {
+            int treasureCount = GreatCausalityUtility.getMasteryStage(player).ordinal() >= 2 ? 2 : 1;
+            event.getDrops().clear();
+            StringBuilder result = new StringBuilder();
+            for (int index = 0; index < treasureCount; index++) {
+                ItemStack treasure = new ItemStack(getFishingTreasure(player));
+                event.getDrops().add(treasure);
+                if (result.length() > 0) {
+                    result.append("、");
+                }
+                result.append(treasure.getHoverName().getString());
+            }
+            CausalityHistoryManager.record(
+                    player,
+                    "fishing",
+                    "完成了一次垂钓；获得：" + result
+                            + "；鱼钩坐标：" + formatPosition(player.blockPosition())
+            );
+            return;
         }
-        CausalityHistoryManager.record(player, "fishing", "垂钓得到了因果所向的宝物");
+
+        String result = event.getDrops().stream()
+                .map(stack -> stack.getHoverName().getString() + " ×" + stack.getCount())
+                .reduce((first, second) -> first + "、" + second)
+                .orElse("无物品");
+        CausalityHistoryManager.record(
+                player,
+                "fishing",
+                "完成了一次垂钓；获得：" + result
+                        + "；鱼钩坐标：" + formatPosition(player.blockPosition())
+        );
     }
 
     @SubscribeEvent
     public static void onLivingDeath(LivingDeathEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
-            CausalityHistoryManager.record(player, "death", "死亡");
+            Entity killer = event.getSource().getEntity();
+            CausalityHistoryManager.record(
+                    player,
+                    "death",
+                    "死亡；原因：" + event.getSource().getMsgId()
+                            + "；致死者：" + (killer == null ? "环境" : killer.getName().getString())
+            );
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            LAST_MOVEMENT_RECORDS.put(player.getUUID(), player.blockPosition());
+            CausalityHistoryManager.record(
+                    player,
+                    "login",
+                    "进入了世界；维度：" + player.level().dimension().location()
+            );
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            CausalityHistoryManager.record(
+                    player,
+                    "logout",
+                    "离开了世界；最后位置：" + formatPosition(player.blockPosition())
+            );
+            CausalityHistoryManager.flush(player);
+            LAST_MOVEMENT_RECORDS.remove(player.getUUID());
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            CausalityHistoryManager.record(
+                    player,
+                    "death",
+                    "复活；当前位置：" + formatPosition(player.blockPosition())
+            );
+            LAST_MOVEMENT_RECORDS.put(player.getUUID(), player.blockPosition());
+        }
+    }
+
+    @SubscribeEvent
+    public static void onItemCrafted(PlayerEvent.ItemCraftedEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            CausalityHistoryManager.record(
+                    player,
+                    "crafting",
+                    "制作了 " + event.getCrafting().getHoverName().getString()
+                            + " ×" + event.getCrafting().getCount()
+            );
         }
     }
 
@@ -158,9 +276,10 @@ public final class GreatCausalityEventHandler {
     public static void onChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             CausalityHistoryManager.record(
-                    player,
-                    "travel",
-                    "从 " + event.getFrom().location() + " 进入了 " + event.getTo().location()
+                player,
+                "travel",
+                "从 " + event.getFrom().location() + " 进入了 " + event.getTo().location()
+                        + "；当前位置：" + formatPosition(player.blockPosition())
             );
         }
     }
@@ -169,14 +288,18 @@ public final class GreatCausalityEventHandler {
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
         if (event.phase != TickEvent.Phase.END
                 || !(event.player instanceof ServerPlayer player)
-                || !GreatCausalityUtility.hasTechnique(player)
-                || player.tickCount % 100 != 0) {
+                || player.tickCount % 20 != 0) {
             return;
         }
-        long packedPosition = player.blockPosition().asLong();
-        Long lastPosition = LAST_MOVEMENT_RECORDS.put(player.getId(), packedPosition);
-        if (lastPosition != null && lastPosition != packedPosition) {
-            CausalityHistoryManager.record(player, "travel", "移动到了新的位置");
+        BlockPos currentPosition = player.blockPosition();
+        BlockPos previousPosition = LAST_MOVEMENT_RECORDS.put(player.getUUID(), currentPosition);
+        if (previousPosition != null && !previousPosition.equals(currentPosition)) {
+            CausalityHistoryManager.record(
+                    player,
+                    "travel",
+                    "从 " + formatPosition(previousPosition)
+                            + " 移动到 " + formatPosition(currentPosition)
+            );
         }
     }
 
@@ -217,6 +340,12 @@ public final class GreatCausalityEventHandler {
         ItemStack bestStack = findBestStack(container);
         if (!bestStack.isEmpty() && bestStack.getCount() < bestStack.getMaxStackSize()) {
             bestStack.grow(1);
+            CausalityHistoryManager.record(
+                    player,
+                    "loot",
+                    "开启容器并使 " + bestStack.getHoverName().getString()
+                            + " 的数量增加 1；容器坐标：" + formatPosition(position)
+            );
         }
         container.getPersistentData().putBoolean(ENHANCED_LOOT_KEY, true);
     }
@@ -250,5 +379,9 @@ public final class GreatCausalityEventHandler {
             case 3 -> Items.HEART_OF_THE_SEA;
             default -> Items.DIAMOND;
         };
+    }
+
+    private static String formatPosition(BlockPos position) {
+        return "[" + position.getX() + ", " + position.getY() + ", " + position.getZ() + "]";
     }
 }

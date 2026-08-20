@@ -78,6 +78,16 @@ public final class CausalityHistoryManager {
                 .forEach(CausalityHistoryManager::flush);
     }
 
+    public static void flush(ServerPlayer player) {
+        if (player == null || player.level().isClientSide()) {
+            return;
+        }
+        CachedHistory history = HISTORIES.get(getFilePath(player.server, player.getUUID()));
+        if (history != null) {
+            flush(history);
+        }
+    }
+
     public static void clear(MinecraftServer server) {
         flush(server);
         HISTORIES.entrySet().removeIf(entry -> entry.getValue().server == server);
