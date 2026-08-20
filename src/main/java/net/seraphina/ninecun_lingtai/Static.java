@@ -24,4 +24,8 @@ public class Static {
     public static boolean isClient() {
         return FMLEnvironment.dist == Dist.CLIENT;
     }
+
+    public static void println(String message) {
+        System.out.println(message);
+    }
 }

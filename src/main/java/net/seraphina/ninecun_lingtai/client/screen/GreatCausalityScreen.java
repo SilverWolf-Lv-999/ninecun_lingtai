@@ -1,6 +1,13 @@
 package net.seraphina.ninecun_lingtai.client.screen;
 
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.BufferUploader;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.Tesselator;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.Util;
+import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -13,6 +20,7 @@ import net.seraphina.ninecun_lingtai.common.causality.CausalitySnapshot;
 import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import net.seraphina.ninecun_lingtai.common.network.packet.RequestGreatCausalityPacket;
 import org.lwjgl.glfw.GLFW;
+import org.joml.Matrix4f;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -34,6 +42,7 @@ public final class GreatCausalityScreen extends Screen {
     private static final int EMPTY_LINE_NODES = 5;
     private static final int MAX_VISIBLE_RECORDS = 8;
     private static final int HEADER_HEIGHT = 84;
+    private static final int TIMELINE_LABEL_HEIGHT = 56;
     private static final long INTRO_DURATION = 1_250L;
     private static final long NODE_APPEAR_INTERVAL = 95L;
     private static final long NODE_APPEAR_DURATION = 480L;
@@ -41,6 +50,9 @@ public final class GreatCausalityScreen extends Screen {
     private static final long SENTENCE_APPEAR_INTERVAL = 155L;
     private static final DateTimeFormatter TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern(
             "yyyy-MM-dd HH:mm:ss"
+    ).withZone(ZoneId.systemDefault());
+    private static final DateTimeFormatter SHORT_TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern(
+            "HH:mm:ss"
     ).withZone(ZoneId.systemDefault());
 
     private final CausalitySnapshot snapshot;
@@ -141,7 +153,7 @@ public final class GreatCausalityScreen extends Screen {
             return true;
         }
         if (this.mode == ViewMode.RECORD_FILE && !this.snapshot.records().isEmpty()) {
-            int maximumOffset = Math.max(0, this.snapshot.records().size() - MAX_VISIBLE_RECORDS);
+            int maximumOffset = Math.max(0, this.snapshot.records().size() - getVisibleRecordCount());
             this.recordScrollOffset = Mth.clamp(
                     this.recordScrollOffset - (int) Math.signum(delta),
                     0,
@@ -348,13 +360,14 @@ public final class GreatCausalityScreen extends Screen {
         }
 
         int windowStart = getVisibleFileStart();
+        int rowHeight = getRecordRowHeight();
         for (int index = 0; index < records.size(); index++) {
             CausalityRecord record = records.get(index);
             int absoluteIndex = windowStart + index;
             int column = index % 2;
             int row = index / 2;
             int left = 58 + column * (this.width / 2);
-            int top = 108 + row * 108;
+            int top = 104 + row * rowHeight;
             float recordAlpha = easeOut(progress(
                     currentTime - this.viewStartedAt - index * RECORD_APPEAR_INTERVAL,
                     520L
@@ -368,6 +381,7 @@ public final class GreatCausalityScreen extends Screen {
                     absoluteIndex,
                     left,
                     top,
+                    rowHeight,
                     currentTime,
                     recordAlpha * reveal
             );
@@ -459,7 +473,17 @@ public final class GreatCausalityScreen extends Screen {
             float[] point = getTimelinePoint(nodePosition, startX, startY, endX, endY);
             CausalityRecord record = getNodeRecord(records, index, nodeCount);
             drawTimelineNode(guiGraphics, point[0], point[1], nodeProgress, index == this.selectedNodeIndex);
-            drawTimelineNodeLabel(guiGraphics, record, index, point[0], point[1], nodeProgress);
+            drawTimelineNodeLabel(
+                    guiGraphics,
+                    record,
+                    index,
+                    nodeCount,
+                    startX,
+                    endX,
+                    point[0],
+                    point[1],
+                    nodeProgress
+            );
         }
         guiGraphics.drawString(
                 this.font,
@@ -490,21 +514,42 @@ public final class GreatCausalityScreen extends Screen {
             GuiGraphics guiGraphics,
             CausalityRecord record,
             int nodeIndex,
+            int nodeCount,
+            float timelineStartX,
+            float timelineEndX,
             float nodeX,
             float nodeY,
             float alpha
     ) {
-        boolean above = nodeIndex % 2 == 0;
-        int labelWidth = Mth.clamp(this.width / 5, 148, 220);
-        int labelX = Mth.clamp(
-                Mth.floor(nodeX - labelWidth * 0.5F),
-                12,
-                Math.max(12, this.width - labelWidth - 12)
+        float position = getNodePosition(nodeIndex, nodeCount);
+        float previousPosition = getNodePosition(Math.max(0, nodeIndex - 1), nodeCount);
+        float nextPosition = getNodePosition(Math.min(nodeCount - 1, nodeIndex + 1), nodeCount);
+        int cellLeft = nodeIndex == 0
+                ? Mth.floor(timelineStartX)
+                : Mth.floor(Mth.lerp((previousPosition + position) * 0.5F, timelineStartX, timelineEndX));
+        int cellRight = nodeIndex == nodeCount - 1
+                ? Mth.floor(timelineEndX)
+                : Mth.floor(Mth.lerp((position + nextPosition) * 0.5F, timelineStartX, timelineEndX));
+        int labelX = cellLeft + 6;
+        int labelWidth = Math.max(42, cellRight - cellLeft - 12);
+        int lane = nodeIndex % 4;
+        boolean above = lane < 2;
+        int labelY = getTimelineLabelY(lane);
+        int connectorY = above ? labelY + TIMELINE_LABEL_HEIGHT : labelY;
+        guiGraphics.fill(
+                labelX - 4,
+                labelY - 4,
+                labelX + labelWidth + 4,
+                labelY + TIMELINE_LABEL_HEIGHT,
+                withAlpha(VOID_BACKGROUND, alpha * 0.86F)
         );
-        int labelY = above
-                ? Mth.floor(nodeY - 82.0F)
-                : Mth.floor(nodeY + 30.0F);
-        int connectorY = above ? labelY + 45 : labelY - 8;
+        guiGraphics.fill(
+                labelX - 4,
+                labelY - 4,
+                labelX + labelWidth + 4,
+                labelY - 2,
+                withAlpha(GOLD_LINE, alpha * 0.48F)
+        );
         guiGraphics.fill(
                 Mth.floor(nodeX),
                 Math.min(Mth.floor(nodeY), connectorY),
@@ -513,24 +558,21 @@ public final class GreatCausalityScreen extends Screen {
                 withAlpha(GOLD_LINE, alpha * 0.66F)
         );
         String title = record == null
-                ? String.format("节点 %02d · 等待记录", nodeIndex + 1)
-                : String.format("节点 %02d · %s", nodeIndex + 1, categoryName(record.category()));
+                ? String.format("%02d · 等待记录", nodeIndex + 1)
+                : String.format("%02d · %s", nodeIndex + 1, categoryName(record.category()));
         String timestamp = record == null
-                ? "时间：暂无"
-                : "时间：" + formatTimestamp(record.timestamp());
-        String metadata = record == null
-                ? "游戏刻：暂无 · 坐标：暂无"
-                : "刻 " + record.gameTime() + " · [" + record.x() + ", " + record.y() + ", " + record.z() + "]";
-        guiGraphics.drawString(this.font, title, labelX, labelY, withAlpha(GOLD, alpha));
-        guiGraphics.drawString(this.font, timestamp, labelX, labelY + 14, withAlpha(TEXT, alpha));
-        guiGraphics.drawString(this.font, metadata, labelX, labelY + 28, withAlpha(MUTED_TEXT, alpha));
-        if (record != null) {
-            String description = record.description();
-            List<FormattedCharSequence> lines = wrapText(description, labelWidth);
-            if (!lines.isEmpty()) {
-                guiGraphics.drawString(this.font, lines.get(0), labelX, labelY + 42, withAlpha(FAINT_TEXT, alpha));
-            }
-        }
+                ? "时间 暂无"
+                : "时间 " + formatShortTimestamp(record.timestamp());
+        String gameTime = record == null ? "刻 暂无" : "刻 " + record.gameTime();
+        String coordinate = record == null
+                ? "坐标 暂无"
+                : "[" + record.x() + ", " + record.y() + ", " + record.z() + "]";
+        String description = record == null ? "等待行为写入" : compactTimelineDescription(record.description());
+        drawTimelineTextLine(guiGraphics, title, labelX, labelY, labelWidth, GOLD, alpha);
+        drawTimelineTextLine(guiGraphics, timestamp, labelX, labelY + 12, labelWidth, TEXT, alpha);
+        drawTimelineTextLine(guiGraphics, gameTime, labelX, labelY + 24, labelWidth, MUTED_TEXT, alpha);
+        drawTimelineTextLine(guiGraphics, coordinate, labelX, labelY + 36, labelWidth, MUTED_TEXT, alpha);
+        drawTimelineTextLine(guiGraphics, description, labelX, labelY + 48, labelWidth, FAINT_TEXT, alpha);
     }
 
     private void drawTimelinePath(
@@ -543,30 +585,20 @@ public final class GreatCausalityScreen extends Screen {
             int thickness,
             int color
     ) {
-        float previousT = 0.0F;
-        float[] previousPoint = getTimelinePoint(0.0F, startX, startY, endX, endY);
-        int segmentCount = 96;
-        for (int index = 1; index <= segmentCount; index++) {
-            float currentT = index / (float) segmentCount;
-            if (currentT > progress) {
-                currentT = progress;
-            }
-            float[] currentPoint = getTimelinePoint(currentT, startX, startY, endX, endY);
-            drawSegment(
-                    guiGraphics,
-                    previousPoint[0],
-                    previousPoint[1],
-                    currentPoint[0],
-                    currentPoint[1],
-                    thickness,
-                    color
-            );
-            previousPoint = currentPoint;
-            previousT = currentT;
-            if (previousT >= progress) {
+        if (progress <= 0.0F) {
+            return;
+        }
+
+        int segmentCount = 128;
+        List<float[]> points = new ArrayList<>(segmentCount + 1);
+        for (int index = 0; index <= segmentCount; index++) {
+            float currentT = Math.min(progress, index / (float) segmentCount);
+            points.add(getTimelinePoint(currentT, startX, startY, endX, endY));
+            if (currentT >= progress) {
                 break;
             }
         }
+        drawSmoothPolyline(guiGraphics, points, thickness, color);
     }
 
     private void drawTimelineNode(
@@ -608,12 +640,21 @@ public final class GreatCausalityScreen extends Screen {
             int absoluteIndex,
             int left,
             int top,
+            int rowHeight,
             long currentTime,
             float alpha
     ) {
         int availableWidth = Math.max(180, this.width / 2 - 104);
-        guiGraphics.fill(left - 8, top - 8, left - 5, top + 82, withAlpha(GOLD_LINE, alpha * 0.82F));
-        guiGraphics.hLine(left, left + availableWidth, top + 80, withAlpha(0x7B6040, alpha * 0.55F));
+        int bottom = top + rowHeight - 14;
+        guiGraphics.fill(
+                left - 8,
+                top - 8,
+                left + availableWidth + 8,
+                bottom,
+                withAlpha(VOID_BACKGROUND, alpha * 0.52F)
+        );
+        guiGraphics.fill(left - 8, top - 8, left - 5, bottom, withAlpha(GOLD_LINE, alpha * 0.82F));
+        guiGraphics.hLine(left, left + availableWidth, bottom, withAlpha(0x7B6040, alpha * 0.55F));
         guiGraphics.drawString(
                 this.font,
                 String.format("档案 %02d  ·  %s", absoluteIndex + 1, categoryName(record.category())),
@@ -638,6 +679,8 @@ public final class GreatCausalityScreen extends Screen {
 
         List<String> sentences = splitSentences(record.description());
         int sentenceY = top + 49;
+        int maximumDescriptionLines = Math.max(1, (bottom - sentenceY - 2) / 12);
+        int renderedDescriptionLines = 0;
         for (int index = 0; index < sentences.size(); index++) {
             float sentenceAlpha = easeOut(progress(
                     currentTime - this.viewStartedAt
@@ -649,6 +692,9 @@ public final class GreatCausalityScreen extends Screen {
                 continue;
             }
             for (FormattedCharSequence line : wrapText(sentences.get(index), availableWidth)) {
+                if (renderedDescriptionLines >= maximumDescriptionLines) {
+                    break;
+                }
                 guiGraphics.drawString(
                         this.font,
                         line,
@@ -657,6 +703,10 @@ public final class GreatCausalityScreen extends Screen {
                         withAlpha(TEXT, alpha * sentenceAlpha)
                 );
                 sentenceY += 12;
+                renderedDescriptionLines++;
+            }
+            if (renderedDescriptionLines >= maximumDescriptionLines) {
+                break;
             }
         }
     }
@@ -743,11 +793,13 @@ public final class GreatCausalityScreen extends Screen {
     }
 
     private float getTimelineStartY() {
-        return Math.max(142.0F, this.height * 0.24F);
+        float halfSpan = Math.min(96.0F, Math.max(48.0F, this.height * 0.11F));
+        return this.height * 0.5F - halfSpan;
     }
 
     private float getTimelineEndY() {
-        return Math.min(this.height - 174.0F, this.height * 0.76F);
+        float halfSpan = Math.min(96.0F, Math.max(48.0F, this.height * 0.11F));
+        return this.height * 0.5F + halfSpan;
     }
 
     private List<CausalityRecord> getVisibleFileRecords() {
@@ -755,7 +807,7 @@ public final class GreatCausalityScreen extends Screen {
             return List.of();
         }
         int start = getVisibleFileStart();
-        int end = Math.min(this.snapshot.records().size(), start + MAX_VISIBLE_RECORDS);
+        int end = Math.min(this.snapshot.records().size(), start + getVisibleRecordCount());
         return this.snapshot.records().subList(start, end);
     }
 
@@ -771,42 +823,230 @@ public final class GreatCausalityScreen extends Screen {
         int start = Mth.clamp(
                 center - 2,
                 0,
-                Math.max(0, this.snapshot.records().size() - MAX_VISIBLE_RECORDS)
+                Math.max(0, this.snapshot.records().size() - getVisibleRecordCount())
         );
         return Mth.clamp(
                 start + this.recordScrollOffset,
                 0,
-                Math.max(0, this.snapshot.records().size() - MAX_VISIBLE_RECORDS)
+                Math.max(0, this.snapshot.records().size() - getVisibleRecordCount())
         );
+    }
+
+    private int getTimelineLabelY(int lane) {
+        int upperStart = HEADER_HEIGHT + 28;
+        int upperStep = Math.max(
+                48,
+                Mth.floor(getTimelineStartY() - upperStart - TIMELINE_LABEL_HEIGHT - 12.0F)
+        );
+        int lowerStart = Math.max(
+                Mth.floor(getTimelineEndY() + 24.0F),
+                this.height - 152
+        );
+        int lowerStep = Math.max(
+                48,
+                this.height - 64 - TIMELINE_LABEL_HEIGHT - lowerStart
+        );
+        return lane < 2
+                ? upperStart + lane * upperStep
+                : lowerStart + (lane - 2) * lowerStep;
+    }
+
+    private int getVisibleRecordRows() {
+        return Mth.clamp((this.height - 140) / 126, 1, MAX_VISIBLE_RECORDS / 2);
+    }
+
+    private int getVisibleRecordCount() {
+        return getVisibleRecordRows() * 2;
+    }
+
+    private int getRecordRowHeight() {
+        return Math.max(108, (this.height - 150) / getVisibleRecordRows());
     }
 
     private void drawFooter(GuiGraphics guiGraphics, String text) {
         guiGraphics.drawString(this.font, text, 52, this.height - 38, FAINT_TEXT);
     }
 
-    private static void drawSegment(
+    private static void drawSmoothPolyline(
             GuiGraphics guiGraphics,
-            float x1,
-            float y1,
-            float x2,
-            float y2,
-            int thickness,
+            List<float[]> points,
+            float thickness,
             int color
     ) {
-        int halfThickness = Math.max(1, thickness / 2);
-        int steps = Math.max(1, (int) Math.max(Math.abs(x2 - x1), Math.abs(y2 - y1)));
-        for (int index = 0; index <= steps; index++) {
-            float progress = index / (float) steps;
-            int x = Mth.floor(Mth.lerp(progress, x1, x2));
-            int y = Mth.floor(Mth.lerp(progress, y1, y2));
-            guiGraphics.fill(
-                    x - halfThickness,
-                    y - halfThickness,
-                    x + halfThickness + 1,
-                    y + halfThickness + 1,
+        if ((color >>> 24) == 0 || points.size() < 2) {
+            return;
+        }
+
+        guiGraphics.flush();
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        RenderSystem.disableCull();
+        RenderSystem.setShader(GameRenderer::getPositionColorShader);
+
+        Matrix4f matrix = guiGraphics.pose().last().pose();
+        drawPolylineLayer(
+                matrix,
+                points,
+                thickness + 3.0F,
+                scaleAlpha(color, 0.16F)
+        );
+        drawPolylineEdgeFade(matrix, points, thickness, color);
+        drawPolylineLayer(matrix, points, Math.max(1.0F, thickness - 0.7F), color);
+
+        RenderSystem.enableCull();
+        RenderSystem.disableBlend();
+    }
+
+    private static void drawPolylineLayer(
+            Matrix4f matrix,
+            List<float[]> points,
+            float thickness,
+            int color
+    ) {
+        if ((color >>> 24) == 0 || thickness <= 0.0F) {
+            return;
+        }
+
+        BufferBuilder bufferBuilder = Tesselator.getInstance().getBuilder();
+        bufferBuilder.begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR);
+        for (int index = 0; index < points.size(); index++) {
+            appendPolylineStripVertices(bufferBuilder, matrix, points, index, thickness, color);
+        }
+        BufferUploader.drawWithShader(bufferBuilder.end());
+    }
+
+    private static void drawPolylineEdgeFade(
+            Matrix4f matrix,
+            List<float[]> points,
+            float thickness,
+            int color
+    ) {
+        float innerHalfThickness = Math.max(0.35F, thickness * 0.5F - 0.25F);
+        float outerHalfThickness = thickness * 0.5F + 1.15F;
+        int transparentColor = color & 0x00FFFFFF;
+        BufferBuilder bufferBuilder = Tesselator.getInstance().getBuilder();
+        bufferBuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+
+        for (int index = 0; index < points.size() - 1; index++) {
+            float[] start = points.get(index);
+            float[] end = points.get(index + 1);
+            float[] startNormal = getPolylineNormal(points, index);
+            float[] endNormal = getPolylineNormal(points, index + 1);
+
+            appendQuad(
+                    bufferBuilder,
+                    matrix,
+                    start[0] + startNormal[0] * outerHalfThickness,
+                    start[1] + startNormal[1] * outerHalfThickness,
+                    start[0] + startNormal[0] * innerHalfThickness,
+                    start[1] + startNormal[1] * innerHalfThickness,
+                    end[0] + endNormal[0] * innerHalfThickness,
+                    end[1] + endNormal[1] * innerHalfThickness,
+                    end[0] + endNormal[0] * outerHalfThickness,
+                    end[1] + endNormal[1] * outerHalfThickness,
+                    transparentColor,
+                    color,
+                    color,
+                    transparentColor
+            );
+            appendQuad(
+                    bufferBuilder,
+                    matrix,
+                    start[0] - startNormal[0] * innerHalfThickness,
+                    start[1] - startNormal[1] * innerHalfThickness,
+                    start[0] - startNormal[0] * outerHalfThickness,
+                    start[1] - startNormal[1] * outerHalfThickness,
+                    end[0] - endNormal[0] * outerHalfThickness,
+                    end[1] - endNormal[1] * outerHalfThickness,
+                    end[0] - endNormal[0] * innerHalfThickness,
+                    end[1] - endNormal[1] * innerHalfThickness,
+                    color,
+                    transparentColor,
+                    transparentColor,
                     color
             );
         }
+        BufferUploader.drawWithShader(bufferBuilder.end());
+    }
+
+    private static void appendPolylineStripVertices(
+            BufferBuilder bufferBuilder,
+            Matrix4f matrix,
+            List<float[]> points,
+            int pointIndex,
+            float thickness,
+            int color
+    ) {
+        float[] point = points.get(pointIndex);
+        float[] normal = getPolylineNormal(points, pointIndex);
+        float halfThickness = thickness * 0.5F;
+        vertex(
+                bufferBuilder,
+                matrix,
+                point[0] + normal[0] * halfThickness,
+                point[1] + normal[1] * halfThickness,
+                color
+        );
+        vertex(
+                bufferBuilder,
+                matrix,
+                point[0] - normal[0] * halfThickness,
+                point[1] - normal[1] * halfThickness,
+                color
+        );
+    }
+
+    private static float[] getPolylineNormal(List<float[]> points, int pointIndex) {
+        float[] previous = points.get(Math.max(0, pointIndex - 1));
+        float[] next = points.get(Math.min(points.size() - 1, pointIndex + 1));
+        float deltaX = next[0] - previous[0];
+        float deltaY = next[1] - previous[1];
+        float length = Mth.sqrt(deltaX * deltaX + deltaY * deltaY);
+        if (length <= 0.0001F) {
+            return new float[]{0.0F, 1.0F};
+        }
+        return new float[]{-deltaY / length, deltaX / length};
+    }
+
+    private static void appendQuad(
+            BufferBuilder bufferBuilder,
+            Matrix4f matrix,
+            float firstX,
+            float firstY,
+            float secondX,
+            float secondY,
+            float thirdX,
+            float thirdY,
+            float fourthX,
+            float fourthY,
+            int firstColor,
+            int secondColor,
+            int thirdColor,
+            int fourthColor
+    ) {
+        vertex(bufferBuilder, matrix, firstX, firstY, firstColor);
+        vertex(bufferBuilder, matrix, secondX, secondY, secondColor);
+        vertex(bufferBuilder, matrix, thirdX, thirdY, thirdColor);
+        vertex(bufferBuilder, matrix, fourthX, fourthY, fourthColor);
+    }
+
+    private static void vertex(
+            BufferBuilder bufferBuilder,
+            Matrix4f matrix,
+            float x,
+            float y,
+            int color
+    ) {
+        int alpha = color >>> 24 & 0xFF;
+        int red = color >>> 16 & 0xFF;
+        int green = color >>> 8 & 0xFF;
+        int blue = color & 0xFF;
+        bufferBuilder.vertex(matrix, x, y, 0.0F).color(red, green, blue, alpha).endVertex();
+    }
+
+    private static int scaleAlpha(int color, float scale) {
+        int alpha = Mth.clamp((int) ((color >>> 24 & 0xFF) * scale), 0, 255);
+        return (alpha << 24) | (color & 0x00FFFFFF);
     }
 
     private static float[] getTimelinePoint(
@@ -826,6 +1066,26 @@ public final class GreatCausalityScreen extends Screen {
 
     private List<FormattedCharSequence> wrapText(String text, int width) {
         return this.font.split(Component.literal(text), width);
+    }
+
+    private void drawTimelineTextLine(
+            GuiGraphics guiGraphics,
+            String text,
+            int x,
+            int y,
+            int width,
+            int color,
+            float alpha
+    ) {
+        List<FormattedCharSequence> lines = wrapText(text, width);
+        if (!lines.isEmpty()) {
+            guiGraphics.drawString(this.font, lines.get(0), x, y, withAlpha(color, alpha));
+        }
+    }
+
+    private static String compactTimelineDescription(String description) {
+        String compact = description.replace('\n', ' ').trim();
+        return compact.length() > 18 ? compact.substring(0, 18) + "…" : compact;
     }
 
     private static List<String> splitSentences(String text) {
@@ -876,6 +1136,14 @@ public final class GreatCausalityScreen extends Screen {
             return TIMESTAMP_FORMAT.format(Instant.parse(timestamp));
         } catch (DateTimeParseException exception) {
             return timestamp;
+        }
+    }
+
+    private static String formatShortTimestamp(String timestamp) {
+        try {
+            return SHORT_TIMESTAMP_FORMAT.format(Instant.parse(timestamp));
+        } catch (DateTimeParseException exception) {
+            return timestamp.length() > 8 ? timestamp.substring(timestamp.length() - 8) : timestamp;
         }
     }
 

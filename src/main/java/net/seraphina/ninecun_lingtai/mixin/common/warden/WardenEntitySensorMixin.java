@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(WardenEntitySensor.class)
 public abstract class WardenEntitySensorMixin {
-    @Inject(method = "doTick", at = @At("TAIL"))
+    @Inject(method = "doTick*", at = @At("TAIL"))
     private void ninecunLingtai$removeCausalityPlayerFromSniffTargets(
             ServerLevel level,
             Warden warden,

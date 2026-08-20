@@ -1,21 +1,12 @@
 package net.seraphina.ninecun_lingtai;
 
-import net.seraphina.ninecun_lingtai.common.config.CommonConfig;
-import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
-import net.seraphina.ninecun_lingtai.common.registry.ModBlocks;
-import net.seraphina.ninecun_lingtai.common.registry.ModBlockEntityTypes;
-import net.seraphina.ninecun_lingtai.common.registry.ModCreativeModeTabs;
-import net.seraphina.ninecun_lingtai.common.registry.ModEntityTypes;
-import net.seraphina.ninecun_lingtai.common.registry.ModFeatures;
-import net.seraphina.ninecun_lingtai.common.registry.ModItems;
-import net.seraphina.ninecun_lingtai.common.registry.ModMenuTypes;
-import net.seraphina.ninecun_lingtai.common.registry.ModSpells;
-import net.seraphina.ninecun_lingtai.common.registry.ModSounds;
-import net.seraphina.ninecun_lingtai.common.registry.ModWorldgenSerializers;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.seraphina.ninecun_lingtai.common.config.CommonConfig;
+import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
+import net.seraphina.ninecun_lingtai.common.registry.*;
 import net.seraphina.ninecun_lingtai.utility.jvm.HookUtility;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -60,5 +51,10 @@ public final class ModMain {
             HookUtility.commonHooks();
             HookUtility.commonReplaceMethod();
         }
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            Static.println("何处有仙？");
+            Static.println("悠悠半载，慕然回首");
+            Static.println("一梦春秋，恍如隔世");
+        }));
     }
 }

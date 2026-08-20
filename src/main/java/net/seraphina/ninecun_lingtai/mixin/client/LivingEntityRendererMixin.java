@@ -19,7 +19,7 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, M extend
     @Unique
     private LivingEntity ninecunLingtai$renderingEntity;
 
-    @Inject(method = "render", at = @At("HEAD"))
+    @Inject(method = "render*", at = @At("HEAD"))
     private void ninecunLingtai$captureRenderingEntity(
             T entity,
             float entityYaw,
@@ -32,7 +32,7 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, M extend
         this.ninecunLingtai$renderingEntity = entity;
     }
 
-    @Inject(method = "render", at = @At("RETURN"))
+    @Inject(method = "render*", at = @At("RETURN"))
     private void ninecunLingtai$clearRenderingEntity(
             T entity,
             float entityYaw,
@@ -46,7 +46,7 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, M extend
     }
 
     @ModifyArg(
-            method = "render",
+            method = "render*",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/client/model/EntityModel;renderToBuffer(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;IIFFFF)V"
