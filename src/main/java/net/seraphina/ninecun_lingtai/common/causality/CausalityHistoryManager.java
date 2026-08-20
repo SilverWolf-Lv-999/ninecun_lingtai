@@ -9,6 +9,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.storage.LevelResource;
 import net.seraphina.ninecun_lingtai.ModMain;
+import net.seraphina.ninecun_lingtai.utility.DimensionNameUtility;
 import net.seraphina.ninecun_lingtai.utility.JsonFileUtility;
 
 import java.io.IOException;
@@ -69,7 +70,18 @@ public final class CausalityHistoryManager {
         }
         List<CausalityRecord> records = getOrLoad(server, playerId).records;
         int start = Math.max(0, records.size() - maximumRecords);
-        return List.copyOf(records.subList(start, records.size()));
+        return records.subList(start, records.size()).stream()
+                .map(record -> new CausalityRecord(
+                        record.timestamp(),
+                        record.gameTime(),
+                        DimensionNameUtility.getDisplayName(server, record.dimension()),
+                        record.x(),
+                        record.y(),
+                        record.z(),
+                        record.category(),
+                        record.description()
+                ))
+                .toList();
     }
 
     public static void flush(MinecraftServer server) {

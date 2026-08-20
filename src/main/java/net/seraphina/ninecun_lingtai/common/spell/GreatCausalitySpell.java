@@ -6,21 +6,13 @@ import net.seraphina.ninecun_lingtai.api.spell.SpellCastContext;
 import net.seraphina.ninecun_lingtai.common.causality.GreatCausalityQueryService;
 
 /**
- * 推衍因果是大因果术唯一需要主动施展的部分。
- *
- * <p>查询目标由客户端交互包提供；普通施法键只打开当前界域的玩家列表。</p>
+ * 大因果术的推衍入口。目标来自本次真正的施法上下文：
+ * 对着玩家施法查询该玩家，对空气施法查询当前界域。
  */
 public final class GreatCausalitySpell extends Spell {
     @Override
     public boolean cast(ServerPlayer player, SpellCastContext context) {
-        if (GreatCausalityQueryService.hasPendingQuery(player)) {
-            GreatCausalityQueryService.query(
-                    player,
-                    GreatCausalityQueryService.consumePendingTarget(player)
-            );
-            return true;
-        }
-        GreatCausalityQueryService.sendPlayerList(player);
+        GreatCausalityQueryService.query(player, context.targetPlayerId());
         return true;
     }
 }

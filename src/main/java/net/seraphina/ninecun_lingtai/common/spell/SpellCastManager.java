@@ -28,6 +28,7 @@ import net.minecraft.server.level.ServerPlayer;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public final class SpellCastManager {
@@ -57,6 +58,10 @@ public final class SpellCastManager {
     }
 
     public static void castSelectedSpell(ServerPlayer player) {
+        castSelectedSpell(player, null);
+    }
+
+    public static void castSelectedSpell(ServerPlayer player, UUID targetPlayerId) {
         Optional<ResourceLocation> selectedTechniqueId = PlayerSelectedSpellData.getSelectedSpell(player);
         if (selectedTechniqueId.isEmpty()) {
             sendActionBar(player, "尚未择定任何法术");
@@ -69,7 +74,7 @@ public final class SpellCastManager {
             sendActionBar(player, "所择法术已失传，请重新择法");
             return;
         }
-        castTechnique(player, techniqueOptional.get());
+        castTechnique(player, techniqueOptional.get(), false, targetPlayerId);
     }
 
     public static void castTechnique(ServerPlayer player, TechniqueDefinition technique) {
@@ -84,6 +89,15 @@ public final class SpellCastManager {
             ServerPlayer player,
             TechniqueDefinition technique,
             boolean interactionTriggered
+    ) {
+        castTechnique(player, technique, interactionTriggered, null);
+    }
+
+    private static void castTechnique(
+            ServerPlayer player,
+            TechniqueDefinition technique,
+            boolean interactionTriggered,
+            UUID targetPlayerId
     ) {
         if (technique.spell().isEmpty()) {
             sendActionBar(player, "此功并非法术，无从施展");
@@ -152,7 +166,8 @@ public final class SpellCastManager {
                 masteryStage,
                 powerEfficiency,
                 cultivationStrength,
-                interactionTriggered
+                interactionTriggered,
+                targetPlayerId
         );
         if (!spell.cast(player, context)) {
             if (anyElementConsumption != null) {

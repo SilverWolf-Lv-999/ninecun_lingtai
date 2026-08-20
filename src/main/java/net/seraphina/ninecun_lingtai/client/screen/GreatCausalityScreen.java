@@ -42,7 +42,7 @@ public final class GreatCausalityScreen extends Screen {
     private static final int EMPTY_LINE_NODES = 5;
     private static final int MAX_VISIBLE_RECORDS = 8;
     private static final int HEADER_HEIGHT = 84;
-    private static final int TIMELINE_LABEL_HEIGHT = 56;
+    private static final int TIMELINE_LABEL_HEIGHT = 32;
     private static final long INTRO_DURATION = 1_250L;
     private static final long NODE_APPEAR_INTERVAL = 95L;
     private static final long NODE_APPEAR_DURATION = 480L;
@@ -438,7 +438,7 @@ public final class GreatCausalityScreen extends Screen {
                 endY,
                 visibleProgress,
                 9,
-                withAlpha(GOLD_LINE, 0.12F)
+                withAlpha(GOLD_LINE, 0.10F)
         );
         drawTimelinePath(
                 guiGraphics,
@@ -448,7 +448,7 @@ public final class GreatCausalityScreen extends Screen {
                 endY,
                 visibleProgress,
                 4,
-                withAlpha(GOLD_LINE, 0.38F)
+                withAlpha(GOLD_LINE, 0.42F)
         );
         drawTimelinePath(
                 guiGraphics,
@@ -532,7 +532,7 @@ public final class GreatCausalityScreen extends Screen {
                 : Mth.floor(Mth.lerp((position + nextPosition) * 0.5F, timelineStartX, timelineEndX));
         int labelX = cellLeft + 6;
         int labelWidth = Math.max(42, cellRight - cellLeft - 12);
-        int lane = nodeIndex % 4;
+        int lane = getTimelineLabelLane(nodeIndex);
         boolean above = lane < 2;
         int labelY = getTimelineLabelY(lane);
         int connectorY = above ? labelY + TIMELINE_LABEL_HEIGHT : labelY;
@@ -541,7 +541,7 @@ public final class GreatCausalityScreen extends Screen {
                 labelY - 4,
                 labelX + labelWidth + 4,
                 labelY + TIMELINE_LABEL_HEIGHT,
-                withAlpha(VOID_BACKGROUND, alpha * 0.86F)
+                withAlpha(VOID_BACKGROUND, alpha * 0.80F)
         );
         guiGraphics.fill(
                 labelX - 4,
@@ -561,18 +561,10 @@ public final class GreatCausalityScreen extends Screen {
                 ? String.format("%02d · 等待记录", nodeIndex + 1)
                 : String.format("%02d · %s", nodeIndex + 1, categoryName(record.category()));
         String timestamp = record == null
-                ? "时间 暂无"
-                : "时间 " + formatShortTimestamp(record.timestamp());
-        String gameTime = record == null ? "刻 暂无" : "刻 " + record.gameTime();
-        String coordinate = record == null
-                ? "坐标 暂无"
-                : "[" + record.x() + ", " + record.y() + ", " + record.z() + "]";
-        String description = record == null ? "等待行为写入" : compactTimelineDescription(record.description());
+                ? "等待行为写入"
+                : "时刻 " + formatShortTimestamp(record.timestamp()) + " · 第 " + record.gameTime() + " 刻";
         drawTimelineTextLine(guiGraphics, title, labelX, labelY, labelWidth, GOLD, alpha);
-        drawTimelineTextLine(guiGraphics, timestamp, labelX, labelY + 12, labelWidth, TEXT, alpha);
-        drawTimelineTextLine(guiGraphics, gameTime, labelX, labelY + 24, labelWidth, MUTED_TEXT, alpha);
-        drawTimelineTextLine(guiGraphics, coordinate, labelX, labelY + 36, labelWidth, MUTED_TEXT, alpha);
-        drawTimelineTextLine(guiGraphics, description, labelX, labelY + 48, labelWidth, FAINT_TEXT, alpha);
+        drawTimelineTextLine(guiGraphics, timestamp, labelX, labelY + 15, labelWidth, MUTED_TEXT, alpha);
     }
 
     private void drawTimelinePath(
@@ -589,7 +581,7 @@ public final class GreatCausalityScreen extends Screen {
             return;
         }
 
-        int segmentCount = 128;
+        int segmentCount = 384;
         List<float[]> points = new ArrayList<>(segmentCount + 1);
         for (int index = 0; index <= segmentCount; index++) {
             float currentT = Math.min(progress, index / (float) segmentCount);
@@ -669,12 +661,14 @@ public final class GreatCausalityScreen extends Screen {
                 top + 16,
                 withAlpha(TEXT, alpha)
         );
-        guiGraphics.drawString(
-                this.font,
+        drawTimelineTextLine(
+                guiGraphics,
                 "位置：" + record.dimension() + "  [" + record.x() + ", " + record.y() + ", " + record.z() + "]",
                 left,
                 top + 32,
-                withAlpha(MUTED_TEXT, alpha)
+                availableWidth,
+                MUTED_TEXT,
+                alpha
         );
 
         List<String> sentences = splitSentences(record.description());
@@ -793,13 +787,19 @@ public final class GreatCausalityScreen extends Screen {
     }
 
     private float getTimelineStartY() {
-        float halfSpan = Math.min(96.0F, Math.max(48.0F, this.height * 0.11F));
-        return this.height * 0.5F - halfSpan;
+        if (this.height < 620) {
+            return this.height - 64.0F - TIMELINE_LABEL_HEIGHT - 16.0F;
+        }
+        float verticalSpan = Math.min(260.0F, Math.max(188.0F, this.height * 0.36F));
+        return this.height * 0.5F + verticalSpan * 0.5F;
     }
 
     private float getTimelineEndY() {
-        float halfSpan = Math.min(96.0F, Math.max(48.0F, this.height * 0.11F));
-        return this.height * 0.5F + halfSpan;
+        if (this.height < 620) {
+            return HEADER_HEIGHT + TIMELINE_LABEL_HEIGHT + 20.0F;
+        }
+        float verticalSpan = Math.min(260.0F, Math.max(188.0F, this.height * 0.36F));
+        return this.height * 0.5F - verticalSpan * 0.5F;
     }
 
     private List<CausalityRecord> getVisibleFileRecords() {
@@ -832,23 +832,32 @@ public final class GreatCausalityScreen extends Screen {
         );
     }
 
+    private int getTimelineLabelLane(int nodeIndex) {
+        if (this.height < 620) {
+            return nodeIndex % 2 == 0 ? 0 : 2;
+        }
+        return nodeIndex % 4;
+    }
+
     private int getTimelineLabelY(int lane) {
-        int upperStart = HEADER_HEIGHT + 28;
-        int upperStep = Math.max(
-                48,
-                Mth.floor(getTimelineStartY() - upperStart - TIMELINE_LABEL_HEIGHT - 12.0F)
+        int minimumTimelineY = Mth.floor(Math.min(getTimelineStartY(), getTimelineEndY()));
+        int maximumTimelineY = Mth.floor(Math.max(getTimelineStartY(), getTimelineEndY()));
+        int upperHeaderY = HEADER_HEIGHT + 20;
+        int upperNearLineY = Math.max(
+                upperHeaderY,
+                minimumTimelineY - TIMELINE_LABEL_HEIGHT - 16
         );
-        int lowerStart = Math.max(
-                Mth.floor(getTimelineEndY() + 24.0F),
-                this.height - 152
+        int lowerFooterY = this.height - 64 - TIMELINE_LABEL_HEIGHT;
+        int lowerNearLineY = Math.min(
+                lowerFooterY,
+                maximumTimelineY + 16
         );
-        int lowerStep = Math.max(
-                48,
-                this.height - 64 - TIMELINE_LABEL_HEIGHT - lowerStart
-        );
-        return lane < 2
-                ? upperStart + lane * upperStep
-                : lowerStart + (lane - 2) * lowerStep;
+        return switch (lane) {
+            case 0 -> this.height < 620 ? upperNearLineY : upperHeaderY;
+            case 1 -> upperNearLineY;
+            case 2 -> lowerNearLineY;
+            default -> Math.max(lowerNearLineY, lowerFooterY);
+        };
     }
 
     private int getVisibleRecordRows() {
@@ -884,14 +893,9 @@ public final class GreatCausalityScreen extends Screen {
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
 
         Matrix4f matrix = guiGraphics.pose().last().pose();
-        drawPolylineLayer(
-                matrix,
-                points,
-                thickness + 3.0F,
-                scaleAlpha(color, 0.16F)
-        );
+        drawPolylineLayer(matrix, points, thickness + 4.0F, scaleAlpha(color, 0.12F));
         drawPolylineEdgeFade(matrix, points, thickness, color);
-        drawPolylineLayer(matrix, points, Math.max(1.0F, thickness - 0.7F), color);
+        drawPolylineLayer(matrix, points, Math.max(1.0F, thickness - 0.9F), color);
 
         RenderSystem.enableCull();
         RenderSystem.disableBlend();
@@ -921,8 +925,8 @@ public final class GreatCausalityScreen extends Screen {
             float thickness,
             int color
     ) {
-        float innerHalfThickness = Math.max(0.35F, thickness * 0.5F - 0.25F);
-        float outerHalfThickness = thickness * 0.5F + 1.15F;
+        float innerHalfThickness = Math.max(0.35F, thickness * 0.5F - 0.35F);
+        float outerHalfThickness = thickness * 0.5F + 1.65F;
         int transparentColor = color & 0x00FFFFFF;
         BufferBuilder bufferBuilder = Tesselator.getInstance().getBuilder();
         bufferBuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
@@ -1058,7 +1062,7 @@ public final class GreatCausalityScreen extends Screen {
     ) {
         float clampedProgress = Mth.clamp(progress, 0.0F, 1.0F);
         float x = Mth.lerp(clampedProgress, startX, endX);
-        float wave = Mth.sin(clampedProgress * Mth.PI * 4.0F) * 0.055F;
+        float wave = Mth.sin(clampedProgress * Mth.PI) * 0.045F;
         float y = Mth.lerp(clampedProgress, startY, endY)
                 + wave * (endY - startY);
         return new float[]{x, y};
@@ -1081,11 +1085,6 @@ public final class GreatCausalityScreen extends Screen {
         if (!lines.isEmpty()) {
             guiGraphics.drawString(this.font, lines.get(0), x, y, withAlpha(color, alpha));
         }
-    }
-
-    private static String compactTimelineDescription(String description) {
-        String compact = description.replace('\n', ' ').trim();
-        return compact.length() > 18 ? compact.substring(0, 18) + "…" : compact;
     }
 
     private static List<String> splitSentences(String text) {

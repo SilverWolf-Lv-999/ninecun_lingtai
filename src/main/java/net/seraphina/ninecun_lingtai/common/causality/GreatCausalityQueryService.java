@@ -1,9 +1,10 @@
 package net.seraphina.ninecun_lingtai.common.causality;
 
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.player.Player;
 import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
+import net.seraphina.ninecun_lingtai.utility.DimensionNameUtility;
 import net.seraphina.ninecun_lingtai.utility.EntityUtility;
 import net.seraphina.ninecun_lingtai.utility.GreatCausalityUtility;
 
@@ -11,16 +12,19 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 public final class GreatCausalityQueryService {
     private static final double MAXIMUM_QUERY_DISTANCE_SQUARED = 64.0D * 64.0D;
-    private static final Map<UUID, PendingQuery> PENDING_QUERIES = new HashMap<>();
+    private static final long PLAYER_LIST_SESSION_DURATION = 20L * 15L;
+    private static final Map<UUID, PlayerListSession> PLAYER_LIST_SESSIONS = new HashMap<>();
 
     private GreatCausalityQueryService() {
     }
 
     public static void query(ServerPlayer observer, UUID targetId) {
+        PLAYER_LIST_SESSIONS.remove(observer.getUUID());
         if (!GreatCausalityUtility.canQuery(observer)) {
             observer.displayClientMessage(Component.literal("尚未参悟《大因果术》，无法推衍因果"), true);
             return;
@@ -29,9 +33,36 @@ public final class GreatCausalityQueryService {
             sendPlayerList(observer);
             return;
         }
+        queryTarget(observer, targetId, true);
+    }
 
+    public static void querySelectedPlayer(ServerPlayer observer, UUID targetId) {
+        if (targetId == null) {
+            observer.displayClientMessage(Component.literal("未锁定可推衍的因果对象"), true);
+            return;
+        }
+        PlayerListSession session = PLAYER_LIST_SESSIONS.remove(observer.getUUID());
+        if (session == null
+                || observer.level().getGameTime() > session.expiresAt()
+                || !observer.level().dimension().location().equals(session.dimensionId())
+                || !session.targetIds().contains(targetId)) {
+            observer.displayClientMessage(Component.literal("因果观测已失效，请重新施展《大因果术》"), true);
+            return;
+        }
+        queryTarget(observer, targetId, false);
+    }
+
+    private static void queryTarget(
+            ServerPlayer observer,
+            UUID targetId,
+            boolean requireDirectSight
+    ) {
+        if (!GreatCausalityUtility.canQuery(observer)) {
+            observer.displayClientMessage(Component.literal("尚未参悟《大因果术》，无法推衍因果"), true);
+            return;
+        }
         ServerPlayer target = observer.server.getPlayerList().getPlayer(targetId);
-        if (!isValidTarget(observer, target)) {
+        if (!isValidTarget(observer, target, requireDirectSight)) {
             observer.displayClientMessage(Component.literal("因果线超出当前感知范围"), true);
             return;
         }
@@ -59,29 +90,20 @@ public final class GreatCausalityQueryService {
         ));
     }
 
-    public static void setPendingTarget(ServerPlayer player, UUID targetId) {
-        PENDING_QUERIES.put(player.getUUID(), new PendingQuery(targetId));
-    }
-
-    public static boolean hasPendingQuery(ServerPlayer player) {
-        return PENDING_QUERIES.containsKey(player.getUUID());
-    }
-
-    public static UUID consumePendingTarget(ServerPlayer player) {
-        PendingQuery pendingQuery = PENDING_QUERIES.remove(player.getUUID());
-        return pendingQuery == null ? null : pendingQuery.targetId();
-    }
-
-    public static void clearPendingTarget(ServerPlayer player) {
-        PENDING_QUERIES.remove(player.getUUID());
-    }
-
     public static void sendPlayerList(ServerPlayer observer) {
+        removeExpiredPlayerListSessions(observer);
         List<CausalityPlayerSnapshot> players = observer.server.getPlayerList().getPlayers().stream()
-                .filter(player -> player.level() == observer.level())
+                .filter(player -> player != observer && player.level() == observer.level())
                 .map(GreatCausalityQueryService::createPlayerSnapshot)
                 .sorted(Comparator.comparing(CausalityPlayerSnapshot::playerName))
                 .toList();
+        PLAYER_LIST_SESSIONS.put(observer.getUUID(), new PlayerListSession(
+                observer.level().dimension().location(),
+                observer.level().getGameTime() + PLAYER_LIST_SESSION_DURATION,
+                players.stream()
+                        .map(CausalityPlayerSnapshot::playerId)
+                        .collect(java.util.stream.Collectors.toUnmodifiableSet())
+        ));
         ModNetwork.sendGreatCausalitySnapshot(observer, new CausalitySnapshot(
                 true,
                 players,
@@ -92,12 +114,22 @@ public final class GreatCausalityQueryService {
         ));
     }
 
-    private static boolean isValidTarget(ServerPlayer observer, ServerPlayer target) {
+    private static void removeExpiredPlayerListSessions(ServerPlayer observer) {
+        long gameTime = observer.level().getGameTime();
+        PLAYER_LIST_SESSIONS.entrySet().removeIf(entry -> entry.getValue().expiresAt() < gameTime);
+    }
+
+    private static boolean isValidTarget(
+            ServerPlayer observer,
+            ServerPlayer target,
+            boolean requireDirectSight
+    ) {
         return target != null
                 && target.level() == observer.level()
                 && target != observer
-                && observer.distanceToSqr(target) <= MAXIMUM_QUERY_DISTANCE_SQUARED
-                && observer.hasLineOfSight(target);
+                && (!requireDirectSight
+                || observer.distanceToSqr(target) <= MAXIMUM_QUERY_DISTANCE_SQUARED
+                && observer.hasLineOfSight(target));
     }
 
     private static CausalityPlayerSnapshot createPlayerSnapshot(ServerPlayer player) {
@@ -108,11 +140,19 @@ public final class GreatCausalityQueryService {
         return new CausalityPlayerSnapshot(
                 player.getUUID(),
                 player.getGameProfile().getName(),
-                player.level().dimension().location().toString(),
+                DimensionNameUtility.getDisplayName(
+                        player.server,
+                        player.level().dimension().location()
+                ),
                 cultivation
         );
     }
 
-    private record PendingQuery(UUID targetId) {
+    private record PlayerListSession(
+            ResourceLocation dimensionId,
+            long expiresAt,
+            Set<UUID> targetIds
+    ) {
     }
+
 }

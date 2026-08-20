@@ -4,9 +4,6 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
 import net.seraphina.ninecun_lingtai.common.causality.GreatCausalityQueryService;
-import net.seraphina.ninecun_lingtai.common.data.TechniqueManager;
-import net.seraphina.ninecun_lingtai.common.spell.SpellCastManager;
-import net.seraphina.ninecun_lingtai.utility.GreatCausalityUtility;
 
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -33,15 +30,7 @@ public record RequestGreatCausalityPacket(UUID targetId) {
             if (player == null) {
                 return;
             }
-            TechniqueManager.INSTANCE.getTechnique(GreatCausalityUtility.TECHNIQUE_ID)
-                    .ifPresent(technique -> {
-                        GreatCausalityQueryService.setPendingTarget(player, packet.targetId());
-                        try {
-                            SpellCastManager.castTechniqueFromInteraction(player, technique);
-                        } finally {
-                            GreatCausalityQueryService.clearPendingTarget(player);
-                        }
-                    });
+            GreatCausalityQueryService.querySelectedPlayer(player, packet.targetId());
         });
         context.setPacketHandled(true);
     }

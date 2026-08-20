@@ -26,6 +26,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.seraphina.ninecun_lingtai.ModMain;
 import net.seraphina.ninecun_lingtai.common.causality.CausalityHistoryManager;
+import net.seraphina.ninecun_lingtai.utility.DimensionNameUtility;
 import net.seraphina.ninecun_lingtai.utility.GreatCausalityUtility;
 
 import java.util.HashMap;
@@ -230,7 +231,10 @@ public final class GreatCausalityEventHandler {
             CausalityHistoryManager.record(
                     player,
                     "login",
-                    "进入了世界；维度：" + player.level().dimension().location()
+                    "进入了世界；维度：" + DimensionNameUtility.getDisplayName(
+                            player.server,
+                            player.level().dimension().location()
+                    )
             );
         }
     }
