@@ -4,6 +4,7 @@ import com.mojang.datafixers.util.Either;
 import net.minecraftforge.client.event.*;
 import net.seraphina.ninecun_lingtai.ModMain;
 import net.seraphina.ninecun_lingtai.client.input.ModKeyMappings;
+import net.seraphina.ninecun_lingtai.client.causality.ClientCausalityManager;
 import net.seraphina.ninecun_lingtai.client.player.ClientBodyShieldManager;
 import net.seraphina.ninecun_lingtai.client.player.ClientBookManager;
 import net.seraphina.ninecun_lingtai.client.notification.ClientNotificationManager;
@@ -28,6 +29,7 @@ import net.seraphina.ninecun_lingtai.client.ring.ClientStorageRingImmersionManag
 import net.seraphina.ninecun_lingtai.client.ring.ClientStorageRingProjectionManager;
 import net.seraphina.ninecun_lingtai.client.screen.ClientAptitudeScreenManager;
 import net.seraphina.ninecun_lingtai.client.screen.ClientAscensionQuestionScreenManager;
+import net.seraphina.ninecun_lingtai.client.player.ClientTechniqueManager;
 import net.seraphina.ninecun_lingtai.client.utility.BodyShieldRenderUtility;
 import net.seraphina.ninecun_lingtai.client.utility.AlchemyFurnaceHighlightRenderUtility;
 import net.seraphina.ninecun_lingtai.client.utility.DefenseBarRenderUtility;
@@ -46,6 +48,11 @@ import net.seraphina.ninecun_lingtai.utility.BookItemUtility;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.Input;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.phys.HitResult;
+import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
+import net.seraphina.ninecun_lingtai.common.network.packet.RequestGreatCausalityPacket;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
@@ -168,6 +175,34 @@ public final class ClientForgeEventHandler {
         }
         if (ClientSwordFlightManager.handleInteraction(event)) {
             return;
+        }
+        handleGreatCausalityInteraction(event);
+    }
+
+    private static void handleGreatCausalityInteraction(InputEvent.InteractionKeyMappingTriggered event) {
+        if (!event.isUseItem()
+                || !ClientTechniqueManager.isLearned(
+                net.seraphina.ninecun_lingtai.utility.GreatCausalityUtility.TECHNIQUE_ID
+        )) {
+            return;
+        }
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player == null) {
+            return;
+        }
+        Entity target = minecraft.crosshairPickEntity;
+        if (target instanceof Player player) {
+            ModNetwork.sendToServer(new RequestGreatCausalityPacket(player.getUUID()));
+            event.setSwingHand(false);
+            event.setCanceled(true);
+            return;
+        }
+        if (minecraft.hitResult != null
+                && minecraft.hitResult.getType() == HitResult.Type.MISS
+                && minecraft.player.getMainHandItem().isEmpty()) {
+            ModNetwork.sendToServer(new RequestGreatCausalityPacket(null));
+            event.setSwingHand(false);
+            event.setCanceled(true);
         }
     }
 
@@ -294,5 +329,6 @@ public final class ClientForgeEventHandler {
         ClientPressureManager.reset();
         PushingMountainsRenderMeshManager.clearAll();
         ClientStorageRingProjectionManager.reset();
+        ClientCausalityManager.reset();
     }
 }

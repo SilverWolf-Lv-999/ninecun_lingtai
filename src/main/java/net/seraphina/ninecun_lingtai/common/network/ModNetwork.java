@@ -52,6 +52,8 @@ import net.seraphina.ninecun_lingtai.common.network.packet.RequestPlayerValueCon
 import net.seraphina.ninecun_lingtai.common.network.packet.RequestAlchemyRecipeLibraryPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.RequestBookPagePacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.RequestTechniqueLibraryPacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.RequestGreatCausalityPacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.OpenGreatCausalityScreenPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.SelectAlchemyRecipePacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.SelectSpellPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.SetStorageRingImmersionPacket;
@@ -145,6 +147,24 @@ public final class ModNetwork {
     private static int nextPacketId;
 
     public static void register() {
+        CHANNEL.messageBuilder(
+                        RequestGreatCausalityPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(RequestGreatCausalityPacket::encode)
+                .decoder(RequestGreatCausalityPacket::decode)
+                .consumerMainThread(RequestGreatCausalityPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        OpenGreatCausalityScreenPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(OpenGreatCausalityScreenPacket::encode)
+                .decoder(OpenGreatCausalityScreenPacket::decode)
+                .consumerMainThread(OpenGreatCausalityScreenPacket::handle)
+                .add();
         CHANNEL.messageBuilder(
                         AlchemyFurnaceActionPacket.class,
                         getId(),
@@ -986,6 +1006,16 @@ public final class ModNetwork {
         CHANNEL.send(
                 PacketDistributor.PLAYER.with(() -> player),
                 new OpenDaoScrollScreenPacket(snapshot, editingSelf)
+        );
+    }
+
+    public static void sendGreatCausalitySnapshot(
+            ServerPlayer player,
+            net.seraphina.ninecun_lingtai.common.causality.CausalitySnapshot snapshot
+    ) {
+        CHANNEL.send(
+                PacketDistributor.PLAYER.with(() -> player),
+                new OpenGreatCausalityScreenPacket(snapshot)
         );
     }
 

@@ -1,0 +1,44 @@
+{
+  "name": "大因果术",
+  "description": "逆天道，避因果；顺天道，成因果。以自身因果为线，照见众生所行。",
+  "content": "此术不求改命，只求见因。参悟之后，因果之线常悬识海，诸般攻击皆循因果必中；垂钓与开宝箱时，因果自向较佳之物偏转，生灵对你的感知也会被因果遮蔽。唯有推衍因果需要主动施法：凝神于玩家可见其因果，凝神于虚空可见当前界域诸人。若境界不足而窥探仙人，因果反噬，当场身死。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "compatible_elements": [
+    "yin_yang",
+    "chaos"
+  ],
+  "requirements": {
+    "minimum_soul_strength": 2
+  },
+  "comprehension": {
+    "minimum_learning_score": 78,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "以自身因果为线照见众生所行",
+      "必中、偏得佳物与遮蔽感知皆为持续被动",
+      "推衍因果才需要凝神施法",
+      "窥探仙人会承受因果反噬"
+    ],
+    "grading_criteria": [
+      "区分大因果术的持续被动与推衍因果主动法术",
+      "说明查询目标必须处于当前界域且在可感知范围内",
+      "理解圆满前只能读取有限因果，境界越高可见时间越长",
+      "明白非仙级窥探仙人会立即死亡"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 78
+      }
+    ]
+  },
+  "spell": {
+    "id": "ninecun_lingtai:great_causality",
+    "grade": 5,
+    "category": "utility",
+    "base_cost": 12.0,
+    "cost_elements": [
+      "yin_yang"
+    ]
+  }
+}

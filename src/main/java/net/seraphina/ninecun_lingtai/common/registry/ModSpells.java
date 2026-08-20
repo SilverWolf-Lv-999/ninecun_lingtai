@@ -3,6 +3,7 @@ package net.seraphina.ninecun_lingtai.common.registry;
 import net.seraphina.ninecun_lingtai.ModMain;
 import net.seraphina.ninecun_lingtai.api.spell.Spell;
 import net.seraphina.ninecun_lingtai.common.spell.FireballSpell;
+import net.seraphina.ninecun_lingtai.common.spell.GreatCausalitySpell;
 import net.seraphina.ninecun_lingtai.common.spell.ShrinkEarthSpell;
 import net.seraphina.ninecun_lingtai.common.spell.SwiftWindSpell;
 import net.seraphina.ninecun_lingtai.common.spell.SwordFlightSpell;
@@ -52,6 +53,11 @@ public final class ModSpells {
     public static final RegistryObject<Spell> SHRINK_EARTH = SPELLS.register(
             "shrink_earth",
             ShrinkEarthSpell::new
+    );
+
+    public static final RegistryObject<Spell> GREAT_CAUSALITY = SPELLS.register(
+            "great_causality",
+            GreatCausalitySpell::new
     );
 
     public static final RegistryObject<Spell> METAL_BODY_SHIELD = registerBodyShield(

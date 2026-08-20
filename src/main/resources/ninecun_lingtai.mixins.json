@@ -8,6 +8,7 @@
     "common.ChatFormattingMixin",
     "common.CommandsMixin",
     "common.StyleMixin",
+    "common.causality.EnderManCausalityMixin",
     "common.flight.ServerGamePacketListenerLightFlightMixin",
     "common.food.FoodDataMixin",
     "common.food.PlayerMixin",
@@ -25,7 +26,9 @@
     "common.ring.BrewingStandBlockEntityMixin",
     "common.ring.EnderChestBlockEntityMixin",
     "common.ring.RandomizableContainerBlockEntityMixin",
-    "common.ring.ServerLevelMixin"
+    "common.ring.ServerLevelMixin",
+    "common.warden.WardenEntitySensorMixin",
+    "common.warden.WardenVibrationUserMixin"
   ],
   "client": [
     "client.AbstractClientPlayerMixin",
