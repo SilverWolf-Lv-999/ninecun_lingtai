@@ -1,0 +1,40 @@
+{
+  "name": "白露洗金篇",
+  "description": "以晨露清润金气，缓缓涤除肺脉杂滓的金行低阶呼吸法。",
+  "content": "白露初凝之时，取一方未受尘染的石面静坐，以露意观鼻息。吸气不求深，只在露珠将坠未坠之际引一丝金灵入肺；停息三拍，想其化作清凉薄膜，贴过肺叶与喉关；再以长呼将浮浊带出，不使浊气回流。此法每次只许洗过一处经隙，今日清肺俞，明日过膻中，旬日之后方可周遍。若行气时口鼻干涩，便是露意已失，强纳只会将燥金化为刃芒。功力增长极慢，却能使金灵入体少染尘垢，适合根基薄弱而不耐猛炼者。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 0.52
+  },
+  "compatible_elements": ["metal"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 1
+    },
+    "minimum_soul_strength": 1,
+    "required_elements": ["metal"],
+    "required_techniques": ["ninecun_lingtai:basic_breathing"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 63,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "白露将坠未坠时引金入肺",
+      "停息三拍化清凉薄膜",
+      "逐隙涤脉而非一气周天",
+      "口鼻干涩即为燥金失润"
+    ],
+    "grading_criteria": [
+      "理解此诀以露意润金，不能以深猛呼吸取代",
+      "说明停息、洗脉、长呼排浊的完整次序",
+      "明白每日只洗一处经隙是其慢而稳的根本"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 63
+      }
+    ]
+  }
+}

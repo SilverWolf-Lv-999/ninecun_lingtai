@@ -1,0 +1,41 @@
+{
+  "name": "三垣镇元息",
+  "description": "金水土三根分守肺肾脾宫，缓缓垒成镇元三垣的三灵根低阶呼吸法。",
+  "content": "此息先定三垣：金守肺门，水守肾底，土守脾中。吸气只纳一行，按金、土、水的次序轮换；呼气将当行之气送至本宫，不许越界。三行各满三息，才让土气在中宫牵住金水，使三垣形成静止之环。若金气越界入肾，便生寒刃；若水气漫入脾，便成泥滞；若土气堵住肺门，便有胸闷。每次只修一环，九环之后才可有一缕合入气海。它的速度低于单行吐纳，却适合根性驳杂、经脉承压不一的修士。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 0.58
+  },
+  "compatible_elements": ["metal", "water", "earth"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 3
+    },
+    "minimum_soul_strength": 1,
+    "required_elements": ["metal", "water", "earth"],
+    "minimum_spiritual_root_elements": 3,
+    "required_techniques": ["ninecun_lingtai:basic_breathing"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 67,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "金守肺门水守肾底土守脾中",
+      "金土水三行轮换纳气",
+      "土在中宫牵住金水成静环",
+      "越界会生寒刃泥滞或胸闷"
+    ],
+    "grading_criteria": [
+      "准确说出三垣各自所守的宫位与金土水的轮换次序",
+      "理解三行先分守、后由土气镇合，不能一开始混炼",
+      "指出三种越界征兆及其对应的失衡原因"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 67
+      }
+    ]
+  }
+}

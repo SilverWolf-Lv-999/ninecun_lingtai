@@ -1,0 +1,41 @@
+{
+  "name": "五气离宫篇",
+  "description": "五行俱全者方可修习，令五气各守本宫、缓慢积成根基的低阶呼吸法。",
+  "content": "五行灵根俱全者，先按金肺、木肝、水肾、火心、土脾分定五宫。吸气只引一行，依土、金、水、木、火的次序轮换；每行入宫之后停留五息，不许借相生之势提前唤醒下一宫。五宫各得一缕，方以土宫为中轴，将五气向外牵成不相触的环。九环之后，才可令五气同时向气海边缘靠拢。若某一宫先亮，说明五气分量不均，必须从最旺之宫退气。此篇吞吐迟缓，甚至刻意压低五行相生的便利，适合初得五根而尚不能驾驭复合灵力的修士。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 0.63
+  },
+  "compatible_elements": ["metal", "wood", "water", "fire", "earth"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 3
+    },
+    "minimum_soul_strength": 1,
+    "required_elements": ["metal", "wood", "water", "fire", "earth"],
+    "minimum_spiritual_root_elements": 5,
+    "required_techniques": ["ninecun_lingtai:basic_breathing"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 70,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "金肺木肝水肾火心土脾各守本宫",
+      "依土金水木火次序轮换",
+      "每行入宫停留五息",
+      "一宫先亮代表五气分量不均"
+    ],
+    "grading_criteria": [
+      "准确说出五气对应的五宫与土金水木火轮换顺序",
+      "理解此篇故意不借五行相生抢速，而先求五宫分定",
+      "明白某宫先亮时应从最旺之宫退气，不可继续补弱宫"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 70
+      }
+    ]
+  }
+}

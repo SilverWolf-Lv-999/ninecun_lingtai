@@ -1,0 +1,40 @@
+{
+  "name": "昼夜错息篇",
+  "description": "避开阴阳交替的锋面，以错开一线的呼吸缓纳两仪的阴阳低阶呼吸法。",
+  "content": "此篇不在日中或子夜修习，专取日将沉、月未升的交界。吸气时只纳残阳之意三分，停于督脉；隔一息再呼，将初阴之意引入任脉。阴阳不得同息相撞，必须错开一息，待两气各自走过三关，才在丹田外缘相望。九次之后，以第十息使二者相向而不相合，留一线空隙。若黑白二色在心中骤然闭合，便是两仪相吞，应立即散去。此诀修炼迟缓，长处是让阴阳灵根先学会守界，不因追求调和而失去各自根性。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 0.52
+  },
+  "compatible_elements": ["yin_yang"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 2
+    },
+    "minimum_soul_strength": 1,
+    "required_elements": ["yin_yang"],
+    "required_techniques": ["ninecun_lingtai:basic_breathing"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 65,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "日沉月未升的阴阳交界",
+      "阳停督脉阴入任脉",
+      "阴阳错开一息不相撞",
+      "黑白骤合是两仪相吞"
+    ],
+    "grading_criteria": [
+      "说明此诀故意避开昼盛夜盛，只取交界时分",
+      "理解阴阳必须错息运行，不能同吸同呼相撞",
+      "明白两仪先各守边界，暂不以强行调和为功"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 65
+      }
+    ]
+  }
+}

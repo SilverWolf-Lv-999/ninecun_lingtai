@@ -1,0 +1,41 @@
+{
+  "name": "金水沉轮篇",
+  "description": "以金水相生之意沉炼肺肾，进境迟缓而气息清冽的双灵根低阶呼吸法。",
+  "content": "金水相生，却不可使金气先锐、水气后逐。修习时先于肺宫结一枚白轮，吸入金灵七分；呼气时将白轮压入肾宫，化作一圈寒润水意。水意只绕肾宫三匝，便须返肺承金，金水往复如沉轮碾石。每次轮转不得超过三周，第四周会使寒意淹没金锋，出现齿冷耳鸣之兆。若白轮散碎，则说明肺肾两气未曾相接，需退回基础吐纳重新分辨两行。此篇纳气不及专精之法，胜在以相生互制，慢慢磨去金水相冲的棱角。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 0.60
+  },
+  "compatible_elements": ["metal", "water"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 2
+    },
+    "minimum_soul_strength": 1,
+    "required_elements": ["metal", "water"],
+    "minimum_spiritual_root_elements": 2,
+    "required_techniques": ["ninecun_lingtai:basic_breathing"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 65,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "肺宫白轮承金",
+      "白轮压肾化寒润水意",
+      "金水三周沉轮往复",
+      "齿冷耳鸣是寒意过盛"
+    ],
+    "grading_criteria": [
+      "说明金水相生并非两气同时冲入，而是肺肾交替承接",
+      "理解白轮沉入肾宫、三匝返肺的行气次序",
+      "明白白轮碎散或齿冷耳鸣都说明两气失衡，不能继续加纳"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 65
+      }
+    ]
+  }
+}

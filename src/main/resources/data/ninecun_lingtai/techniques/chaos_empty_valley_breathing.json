@@ -1,0 +1,39 @@
+{
+  "name": "归墟涵气诀",
+  "description": "以归墟空谷容纳杂气，缓缓消磨其名相的混沌灵根低阶呼吸法。",
+  "content": "闭目观自身气海为无底归墟，先不纳气，只守其中空。待心念能容一息而不生形，方从周身五行之中引来最弱的一缕，悬在归墟上方，不使其下坠。九息之后，缕中颜色自褪，才可再取第二缕。每次只容三缕，三缕皆无色后，方让它们沉入归墟。若气海忽有回声，说明空谷生了执相，应立即停止观想。此诀进境极慢，甚至不如普通呼吸法，却能磨去混沌灵根初期最易犯的贪纳之病。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 0.68
+  },
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 2
+    },
+    "minimum_soul_strength": 1,
+    "required_elements": ["chaos"],
+    "required_techniques": ["ninecun_lingtai:basic_breathing"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 68,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "先守归墟之空而不纳气",
+      "弱气悬空九息自行褪色",
+      "每次只容三缕无色后方沉海",
+      "气海回声是空谷生执相"
+    ],
+    "grading_criteria": [
+      "说明归墟涵气诀先空后纳、先悬后沉的次序",
+      "理解混沌化气依靠消磨名相，不能直接抹去属性",
+      "明白气海回声代表观想已经生出执着，应立即停功"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 68
+      }
+    ]
+  }
+}

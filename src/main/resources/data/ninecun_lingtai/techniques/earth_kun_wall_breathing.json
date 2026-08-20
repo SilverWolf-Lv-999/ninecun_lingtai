@@ -1,0 +1,40 @@
+{
+  "name": "坤垣纳尘诀",
+  "description": "以坤土承万尘之意纳取微末土灵，层层垒成气海外垣的土行低阶呼吸法。",
+  "content": "面向大地，双掌覆膝，先把自身呼吸想作地表尘埃。吸气时只摄一粒尘意入涌泉，沿腿脉升至脾宫；呼气时将其铺在气海外缘，像垒墙添砖。每次只添一粒，不许越过上一层的缝隙。三十六息后，若外垣仍有缺口，便以空息补壁，不可再取外气。若腹中气息向中央坍塌，说明墙基未稳，应停功以意守足底。此诀修炼极缓，所得不显于修为进境，却可使灵力有边界、有归处，不至纳得越多越散。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 0.39
+  },
+  "compatible_elements": ["earth"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 2
+    },
+    "minimum_soul_strength": 1,
+    "required_elements": ["earth"],
+    "required_techniques": ["ninecun_lingtai:basic_breathing"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 61,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "将呼吸观作地表尘埃",
+      "一粒尘意由涌泉升至脾宫",
+      "土灵铺在气海外缘如垒墙添砖",
+      "墙基未稳会使气息向中央坍塌"
+    ],
+    "grading_criteria": [
+      "说明坤垣诀纳取的是微尘之意，重在垒界而非填满气海",
+      "理解每次只添一粒且不得越过上一层缝隙",
+      "明白气息坍塌时应守足底，不能继续从外界取气"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 61
+      }
+    ]
+  }
+}

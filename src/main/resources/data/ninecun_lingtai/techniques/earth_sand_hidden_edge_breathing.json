@@ -1,0 +1,40 @@
+{
+  "name": "砂壤藏锋息",
+  "description": "将土灵裹于砂壤之间，借藏锋之法缓纳厚气的土行低阶呼吸法。",
+  "content": "取细砂一撮置于掌心，闭目感受砂粒彼此相依却不相融。吸气时引土灵入掌，分作百缕藏在砂粒之间；呼气时只放出一缕，经劳宫回到膻中，其余仍潜伏不动。待百缕皆曾归胸，方可让它们在脐下重新合土。若掌心发硬，便是土气抱团成石，应立即张指散砂；若掌心发冷，则土意太薄，须停息养神。此诀每轮所得微薄如砂，却擅长训练土灵的分散与收束，避免厚重灵力在经脉中结块。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 0.50
+  },
+  "compatible_elements": ["earth"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 2
+    },
+    "minimum_soul_strength": 1,
+    "required_elements": ["earth"],
+    "required_techniques": ["ninecun_lingtai:basic_breathing"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 64,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "细砂彼此相依而不相融",
+      "土灵百缕藏于砂粒之间",
+      "每次呼气只放一缕归膻中",
+      "掌心发硬是土气抱团成石"
+    ],
+    "grading_criteria": [
+      "理解藏锋息先分散土灵，再于脐下合土",
+      "说明百缕土气逐缕回胸而不是一次倾出",
+      "指出掌硬与掌冷分别对应抱团成石和土意太薄"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 64
+      }
+    ]
+  }
+}

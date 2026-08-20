@@ -1,0 +1,40 @@
+{
+  "name": "余烬守炉诀",
+  "description": "不逐烈焰，只守炉中余烬，以微火炼化火灵的火行低阶呼吸法。",
+  "content": "日落之后背阳静坐，先以三息清空心火，再将一线离火引入心宫，如将余烬埋在灰下。吸气只添其温，不许火星飞扬；呼气则以神念覆灰，使火意伏而不灭。九次添温后，才让余烬沿心包络下行至丹田边缘，绕一圈即返。若眉心发热、耳畔有爆鸣，便是心火抬头，应立刻收意归脐。此诀吸纳少、炼化慢，却能让火灵不以躁烈伤脉，最适合火根初成而心神尚未稳固的修士。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 0.49
+  },
+  "compatible_elements": ["fire"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 1
+    },
+    "minimum_soul_strength": 1,
+    "required_elements": ["fire"],
+    "required_techniques": ["ninecun_lingtai:basic_breathing"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 62,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "日落背阳先清心火",
+      "离火如余烬埋灰下",
+      "吸只添温呼以神念覆灰",
+      "眉心发热爆鸣即为心火抬头"
+    ],
+    "grading_criteria": [
+      "说明余烬守炉诀不取烈焰，而取伏而不灭的火意",
+      "理解九次添温后才可沿心包络下行",
+      "指出眉心发热与爆鸣是火势失伏、须收意归脐"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 62
+      }
+    ]
+  }
+}

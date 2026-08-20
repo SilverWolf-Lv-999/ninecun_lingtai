@@ -1,0 +1,40 @@
+{
+  "name": "榆荫回生息",
+  "description": "借老榆荫下迟缓生机回养肝脉的木行低阶呼吸法。",
+  "content": "日中不取烈阳，只在老榆树荫最深处盘坐，将背脊对准树根延伸之向。吸气时不牵外木之盛，惟纳荫中一缕将息未息的生机；呼气时把此气送至肝脉旧伤或最弱之处，停留十二息，再缓缓退回气海。全篇只许养一处，不得贪多。若经脉忽觉温热上涌，便是木气催芽过盛，应改以鼻尖短呼压下。此诀所得灵气如老树年轮，一日只添一圈，不能助人骤进，却能使气海在反复损耗后慢慢恢复其本来韧性。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 0.46
+  },
+  "compatible_elements": ["wood"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 1
+    },
+    "minimum_soul_strength": 1,
+    "required_elements": ["wood"],
+    "required_techniques": ["ninecun_lingtai:basic_breathing"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 62,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "老榆深荫中纳将息未息的生机",
+      "一息只养一处经脉",
+      "木气停留十二息再退回气海",
+      "温热上涌须以短呼压芽"
+    ],
+    "grading_criteria": [
+      "理解此诀取的是荫中缓生之气，不是烈日下的旺木",
+      "说明养脉、停息、回海的顺序以及一处一养的限制",
+      "指出温热上涌代表生机催芽过盛，不能继续加引"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 62
+      }
+    ]
+  }
+}

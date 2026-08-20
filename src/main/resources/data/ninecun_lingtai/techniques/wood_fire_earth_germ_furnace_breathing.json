@@ -1,0 +1,41 @@
+{
+  "name": "生炉抱土诀",
+  "description": "木火生发而以厚土收束，缓炼三宫初炉的三灵根低阶呼吸法。",
+  "content": "择草木近火、土色温润之地盘坐，先纳木气入肝，令其如根须铺开；第二息引火气落于根须中央，化一枚温核；第三息取土气覆于温核之外，只留一线火光。三息一组，九组之后，才将温核送至丹田。木气不可枯，火气不可燥，土壳不可厚，三者稍有偏废便会出现不同征兆：木枯则胸胁发紧，火燥则心跳急促，土厚则腹中沉滞。此诀吞吐灵气极慢，贵在让三种灵性共同成炉而不彼此争位。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 0.61
+  },
+  "compatible_elements": ["wood", "fire", "earth"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 3
+    },
+    "minimum_soul_strength": 1,
+    "required_elements": ["wood", "fire", "earth"],
+    "minimum_spiritual_root_elements": 3,
+    "required_techniques": ["ninecun_lingtai:basic_breathing"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 68,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "木气如根须铺开",
+      "火气落根成温核",
+      "土气覆核只留一线火光",
+      "木枯火燥土厚各有征兆"
+    ],
+    "grading_criteria": [
+      "理解木、火、土分别承担根须、温核、炉壳之职",
+      "准确说明三息一组、九组送入丹田的节律",
+      "能区分胸胁发紧、心跳急促、腹中沉滞对应的失衡属性"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 68
+      }
+    ]
+  }
+}

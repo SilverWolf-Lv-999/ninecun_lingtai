@@ -1,0 +1,41 @@
+{
+  "name": "沧木听潮诀",
+  "description": "以水润木、以木束水，循潮声缓养肾肝两宫的双灵根低阶呼吸法。",
+  "content": "临江不看江面，只听水拍枯木之声。第一声入耳时吸水灵入肾，第二声起时将一缕木气从肝宫引出，沿肋下横生，恰好托住肾水；第三声落时两气相接，化作一枚青碧水珠停在膻中。三声为一息，九息为一潮，潮未满不得送珠入丹田。若水气漫过木气，胸胁会有浮胀；若木气反压水意，喉中会涩，皆须退回听潮，不可用意强调。此诀纳取细若潮沫，长处在于让两行灵气学会彼此依存，而非各走各路。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 0.57
+  },
+  "compatible_elements": ["water", "wood"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 2
+    },
+    "minimum_soul_strength": 1,
+    "required_elements": ["water", "wood"],
+    "minimum_spiritual_root_elements": 2,
+    "required_techniques": ["ninecun_lingtai:basic_breathing"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 64,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "第一声纳水入肾第二声引木出肝",
+      "第三声使水木相接",
+      "三声一息九息一潮",
+      "胸胁浮胀与喉涩分别为水木失衡"
+    ],
+    "grading_criteria": [
+      "准确说明三声潮响对应的水木行气次序",
+      "理解木气横生是为托水，不是单独催动木灵",
+      "明白潮未满不可入丹田，失衡时只能退回听潮"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 64
+      }
+    ]
+  }
+}

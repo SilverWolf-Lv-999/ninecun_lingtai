@@ -1,0 +1,40 @@
+{
+  "name": "两仪息壤法",
+  "description": "以阴阳相抱之气化作息壤，缓缓填补灵脉空隙的阴阳低阶呼吸法。",
+  "content": "取清晨第一缕未偏的天光，闭目观其落在脐下。吸气时纳阳意，化作一粒白砂；呼气时纳阴意，化作一粒黑砂；两砂不可相触，须分别堆在气海左右。七黑七白之后，以神念让两砂隔着一线虚空并行，彼此生出微温，化为息壤。息壤只许填补气海边缘一处凹陷，满则即止。若黑白砂粒自行混成灰色，说明阴阳失去分判，需散功重来。此法所得极慢，却能让阴阳灵根在不强求大周天的情况下，逐步补足自身灵脉的空缺。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 0.59
+  },
+  "compatible_elements": ["yin_yang"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 3
+    },
+    "minimum_soul_strength": 1,
+    "required_elements": ["yin_yang"],
+    "required_techniques": ["ninecun_lingtai:basic_breathing"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 67,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "阳意化白砂阴意化黑砂",
+      "黑白砂分居气海左右",
+      "七黑七白隔空化息壤",
+      "灰色混成是阴阳失判"
+    ],
+    "grading_criteria": [
+      "说明息壤不是直接混合阴阳，而是两砂隔空相抱后生成",
+      "理解每次只填补气海边缘一处凹陷，不能贪多",
+      "明白黑白变灰代表分判已失，必须散功重来"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 67
+      }
+    ]
+  }
+}

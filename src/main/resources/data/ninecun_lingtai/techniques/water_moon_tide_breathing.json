@@ -1,0 +1,40 @@
+{
+  "name": "月汐回潮息",
+  "description": "循月相涨落收放水灵，使灵气如潮退复来而不冲关的水行低阶呼吸法。",
+  "content": "此息不择水边，惟须在月影可辨时修习。上弦取三分潮意，吸三分、停一分、呼两分；下弦反之，吸两分、停一分、呼三分。水灵每入一次，须在胸中折返一次，像潮头触岸而回，不得直下丹田。七轮之后，才将余下的潮意送入气海外缘。若呼吸节拍与月相相悖，胸中会生闷涨，便是水势逆潮，需以三次空呼散去。其速度不及常法，长处在于能以节律驯服水灵，避免一味纳气造成丹田浮动。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 0.54
+  },
+  "compatible_elements": ["water"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 2
+    },
+    "minimum_soul_strength": 1,
+    "required_elements": ["water"],
+    "required_techniques": ["ninecun_lingtai:basic_breathing"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 64,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "上弦三分吸三停一呼二",
+      "下弦反为吸二停一呼三",
+      "水灵入胸须折返如潮触岸",
+      "月相相悖会造成水势逆潮"
+    ],
+    "grading_criteria": [
+      "准确区分上弦与下弦的吸停呼节律",
+      "理解水灵七轮之前不得直入丹田",
+      "指出胸中闷涨是节律逆月、应以空呼散潮"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 64
+      }
+    ]
+  }
+}

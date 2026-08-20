@@ -1,0 +1,40 @@
+{
+  "name": "赤曜含光息",
+  "description": "取日轮未盛之光含于心窍，缓纳火灵而不显其锋的火行低阶呼吸法。",
+  "content": "日出一刻，不直视天光，只以闭目后的赤色余影为引。吸气时将余影收作针尖，落入膻中；停息一拍，使针尖化作圆珠；呼气时把圆珠藏进心宫深处，不令其照彻周身。九轮以后，才从心宫分出一缕沿任脉下行。若眼前赤光自行扩散，或心跳随之加速，便是含光未成而外泄，须转向背光处以冷念镇之。此息所得不快，却能磨炼火灵的内敛与持久，避免火行修士只会向外爆发。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 0.57
+  },
+  "compatible_elements": ["fire"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 2
+    },
+    "minimum_soul_strength": 1,
+    "required_elements": ["fire"],
+    "required_techniques": ["ninecun_lingtai:basic_breathing"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 64,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "闭目赤影引火而不直视日光",
+      "余影收针尖落膻中",
+      "针尖化珠藏入心宫",
+      "赤光扩散是含光外泄"
+    ],
+    "grading_criteria": [
+      "说明赤曜含光息以收摄光意为本，不能直取烈日",
+      "理解针尖、圆珠、藏心三重变化的行气次序",
+      "明白赤光扩散与心跳加速意味着火灵外泄，不是功力暴涨"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 64
+      }
+    ]
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "name": "葵水潜渊篇",
+  "description": "取癸水阴柔之性潜入经隙，慢慢汇聚深渊水意的水行低阶呼吸法。",
+  "content": "月亏之夜，背月而坐，以右手覆于脐下，左手按住肾俞。吸气时不看外界水势，只想一滴癸水沿足少阴经下潜；呼气时令此滴水停在涌泉，待下一吸再从足底反渗而上。三十六息之内，水气只能抵达膝下；七十二息后方可越过腰门。若腰腹骤冷，说明阴水沉滞，须将掌心温意送入肾俞，使其化为细雾后再行。此篇纳气极少，却擅长把散在末梢的水灵聚成一线，适合水根有余而经脉承载不足者。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 0.51
+  },
+  "compatible_elements": ["water"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 1
+    },
+    "minimum_soul_strength": 1,
+    "required_elements": ["water"],
+    "required_techniques": ["ninecun_lingtai:basic_breathing"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 63,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "月亏背月以取癸水阴柔",
+      "水滴沿足少阴经下潜",
+      "三十六息不过膝下七十二息方过腰门",
+      "腰腹骤冷须以温意化雾"
+    ],
+    "grading_criteria": [
+      "理解潜渊篇的水气先下后返，不可一开始逆行",
+      "准确说出三十六息与七十二息的行气界限",
+      "明白骤冷是阴水沉滞，不能误作水灵充盈"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 63
+      }
+    ]
+  }
+}

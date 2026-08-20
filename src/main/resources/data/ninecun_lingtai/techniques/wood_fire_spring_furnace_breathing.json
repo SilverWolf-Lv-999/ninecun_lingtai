@@ -1,0 +1,41 @@
+{
+  "name": "燎原引芽息",
+  "description": "取木生火而不纵其势，以初芽承炉火的双灵根低阶呼吸法。",
+  "content": "春末择有新芽而无烈日之地坐定，先纳木气入肝宫，令其聚成一粒青芽；再于下一吸引一线火意落在芽心，只许温养，不许燃烧。呼气时木芽向上，火意向下，二者在膻中交会后各退半步，留下温润生机。九次交会方可有一缕送入气海。若芽尖变赤，便是火生木而成燎原，须以长呼熄去；若青芽枯黑，则木气不足，不能再添火。此息进境极慢，却能教火木双根在同一炉中分掌生发与温炼。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 0.62
+  },
+  "compatible_elements": ["wood", "fire"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 2
+    },
+    "minimum_soul_strength": 1,
+    "required_elements": ["wood", "fire"],
+    "minimum_spiritual_root_elements": 2,
+    "required_techniques": ["ninecun_lingtai:basic_breathing"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 66,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "木气聚成一粒青芽",
+      "火意落芽心只许温养",
+      "木上火下在膻中交会",
+      "芽尖变赤是火势燎原"
+    ],
+    "grading_criteria": [
+      "理解火意在此诀中只是温养木芽，不能先行燃烧",
+      "说明木上火下、膻中交会、各退半步的细节",
+      "明白芽尖变赤或青芽枯黑分别代表火过与木亏"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 66
+      }
+    ]
+  }
+}

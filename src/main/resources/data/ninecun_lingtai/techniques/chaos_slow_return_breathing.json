@@ -1,0 +1,39 @@
+{
+  "name": "混元迟纳篇",
+  "description": "混沌灵根专修的迟纳法门，将五行灵气逐缕磨平后归于一元的低阶呼吸法。",
+  "content": "混沌灵根虽能兼纳五行，却不可因无所不拒便任万气并入。此篇每次只取一种灵气，先在体外观其形，再引入气海边缘，以混沌之意磨去一层属性，隔三息才取下一行。金木水火土五气各行一遍，须停息七息，待彼此的棱角自行消退，方可汇入混元气海。若五色灵光在体内同时闪动，便是迟纳失守，应将最先入体的一行原路送出。此法慢得近乎拙笨，却能让混沌灵根初学者明白包容不等于吞并，归元须给万气留下彼此消磨的时间。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 0.62
+  },
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 2
+    },
+    "minimum_soul_strength": 1,
+    "required_elements": ["chaos"],
+    "required_techniques": ["ninecun_lingtai:basic_breathing"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 67,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "混沌灵根也须一行一纳",
+      "每行入气海边缘先磨去一层属性",
+      "五气轮过后停息七息",
+      "五色同时闪动是迟纳失守"
+    ],
+    "grading_criteria": [
+      "理解混沌归元的入门关键是克制兼纳，而非五行齐吞",
+      "说明一行一纳、隔三息、五气后停七息的节律",
+      "明白五色同闪时必须送出先入之气，不能强行归元"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 67
+      }
+    ]
+  }
+}

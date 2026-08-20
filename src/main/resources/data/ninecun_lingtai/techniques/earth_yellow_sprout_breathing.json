@@ -1,0 +1,40 @@
+{
+  "name": "黄芽镇脉篇",
+  "description": "观土中黄芽破壳，以微弱厚土之气镇住初生灵元的土行低阶呼吸法。",
+  "content": "春分前后，于田垄未耕处坐定，神念沉入地下三尺，寻找一枚尚未破土的黄芽。吸气时纳土灵于膻中，不使其下坠；呼气时将一半气息压向脐下，另一半留在胸腹之间，如土层护芽。七息之后，若心中黄芽仍未出土，方可再纳一轮。切不可观想其骤然拔高，土灵一动便会带动丹田翻涌。若腹中传来闷响，说明护层过厚，应散去胸中留气。此篇吸收迟缓，胜在能以厚土镇住新生灵力，避免初入练气者根基浮躁。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 0.55
+  },
+  "compatible_elements": ["earth"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 1
+    },
+    "minimum_soul_strength": 1,
+    "required_elements": ["earth"],
+    "required_techniques": ["ninecun_lingtai:basic_breathing"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 63,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "田垄未耕处观地下黄芽",
+      "一半土灵压脐下一半护芽",
+      "七息不破土方续纳",
+      "腹中闷响是护层过厚"
+    ],
+    "grading_criteria": [
+      "说明黄芽只是土灵缓生的观想，不可催其破土",
+      "理解胸腹留气与脐下沉气的分工",
+      "明白腹中闷响代表镇脉过度，须散去留气"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 63
+      }
+    ]
+  }
+}

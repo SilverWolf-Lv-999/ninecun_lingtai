@@ -1,0 +1,40 @@
+{
+  "name": "春篁引脉篇",
+  "description": "观新竹节节上生，以木气缓引经脉的木行低阶呼吸法。",
+  "content": "春雨初歇，择一竿新篁而坐，勿倚其身，只听竹节中水意上行。吸气时引一线青木气自肝宫起，沿脊柱只上升一节；呼气时令其停在节隙，待下一息再越一节。七节未满，不得将气送入泥丸。此法重在节制生发之性，若一念贪快，木气便会从经隙旁逸，肩胁先酸，继而指端麻痒。每过一节，须以心神回看根部，确认旧气未浮，方可继续。吐纳虽慢如竹笋破土，却能令气机有根有节，不因一时旺盛而耗尽生机。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 0.53
+  },
+  "compatible_elements": ["wood"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 1
+    },
+    "minimum_soul_strength": 1,
+    "required_elements": ["wood"],
+    "required_techniques": ["ninecun_lingtai:basic_breathing"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 63,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "听竹节中水意上行",
+      "一息一节而非一气贯脊",
+      "七节未满不得入泥丸",
+      "肩胁酸麻是木气旁逸"
+    ],
+    "grading_criteria": [
+      "说明此诀以竹节为法，生发之气必须逐节推进",
+      "理解每一节都要回看根部、确认旧气不浮",
+      "明白贪快会令木气旁逸而非加快修炼"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 63
+      }
+    ]
+  }
+}

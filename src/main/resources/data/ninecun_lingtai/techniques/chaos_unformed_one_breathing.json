@@ -1,0 +1,39 @@
+{
+  "name": "未分守一息",
+  "description": "混沌灵根以守一代替强炼，任诸气在未分之境缓慢自化的低阶呼吸法。",
+  "content": "此法不择时地，惟须先把心神收成一点。吸气时万般灵气皆可近身，却只许最先触及鼻端的一缕入体；入体之后不辨金木，不分寒热，只以守一之念令其停在膻中。呼气时不把气推出，反而让其向内回旋半匝，再静待属性自行消隐。七次之后，若仍能守住一点不生分别，才将这一缕送入气海。若心中浮现五行名称，便已起分判之心，应退回一念未生处。此息纳气极微，专为混沌灵根筑下不被万象牵动的第一层根基。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 0.74
+  },
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 3
+    },
+    "minimum_soul_strength": 1,
+    "required_elements": ["chaos"],
+    "required_techniques": ["ninecun_lingtai:basic_breathing"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 69,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "万气近身只取最先触鼻的一缕",
+      "入体不辨属性只守一点",
+      "呼气使灵气向内回旋半匝",
+      "心现五行名称即已起分判"
+    ],
+    "grading_criteria": [
+      "理解未分守一息不是拒绝万气，而是不以分别之心役使万气",
+      "说明灵气停膻中、内旋半匝、七次后归海的过程",
+      "明白心中出现具体属性名意味着守一已破，必须退回静念"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 69
+      }
+    ]
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "name": "丹霞温脉篇",
+  "description": "借晚霞余温行火入脉，以温养代煅烧的火行低阶呼吸法。",
+  "content": "夕阳将沉未沉之际，面西坐于赤石旁，先观霞色由金转赤，再随霞光变换纳气。金霞时只吸半息，赤霞时将火灵送入双臂，紫霞初起便收回膻中。每一轮只温一条支脉，火气不得进入骨髓。若行气处出现针刺般灼痛，说明把温火误作真焰，应以水意观想将其化为雾散开。此篇故意避开正午烈阳，所得火灵稀薄而柔和，修炼进度如霞退天青，却能先把经脉养熟，再承受更高阶的炉火。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 0.45
+  },
+  "compatible_elements": ["fire"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 1
+    },
+    "minimum_soul_strength": 1,
+    "required_elements": ["fire"],
+    "required_techniques": ["ninecun_lingtai:basic_breathing"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 63,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "夕阳金霞赤霞紫霞分段纳气",
+      "一轮只温一条支脉",
+      "火灵不得入骨髓",
+      "灼痛须以水意化雾"
+    ],
+    "grading_criteria": [
+      "准确说出三色霞光对应的纳气与收气时机",
+      "理解此篇取余温养脉，不以正午烈焰煅身",
+      "明白针刺灼痛是温火转真焰、必须立即散热"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 63
+      }
+    ]
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "name": "滴水穿脉诀",
+  "description": "以一滴水磨穿一处经关，缓而不息的水行低阶呼吸法。",
+  "content": "选一处最难贯通的经关，静听檐下滴水。每听一滴，方吸一缕水灵；吸后闭口，将灵气凝成水珠停在关前，待下一滴落下，才让前一珠向内渗入半分。九滴只进一分，九十九滴才许越关。越关之后不可庆喜催气，须让水珠在新经段散开，否则内壁会被寒意割裂。若听不见滴声，便以心跳代之，不可凭空加快。此诀看似拙慢，实则专磨经脉最顽固的阻滞，水根修士若能守住一滴一分，日后行气最少留下暗伤。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 0.43
+  },
+  "compatible_elements": ["water"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 2
+    },
+    "minimum_soul_strength": 1,
+    "required_elements": ["water"],
+    "required_techniques": ["ninecun_lingtai:basic_breathing"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 61,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "听一滴纳一缕水灵",
+      "水珠停关前待下一滴才渗半分",
+      "九十九滴方许越关",
+      "越关后须散珠不可催气"
+    ],
+    "grading_criteria": [
+      "理解此诀以滴水磨关，贵在持久而不是一次冲破",
+      "说明水珠停、滴声引、半分渗入的细微次序",
+      "明白越关后强催会让寒水割裂经脉"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 61
+      }
+    ]
+  }
+}

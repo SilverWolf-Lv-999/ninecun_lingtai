@@ -1,0 +1,41 @@
+{
+  "name": "炉脉培基篇",
+  "description": "以火炼土、以土护炉，缓慢培植丹田根基的双灵根低阶呼吸法。",
+  "content": "夜半无风时，于腹前观想一座未开炉门的小鼎。吸气引离火至心宫，不使其下坠；呼气时从脾宫取一缕厚土覆在火外，形成灰壳。火在壳中只炼一息，土壳便退半分，露出火心，再由火心反哺土层。五次火土交替，才准一缕沉入丹田底部。若腹中灼热而沉重，说明土壳太薄；若气机迟钝如塞，说明土壳过厚。此篇吸收不疾，专教火土双根建立炉壁，免得火气无所依凭、土气闭塞不化。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 0.59
+  },
+  "compatible_elements": ["fire", "earth"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 2
+    },
+    "minimum_soul_strength": 1,
+    "required_elements": ["fire", "earth"],
+    "minimum_spiritual_root_elements": 2,
+    "required_techniques": ["ninecun_lingtai:basic_breathing"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 65,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "腹前观未开炉门小鼎",
+      "厚土覆火形成灰壳",
+      "火炼土壳退半分再反哺",
+      "灼重与迟塞分别为土壳过薄过厚"
+    ],
+    "grading_criteria": [
+      "说明火土在炉脉篇中互为炉心与炉壁",
+      "理解五次火土交替后才可沉入丹田",
+      "指出腹中灼重和气机迟塞对应的调息方向"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 65
+      }
+    ]
+  }
+}

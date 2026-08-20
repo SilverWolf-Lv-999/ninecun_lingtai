@@ -1,0 +1,40 @@
+{
+  "name": "秋声断流诀",
+  "description": "借风过金叶之声截断杂念，使金气断续入脉的金行低阶呼吸法。",
+  "content": "霜降前后，立于疏林背风处，待一片金叶落地，便以其坠势配合呼吸。叶动则吸，叶静则停，叶落尽才呼；一息之间只引半缕金气，悬在肺脉关口，不许其自行下泄。待心念能在风声中辨出一片叶的去向，方将悬气送过尺泽，分流至两臂。此诀故意截断周天，不使灵气一泻千里，以断续之势磨出对金气的节制。急于求成者会觉肺中如有细砂，便是金气未停而经脉受刮，须散功静养。其进境虽如落叶，日久却能养成一缕不乱的肃杀真息。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 0.44
+  },
+  "compatible_elements": ["metal"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 2
+    },
+    "minimum_soul_strength": 1,
+    "required_elements": ["metal"],
+    "required_techniques": ["ninecun_lingtai:basic_breathing"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 61,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "叶动吸叶静停叶落呼",
+      "半缕金气悬于肺脉关口",
+      "故截周天以断续磨节制",
+      "肺如细砂是金气未停伤脉"
+    ],
+    "grading_criteria": [
+      "理解秋声断流诀故意不求周天贯通",
+      "准确说明落叶与吸停呼之间的对应关系",
+      "明白肺中细砂感意味着行气过急，不可继续强炼"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 61
+      }
+    ]
+  }
+}

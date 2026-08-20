@@ -1,0 +1,40 @@
+{
+  "name": "寒潭息浪诀",
+  "description": "观寒潭无波，以迟缓水息沉入肾宫的水行低阶呼吸法。",
+  "content": "子夜临寒潭，不取水声，只取水面未被风触的那一寸寂静。吸气时将北方水灵引到喉下，停在膻中，如月影浮于潭面；呼气时才令其徐徐下沉，经过脐轮而入肾宫。每一息下沉不得超过三分，若水意先入腹底，便以舌抵上腭将其牵回。此诀不以奔流为力，专炼水行的定性。修士须待潭面在心中完整映出一轮月，才可开始下一轮吐纳。进境缓慢如寒冰滴落，却能使心神沉静，水灵不受外念搅浑。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 0.47
+  },
+  "compatible_elements": ["water"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 1
+    },
+    "minimum_soul_strength": 1,
+    "required_elements": ["water"],
+    "required_techniques": ["ninecun_lingtai:basic_breathing"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 62,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "取寒潭无波的一寸寂静",
+      "水灵停于膻中如月影浮潭",
+      "每息下沉不得超过三分",
+      "心映满月方可续下一轮"
+    ],
+    "grading_criteria": [
+      "说明寒潭息浪诀炼的是水灵的定性，不是奔流冲脉",
+      "理解水灵先停膻中、后缓沉肾宫的路线",
+      "明白水意先入腹底代表下沉过急，必须牵回"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 62
+      }
+    ]
+  }
+}

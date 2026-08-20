@@ -1,0 +1,40 @@
+{
+  "name": "青梧落子诀",
+  "description": "取梧叶坠地之静，令木灵散入周身窍穴的木行低阶呼吸法。",
+  "content": "梧叶将落未落之时，面向南枝静立片刻，待一叶触地，方可入坐。每次吸气只收一枚落叶之象，将青木气分入双肩、双胁与两膝六处；呼气时不催其行，只观六处气息各自下沉。待六窍皆有微温，再以第七息把余气汇于脐下。此诀不走任督，不求大周天，专以散而不乱为功。若六处温意不能同时存在，便说明某一窍贪纳，须先以呼气将其余气送回肝宫。修行迟缓，却能让木灵均匀浸入末梢，适合经脉宽窄不一的修士。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 0.55
+  },
+  "compatible_elements": ["wood"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 2
+    },
+    "minimum_soul_strength": 1,
+    "required_elements": ["wood"],
+    "required_techniques": ["ninecun_lingtai:basic_breathing"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 64,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "梧叶触地方入坐",
+      "木气分入六处窍穴",
+      "不走任督只求散而不乱",
+      "第七息将余气汇于脐下"
+    ],
+    "grading_criteria": [
+      "准确说出六处纳气位置与第七息归元的顺序",
+      "理解此诀不以任督周天为核心，而以末梢均匀为功",
+      "明白一窍贪纳时必须先散气，不可强行补齐六处"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 64
+      }
+    ]
+  }
+}

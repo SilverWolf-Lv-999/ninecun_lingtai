@@ -1,0 +1,40 @@
+{
+  "name": "玄牝回环诀",
+  "description": "守住玄牝一窍，使阴阳在任督之间缓行回环的阴阳低阶呼吸法。",
+  "content": "静坐时不观丹田，只守鼻下至膻中之间一窍，谓之玄牝。吸气取阳和，自鼻端下沉至膻中；呼气取阴柔，自膻中上返鼻端，二者皆不入丹田。待一百零八息后，才将阳气沿督脉升一寸、阴气沿任脉降一寸，随后复归玄牝。此法以回环为门，不许两仪急于交合。若鼻端生冷、膻中发空，说明守窍偏向一方，应立即减半纳气。进境如水磨旧环，极慢而少显，却能使阴阳灵力不因神念偏执而失其平衡。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 0.55
+  },
+  "compatible_elements": ["yin_yang"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 2
+    },
+    "minimum_soul_strength": 1,
+    "required_elements": ["yin_yang"],
+    "required_techniques": ["ninecun_lingtai:basic_breathing"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 66,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "玄牝在鼻端至膻中之间",
+      "阳下沉膻中阴上返鼻端",
+      "一百零八息后任督各行一寸",
+      "鼻冷膻空是守窍偏废"
+    ],
+    "grading_criteria": [
+      "理解玄牝回环诀前期不入丹田、只在一窍往返",
+      "准确说出阳气下沉、阴气上返以及百八息后的任督寸行",
+      "明白鼻冷与膻空分别提示阴阳哪一方失守"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 66
+      }
+    ]
+  }
+}

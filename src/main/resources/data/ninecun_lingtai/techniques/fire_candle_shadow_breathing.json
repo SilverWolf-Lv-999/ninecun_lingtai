@@ -1,0 +1,40 @@
+{
+  "name": "烛影归心法",
+  "description": "观孤烛摇曳而不灭，将火灵折返心宫的火行低阶呼吸法。",
+  "content": "夜读时置一盏素烛于左前方，灯焰偏向哪边，心念便向相反处收束。吸气随焰尖上挑，引一缕火灵至眉间；呼气随焰根下沉，将其折回心宫。火灵不得停在胸外，也不得随焰摆动而左右游移。每十二息只完成一次上引下归，三次之后静息一轮，观烛影是否仍在原处。若烛影在心中分成两重，说明神火与外火相乱，应闭目收功。其吸纳缓慢且极耗专注，所得却能让火气在动静之间自守，不因外界变化而失去根位。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 0.50
+  },
+  "compatible_elements": ["fire"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 2
+    },
+    "minimum_soul_strength": 1,
+    "required_elements": ["fire"],
+    "required_techniques": ["ninecun_lingtai:basic_breathing"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 63,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "焰尖上挑时引火至眉间",
+      "焰根下沉时火灵折返心宫",
+      "十二息一轮上引下归",
+      "烛影分重即神火外乱"
+    ],
+    "grading_criteria": [
+      "理解烛焰只是节律参照，火灵路线始终由修士心念掌握",
+      "准确说明眉间上引与心宫归藏的呼吸配合",
+      "指出烛影分重是神火失守，须闭目收功"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 63
+      }
+    ]
+  }
+}

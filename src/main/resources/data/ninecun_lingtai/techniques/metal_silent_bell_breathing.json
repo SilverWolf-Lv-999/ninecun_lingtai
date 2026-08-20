@@ -1,0 +1,40 @@
+{
+  "name": "沉钟炼肺法",
+  "description": "观沉钟之音藏于无声，以低沉吐纳温炼肺宫的金行低阶呼吸法。",
+  "content": "置一枚旧铜钟于身前三尺，不叩其声，只观其曾经震荡的余韵。吸气时，先听自身心跳，再引一线金气落入肺宫；呼气时想钟声沉入井底，气息亦随之下坠。每一轮只炼肺宫一寸，不许越过胸中膻府。待九轮之后，方将沉金之气送入气海，令其如钟钮般安坐，不随情绪浮动。若耳中忽闻巨响，或胸腔震颤不止，皆是神念追逐声相，须立即断息三息。此法纳气寥寥，久修却可使肺气沉厚，临敌时不为外声乱神。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 0.56
+  },
+  "compatible_elements": ["metal"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 2
+    },
+    "minimum_soul_strength": 1,
+    "required_elements": ["metal"],
+    "required_techniques": ["ninecun_lingtai:basic_breathing"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 64,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "不叩钟而观余韵",
+      "吸纳金气入肺、呼气如沉井",
+      "九轮炼肺一寸后才入气海",
+      "追逐声相会致神乱断息"
+    ],
+    "grading_criteria": [
+      "说明沉钟只是观想其沉降之势，不是借声震炼",
+      "理解金气须先沉于肺宫，九轮后方可归海",
+      "指出耳闻巨响与胸腔震颤是神念失守的征兆"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 64
+      }
+    ]
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "name": "山铸鸣金诀",
+  "description": "借山土孕金之理，缓缓从脾肺之间铸出金灵的双灵根低阶呼吸法。",
+  "content": "择石脉初露之山坡盘坐，先将土气引至脾宫，压成一方未琢矿胚；再以吸气从肺宫纳入极细金意，埋入矿胚中央。土气三沉，金意才响一声；三声之后，方可将矿胚向上移至膻中。不得直接把金气送肺，亦不得让矿胚离开土意独行。若胸中金声连鸣，说明铸火过急，应以沉土压住；若脾宫空陷，则土母不足，须停纳金意。此诀增长如山中寻矿，所得虽少，能使厚重与锋锐互相成就。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 0.56
+  },
+  "compatible_elements": ["earth", "metal"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 2
+    },
+    "minimum_soul_strength": 1,
+    "required_elements": ["earth", "metal"],
+    "minimum_spiritual_root_elements": 2,
+    "required_techniques": ["ninecun_lingtai:basic_breathing"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 66,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "土气压成未琢矿胚",
+      "金意埋入矿胚而非直入肺宫",
+      "土气三沉金意一鸣",
+      "金声连鸣与脾宫空陷各有其因"
+    ],
+    "grading_criteria": [
+      "理解山铸诀以土为母、以金为矿，次序不可颠倒",
+      "准确说明三沉一鸣以及矿胚上移膻中的条件",
+      "明白金声连鸣须压土、脾宫空陷须停金，两者不可混淆"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 66
+      }
+    ]
+  }
+}

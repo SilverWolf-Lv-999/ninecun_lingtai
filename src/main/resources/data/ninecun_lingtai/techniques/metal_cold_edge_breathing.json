@@ -1,0 +1,40 @@
+{
+  "name": "寒锋敛息诀",
+  "description": "借秋金肃气收束呼吸，以微缓之法磨砺经脉的金行低阶呼吸法。",
+  "content": "秋分之后，择露重风清之处面西而坐，舌抵上腭，令一缕西方金气随凉息入肺。此诀不取金气锋芒，反以敛息藏锋为第一关：吸时只纳七分，余下三分留于鼻端，使锐意不冲经脉；呼时将肺宫中气息折作三缕，沿手太阴缓缓下沉，至丹田方合为一线。每三息为一折，每九折才许气过中府。若胸中忽生金鸣，便是引气太急，须散去新纳之气，重归静坐。其功迟在步步收锋，胜在久修之后肺脉不为外邪所扰。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 0.48
+  },
+  "compatible_elements": ["metal"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 1
+    },
+    "minimum_soul_strength": 1,
+    "required_elements": ["metal"],
+    "required_techniques": ["ninecun_lingtai:basic_breathing"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 62,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "秋分露重之地纳西方金气",
+      "吸纳七分而留三分敛息藏锋",
+      "肺宫三缕下沉至丹田方合",
+      "胸生金鸣即为引气过急"
+    ],
+    "grading_criteria": [
+      "说明此诀以收束金气为要，而非追逐锋锐之势",
+      "理解七分纳气、三分留息的分寸",
+      "准确说出三缕金气在肺宫分行、丹田合流的次序"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 62
+      }
+    ]
+  }
+}

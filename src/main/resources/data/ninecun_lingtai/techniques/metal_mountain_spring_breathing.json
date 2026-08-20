@@ -1,0 +1,40 @@
+{
+  "name": "砚山回锋息",
+  "description": "以砚石承金、以回锋折锐，缓纳金气而不伤经脉的金行低阶呼吸法。",
+  "content": "取山石所成旧砚置于膝上，掌根覆其四角，先以神念感受石中沉金，再于每次吸气末尾将一缕金气引至指端。气至指节不可前进，须沿掌缘回折，经劳宫返入膻中，如刀锋入鞘。每回一次，只能再添一缕；九缕之后，金气才许下沉丹田。砚面若生白霜，说明金气已被石性安抚，可以继续；若霜纹向外裂散，则回锋失序，应立刻散去掌中之气。此法所得极少，偏能锻出灵力收放之间的转折，不使金行修士一味刚直而折。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 0.58
+  },
+  "compatible_elements": ["metal"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 2
+    },
+    "minimum_soul_strength": 1,
+    "required_elements": ["metal"],
+    "required_techniques": ["ninecun_lingtai:basic_breathing"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 65,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "砚石承金以山性安抚锐气",
+      "金气至指节不可前进",
+      "沿掌缘回折经劳宫返膻中",
+      "白霜外裂是回锋失序"
+    ],
+    "grading_criteria": [
+      "说明回锋不是退气，而是将锋芒收入经脉内侧",
+      "理解九缕金气必须逐缕回折后才可归入丹田",
+      "指出霜纹外裂是灵气失控而非功力增长"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 65
+      }
+    ]
+  }
+}

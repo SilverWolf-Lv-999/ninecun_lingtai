@@ -1,0 +1,40 @@
+{
+  "name": "砺岳伏气诀",
+  "description": "以山岳磨盘沉降土灵，缓缓夯实气海的土行低阶呼吸法。",
+  "content": "择有风而不见峰顶之处盘坐，脊柱如山脊，舌根下垂。吸气时引土灵至尾闾，令其贴着骨盆缓慢旋转；呼气时使其下压一分，如磨盘碾过砂砾。每九息只许土灵前进半寸，待尾闾、命门、脊中三关都生沉重之感，才可将一缕送入丹田底部。若双腿先麻而腰腹空浮，便是土气失根，应以双掌触地重新定势。此诀几乎不求灵气数量，专炼沉降与承载，修行如山石受磨，日久方显根基坚厚之效。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 0.41
+  },
+  "compatible_elements": ["earth"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 1
+    },
+    "minimum_soul_strength": 1,
+    "required_elements": ["earth"],
+    "required_techniques": ["ninecun_lingtai:basic_breathing"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 62,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "土灵至尾闾贴骨盆旋转",
+      "每九息下压半寸",
+      "三关沉重方可入丹田底部",
+      "双腿麻而腰腹浮是土气失根"
+    ],
+    "grading_criteria": [
+      "理解砺岳诀重在沉降承载，不以纳气数量为先",
+      "准确说出尾闾、命门、脊中三关的推进条件",
+      "明白腰腹空浮意味着土灵失根，必须触地定势"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 62
+      }
+    ]
+  }
+}

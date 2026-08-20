@@ -1,0 +1,41 @@
+{
+  "name": "五行迟环诀",
+  "description": "五行俱全者以迟环驯服相生之势，令一周气机分作五次完成的低阶呼吸法。",
+  "content": "此诀不从木起，亦不从金收，而以当日环境最弱的一行作为环首。首行入脾宫暂存，第二行只取首行半数，沿相生之理推移；第三行再取其半，依次递减，至第五行时只余最细一丝，便将全环倒转回首。每一环耗五十息，环中任何一行不得超过前一行之半。若第五行仍然过盛，说明相生之势未被压住，应退回最初一息重来。此法吸收慢如细线绕轮，却能让五行俱全的修士先学会节约与衰减，不被多根资质带来的灵气洪流冲散经脉。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 0.66
+  },
+  "compatible_elements": ["metal", "wood", "water", "fire", "earth"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 3
+    },
+    "minimum_soul_strength": 1,
+    "required_elements": ["metal", "wood", "water", "fire", "earth"],
+    "minimum_spiritual_root_elements": 5,
+    "required_techniques": ["ninecun_lingtai:basic_breathing"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 71,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "以当日最弱一行作为环首",
+      "后行只取前行半数",
+      "五十息完成一迟环",
+      "第五行过盛须退回首息"
+    ],
+    "grading_criteria": [
+      "理解五行迟环诀不固定环首，而取环境最弱之行起势",
+      "准确说明各行灵气依次减半、第五行后倒转回首的规则",
+      "明白第五行过盛说明相生未被节制，不能把多纳当作成功"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 71
+      }
+    ]
+  }
+}

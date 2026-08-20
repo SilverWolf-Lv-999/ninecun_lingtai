@@ -1,0 +1,40 @@
+{
+  "name": "苔痕养元篇",
+  "description": "仿苔痕附石而生，以微弱木灵潜养气海的木行低阶呼吸法。",
+  "content": "雨后寻北面石壁，取苔色最深之处落座，神念沉到脚底，不观枝叶，只观苔痕如何贴石。吸气时引木灵贴着经脉内壁缓慢爬行，绕过一处关节便停一息；呼气时让它渗入气海边缘，像苔丝附石，不可卷入中央。每日只许完成三圈，第四圈便会使外缘生气过厚，反压丹田。若小腹有潮湿黏滞之感，须暂停吐纳，待气海自行澄清。此法吸收极微，所得木气却不惊不扰，最适合灵脉细弱、不能承受剧烈生发之修士。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "breathing": {
+    "absorption_multiplier": 0.42
+  },
+  "compatible_elements": ["wood"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 2
+    },
+    "minimum_soul_strength": 1,
+    "required_elements": ["wood"],
+    "required_techniques": ["ninecun_lingtai:basic_breathing"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 61,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "雨后北壁观苔附石",
+      "木灵贴经脉内壁爬行",
+      "绕过关节便停一息",
+      "每日三圈不可多纳"
+    ],
+    "grading_criteria": [
+      "理解苔痕之法在于贴附与渗入，而非枝叶般向外生长",
+      "说明木灵只能停在气海边缘，不可卷入中央",
+      "明白小腹湿滞是外缘生气过厚、须停功澄清的征兆"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 61
+      }
+    ]
+  }
+}
