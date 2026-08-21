@@ -3,10 +3,8 @@ package net.seraphina.ninecun_lingtai.client.utility;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexMultiConsumer;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
@@ -33,7 +31,7 @@ public final class CosmicItemRenderUtility {
         RandomSource randomSource = RandomSource.create();
         VertexConsumer cosmicConsumer = VertexMultiConsumer.create(
                 bufferSource.getBuffer(MegaRenderType.END_COSMIC_ITEM(
-                        new ResourceLocation(ClientConfig.WRAPPED_COSMIC_LOCATION.get())
+                        ResourceLocation.parse(ClientConfig.WRAPPED_COSMIC_LOCATION.get())
                 ))
         );
         randomSource.setSeed(42L);

@@ -1,9 +1,7 @@
 package net.seraphina.ninecun_lingtai.client.model;
 
 
-import net.seraphina.ninecun_lingtai.client.render.cosmic.MegaRenderBuffers;
 import net.seraphina.ninecun_lingtai.client.render.cosmic.CosmicItemShaders;
-import net.seraphina.ninecun_lingtai.client.utility.TransformUtils;
 import net.seraphina.ninecun_lingtai.common.config.ClientConfig;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -29,14 +27,6 @@ public class CosmicBakedModel extends WrappedItemModel implements IItemRenderer 
     }
 
     public void renderItem(ItemStack stack, ItemDisplayContext transformType, PoseStack pStack, MultiBufferSource source, int light, int overlay) {
-        if (stack.getItem() instanceof TieredItem) {
-            this.parentState = TransformUtils.HANDHELD;
-        } else if (stack.getItem() instanceof BowItem) {
-            this.parentState = TransformUtils.DEFAULT_BOW;
-        } else if (stack.getItem() instanceof BlockItem) {
-            this.parentState = TransformUtils.DEFAULT_BLOCK;
-        } else this.parentState = TransformUtils.DEFAULT_ITEM;
-        source = MegaRenderBuffers.getBufferSource();
         this.renderWrapped(stack, pStack, source, light, overlay, true, Function.identity());
         if (ClientConfig.ENABLE_COSMIC_RENDERER.get()) {
             if (source instanceof MultiBufferSource.BufferSource bs)
@@ -53,7 +43,8 @@ public class CosmicBakedModel extends WrappedItemModel implements IItemRenderer 
                 atlasSprite.add(sprite);
             }
             mc.getItemRenderer().renderQuadList(pStack, cons, bakeItem(atlasSprite), stack, light, overlay);
-            MegaRenderBuffers.getBufferSource().endBatch();
+            if (source instanceof MultiBufferSource.BufferSource bs)
+                bs.endBatch();
         }
     }
 

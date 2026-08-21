@@ -63,7 +63,7 @@ public abstract class WrappedItemModel implements PerspectiveModel {
             for (BlockElement element : unbaked) {
 
                 for (Map.Entry<Direction, BlockElementFace> directionBlockElementFaceEntry : element.faces.entrySet()) {
-                    quads.add(FACE_BAKERY.bakeQuad(element.from, element.to, directionBlockElementFaceEntry.getValue(), sprite, directionBlockElementFaceEntry.getKey(), new PerspectiveModelState(ImmutableMap.of()), element.rotation, element.shade, new ResourceLocation(ModMain.MOD_ID, "dynamic")));
+                    quads.add(FACE_BAKERY.bakeQuad(element.from, element.to, directionBlockElementFaceEntry.getValue(), sprite, directionBlockElementFaceEntry.getKey(), new PerspectiveModelState(ImmutableMap.of()), element.rotation, element.shade, ResourceLocation.fromNamespaceAndPath(ModMain.MOD_ID, "dynamic")));
                 }
             }
         }

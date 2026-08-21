@@ -62,7 +62,7 @@ public class VanillaCosmicModelLoader implements IGeometryLoader<VanillaCosmicMo
             BakedModel baseBakedModel = this.baseModel.bake(baker, this.baseModel, spriteGetter, modelState, modelLocation, true);
             List<ResourceLocation> textures = new ArrayList();
             this.maskTextures.forEach((mask) -> {
-                textures.add(new ResourceLocation(mask));
+                textures.add(ResourceLocation.parse(mask));
             });
             return new VanillaCosmicBakedModel(baseBakedModel, textures);
         }

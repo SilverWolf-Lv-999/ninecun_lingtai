@@ -2,7 +2,6 @@ package net.seraphina.ninecun_lingtai.client.model.separate;
 
 import com.google.common.collect.ImmutableMap;
 import net.seraphina.ninecun_lingtai.client.model.PerspectiveModelState;
-import net.seraphina.ninecun_lingtai.client.render.cosmic.MegaRenderBuffers;
 import net.seraphina.ninecun_lingtai.client.render.cosmic.VanillaCosmicShaders;
 import net.seraphina.ninecun_lingtai.client.utility.TransformUtils;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -30,7 +29,6 @@ public class SeparateTransformsCosmicModel extends STWrappedModel {
 
     public void renderItem(ItemStack stack, ItemDisplayContext transformType, PoseStack pStack, MultiBufferSource source, int light, int overlay) {
         if (mainParentState == null) mainParentState = TransformUtils.DEFAULT_BLOCK;
-        source = MegaRenderBuffers.getBufferSource();
         this.renderWrapped(stack, pStack, source, light, overlay, true, Function.identity());
         if (ClientConfig.ENABLE_COSMIC_RENDERER.get() && isCosmic) {
             if (source instanceof MultiBufferSource.BufferSource bs)
@@ -40,7 +38,8 @@ public class SeparateTransformsCosmicModel extends STWrappedModel {
             VanillaCosmicShaders.updateShaderData(transformType);
             VertexConsumer cons = source.getBuffer(VanillaCosmicShaders.COSMIC_RENDER_TYPE);
             mc.getItemRenderer().renderQuadList(pStack, cons, wrapped.getQuads(null, null, RandomSource.create(42L)), stack, light, overlay);
-            MegaRenderBuffers.getBufferSource().endBatch();
+            if (source instanceof MultiBufferSource.BufferSource bs)
+                bs.endBatch();
         }
     }
 

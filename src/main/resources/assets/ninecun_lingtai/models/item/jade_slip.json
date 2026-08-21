@@ -1,7 +1,7 @@
 {
   "loader": "ninecun_lingtai:cosmic_mask_loader",
   "cosmic": {
-    "mask": "ninecun_lingtai:item/misc/cosmic_0"
+    "mask": "ninecun_lingtai:item/jade_slip_mask"
   },
   "textures": {
     "0": "ninecun_lingtai:item/jade_slip",

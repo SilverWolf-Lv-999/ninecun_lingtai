@@ -23,6 +23,6 @@ public class CosmicTextures {
     }
 
     public static ResourceLocation rl(String path) {
-        return new ResourceLocation(ModMain.MOD_ID, path);
+        return ResourceLocation.fromNamespaceAndPath(ModMain.MOD_ID, path);
     }
 }

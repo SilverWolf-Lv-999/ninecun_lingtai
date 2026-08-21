@@ -37,7 +37,7 @@ public class VanillaCosmicShaders {
     }
 
     public static void onRegisterShaders(RegisterShadersEvent event) {
-        event.registerShader(CosmicShaderInstance.create(event.getResourceProvider(), new ResourceLocation(ModMain.MOD_ID, "cosmic_2"), DefaultVertexFormat.BLOCK), (e) -> {
+        event.registerShader(CosmicShaderInstance.create(event.getResourceProvider(), ResourceLocation.fromNamespaceAndPath(ModMain.MOD_ID, "cosmic_2"), DefaultVertexFormat.BLOCK), (e) -> {
             cosmicShader = (CosmicShaderInstance) e;
             cosmicTime = Objects.requireNonNull(cosmicShader.getUniform("time"));
             cosmicYaw = Objects.requireNonNull(cosmicShader.getUniform("yaw")); 
