@@ -4,6 +4,7 @@ import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.seraphina.ninecun_lingtai.common.config.ClientConfig;
 import net.seraphina.ninecun_lingtai.common.config.CommonConfig;
 import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import net.seraphina.ninecun_lingtai.common.registry.*;
@@ -39,6 +40,7 @@ public final class ModMain {
         ModSounds.register(modEventBus);
         ModCreativeModeTabs.register(modEventBus);
         context.registerConfig(ModConfig.Type.COMMON, CommonConfig.SPEC);
+        context.registerConfig(ModConfig.Type.CLIENT, ClientConfig.SPEC);
         ModNetwork.register();
         if (Boolean.getBoolean(DISABLE_RUNTIME_HOOKS_PROPERTY)) {
             return;

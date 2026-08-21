@@ -13,7 +13,8 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
-import net.seraphina.ninecun_lingtai.client.utility.CausalityBlurUtility;
+import net.seraphina.ninecun_lingtai.client.render.shader.screen.ScreenShaderEffects;
+import net.seraphina.ninecun_lingtai.client.utility.Render2DUtility;
 import net.seraphina.ninecun_lingtai.common.causality.CausalityPlayerSnapshot;
 import net.seraphina.ninecun_lingtai.common.causality.CausalityRecord;
 import net.seraphina.ninecun_lingtai.common.causality.CausalitySnapshot;
@@ -22,6 +23,7 @@ import net.seraphina.ninecun_lingtai.common.network.packet.RequestGreatCausality
 import net.seraphina.ninecun_lingtai.common.network.packet.SetGreatCausalitySettingsPacket;
 import net.seraphina.ninecun_lingtai.common.player.GreatCausalitySettings;
 import net.seraphina.ninecun_lingtai.common.player.GreatCausalityTargetMode;
+import net.seraphina.ninecun_lingtai.utility.BezierUtility;
 import org.lwjgl.glfw.GLFW;
 import org.joml.Matrix4f;
 
@@ -30,27 +32,44 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.UUID;
 
 public final class GreatCausalityScreen extends Screen {
-    private static final int VOID_BACKGROUND = 0xA9080C14;
-    private static final int VOID_GRID = 0x3A5F4B35;
-    private static final int GOLD = 0xFFF5D37C;
-    private static final int BRIGHT_GOLD = 0xFFFFF0B5;
-    private static final int GOLD_LINE = 0xFFE0A63A;
-    private static final int TEXT = 0xFFF0ECE2;
-    private static final int MUTED_TEXT = 0xFFB8B5AF;
-    private static final int FAINT_TEXT = 0xFF777B82;
+    private static final int VOID_BACKGROUND = 0xF20A0C12;
+    private static final int VOID_GRID = 0x183D81F7;
+    private static final int GOLD = 0xFF57C7FF;
+    private static final int BRIGHT_GOLD = 0xFF8C6DFF;
+    private static final int GOLD_LINE = 0xFF3D81F7;
+    private static final int AQUA = 0xFF8C6DFF;
+    private static final int AQUA_DARK = 0xFF283E78;
+    private static final int PANEL = 0xE60C0D11;
+    private static final int PANEL_RAISED = 0xE9141822;
+    private static final int PANEL_HOVER = 0xF0202A3D;
+    private static final int TEXT = 0xFFF3F5FC;
+    private static final int MUTED_TEXT = 0xFFB8C0D2;
+    private static final int FAINT_TEXT = 0xFF7E879D;
     private static final int MAX_LINE_NODES = 12;
     private static final int EMPTY_LINE_NODES = 5;
     private static final int MAX_VISIBLE_RECORDS = 8;
     private static final int HEADER_HEIGHT = 84;
     private static final int TIMELINE_LABEL_HEIGHT = 32;
-    private static final int SETTINGS_TOP = 108;
-    private static final int SETTINGS_SECTION_TITLE_HEIGHT = 18;
-    private static final int SETTINGS_ROW_HEIGHT = 22;
-    private static final int SETTINGS_TOGGLE_WIDTH = 16;
+    private static final int SETTINGS_TOP = 96;
+    private static final int SETTINGS_MAX_WIDTH = 1120;
+    private static final int SETTINGS_COLUMN_GAP = 20;
+    private static final int SETTINGS_SECTION_TITLE_HEIGHT = 44;
+    private static final int SETTINGS_ROW_HEIGHT = 44;
+    private static final int SETTINGS_ROW_FILL_HEIGHT = 42;
+    private static final int SETTINGS_TARGET_HEIGHT = 44;
+    private static final int SETTINGS_TRACK_WIDTH = 40;
+    private static final int SETTINGS_TRACK_HEIGHT = 16;
+    private static final int SETTINGS_KNOB_SIZE = 12;
+    private static final int CARD_RADIUS = 8;
+    private static final int PLAYER_CARD_HEIGHT = 66;
+    private static final int PLAYER_CARD_GAP = 12;
+    private static final long TOGGLE_ANIMATION_DURATION = 420L;
+    private static final long VIEW_TRANSITION_DURATION = 420L;
     private static final long INTRO_DURATION = 1_250L;
     private static final long NODE_APPEAR_INTERVAL = 95L;
     private static final long NODE_APPEAR_DURATION = 480L;
@@ -67,11 +86,16 @@ public final class GreatCausalityScreen extends Screen {
     private ViewMode mode;
     private ViewMode modeBeforeSettings;
     private GreatCausalitySettings settings;
+    private final EnumMap<SettingToggle, ToggleAnimation> toggleAnimations = new EnumMap<>(
+            SettingToggle.class
+    );
     private long openedAt;
     private long viewStartedAt;
     private int selectedNodeIndex = -1;
     private int recordScrollOffset;
     private int playerScrollOffset;
+    private int lastMouseX;
+    private int lastMouseY;
 
     public GreatCausalityScreen(CausalitySnapshot snapshot) {
         super(Component.literal("大因果术"));
@@ -86,12 +110,12 @@ public final class GreatCausalityScreen extends Screen {
         super.added();
         this.openedAt = Util.getMillis();
         this.viewStartedAt = this.openedAt;
-        CausalityBlurUtility.install();
+        ScreenShaderEffects.setAptitudeBlurActive(true);
     }
 
     @Override
     public void removed() {
-        CausalityBlurUtility.restore();
+        ScreenShaderEffects.setAptitudeBlurActive(false);
         super.removed();
     }
 
@@ -107,14 +131,15 @@ public final class GreatCausalityScreen extends Screen {
 
     @Override
     public void onClose() {
-        CausalityBlurUtility.restore();
+        ScreenShaderEffects.setAptitudeBlurActive(false);
         super.onClose();
     }
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        this.lastMouseX = mouseX;
+        this.lastMouseY = mouseY;
         long currentTime = Util.getMillis();
-        CausalityBlurUtility.ensureInstalled();
         renderFullScreenAtmosphere(guiGraphics, currentTime);
 
         if (this.mode == ViewMode.PLAYER_LIST) {
@@ -206,30 +231,21 @@ public final class GreatCausalityScreen extends Screen {
     }
 
     private void renderFullScreenAtmosphere(GuiGraphics guiGraphics, long currentTime) {
-        guiGraphics.fill(0, 0, this.width, this.height, VOID_BACKGROUND);
-        for (int x = 0; x < this.width; x += 48) {
-            guiGraphics.fill(x, HEADER_HEIGHT + 1, x + 1, this.height - 48, withAlpha(VOID_GRID, 0.34F));
-        }
-        for (int y = HEADER_HEIGHT + 24; y < this.height - 48; y += 48) {
-            guiGraphics.fill(0, y, this.width, y + 1, withAlpha(VOID_GRID, 0.26F));
-        }
-        guiGraphics.fill(0, 0, this.width, 2, withAlpha(GOLD, 0.62F));
-        guiGraphics.fill(0, this.height - 2, this.width, this.height, withAlpha(GOLD, 0.32F));
-        guiGraphics.fill(0, 0, 2, this.height, withAlpha(GOLD, 0.3F));
-        guiGraphics.fill(this.width - 2, 0, this.width, this.height, withAlpha(GOLD, 0.3F));
+        Render2DUtility.drawRoundedRect(guiGraphics, 0.0F, 0.0F, this.width, this.height, 0.0F, VOID_BACKGROUND);
 
-        for (int index = 0; index < 28; index++) {
+        for (int index = 0; index < 18; index++) {
             float x = Mth.frac(index * 0.371F + currentTime * 0.000012F) * this.width;
             float y = Mth.frac(index * 0.173F + currentTime * 0.000008F) * this.height;
-            int size = index % 5 == 0 ? 2 : 1;
+            int size = index % 6 == 0 ? 2 : 1;
             guiGraphics.fill(
-                    (int) x,
-                    (int) y,
-                    (int) x + size,
-                    (int) y + size,
-                    withAlpha(GOLD, 0.1F + (index % 4) * 0.035F)
+                    Mth.floor(x),
+                    Mth.floor(y),
+                    Mth.floor(x) + size,
+                    Mth.floor(y) + size,
+                    withAlpha(index % 2 == 0 ? GOLD : AQUA, 0.08F + (index % 3) * 0.025F)
             );
         }
+        guiGraphics.fill(0, this.height - 1, this.width, this.height, withAlpha(AQUA_DARK, 0.22F));
     }
 
     private void renderPlayerList(GuiGraphics guiGraphics, long currentTime, int mouseX, int mouseY) {
@@ -240,24 +256,29 @@ public final class GreatCausalityScreen extends Screen {
                 "左键选择一名玩家，展开他的因果时间线",
                 currentTime
         );
+        int contentLeft = getPageContentLeft();
+        int contentRight = getPageContentRight();
         guiGraphics.drawString(
                 this.font,
-                "界域：" + getDimensionName(this.snapshot.players()),
-                52,
-                66,
+                "界域  " + getDimensionName(this.snapshot.players()),
+                contentLeft,
+                70,
                 withAlpha(MUTED_TEXT, intro)
         );
+        String playerCount = "可观测因果线  " + this.snapshot.players().size();
         guiGraphics.drawString(
                 this.font,
-                "共 " + this.snapshot.players().size() + " 条可观测因果线",
-                this.width - 220,
-                66,
+                playerCount,
+                contentRight - this.font.width(playerCount),
+                70,
                 withAlpha(MUTED_TEXT, intro)
         );
 
         List<CausalityPlayerSnapshot> players = this.snapshot.players();
         int firstPlayerIndex = this.playerScrollOffset * 2;
         int lastPlayerIndex = Math.min(players.size(), firstPlayerIndex + getVisiblePlayerRows() * 2);
+        int columnGap = PLAYER_CARD_GAP;
+        int cardWidth = Math.max(220, (contentRight - contentLeft - columnGap) / 2);
         for (int index = firstPlayerIndex; index < lastPlayerIndex; index++) {
             long delay = (index - firstPlayerIndex) * 115L;
             float alpha = easeOut(progress(currentTime - this.openedAt - delay, 560L));
@@ -266,48 +287,73 @@ public final class GreatCausalityScreen extends Screen {
             }
             int column = index % 2;
             int row = (index - firstPlayerIndex) / 2;
-            int columnWidth = Math.max(220, this.width / 2 - 84);
-            int left = 52 + column * (this.width / 2);
-            int top = 112 + row * 54;
-            boolean hovered = mouseX >= left - 8
-                    && mouseX <= left + columnWidth
-                    && mouseY >= top - 8
-                    && mouseY <= top + 35;
-            int accent = hovered ? BRIGHT_GOLD : GOLD;
-            guiGraphics.fill(left - 8, top - 5, left - 6, top + 31, withAlpha(accent, alpha));
-            guiGraphics.drawString(
+            int left = contentLeft + column * (cardWidth + columnGap);
+            int top = 104 + row * (PLAYER_CARD_HEIGHT + PLAYER_CARD_GAP);
+            boolean hovered = isInside(
+                    mouseX,
+                    mouseY,
+                    left,
+                    top,
+                    cardWidth,
+                    PLAYER_CARD_HEIGHT
+            );
+            int panelTop = hovered ? PANEL_HOVER : PANEL_RAISED;
+            int panelBottom = hovered ? 0xE61A2031 : PANEL;
+            drawUiPanel(
+                    guiGraphics,
+                    left,
+                    top,
+                    cardWidth,
+                    PLAYER_CARD_HEIGHT,
+                    CARD_RADIUS,
+                    panelTop,
+                    panelBottom,
+                    hovered ? 0x8057C7FF : 0x2AFFFFFF,
+                    alpha
+            );
+            Render2DUtility.drawPill(
+                    guiGraphics,
+                    left + 14,
+                    top + 16,
+                    34.0F,
+                    24.0F,
+                    withAlpha(hovered ? GOLD_LINE : 0xFF141B2A, alpha),
+                    withAlpha(hovered ? GOLD : 0x303D81F7, alpha)
+            );
+            guiGraphics.drawCenteredString(
                     this.font,
                     String.format("%02d", index + 1),
-                    left + 4,
-                    top,
-                    withAlpha(accent, alpha)
+                    left + 31,
+                    top + 24,
+                    withAlpha(hovered ? TEXT : GOLD, alpha)
             );
             guiGraphics.drawString(
                     this.font,
-                    players.get(index).playerName(),
-                    left + 38,
-                    top - 1,
+                    trimTextToWidth(players.get(index).playerName(), cardWidth - 104),
+                    left + 62,
+                    top + 13,
                     withAlpha(hovered ? BRIGHT_GOLD : TEXT, alpha)
             );
             guiGraphics.drawString(
                     this.font,
                     players.get(index).cultivation(),
-                    left + 38,
-                    top + 14,
+                    left + 62,
+                    top + 31,
                     withAlpha(MUTED_TEXT, alpha)
             );
             guiGraphics.drawString(
                     this.font,
-                    players.get(index).dimension(),
-                    left + 38,
-                    top + 29,
+                    trimTextToWidth(players.get(index).dimension(), cardWidth - 104),
+                    left + 62,
+                    top + 46,
                     withAlpha(FAINT_TEXT, alpha)
             );
-            guiGraphics.hLine(
-                    left + 38,
-                    Math.min(this.width - 52, left + columnWidth),
-                    top + 38,
-                    withAlpha(0x5C6B54, alpha * 0.75F)
+            guiGraphics.drawString(
+                    this.font,
+                    ">",
+                    left + cardWidth - 18,
+                    top + 25,
+                    withAlpha(hovered ? GOLD : FAINT_TEXT, alpha)
             );
         }
         drawFooter(
@@ -343,6 +389,19 @@ public final class GreatCausalityScreen extends Screen {
             );
         }
 
+        int contentLeft = getPageContentLeft();
+        drawUiPanel(
+                guiGraphics,
+                contentLeft,
+                96,
+                getPageContentRight() - contentLeft,
+                Math.max(220, this.height - 160),
+                10.0F,
+                0xD1121825,
+                0xD0090C13,
+                0x2CFFFFFF,
+                lineProgress * 0.96F
+        );
         List<CausalityRecord> records = this.snapshot.records();
         drawTimeline(guiGraphics, records, currentTime, lineProgress);
         drawFooter(
@@ -386,12 +445,16 @@ public final class GreatCausalityScreen extends Screen {
 
         int windowStart = getVisibleFileStart();
         int rowHeight = getRecordRowHeight();
+        int contentLeft = getPageContentLeft();
+        int contentRight = getPageContentRight();
+        int columnGap = 14;
+        int cardWidth = Math.max(220, (contentRight - contentLeft - columnGap) / 2);
         for (int index = 0; index < records.size(); index++) {
             CausalityRecord record = records.get(index);
             int absoluteIndex = windowStart + index;
             int column = index % 2;
             int row = index / 2;
-            int left = 58 + column * (this.width / 2);
+            int left = contentLeft + column * (cardWidth + columnGap);
             int top = 104 + row * rowHeight;
             float recordAlpha = easeOut(progress(
                     currentTime - this.viewStartedAt - index * RECORD_APPEAR_INTERVAL,
@@ -406,6 +469,7 @@ public final class GreatCausalityScreen extends Screen {
                     absoluteIndex,
                     left,
                     top,
+                    cardWidth,
                     rowHeight,
                     currentTime,
                     recordAlpha * reveal
@@ -416,27 +480,145 @@ public final class GreatCausalityScreen extends Screen {
 
     private void drawHeader(GuiGraphics guiGraphics, String title, String subtitle, long currentTime) {
         float alpha = easeOut(progress(currentTime - this.openedAt, 600L));
-        guiGraphics.drawString(this.font, title, 52, 24, withAlpha(GOLD, alpha));
-        guiGraphics.drawString(this.font, subtitle, 52, 42, withAlpha(MUTED_TEXT, alpha * 0.9F));
-        guiGraphics.hLine(52, this.width - 52, HEADER_HEIGHT, withAlpha(GOLD_LINE, alpha * 0.8F));
+        int contentLeft = getPageContentLeft();
+        int contentRight = getPageContentRight();
+        int headerWidth = contentRight - contentLeft;
+        drawUiPanel(
+                guiGraphics,
+                contentLeft,
+                12,
+                headerWidth,
+                62,
+                CARD_RADIUS,
+                0xE6121827,
+                0xE60B0E16,
+                0x20FFFFFF,
+                alpha
+        );
         guiGraphics.fill(
+                contentLeft + 16,
+                24,
+                contentLeft + 19,
                 52,
-                HEADER_HEIGHT - 2,
-                130,
-                HEADER_HEIGHT,
-                withAlpha(BRIGHT_GOLD, alpha)
+                withAlpha(GOLD, alpha)
+        );
+        guiGraphics.drawString(this.font, title, contentLeft + 30, 24, withAlpha(GOLD, alpha));
+        guiGraphics.drawString(
+                this.font,
+                subtitle,
+                contentLeft + 30,
+                42,
+                withAlpha(MUTED_TEXT, alpha * 0.9F)
+        );
+        guiGraphics.fill(
+                contentLeft + 30,
+                61,
+                contentLeft + 130,
+                62,
+                withAlpha(GOLD_LINE, alpha * 0.75F)
         );
         if (this.snapshot.settingsAvailable()) {
             String settingsText = this.mode == ViewMode.SETTINGS ? "返回推衍" : "术式设置";
-            int settingsX = this.width - 52 - this.font.width(settingsText);
+            int buttonWidth = this.font.width(settingsText) + 24;
+            int buttonLeft = contentRight - buttonWidth;
+            int buttonTop = 16;
+            int buttonBottom = 44;
+            boolean hovered = isSettingsButtonAt(this.lastMouseX, this.lastMouseY);
+            Render2DUtility.drawRoundedVerticalGradientRect(
+                    guiGraphics,
+                    buttonLeft,
+                    buttonTop,
+                    buttonWidth,
+                    buttonBottom - buttonTop,
+                    6.0F,
+                    withAlpha(hovered ? 0xFF23395A : 0xFF151A28, alpha),
+                    withAlpha(hovered ? 0xFF1A2843 : 0xFF0F121B, alpha)
+            );
+            Render2DUtility.drawOutlineRoundedRect(
+                    guiGraphics,
+                    buttonLeft,
+                    buttonTop,
+                    buttonWidth,
+                    buttonBottom - buttonTop,
+                    6.0F,
+                    1.0F,
+                    withAlpha(hovered ? GOLD : 0x36FFFFFF, alpha)
+            );
+            Render2DUtility.drawRoundedRect(
+                    guiGraphics,
+                    buttonLeft + 7,
+                    buttonTop + 6,
+                    2.0F,
+                    buttonBottom - buttonTop - 12,
+                    1.0F,
+                    withAlpha(hovered ? BRIGHT_GOLD : GOLD_LINE, alpha)
+            );
             guiGraphics.drawString(
                     this.font,
                     settingsText,
-                    settingsX,
-                    24,
-                    withAlpha(this.mode == ViewMode.SETTINGS ? BRIGHT_GOLD : GOLD, alpha)
+                    buttonLeft + 12,
+                    25,
+                    withAlpha(
+                            hovered || this.mode == ViewMode.SETTINGS ? BRIGHT_GOLD : GOLD,
+                            alpha
+                    )
             );
         }
+    }
+
+    private void drawUiPanel(
+            GuiGraphics guiGraphics,
+            float x,
+            float y,
+            float width,
+            float height,
+            float radius,
+            int topColor,
+            int bottomColor,
+            int borderColor,
+            float alpha
+    ) {
+        Render2DUtility.drawDropShadow(
+                guiGraphics,
+                x,
+                y,
+                width,
+                height,
+                radius,
+                0.0F,
+                3.0F,
+                12.0F,
+                withAlpha(0x78000000, alpha * 0.72F)
+        );
+        Render2DUtility.drawRoundedVerticalGradientRect(
+                guiGraphics,
+                x,
+                y,
+                width,
+                height,
+                radius,
+                withAlpha(topColor, alpha),
+                withAlpha(bottomColor, alpha)
+        );
+        Render2DUtility.drawRoundedRect(
+                guiGraphics,
+                x + 1.0F,
+                y + 1.0F,
+                Math.max(0.0F, width - 2.0F),
+                1.0F,
+                0.5F,
+                withAlpha(0x28FFFFFF, alpha)
+        );
+        Render2DUtility.drawOutlineRoundedRect(
+                guiGraphics,
+                x,
+                y,
+                width,
+                height,
+                radius,
+                1.0F,
+                withAlpha(borderColor, alpha)
+        );
     }
 
     private void renderSettings(
@@ -445,7 +627,12 @@ public final class GreatCausalityScreen extends Screen {
             int mouseX,
             int mouseY
     ) {
-        float alpha = easeOut(progress(currentTime - this.openedAt, 600L));
+        float viewProgress = BezierUtility.cubicEase(
+                progress(currentTime - this.viewStartedAt, VIEW_TRANSITION_DURATION),
+                0.22F,
+                0.96F
+        );
+        float alpha = easeOut(progress(currentTime - this.openedAt, 600L)) * viewProgress;
         drawHeader(
                 guiGraphics,
                 "大因果术 · 圆满术式",
@@ -464,14 +651,26 @@ public final class GreatCausalityScreen extends Screen {
             return;
         }
 
+        guiGraphics.pose().pushPose();
+        guiGraphics.pose().translate(0.0F, Mth.lerp(1.0F - viewProgress, 18.0F, 0.0F), 0.0F);
+
         boolean compact = usesCompactSettingsLayout();
-        int leftX = 52;
-        int rightX = compact ? leftX : this.width / 2 + 26;
-        int columnWidth = compact ? this.width - 104 : this.width / 2 - 78;
+        int leftX = getSettingsContentLeft();
+        int rightX = compact ? leftX : getSettingsRightColumnX();
+        int columnWidth = getSettingsColumnWidth();
         int transferSectionY = getSettingsSectionY(false);
         int tamperSectionY = getSettingsSectionY(true);
 
-        renderSettingsSectionTitle(guiGraphics, "换因果", leftX, transferSectionY, alpha);
+        renderSettingsSectionPanel(
+                guiGraphics,
+                "换因果",
+                "把已发生的结果转接给另一条因果线",
+                leftX,
+                transferSectionY,
+                columnWidth,
+                getSettingsTargetY(true) + SETTINGS_TARGET_HEIGHT,
+                alpha
+        );
         SettingToggle[] transferToggles = {
                 SettingToggle.TRANSFER_ATTACK,
                 SettingToggle.TRANSFER_HATE,
@@ -490,6 +689,7 @@ public final class GreatCausalityScreen extends Screen {
                     columnWidth,
                     mouseX,
                     mouseY,
+                    currentTime,
                     alpha
             );
         }
@@ -504,7 +704,16 @@ public final class GreatCausalityScreen extends Screen {
                 alpha
         );
 
-        renderSettingsSectionTitle(guiGraphics, "篡改因果", rightX, tamperSectionY, alpha);
+        renderSettingsSectionPanel(
+                guiGraphics,
+                "篡改因果",
+                "让结果脱离原本的因，改写归属与去向",
+                rightX,
+                tamperSectionY,
+                columnWidth,
+                getSettingsTargetY(false) + SETTINGS_TARGET_HEIGHT,
+                alpha
+        );
         SettingToggle[] tamperToggles = {
                 SettingToggle.CORRUPT_BENEFICIAL_EFFECTS,
                 SettingToggle.TRANSFER_ITEMS,
@@ -520,6 +729,7 @@ public final class GreatCausalityScreen extends Screen {
                     columnWidth,
                     mouseX,
                     mouseY,
+                    currentTime,
                     alpha
             );
         }
@@ -533,22 +743,53 @@ public final class GreatCausalityScreen extends Screen {
                 mouseY,
                 alpha
         );
+        guiGraphics.pose().popPose();
         drawFooter(guiGraphics, "ESC 返回推衍");
     }
 
-    private void renderSettingsSectionTitle(
+    private void renderSettingsSectionPanel(
             GuiGraphics guiGraphics,
             String title,
+            String subtitle,
             int x,
             int y,
+            int width,
+            int bottom,
             float alpha
     ) {
-        guiGraphics.drawString(this.font, title, x, y, withAlpha(GOLD, alpha));
-        guiGraphics.hLine(
-                x + this.font.width(title) + 12,
-                x + getSettingsColumnWidth(),
-                y + 5,
-                withAlpha(GOLD_LINE, alpha * 0.48F)
+        drawUiPanel(
+                guiGraphics,
+                x,
+                y - 8,
+                width,
+                bottom - y + 8,
+                CARD_RADIUS,
+                0xE6171D2A,
+                PANEL,
+                0x24FFFFFF,
+                alpha
+        );
+        guiGraphics.fill(
+                x + 16,
+                y + 4,
+                x + 19,
+                y + 28,
+                withAlpha(GOLD, alpha * 0.86F)
+        );
+        guiGraphics.drawString(this.font, title, x + 30, y + 1, withAlpha(GOLD, alpha));
+        guiGraphics.drawString(
+                this.font,
+                subtitle,
+                x + 30,
+                y + 19,
+                withAlpha(MUTED_TEXT, alpha * 0.82F)
+        );
+        guiGraphics.fill(
+                x + width - 20,
+                y + 6,
+                x + width - 18,
+                y + 14,
+                withAlpha(AQUA, alpha * 0.72F)
         );
     }
 
@@ -560,50 +801,105 @@ public final class GreatCausalityScreen extends Screen {
             int width,
             int mouseX,
             int mouseY,
+            long currentTime,
             float alpha
     ) {
         boolean enabled = isSettingEnabled(toggle);
-        boolean hovered = mouseX >= x
-                && mouseX <= x + width
-                && mouseY >= y
-                && mouseY <= y + SETTINGS_ROW_HEIGHT - 2;
-        int accent = hovered ? BRIGHT_GOLD : GOLD;
-        guiGraphics.fill(
-                x,
-                y + 4,
-                x + SETTINGS_TOGGLE_WIDTH,
-                y + 14,
-                withAlpha(enabled ? accent : FAINT_TEXT, alpha * 0.72F)
-        );
-        if (enabled) {
+        float toggleProgress = getToggleAnimationProgress(toggle, enabled, currentTime);
+        boolean hovered = isInside(mouseX, mouseY, x, y, width, SETTINGS_ROW_FILL_HEIGHT);
+        if (hovered) {
             guiGraphics.fill(
-                    x + 3,
-                    y + 6,
-                    x + SETTINGS_TOGGLE_WIDTH - 2,
-                    y + 12,
-                    withAlpha(BRIGHT_GOLD, alpha)
+                    x + 8,
+                    y + 1,
+                    x + width - 8,
+                    y + SETTINGS_ROW_FILL_HEIGHT - 1,
+                    withAlpha(PANEL_HOVER, alpha * 0.72F)
             );
         }
+        guiGraphics.fill(
+                x + 8,
+                y + 8,
+                x + 10,
+                y + SETTINGS_ROW_FILL_HEIGHT - 8,
+                withAlpha(mixColor(0xFF59616B, AQUA, toggleProgress), alpha * 0.78F)
+        );
+        int trackX = x + 18;
+        int trackY = y + 18;
+        int trackOffColor = hovered ? 0xFF626B76 : 0xFF3C4651;
+        int trackOnColor = hovered ? 0xFF65BDAF : AQUA_DARK;
+        Render2DUtility.drawPill(
+                guiGraphics,
+                trackX - 2,
+                trackY - 2,
+                SETTINGS_TRACK_WIDTH + 4.0F,
+                SETTINGS_TRACK_HEIGHT + 4.0F,
+                withAlpha(0xAA000000, alpha * 0.5F),
+                0
+        );
+        Render2DUtility.drawPill(
+                guiGraphics,
+                trackX,
+                trackY,
+                SETTINGS_TRACK_WIDTH,
+                SETTINGS_TRACK_HEIGHT,
+                withAlpha(mixColor(trackOffColor, trackOnColor, toggleProgress), alpha),
+                withAlpha(0x35FFFFFF, alpha)
+        );
+        float knobX = trackX
+                + SETTINGS_KNOB_SIZE * 0.5F
+                + (SETTINGS_TRACK_WIDTH - SETTINGS_KNOB_SIZE) * toggleProgress;
+        int knobColor = mixColor(0xFFD5D9DC, AQUA, toggleProgress);
+        int knobGlow = mixColor(0xFF626D77, AQUA, toggleProgress);
+        Render2DUtility.drawCircle(
+                guiGraphics,
+                knobX,
+                trackY + SETTINGS_TRACK_HEIGHT * 0.5F,
+                SETTINGS_KNOB_SIZE * 0.5F + 2.0F,
+                withAlpha(knobGlow, alpha * (0.25F + toggleProgress * 0.32F))
+        );
+        Render2DUtility.drawCircle(
+                guiGraphics,
+                knobX,
+                trackY + SETTINGS_TRACK_HEIGHT * 0.5F,
+                SETTINGS_KNOB_SIZE * 0.5F,
+                withAlpha(knobColor, alpha)
+        );
         guiGraphics.drawString(
                 this.font,
                 toggle.displayName,
-                x + SETTINGS_TOGGLE_WIDTH + 8,
-                y + 2,
+                x + 78,
+                y + 9,
                 withAlpha(hovered ? BRIGHT_GOLD : TEXT, alpha)
         );
-        String state = enabled ? "开" : "关";
         guiGraphics.drawString(
                 this.font,
-                state,
-                x + width - this.font.width(state),
-                y + 2,
-                withAlpha(enabled ? GOLD : FAINT_TEXT, alpha)
+                toggle.description,
+                x + 78,
+                y + 29,
+                withAlpha(hovered ? MUTED_TEXT : FAINT_TEXT, alpha * 0.86F)
         );
-        guiGraphics.hLine(
-                x,
-                x + width,
-                y + SETTINGS_ROW_HEIGHT - 3,
-                withAlpha(0x5C6B54, alpha * (hovered ? 0.72F : 0.42F))
+        guiGraphics.fill(
+                x + 78,
+                y + SETTINGS_ROW_FILL_HEIGHT - 4,
+                x + width - 18,
+                y + SETTINGS_ROW_FILL_HEIGHT - 3,
+                withAlpha(mixColor(0xFF35404A, AQUA, toggleProgress), alpha * 0.38F)
+        );
+        float offAlpha = alpha * (1.0F - toggleProgress);
+        float onAlpha = alpha * toggleProgress;
+        guiGraphics.drawString(
+                this.font,
+                "关",
+                x + width - 28,
+                y + 18,
+                withAlpha(FAINT_TEXT, offAlpha)
+        );
+        guiGraphics.drawString(
+                this.font,
+                "开",
+                x + width - 28,
+                y + 18,
+                withAlpha(AQUA, onAlpha)
         );
     }
 
@@ -621,53 +917,98 @@ public final class GreatCausalityScreen extends Screen {
                 ? this.settings.transferTargetMode()
                 : this.settings.tamperTargetMode();
         UUID targetId = transfer ? this.settings.transferTargetId() : this.settings.tamperTargetId();
-        String modeName = targetMode == GreatCausalityTargetMode.RANDOM ? "随机" : "指定";
+        boolean randomMode = targetMode == GreatCausalityTargetMode.RANDOM;
         String targetName = targetMode == GreatCausalityTargetMode.RANDOM
                 ? "自动选择当前界域玩家"
                 : getSettingsTargetName(targetId);
-        int modeX = x + 50;
-        int targetX = modeX + 68;
-        boolean modeHovered = mouseX >= modeX
-                && mouseX <= targetX - 6
-                && mouseY >= y
-                && mouseY <= y + 20;
+        int modeX = x + 128;
+        int modeWidth = 70;
+        int randomRight = modeX + modeWidth;
+        int selectedLeft = randomRight + 8;
+        int selectedRight = selectedLeft + modeWidth;
+        int targetX = selectedRight + 12;
+        int targetRight = x + width;
+        int targetWidth = Math.max(64, targetRight - targetX);
+        boolean randomHovered = isInside(mouseX, mouseY, modeX, y + 6, modeWidth, 32);
+        boolean selectedHovered = isInside(mouseX, mouseY, selectedLeft, y + 6, modeWidth, 32);
         boolean targetHovered = mouseX >= targetX
-                && mouseX <= x + width
+                && mouseX <= targetRight
                 && mouseY >= y
-                && mouseY <= y + 20;
+                && mouseY <= y + SETTINGS_TARGET_HEIGHT;
+        guiGraphics.fill(
+                x + 8,
+                y,
+                x + width - 8,
+                y + SETTINGS_TARGET_HEIGHT - 1,
+                withAlpha(PANEL_RAISED, alpha * 0.72F)
+        );
+        guiGraphics.fill(
+                x + 78,
+                y,
+                x + width - 8,
+                y + 1,
+                withAlpha(0xFF59616B, alpha * 0.32F)
+        );
         guiGraphics.drawString(
                 this.font,
-                "目标",
-                x,
-                y + 3,
+                "目标模式",
+                x + 14,
+                y + 10,
                 withAlpha(MUTED_TEXT, alpha)
         );
-        guiGraphics.fill(
+        guiGraphics.drawString(
+                this.font,
+                "接收因果的对象",
+                x + 14,
+                y + 28,
+                withAlpha(FAINT_TEXT, alpha * 0.84F)
+        );
+        Render2DUtility.drawPill(
+                guiGraphics,
                 modeX,
-                y,
-                targetX - 6,
-                y + 19,
-                withAlpha(modeHovered ? 0x806E552A : 0x4C3B3020, alpha)
+                y + 6,
+                modeWidth,
+                32.0F,
+                withAlpha(randomMode ? 0xFF294A72 : randomHovered ? 0xFF202D45 : 0xFF141A28, alpha),
+                withAlpha(randomMode ? GOLD : 0x36FFFFFF, alpha)
         );
         guiGraphics.drawString(
                 this.font,
-                modeName,
-                modeX + 8,
-                y + 3,
-                withAlpha(modeHovered ? BRIGHT_GOLD : GOLD, alpha)
+                "随机",
+                modeX + (modeWidth - this.font.width("随机")) / 2,
+                y + 17,
+                withAlpha(randomMode ? BRIGHT_GOLD : randomHovered ? TEXT : MUTED_TEXT, alpha)
         );
-        guiGraphics.fill(
+        Render2DUtility.drawPill(
+                guiGraphics,
+                selectedLeft,
+                y + 6,
+                modeWidth,
+                32.0F,
+                withAlpha(!randomMode ? 0xFF3A2F68 : selectedHovered ? 0xFF242039 : 0xFF141A28, alpha),
+                withAlpha(!randomMode ? AQUA : 0x36FFFFFF, alpha)
+        );
+        guiGraphics.drawString(
+                this.font,
+                "指定",
+                selectedLeft + (modeWidth - this.font.width("指定")) / 2,
+                y + 17,
+                withAlpha(!randomMode ? BRIGHT_GOLD : selectedHovered ? TEXT : MUTED_TEXT, alpha)
+        );
+        Render2DUtility.drawPill(
+                guiGraphics,
                 targetX,
-                y,
-                x + width,
-                y + 19,
-                withAlpha(targetHovered ? 0x805A4A2E : 0x3A2A2520, alpha)
+                y + 6,
+                targetWidth,
+                32.0F,
+                withAlpha(targetHovered ? 0xFF1F2B42 : 0xFF111620, alpha),
+                withAlpha(targetHovered ? GOLD : 0x26FFFFFF, alpha)
         );
         guiGraphics.drawString(
                 this.font,
-                targetName,
-                targetX + 8,
-                y + 3,
+                trimTextToWidth(targetName, Math.max(16, targetWidth - 24)),
+                targetX + 12,
+                y + 17,
                 withAlpha(targetHovered ? BRIGHT_GOLD : TEXT, alpha)
         );
     }
@@ -676,8 +1017,8 @@ public final class GreatCausalityScreen extends Screen {
         if (!this.snapshot.settingsAvailable()) {
             return false;
         }
-        int leftX = 52;
-        int rightX = usesCompactSettingsLayout() ? leftX : this.width / 2 + 26;
+        int leftX = getSettingsContentLeft();
+        int rightX = usesCompactSettingsLayout() ? leftX : getSettingsRightColumnX();
         int columnWidth = getSettingsColumnWidth();
         SettingToggle[] transferToggles = {
                 SettingToggle.TRANSFER_ATTACK,
@@ -692,7 +1033,7 @@ public final class GreatCausalityScreen extends Screen {
             int y = getSettingsSectionY(false)
                     + SETTINGS_SECTION_TITLE_HEIGHT
                     + index * SETTINGS_ROW_HEIGHT;
-            if (isInside(mouseX, mouseY, leftX, y, columnWidth, SETTINGS_ROW_HEIGHT - 2)) {
+            if (isInside(mouseX, mouseY, leftX, y, columnWidth, SETTINGS_ROW_FILL_HEIGHT)) {
                 toggleSetting(transferToggles[index]);
                 return true;
             }
@@ -707,20 +1048,21 @@ public final class GreatCausalityScreen extends Screen {
             int y = getSettingsSectionY(true)
                     + SETTINGS_SECTION_TITLE_HEIGHT
                     + index * SETTINGS_ROW_HEIGHT;
-            if (isInside(mouseX, mouseY, rightX, y, columnWidth, SETTINGS_ROW_HEIGHT - 2)) {
+            if (isInside(mouseX, mouseY, rightX, y, columnWidth, SETTINGS_ROW_FILL_HEIGHT)) {
                 toggleSetting(tamperToggles[index]);
                 return true;
             }
         }
+        int transferTargetY = getSettingsTargetY(true);
         if (isInside(
                 mouseX,
                 mouseY,
                 leftX,
-                getSettingsTargetY(true),
+                transferTargetY,
                 columnWidth,
-                20
+                SETTINGS_TARGET_HEIGHT
         )) {
-            if (mouseX < leftX + 118) {
+            if (mouseX < leftX + 276) {
                 cycleTargetMode(true);
             } else {
                 cycleTarget(true);
@@ -733,9 +1075,9 @@ public final class GreatCausalityScreen extends Screen {
                 rightX,
                 getSettingsTargetY(false),
                 columnWidth,
-                20
+                SETTINGS_TARGET_HEIGHT
         )) {
-            if (mouseX < rightX + 118) {
+            if (mouseX < rightX + 276) {
                 cycleTargetMode(false);
             } else {
                 cycleTarget(false);
@@ -756,12 +1098,10 @@ public final class GreatCausalityScreen extends Screen {
     }
 
     private boolean isSettingsButtonAt(double mouseX, double mouseY) {
+        int buttonLeft = getSettingsButtonLeft();
         String settingsText = this.mode == ViewMode.SETTINGS ? "返回推衍" : "术式设置";
-        int left = this.width - 52 - this.font.width(settingsText) - 8;
-        return mouseX >= left
-                && mouseX <= this.width - 44
-                && mouseY >= 12
-                && mouseY <= 42;
+        int buttonWidth = this.font.width(settingsText) + 24;
+        return isInside(mouseX, mouseY, buttonLeft, 16, buttonWidth, 28);
     }
 
     private void cycleTargetMode(boolean transfer) {
@@ -894,6 +1234,20 @@ public final class GreatCausalityScreen extends Screen {
         };
     }
 
+    private float getToggleAnimationProgress(
+            SettingToggle toggle,
+            boolean enabled,
+            long currentTime
+    ) {
+        ToggleAnimation animation = this.toggleAnimations.get(toggle);
+        if (animation == null) {
+            animation = new ToggleAnimation(enabled ? 1.0F : 0.0F, currentTime);
+            this.toggleAnimations.put(toggle, animation);
+        }
+        animation.updateTarget(enabled ? 1.0F : 0.0F, currentTime);
+        return animation.getValue(currentTime);
+    }
+
     private String getSettingsTargetName(UUID targetId) {
         if (targetId == null) {
             return "未选定";
@@ -909,23 +1263,47 @@ public final class GreatCausalityScreen extends Screen {
         if (!tamper || !usesCompactSettingsLayout()) {
             return SETTINGS_TOP;
         }
-        return getSettingsTargetY(true) + 34;
+        return getSettingsTargetY(true) + SETTINGS_TARGET_HEIGHT + 14;
     }
 
     private int getSettingsTargetY(boolean transfer) {
-        int sectionY = getSettingsSectionY(!transfer);
+        int sectionY = transfer ? getSettingsSectionY(false) : getSettingsSectionY(true);
         int toggleCount = transfer ? 7 : 4;
-        return sectionY + SETTINGS_SECTION_TITLE_HEIGHT + toggleCount * SETTINGS_ROW_HEIGHT + 4;
+        return sectionY + SETTINGS_SECTION_TITLE_HEIGHT + toggleCount * SETTINGS_ROW_HEIGHT + 8;
     }
 
     private int getSettingsColumnWidth() {
+        int contentWidth = Math.min(SETTINGS_MAX_WIDTH, Math.max(360, this.width - 80));
         return usesCompactSettingsLayout()
-                ? Math.max(180, this.width - 104)
-                : Math.max(220, this.width / 2 - 78);
+                ? contentWidth
+                : Math.max(220, (contentWidth - SETTINGS_COLUMN_GAP) / 2);
+    }
+
+    private int getSettingsContentLeft() {
+        return getPageContentLeft();
+    }
+
+    private int getSettingsRightColumnX() {
+        return getSettingsContentLeft() + getSettingsColumnWidth() + SETTINGS_COLUMN_GAP;
+    }
+
+    private int getSettingsButtonLeft() {
+        String settingsText = this.mode == ViewMode.SETTINGS ? "返回推衍" : "术式设置";
+        return getPageContentRight() - this.font.width(settingsText) - 24;
     }
 
     private boolean usesCompactSettingsLayout() {
-        return this.width < 760;
+        return this.width < 900;
+    }
+
+    private int getPageContentLeft() {
+        int contentWidth = Math.min(SETTINGS_MAX_WIDTH, Math.max(360, this.width - 80));
+        return Math.max(40, (this.width - contentWidth) / 2);
+    }
+
+    private int getPageContentRight() {
+        int contentWidth = Math.min(SETTINGS_MAX_WIDTH, Math.max(360, this.width - 80));
+        return getPageContentLeft() + contentWidth;
     }
 
     private static boolean isInside(
@@ -940,6 +1318,23 @@ public final class GreatCausalityScreen extends Screen {
                 && mouseX <= x + width
                 && mouseY >= y
                 && mouseY <= y + height;
+    }
+
+    private static int mixColor(int firstColor, int secondColor, float progress) {
+        float clampedProgress = Mth.clamp(progress, 0.0F, 1.0F);
+        int firstAlpha = firstColor >>> 24 & 0xFF;
+        int firstRed = firstColor >>> 16 & 0xFF;
+        int firstGreen = firstColor >>> 8 & 0xFF;
+        int firstBlue = firstColor & 0xFF;
+        int secondAlpha = secondColor >>> 24 & 0xFF;
+        int secondRed = secondColor >>> 16 & 0xFF;
+        int secondGreen = secondColor >>> 8 & 0xFF;
+        int secondBlue = secondColor & 0xFF;
+        int alpha = Mth.lerpInt(clampedProgress, firstAlpha, secondAlpha);
+        int red = Mth.lerpInt(clampedProgress, firstRed, secondRed);
+        int green = Mth.lerpInt(clampedProgress, firstGreen, secondGreen);
+        int blue = Mth.lerpInt(clampedProgress, firstBlue, secondBlue);
+        return alpha << 24 | red << 16 | green << 8 | blue;
     }
 
     private void updateSettingsTargetSelection(
@@ -1100,19 +1495,17 @@ public final class GreatCausalityScreen extends Screen {
         boolean above = lane < 2;
         int labelY = getTimelineLabelY(lane);
         int connectorY = above ? labelY + TIMELINE_LABEL_HEIGHT : labelY;
-        guiGraphics.fill(
+        drawUiPanel(
+                guiGraphics,
                 labelX - 4,
                 labelY - 4,
-                labelX + labelWidth + 4,
-                labelY + TIMELINE_LABEL_HEIGHT,
-                withAlpha(VOID_BACKGROUND, alpha * 0.80F)
-        );
-        guiGraphics.fill(
-                labelX - 4,
-                labelY - 4,
-                labelX + labelWidth + 4,
-                labelY - 2,
-                withAlpha(GOLD_LINE, alpha * 0.48F)
+                labelWidth + 8,
+                TIMELINE_LABEL_HEIGHT + 4,
+                6.0F,
+                0xE6151D2A,
+                0xE60B0E16,
+                0x30FFFFFF,
+                alpha * 0.9F
         );
         guiGraphics.fill(
                 Mth.floor(nodeX),
@@ -1165,28 +1558,28 @@ public final class GreatCausalityScreen extends Screen {
             boolean selected
     ) {
         float pulse = 1.0F + Mth.sin((Util.getMillis() % 1600L) / 1600.0F * Mth.TWO_PI) * 0.12F;
-        int outerSize = Math.max(8, (int) (15.0F * pulse));
-        int innerSize = selected ? 8 : 6;
-        guiGraphics.fill(
-                (int) x - outerSize,
-                (int) y - outerSize,
-                (int) x + outerSize + 1,
-                (int) y + outerSize + 1,
-                withAlpha(GOLD_LINE, alpha * 0.22F)
+        float outerRadius = Math.max(8.0F, 15.0F * pulse);
+        float innerRadius = selected ? 8.0F : 6.0F;
+        Render2DUtility.drawCircle(
+                guiGraphics,
+                x,
+                y,
+                outerRadius,
+                withAlpha(selected ? AQUA : GOLD_LINE, alpha * 0.20F)
         );
-        guiGraphics.fill(
-                (int) x - innerSize,
-                (int) y - innerSize,
-                (int) x + innerSize + 1,
-                (int) y + innerSize + 1,
+        Render2DUtility.drawCircle(
+                guiGraphics,
+                x,
+                y,
+                innerRadius,
                 withAlpha(selected ? BRIGHT_GOLD : GOLD, alpha)
         );
-        guiGraphics.fill(
-                (int) x - 2,
-                (int) y - 2,
-                (int) x + 3,
-                (int) y + 3,
-                withAlpha(0xFFFFFBDF, alpha)
+        Render2DUtility.drawCircle(
+                guiGraphics,
+                x,
+                y,
+                2.5F,
+                withAlpha(TEXT, alpha)
         );
     }
 
@@ -1196,47 +1589,78 @@ public final class GreatCausalityScreen extends Screen {
             int absoluteIndex,
             int left,
             int top,
+            int cardWidth,
             int rowHeight,
             long currentTime,
             float alpha
     ) {
-        int availableWidth = Math.max(180, this.width / 2 - 104);
-        int bottom = top + rowHeight - 14;
-        guiGraphics.fill(
-                left - 8,
-                top - 8,
-                left + availableWidth + 8,
-                bottom,
-                withAlpha(VOID_BACKGROUND, alpha * 0.52F)
+        int panelHeight = rowHeight - 12;
+        int contentX = left + 16;
+        int availableWidth = Math.max(180, cardWidth - 32);
+        int bottom = top + panelHeight;
+        drawUiPanel(
+                guiGraphics,
+                left,
+                top,
+                cardWidth,
+                panelHeight,
+                CARD_RADIUS,
+                PANEL_RAISED,
+                PANEL,
+                0x2CFFFFFF,
+                alpha
         );
-        guiGraphics.fill(left - 8, top - 8, left - 5, bottom, withAlpha(GOLD_LINE, alpha * 0.82F));
-        guiGraphics.hLine(left, left + availableWidth, bottom, withAlpha(0x7B6040, alpha * 0.55F));
+        Render2DUtility.drawRoundedRect(
+                guiGraphics,
+                left + 14,
+                top + 14,
+                3.0F,
+                18.0F,
+                1.5F,
+                withAlpha(GOLD, alpha)
+        );
+        Render2DUtility.drawPill(
+                guiGraphics,
+                left + cardWidth - 70,
+                top + 13,
+                54.0F,
+                20.0F,
+                withAlpha(0xFF111928, alpha),
+                withAlpha(0x403D81F7, alpha)
+        );
+        guiGraphics.drawCenteredString(
+                this.font,
+                categoryName(record.category()),
+                left + cardWidth - 43,
+                top + 19,
+                withAlpha(GOLD, alpha)
+        );
         guiGraphics.drawString(
                 this.font,
                 String.format("档案 %02d  ·  %s", absoluteIndex + 1, categoryName(record.category())),
-                left,
-                top,
+                contentX + 10,
+                top + 14,
                 withAlpha(GOLD, alpha)
         );
         guiGraphics.drawString(
                 this.font,
                 formatTimestamp(record.timestamp()) + "  /  游戏刻 " + record.gameTime(),
-                left,
-                top + 16,
+                contentX,
+                top + 35,
                 withAlpha(TEXT, alpha)
         );
         drawTimelineTextLine(
                 guiGraphics,
                 "位置：" + record.dimension() + "  [" + record.x() + ", " + record.y() + ", " + record.z() + "]",
-                left,
-                top + 32,
+                contentX,
+                top + 51,
                 availableWidth,
                 MUTED_TEXT,
                 alpha
         );
 
         List<String> sentences = splitSentences(record.description());
-        int sentenceY = top + 49;
+        int sentenceY = top + 70;
         int maximumDescriptionLines = Math.max(1, (bottom - sentenceY - 2) / 12);
         int renderedDescriptionLines = 0;
         for (int index = 0; index < sentences.size(); index++) {
@@ -1275,16 +1699,15 @@ public final class GreatCausalityScreen extends Screen {
                 this.snapshot.players().size(),
                 firstPlayerIndex + getVisiblePlayerRows() * 2
         );
+        int contentLeft = getPageContentLeft();
+        int contentRight = getPageContentRight();
+        int cardWidth = Math.max(220, (contentRight - contentLeft - PLAYER_CARD_GAP) / 2);
         for (int index = firstPlayerIndex; index < lastPlayerIndex; index++) {
             int column = index % 2;
             int row = (index - firstPlayerIndex) / 2;
-            int columnWidth = Math.max(220, this.width / 2 - 84);
-            int left = 52 + column * (this.width / 2);
-            int top = 112 + row * 54;
-            if (mouseX >= left - 8
-                    && mouseX <= left + columnWidth
-                    && mouseY >= top - 8
-                    && mouseY <= top + 35) {
+            int left = contentLeft + column * (cardWidth + PLAYER_CARD_GAP);
+            int top = 104 + row * (PLAYER_CARD_HEIGHT + PLAYER_CARD_GAP);
+            if (isInside(mouseX, mouseY, left, top, cardWidth, PLAYER_CARD_HEIGHT)) {
                 return index;
             }
         }
@@ -1339,7 +1762,7 @@ public final class GreatCausalityScreen extends Screen {
     }
 
     private int getVisiblePlayerRows() {
-        return Math.max(1, (this.height - 156) / 54);
+        return Math.max(1, (this.height - 142) / (PLAYER_CARD_HEIGHT + PLAYER_CARD_GAP));
     }
 
     private float getTimelineStartX() {
@@ -1437,7 +1860,7 @@ public final class GreatCausalityScreen extends Screen {
     }
 
     private void drawFooter(GuiGraphics guiGraphics, String text) {
-        guiGraphics.drawString(this.font, text, 52, this.height - 38, FAINT_TEXT);
+        guiGraphics.drawString(this.font, text, getPageContentLeft(), this.height - 38, FAINT_TEXT);
     }
 
     private static void drawSmoothPolyline(
@@ -1636,6 +2059,19 @@ public final class GreatCausalityScreen extends Screen {
         return this.font.split(Component.literal(text), width);
     }
 
+    private String trimTextToWidth(String text, int width) {
+        if (this.font.width(text) <= width) {
+            return text;
+        }
+        String suffix = "...";
+        int availableWidth = Math.max(0, width - this.font.width(suffix));
+        int end = text.length();
+        while (end > 0 && this.font.width(text.substring(0, end)) > availableWidth) {
+            end--;
+        }
+        return text.substring(0, end) + suffix;
+    }
+
     private void drawTimelineTextLine(
             GuiGraphics guiGraphics,
             String text,
@@ -1720,27 +2156,57 @@ public final class GreatCausalityScreen extends Screen {
     }
 
     private static int withAlpha(int color, float alpha) {
-        int clampedAlpha = Mth.clamp((int) (alpha * 255.0F), 0, 255);
+        int sourceAlpha = color >>> 24 & 0xFF;
+        int clampedAlpha = Mth.clamp((int) (sourceAlpha * Mth.clamp(alpha, 0.0F, 1.0F)), 0, 255);
         return (clampedAlpha << 24) | (color & 0x00FFFFFF);
     }
 
+    private static final class ToggleAnimation {
+        private float startValue;
+        private float targetValue;
+        private long startedAt;
+
+        private ToggleAnimation(float initialValue, long currentTime) {
+            this.startValue = initialValue;
+            this.targetValue = initialValue;
+            this.startedAt = currentTime;
+        }
+
+        private void updateTarget(float nextTarget, long currentTime) {
+            if (Mth.equal(this.targetValue, nextTarget)) {
+                return;
+            }
+            this.startValue = getValue(currentTime);
+            this.targetValue = nextTarget;
+            this.startedAt = currentTime;
+        }
+
+        private float getValue(long currentTime) {
+            float progress = progress(currentTime - this.startedAt, TOGGLE_ANIMATION_DURATION);
+            float easedProgress = BezierUtility.cubicEase(progress, 0.18F, 0.92F);
+            return Mth.lerp(easedProgress, this.startValue, this.targetValue);
+        }
+    }
+
     private enum SettingToggle {
-        TRANSFER_ATTACK("转移攻击"),
-        TRANSFER_HATE("转移仇恨"),
-        TRANSFER_TRIBULATION("转移天劫"),
-        TRANSFER_NEGATIVE_EFFECTS("转移负面效果"),
-        TRANSFER_VILLAGER_PRICE("转移村民价格"),
-        TRANSFER_DAMAGE("转移伤害"),
-        RANDOM_ITEM("随机物品"),
-        CORRUPT_BENEFICIAL_EFFECTS("篡改有益效果"),
-        TRANSFER_ITEMS("转移物品"),
-        TRANSFER_ADVANCEMENTS("转移进度"),
-        VOID_CRAFTING("虚空合成");
+        TRANSFER_ATTACK("转移攻击", "受到的攻击转给目标"),
+        TRANSFER_HATE("转移仇恨", "怪物的敌意改写归属"),
+        TRANSFER_TRIBULATION("转移天劫", "天劫落向另一条因果线"),
+        TRANSFER_NEGATIVE_EFFECTS("转移负面效果", "负面状态不再由自己承受"),
+        TRANSFER_VILLAGER_PRICE("转移村民价格", "涨价结果转给目标"),
+        TRANSFER_DAMAGE("转移伤害", "受到的伤害转给目标"),
+        RANDOM_ITEM("随机物品", "无因取得一件随机物品"),
+        CORRUPT_BENEFICIAL_EFFECTS("篡改有益效果", "有益状态改写为有弊状态"),
+        TRANSFER_ITEMS("转移物品", "获得的物品转移到自己"),
+        TRANSFER_ADVANCEMENTS("转移进度", "获取进度改写为自己获取"),
+        VOID_CRAFTING("虚空合成", "合成结果归于虚空");
 
         private final String displayName;
+        private final String description;
 
-        SettingToggle(String displayName) {
+        SettingToggle(String displayName, String description) {
             this.displayName = displayName;
+            this.description = description;
         }
     }
 

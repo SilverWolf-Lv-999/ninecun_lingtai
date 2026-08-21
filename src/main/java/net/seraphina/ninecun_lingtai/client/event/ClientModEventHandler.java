@@ -15,9 +15,15 @@ import net.seraphina.ninecun_lingtai.client.inventorytab.AlchemyRecipeLibraryTab
 import net.seraphina.ninecun_lingtai.client.inventorytab.PlayerValueControlTabRegistrar;
 import net.seraphina.ninecun_lingtai.client.inventorytab.TechniqueLibraryTabRegistrar;
 import net.seraphina.ninecun_lingtai.client.model.BodyDefenseSpellModel;
+import net.seraphina.ninecun_lingtai.client.model.loader.CosmicModelLoader;
+import net.seraphina.ninecun_lingtai.client.model.loader.SeparateTransformsCosmicModelLoader;
+import net.seraphina.ninecun_lingtai.client.model.loader.VanillaCosmicModelLoader;
 import net.seraphina.ninecun_lingtai.client.render.AptitudeFormationShader;
+import net.seraphina.ninecun_lingtai.client.render.shader.screen.ScreenShaderEffects;
 import net.seraphina.ninecun_lingtai.client.render.AlchemyFurnaceBlockRenderer;
 import net.seraphina.ninecun_lingtai.client.render.BookRenderer;
+import net.seraphina.ninecun_lingtai.client.render.cosmic.CosmicItemShaders;
+import net.seraphina.ninecun_lingtai.client.render.cosmic.VanillaCosmicShaders;
 import net.seraphina.ninecun_lingtai.client.screen.AlchemyFurnaceScreen;
 import net.seraphina.ninecun_lingtai.client.screen.StorageRingScreen;
 import net.seraphina.ninecun_lingtai.client.render.DefenseBarShader;
@@ -112,6 +118,7 @@ public final class ClientModEventHandler {
 
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
+        ScreenShaderEffects.register();
         CultivationDefenseUtility.installClientDefenseProvider(
                 ClientCultivationDefenseUtility::hasActiveDefense
         );
@@ -141,6 +148,13 @@ public final class ClientModEventHandler {
     @SubscribeEvent
     public static void onRegisterAdditionalModels(ModelEvent.RegisterAdditional event) {
         event.register(BookRenderer.BASE_MODEL_ID);
+    }
+
+    @SubscribeEvent
+    public static void onRegisterGeometryLoaders(ModelEvent.RegisterGeometryLoaders event) {
+        event.register("cosmic_mask_loader", CosmicModelLoader.INSTANCE);
+        event.register("cosmic_vanilla_loader", VanillaCosmicModelLoader.INSTANCE);
+        event.register("cosmic_st_loader", SeparateTransformsCosmicModelLoader.INSTANCE);
     }
 
     @SubscribeEvent
@@ -229,6 +243,8 @@ public final class ClientModEventHandler {
 
     @SubscribeEvent
     public static void onRegisterShaders(RegisterShadersEvent event) throws IOException {
+        CosmicItemShaders.onRegisterShaders(event);
+        VanillaCosmicShaders.onRegisterShaders(event);
         event.registerShader(
                 new ShaderInstance(
                         event.getResourceProvider(),

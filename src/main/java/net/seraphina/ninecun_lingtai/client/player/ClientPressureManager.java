@@ -1,13 +1,11 @@
 package net.seraphina.ninecun_lingtai.client.player;
 
-import net.seraphina.ninecun_lingtai.ModMain;
 import net.seraphina.ninecun_lingtai.client.input.ModKeyMappings;
+import net.seraphina.ninecun_lingtai.client.render.shader.screen.ScreenShaderEffects;
 import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import net.seraphina.ninecun_lingtai.common.network.packet.SetPressureStatePacket;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.PostChain;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
@@ -15,12 +13,6 @@ import net.minecraft.world.phys.Vec3;
 import java.util.UUID;
 
 public final class ClientPressureManager {
-    private static final ResourceLocation PRESSURE_EFFECT = ResourceLocation.fromNamespaceAndPath(
-            ModMain.MOD_ID,
-            "shaders/post/pressure_blur.json"
-    );
-    private static final String PRESSURE_EFFECT_NAME = PRESSURE_EFFECT.toString();
-
     private static boolean requestedActive;
     private static boolean affected;
     private static boolean immobilized;
@@ -30,8 +22,6 @@ public final class ClientPressureManager {
     private static float lockedXRot;
     private static float lockedYHeadRot;
     private static float lockedYBodyRot;
-    private static String previousPostEffectName;
-    private static boolean pressureEffectInstalled;
     private static PressureSoundInstance pressureSound;
 
     private ClientPressureManager() {
@@ -54,7 +44,6 @@ public final class ClientPressureManager {
         player.stopUsingItem();
         player.setDeltaMovement(Vec3.ZERO);
         lockPlayerRotation(player);
-        ensurePressureEffect();
     }
 
     public static void setPressure(boolean affected, float severity, boolean immobilized) {
@@ -62,6 +51,9 @@ public final class ClientPressureManager {
         ClientPressureManager.affected = affected;
         ClientPressureManager.severity = Mth.clamp(severity, 0.0F, 1.0F);
         ClientPressureManager.immobilized = immobilized;
+        if (affected != wasAffected) {
+            ScreenShaderEffects.setPressureActive(affected);
+        }
 
         Minecraft minecraft = Minecraft.getInstance();
         LocalPlayer player = minecraft.player;
@@ -70,13 +62,11 @@ public final class ClientPressureManager {
                 startControl(player);
             }
             playPressureSound();
-            installPressureEffect();
         } else if (!affected && wasAffected) {
             if (player != null) {
                 stopControl(player);
             }
             stopPressureSound();
-            restorePreviousPostEffect();
         }
     }
 
@@ -102,12 +92,12 @@ public final class ClientPressureManager {
             stopControl(player);
         }
         stopPressureSound();
-        restorePreviousPostEffect();
         requestedActive = false;
         affected = false;
         immobilized = false;
         severity = 0.0F;
         controlledPlayerId = null;
+        ScreenShaderEffects.setPressureActive(false);
     }
 
     private static void startControl(LocalPlayer player) {
@@ -172,43 +162,4 @@ public final class ClientPressureManager {
         }
     }
 
-    private static void installPressureEffect() {
-        Minecraft minecraft = Minecraft.getInstance();
-        if (pressureEffectInstalled) {
-            return;
-        }
-        PostChain currentEffect = minecraft.gameRenderer.currentEffect();
-        if (currentEffect != null && !PRESSURE_EFFECT_NAME.equals(currentEffect.getName())) {
-            previousPostEffectName = currentEffect.getName();
-        }
-        minecraft.gameRenderer.loadEffect(PRESSURE_EFFECT);
-        PostChain installedEffect = minecraft.gameRenderer.currentEffect();
-        pressureEffectInstalled = installedEffect != null
-                && PRESSURE_EFFECT_NAME.equals(installedEffect.getName());
-        if (!pressureEffectInstalled) {
-            restorePreviousPostEffect();
-        }
-    }
-
-    private static void ensurePressureEffect() {
-        if (!pressureEffectInstalled) {
-            installPressureEffect();
-        }
-    }
-
-    private static void restorePreviousPostEffect() {
-        Minecraft minecraft = Minecraft.getInstance();
-        PostChain currentEffect = minecraft.gameRenderer.currentEffect();
-        if (currentEffect != null && PRESSURE_EFFECT_NAME.equals(currentEffect.getName())) {
-            minecraft.gameRenderer.shutdownEffect();
-        }
-        pressureEffectInstalled = false;
-        if (previousPostEffectName != null) {
-            ResourceLocation previousEffect = ResourceLocation.tryParse(previousPostEffectName);
-            previousPostEffectName = null;
-            if (previousEffect != null) {
-                minecraft.gameRenderer.loadEffect(previousEffect);
-            }
-        }
-    }
 }

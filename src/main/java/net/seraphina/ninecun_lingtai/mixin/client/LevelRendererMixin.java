@@ -5,6 +5,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexBuffer;
 import net.seraphina.ninecun_lingtai.client.player.ClientShrinkEarthManager;
+import net.seraphina.ninecun_lingtai.client.render.shader.screen.pre.PreProcessingShaders;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.ShaderInstance;
@@ -36,6 +37,21 @@ public abstract class LevelRendererMixin {
     private double ninecunLingtai$shrinkEarthCurrentChunkPivotX;
     @Unique
     private double ninecunLingtai$shrinkEarthCurrentChunkPivotZ;
+
+    @Inject(method = "renderLevel", at = @At("TAIL"))
+    private void ninecunLingtai$renderPreEffects(
+            PoseStack poseStack,
+            float partialTick,
+            long finishTimeNano,
+            boolean renderBlockOutline,
+            net.minecraft.client.Camera camera,
+            net.minecraft.client.renderer.GameRenderer gameRenderer,
+            net.minecraft.client.renderer.LightTexture lightTexture,
+            Matrix4f projectionMatrix,
+            CallbackInfo callbackInfo
+    ) {
+        PreProcessingShaders.INSTANCE.renderShaders(partialTick);
+    }
 
     @Inject(method = "renderChunkLayer", at = @At("HEAD"))
     private void ninecunLingtai$beginShrinkEarthChunkCompression(

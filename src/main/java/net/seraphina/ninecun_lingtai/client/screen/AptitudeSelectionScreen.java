@@ -1,10 +1,10 @@
 package net.seraphina.ninecun_lingtai.client.screen;
 
-import net.seraphina.ninecun_lingtai.ModMain;
 import net.seraphina.ninecun_lingtai.api.aptitude.SoulStrength;
 import net.seraphina.ninecun_lingtai.api.aptitude.SpiritualRoot;
 import net.seraphina.ninecun_lingtai.api.element.ElementRelation;
 import net.seraphina.ninecun_lingtai.api.element.ElementType;
+import net.seraphina.ninecun_lingtai.client.render.shader.screen.ScreenShaderEffects;
 import net.seraphina.ninecun_lingtai.client.utility.AnimationUtility;
 import net.seraphina.ninecun_lingtai.client.utility.AptitudeFormationRenderUtility;
 import net.seraphina.ninecun_lingtai.client.utility.AptitudeRenderUtility;
@@ -20,10 +20,8 @@ import net.seraphina.ninecun_lingtai.utility.SpiritualRootUtility;
 import net.minecraft.Util;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.PostChain;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import org.lwjgl.glfw.GLFW;
@@ -35,11 +33,6 @@ import java.util.List;
 import java.util.Set;
 
 public final class AptitudeSelectionScreen extends Screen {
-    private static final ResourceLocation BLUR_EFFECT = ResourceLocation.fromNamespaceAndPath(
-            ModMain.MOD_ID,
-            "shaders/post/aptitude_blur.json"
-    );
-    private static final String BLUR_EFFECT_NAME = BLUR_EFFECT.toString();
     private static final long ELEMENT_APPEAR_INTERVAL = 260L;
     private static final long ELEMENT_APPEAR_DURATION = 650L;
     private static final long TAIJI_APPEAR_DELAY = 1840L;
@@ -87,10 +80,6 @@ public final class AptitudeSelectionScreen extends Screen {
     private boolean draggingSoulStar;
     private int lastDraggedSoulStarIndex = -1;
     private boolean submitted;
-    private boolean blurInstalled;
-    private boolean blurLoadFailed;
-    @Nullable
-    private String previousPostEffectName;
 
     public AptitudeSelectionScreen() {
         super(Component.literal("资质"));
@@ -106,12 +95,12 @@ public final class AptitudeSelectionScreen extends Screen {
         long currentTime = Util.getMillis();
         this.phaseStartedAt = currentTime;
         this.lastFrameAt = currentTime;
-        installBlurEffect();
+        ScreenShaderEffects.setAptitudeBlurActive(true);
     }
 
     @Override
     public void removed() {
-        restorePreviousPostEffect();
+        ScreenShaderEffects.setAptitudeBlurActive(false);
         if (!this.submitted && this.minecraft != null && this.minecraft.level != null) {
             ClientAptitudeScreenManager.requestOpen();
         }
@@ -124,7 +113,6 @@ public final class AptitudeSelectionScreen extends Screen {
         if (advancePhase(currentTime)) {
             return;
         }
-        ensureBlurEffect();
         updateSelectionScales(currentTime);
 
         switch (this.phase) {
@@ -1035,52 +1023,6 @@ public final class AptitudeSelectionScreen extends Screen {
                     SoundEvents.UI_BUTTON_CLICK,
                     pitch
             ));
-        }
-    }
-
-    private void installBlurEffect() {
-        if (this.minecraft == null || this.blurInstalled) {
-            return;
-        }
-        PostChain currentEffect = this.minecraft.gameRenderer.currentEffect();
-        if (currentEffect != null && !BLUR_EFFECT_NAME.equals(currentEffect.getName())) {
-            this.previousPostEffectName = currentEffect.getName();
-        }
-        this.minecraft.gameRenderer.loadEffect(BLUR_EFFECT);
-        PostChain installedEffect = this.minecraft.gameRenderer.currentEffect();
-        this.blurInstalled = installedEffect != null && BLUR_EFFECT_NAME.equals(installedEffect.getName());
-        this.blurLoadFailed = !this.blurInstalled;
-        if (!this.blurInstalled) {
-            restorePreviousPostEffect();
-        }
-    }
-
-    private void ensureBlurEffect() {
-        if (this.minecraft == null || this.blurLoadFailed) {
-            return;
-        }
-        PostChain currentEffect = this.minecraft.gameRenderer.currentEffect();
-        if (currentEffect == null || !BLUR_EFFECT_NAME.equals(currentEffect.getName())) {
-            this.blurInstalled = false;
-            installBlurEffect();
-        }
-    }
-
-    private void restorePreviousPostEffect() {
-        if (this.minecraft == null) {
-            return;
-        }
-        PostChain currentEffect = this.minecraft.gameRenderer.currentEffect();
-        if (currentEffect != null && BLUR_EFFECT_NAME.equals(currentEffect.getName())) {
-            this.minecraft.gameRenderer.shutdownEffect();
-        }
-        this.blurInstalled = false;
-        if (this.previousPostEffectName != null) {
-            ResourceLocation previousEffect = ResourceLocation.tryParse(this.previousPostEffectName);
-            this.previousPostEffectName = null;
-            if (previousEffect != null) {
-                this.minecraft.gameRenderer.loadEffect(previousEffect);
-            }
         }
     }
 

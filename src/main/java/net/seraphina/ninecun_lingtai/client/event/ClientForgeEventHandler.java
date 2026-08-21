@@ -36,6 +36,8 @@ import net.seraphina.ninecun_lingtai.client.utility.DefenseSpellHudRenderUtility
 import net.seraphina.ninecun_lingtai.client.utility.TribulationCloudRenderUtility;
 import net.seraphina.ninecun_lingtai.client.utility.NotificationRenderUtility;
 import net.seraphina.ninecun_lingtai.client.render.PushingMountainsRenderMeshManager;
+import net.seraphina.ninecun_lingtai.client.render.shader.screen.post.PostProcessingShaders;
+import net.seraphina.ninecun_lingtai.client.render.shader.screen.pre.PreProcessingShaders;
 import net.seraphina.ninecun_lingtai.client.utility.PushingMountainsRenderUtility;
 import net.seraphina.ninecun_lingtai.common.entity.ability.PushingMountainsEntity;
 import net.seraphina.ninecun_lingtai.client.tooltip.BookTooltipComponent;
@@ -49,6 +51,7 @@ import net.minecraft.client.player.Input;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
@@ -58,6 +61,12 @@ import org.lwjgl.glfw.GLFW;
 
 @Mod.EventBusSubscriber(modid = ModMain.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class ClientForgeEventHandler {
+
+    @SubscribeEvent
+    public static void onAddReloadListener(AddReloadListenerEvent event) {
+        event.addListener(PostProcessingShaders.INSTANCE);
+        event.addListener(PreProcessingShaders.INSTANCE);
+    }
 
     @SubscribeEvent
     public static void gatherTooltipComponents(RenderTooltipEvent.GatherComponents event) {

@@ -96,6 +96,7 @@ public final class AgentUtility {
 
         retransformLoadedClasses(agentInstrumentation);
         retransformLoadedModClasses(agentInstrumentation);
+        LOGGER.info("Instrumentation agent has been successfully loaded");
     }
 
     private static void retransformLoadedClasses(Instrumentation agentInstrumentation) {
