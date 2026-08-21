@@ -1,0 +1,31 @@
+{
+  "targets": [
+    "swap"
+  ],
+  "passes": [
+    {
+      "name": "ninecun_lingtai:breakthrough_blur",
+      "intarget": "minecraft:main",
+      "outtarget": "swap",
+      "uniforms": [
+        {
+          "name": "BlurRadius",
+          "values": [0.0]
+        },
+        {
+          "name": "Sigma",
+          "values": [0.001]
+        },
+        {
+          "name": "Opacity",
+          "values": [0.0]
+        }
+      ]
+    },
+    {
+      "name": "blit",
+      "intarget": "swap",
+      "outtarget": "minecraft:main"
+    }
+  ]
+}

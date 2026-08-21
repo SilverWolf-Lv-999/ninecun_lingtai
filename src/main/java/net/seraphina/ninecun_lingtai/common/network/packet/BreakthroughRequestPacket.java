@@ -2,8 +2,11 @@ package net.seraphina.ninecun_lingtai.common.network.packet;
 
 import net.seraphina.ninecun_lingtai.api.cultivation.BreakthroughResult;
 import net.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
+import net.seraphina.ninecun_lingtai.api.aptitude.SpiritualRoot;
+import net.seraphina.ninecun_lingtai.common.animation.BreakthroughAnimationType;
 import net.seraphina.ninecun_lingtai.common.ascension.AscensionManager;
 import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
+import net.seraphina.ninecun_lingtai.common.player.PlayerAptitudeData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerCultivationData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerCultivationManager;
 import net.seraphina.ninecun_lingtai.common.player.PlayerDefenseResourceData;
@@ -55,11 +58,22 @@ public final class BreakthroughRequestPacket {
             return;
         }
         Optional<CultivationStage> previousStage = PlayerCultivationData.getStage(player);
-        BreakthroughResult result = PlayerCultivationManager.tryBreakthroughRealm(player);
+        BreakthroughResult result = previousStage.isEmpty()
+                ? PlayerCultivationManager.tryBreakthrough(player)
+                : PlayerCultivationManager.tryBreakthroughRealm(player);
         switch (result) {
             case SUCCESS -> {
                 CultivationStage stage = PlayerCultivationData.getStage(player).orElseThrow();
                 PlayerDefenseResourceData.refillToMaximum(player);
+                BreakthroughAnimationType.fromTransition(previousStage, stage).ifPresent(animationType ->
+                        ModNetwork.sendBreakthroughAnimation(
+                                player,
+                                animationType,
+                                PlayerAptitudeData.getSpiritualRoot(player)
+                                        .map(SpiritualRoot::getElementMask)
+                                        .orElse(0)
+                        )
+                );
                 Component message = Component.translatable(
                         "message.ninecun_lingtai.breakthrough_success",
                         CultivationUtility.getDisplayName(stage)
@@ -166,11 +180,12 @@ public final class BreakthroughRequestPacket {
     }
 
     private static String getRequiredEnergyText(Optional<CultivationStage> currentStage) {
-        return currentStage
+        CultivationStage targetStage = currentStage
                 .flatMap(stage -> stage.realm().next())
-                .map(nextRealm -> CultivationUtility.getRequiredSpiritualEnergy(
-                        new CultivationStage(nextRealm, CultivationStage.MINIMUM_LAYER)
-                ))
+                .map(nextRealm -> new CultivationStage(nextRealm, CultivationStage.MINIMUM_LAYER))
+                .orElse(CultivationStage.first());
+        return Optional.of(targetStage)
+                .map(CultivationUtility::getRequiredSpiritualEnergy)
                 .map(ChineseNumberUtility::toCompactChinese)
                 .orElse(ChineseNumberUtility.toChineseInteger(BigInteger.ZERO));
     }

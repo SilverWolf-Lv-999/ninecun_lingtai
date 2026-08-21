@@ -23,7 +23,8 @@ public final class DebugCommand {
                 .then(CreatureDebugCommand.create())
                 .then(TechniqueDebugCommand.create())
                 .then(NotificationDebugCommand.create())
-                .then(AlchemyDebugCommand.create());
+                .then(AlchemyDebugCommand.create())
+                .then(BreakthroughAnimationDebugCommand.create());
     }
 
     private static int showHelp(CommandSourceStack commandSource) {
@@ -57,6 +58,9 @@ public final class DebugCommand {
         ), false);
         commandSource.sendSuccess(() -> Component.literal(
                 "§ealchemy§r：按画像批量模拟炼丹掷骰，输出成功率与品阶分布"
+        ), false);
+        commandSource.sendSuccess(() -> Component.literal(
+                "§ebreakthrough_animation§r：播放凡人→练气或练气→筑基突破动画"
         ), false);
         commandSource.sendSuccess(() -> Component.literal(
                 "玩家参数支持 @s、玩家名、@a；生物参数支持 @e 选择器；元素与境界支持英文 ID 或中文名。"

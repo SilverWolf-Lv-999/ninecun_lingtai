@@ -19,6 +19,7 @@ import net.seraphina.ninecun_lingtai.client.model.loader.CosmicModelLoader;
 import net.seraphina.ninecun_lingtai.client.model.loader.SeparateTransformsCosmicModelLoader;
 import net.seraphina.ninecun_lingtai.client.model.loader.VanillaCosmicModelLoader;
 import net.seraphina.ninecun_lingtai.client.render.AptitudeFormationShader;
+import net.seraphina.ninecun_lingtai.client.render.BreakthroughAnimationShader;
 import net.seraphina.ninecun_lingtai.client.render.shader.screen.ScreenShaderEffects;
 import net.seraphina.ninecun_lingtai.client.render.AlchemyFurnaceBlockRenderer;
 import net.seraphina.ninecun_lingtai.client.render.BookRenderer;
@@ -86,6 +87,10 @@ public final class ClientModEventHandler {
     private static final ResourceLocation APTITUDE_FORMATION_SHADER = ResourceLocation.fromNamespaceAndPath(
             ModMain.MOD_ID,
             "aptitude_formation"
+    );
+    private static final ResourceLocation BREAKTHROUGH_ANIMATION_SHADER = ResourceLocation.fromNamespaceAndPath(
+            ModMain.MOD_ID,
+            "breakthrough_animation"
     );
     private static final ResourceLocation SOUL_CONSTELLATION_SHADER = ResourceLocation.fromNamespaceAndPath(
             ModMain.MOD_ID,
@@ -252,6 +257,14 @@ public final class ClientModEventHandler {
                         DefaultVertexFormat.POSITION_COLOR_TEX
                 ),
                 AptitudeFormationShader::setAptitudeFormationShader
+        );
+        event.registerShader(
+                new ShaderInstance(
+                        event.getResourceProvider(),
+                        BREAKTHROUGH_ANIMATION_SHADER,
+                        DefaultVertexFormat.POSITION_COLOR_TEX
+                ),
+                BreakthroughAnimationShader::setBreakthroughAnimationShader
         );
         event.registerShader(
                 new ShaderInstance(

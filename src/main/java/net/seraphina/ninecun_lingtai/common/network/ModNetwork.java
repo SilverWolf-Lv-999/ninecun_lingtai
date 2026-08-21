@@ -19,6 +19,7 @@ import net.seraphina.ninecun_lingtai.common.data.BookManager;
 import net.seraphina.ninecun_lingtai.common.entity.spell.DefenseSpellGuardianEntity;
 import net.seraphina.ninecun_lingtai.common.debug.DaoScrollSnapshot;
 import net.seraphina.ninecun_lingtai.common.network.packet.BreakthroughRequestPacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.BreakthroughAnimationPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.BoostLightFlightPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.CastSpellPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.CloseStorageRingPacket;
@@ -417,6 +418,15 @@ public final class ModNetwork {
                 .encoder(BreakthroughRequestPacket::encode)
                 .decoder(BreakthroughRequestPacket::decode)
                 .consumerMainThread(BreakthroughRequestPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        BreakthroughAnimationPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(BreakthroughAnimationPacket::encode)
+                .decoder(BreakthroughAnimationPacket::decode)
+                .consumerMainThread(BreakthroughAnimationPacket::handle)
                 .add();
         CHANNEL.messageBuilder(
                         SubmitAscensionAnswerPacket.class,
@@ -1275,6 +1285,17 @@ public final class ModNetwork {
         CHANNEL.send(
                 PacketDistributor.PLAYER.with(() -> player),
                 new CultivationFeedbackPacket(success, message)
+        );
+    }
+
+    public static void sendBreakthroughAnimation(
+            ServerPlayer player,
+            net.seraphina.ninecun_lingtai.common.animation.BreakthroughAnimationType animationType,
+            int elementMask
+    ) {
+        CHANNEL.send(
+                PacketDistributor.PLAYER.with(() -> player),
+                new BreakthroughAnimationPacket(animationType, elementMask)
         );
     }
 

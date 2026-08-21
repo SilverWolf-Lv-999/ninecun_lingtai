@@ -4,6 +4,7 @@ import com.mojang.datafixers.util.Either;
 import net.minecraftforge.client.event.*;
 import net.seraphina.ninecun_lingtai.ModMain;
 import net.seraphina.ninecun_lingtai.client.input.ModKeyMappings;
+import net.seraphina.ninecun_lingtai.client.animation.BreakthroughAnimationManager;
 import net.seraphina.ninecun_lingtai.client.causality.ClientCausalityManager;
 import net.seraphina.ninecun_lingtai.client.player.ClientBodyShieldManager;
 import net.seraphina.ninecun_lingtai.client.player.ClientBookManager;
@@ -108,6 +109,7 @@ public final class ClientForgeEventHandler {
     public static void onClientTick(TickEvent.ClientTickEvent event) {
         if (event.phase == TickEvent.Phase.END) {
             ClientAptitudeScreenManager.tick();
+            BreakthroughAnimationManager.tick();
             ClientPressureManager.tick();
             ClientMeditationManager.tick();
             ClientSpellManager.tick();
@@ -282,6 +284,7 @@ public final class ClientForgeEventHandler {
     @SubscribeEvent
     public static void onLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
         ClientAptitudeScreenManager.reset();
+        BreakthroughAnimationManager.reset();
         ClientAscensionQuestionScreenManager.reset();
         ClientBookManager.reset();
         ClientCultivationInfoManager.reset();
