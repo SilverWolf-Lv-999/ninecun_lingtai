@@ -1,12 +1,9 @@
 package net.seraphina.ninecun_lingtai.mixin.client;
 
 import net.seraphina.ninecun_lingtai.client.player.ClientSoulRoamingManager;
-import net.seraphina.ninecun_lingtai.client.animation.BreakthroughAnimationManager;
 import net.seraphina.ninecun_lingtai.client.render.shader.screen.post.PostProcessingShaders;
 import net.seraphina.ninecun_lingtai.client.render.shader.screen.pre.PreProcessingShaders;
 import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.HitResult;
@@ -27,25 +24,6 @@ public abstract class GameRendererMixin {
             CallbackInfo callbackInfo
     ) {
         PostProcessingShaders.INSTANCE.renderShaders(partialTicks);
-    }
-
-    @Inject(method = "render", at = @At("TAIL"))
-    private void ninecunLingtai$renderBreakthroughAnimation(
-            float partialTicks,
-            long nanoTime,
-            boolean renderLevel,
-            CallbackInfo callbackInfo
-    ) {
-        if (!BreakthroughAnimationManager.isActive()) {
-            return;
-        }
-        Minecraft minecraft = Minecraft.getInstance();
-        GuiGraphics guiGraphics = new GuiGraphics(
-                minecraft,
-                minecraft.renderBuffers().bufferSource()
-        );
-        BreakthroughAnimationManager.render(guiGraphics, partialTicks);
-        guiGraphics.flush();
     }
 
     @Inject(method = "resize", at = @At("HEAD"))

@@ -43,6 +43,7 @@
     "client.ClientPacketListenerMixin",
     "client.CreativeModeInventoryScreenFiltersMixin",
     "client.DeathScreenMixin",
+    "client.ForgeGuiMixin",
     "client.GameRendererMixin",
     "client.ItemRendererMixin",
     "client.LevelRendererMixin",

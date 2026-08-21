@@ -3,7 +3,9 @@ package net.seraphina.ninecun_lingtai.client.animation;
 import net.minecraft.Util;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.util.Mth;
+import net.seraphina.ninecun_lingtai.ModMain;
 import net.seraphina.ninecun_lingtai.api.aptitude.SpiritualRoot;
+import net.seraphina.ninecun_lingtai.client.render.BreakthroughAnimationShader;
 import net.seraphina.ninecun_lingtai.client.render.shader.screen.ScreenShaderEffects;
 import net.seraphina.ninecun_lingtai.client.utility.BezierUtility;
 import net.seraphina.ninecun_lingtai.client.utility.BreakthroughAnimationRenderUtility;
@@ -27,6 +29,7 @@ public final class BreakthroughAnimationManager {
     private static int primaryColor = DEFAULT_PRIMARY_COLOR;
     private static int secondaryColor = DEFAULT_SECONDARY_COLOR;
     private static int accentColor = 0xFFF3C4;
+    private static long lastRenderLogMillis = -1L;
 
     private BreakthroughAnimationManager() {
     }
@@ -55,6 +58,12 @@ public final class BreakthroughAnimationManager {
         }
         animationType = type;
         startTimeMillis = Util.getMillis();
+        lastRenderLogMillis = -1L;
+        ModMain.LOGGER.info(
+                "Started breakthrough animation: type={}, elementMask={}",
+                type,
+                elementMask
+        );
         ScreenShaderEffects.setBreakthroughBlurActive(true);
     }
 
@@ -69,6 +78,15 @@ public final class BreakthroughAnimationManager {
             return;
         }
         float elapsedMillis = getElapsedMillis() + partialTicks * 50.0F;
+        if (lastRenderLogMillis < 0L || elapsedMillis - lastRenderLogMillis >= 1_000.0F) {
+            lastRenderLogMillis = (long) elapsedMillis;
+            ModMain.LOGGER.info(
+                    "Rendering breakthrough animation: type={}, elapsedMs={}, shaderLoaded={}",
+                    animationType,
+                    (long) elapsedMillis,
+                    BreakthroughAnimationShader.getBreakthroughAnimationShader() != null
+            );
+        }
         float progress = Mth.clamp(elapsedMillis / ANIMATION_DURATION_MILLIS, 0.0F, 1.0F);
         BreakthroughAnimationRenderUtility.render(
                 guiGraphics,
@@ -108,8 +126,12 @@ public final class BreakthroughAnimationManager {
     }
 
     public static void reset() {
+        if (isActive()) {
+            ModMain.LOGGER.info("Finished breakthrough animation: type={}", animationType);
+        }
         animationType = null;
         startTimeMillis = -1L;
+        lastRenderLogMillis = -1L;
         ScreenShaderEffects.setBreakthroughBlurActive(false);
     }
 

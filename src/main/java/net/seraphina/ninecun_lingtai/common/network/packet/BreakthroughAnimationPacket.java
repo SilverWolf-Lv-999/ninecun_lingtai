@@ -4,6 +4,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
+import net.seraphina.ninecun_lingtai.ModMain;
 import net.seraphina.ninecun_lingtai.client.animation.BreakthroughAnimationManager;
 import net.seraphina.ninecun_lingtai.common.animation.BreakthroughAnimationType;
 
@@ -31,6 +32,13 @@ public record BreakthroughAnimationPacket(BreakthroughAnimationType animationTyp
             BreakthroughAnimationPacket packet,
             Supplier<NetworkEvent.Context> contextSupplier
     ) {
+        NetworkEvent.Context context = contextSupplier.get();
+        context.setPacketHandled(true);
+        ModMain.LOGGER.info(
+                "Received breakthrough animation packet: type={}, elementMask={}",
+                packet.animationType,
+                packet.elementMask
+        );
         DistExecutor.unsafeRunWhenOn(
                 Dist.CLIENT,
                 () -> () -> BreakthroughAnimationManager.start(
