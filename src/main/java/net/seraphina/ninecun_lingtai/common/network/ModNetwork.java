@@ -54,6 +54,7 @@ import net.seraphina.ninecun_lingtai.common.network.packet.RequestBookPagePacket
 import net.seraphina.ninecun_lingtai.common.network.packet.RequestTechniqueLibraryPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.RequestGreatCausalityPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.OpenGreatCausalityScreenPacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.SetGreatCausalitySettingsPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.SelectAlchemyRecipePacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.SelectSpellPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.SetStorageRingImmersionPacket;
@@ -164,6 +165,15 @@ public final class ModNetwork {
                 .encoder(OpenGreatCausalityScreenPacket::encode)
                 .decoder(OpenGreatCausalityScreenPacket::decode)
                 .consumerMainThread(OpenGreatCausalityScreenPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        SetGreatCausalitySettingsPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(SetGreatCausalitySettingsPacket::encode)
+                .decoder(SetGreatCausalitySettingsPacket::decode)
+                .consumerMainThread(SetGreatCausalitySettingsPacket::handle)
                 .add();
         CHANNEL.messageBuilder(
                         AlchemyFurnaceActionPacket.class,

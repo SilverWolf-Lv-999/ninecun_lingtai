@@ -74,6 +74,8 @@ public final class GreatCausalityQueryService {
         }
 
         CausalityPlayerSnapshot targetSnapshot = createPlayerSnapshot(target);
+        net.seraphina.ninecun_lingtai.common.player.GreatCausalitySettings settings =
+                net.seraphina.ninecun_lingtai.common.player.PlayerGreatCausalityData.getSettings(observer);
         List<CausalityRecord> records = CausalityHistoryManager.getRecords(
                 observer.server,
                 target.getUUID(),
@@ -83,10 +85,13 @@ public final class GreatCausalityQueryService {
         ModNetwork.sendGreatCausalitySnapshot(observer, new CausalitySnapshot(
                 false,
                 List.of(),
+                createSettingsTargets(observer),
                 targetSnapshot,
                 records,
                 fullHistory,
-                ""
+                "",
+                settings,
+                GreatCausalityUtility.isPerfection(observer)
         ));
     }
 
@@ -97,6 +102,7 @@ public final class GreatCausalityQueryService {
                 .map(GreatCausalityQueryService::createPlayerSnapshot)
                 .sorted(Comparator.comparing(CausalityPlayerSnapshot::playerName))
                 .toList();
+        List<CausalityPlayerSnapshot> settingsTargets = createSettingsTargets(observer);
         PLAYER_LIST_SESSIONS.put(observer.getUUID(), new PlayerListSession(
                 observer.level().dimension().location(),
                 observer.level().getGameTime() + PLAYER_LIST_SESSION_DURATION,
@@ -107,10 +113,13 @@ public final class GreatCausalityQueryService {
         ModNetwork.sendGreatCausalitySnapshot(observer, new CausalitySnapshot(
                 true,
                 players,
+                settingsTargets,
                 null,
                 List.of(),
                 false,
-                ""
+                "",
+                net.seraphina.ninecun_lingtai.common.player.PlayerGreatCausalityData.getSettings(observer),
+                GreatCausalityUtility.isPerfection(observer)
         ));
     }
 
@@ -146,6 +155,13 @@ public final class GreatCausalityQueryService {
                 ),
                 cultivation
         );
+    }
+
+    private static List<CausalityPlayerSnapshot> createSettingsTargets(ServerPlayer observer) {
+        return GreatCausalityUtility.getEligibleTargets(observer).stream()
+                .map(GreatCausalityQueryService::createPlayerSnapshot)
+                .sorted(Comparator.comparing(CausalityPlayerSnapshot::playerName))
+                .toList();
     }
 
     private record PlayerListSession(

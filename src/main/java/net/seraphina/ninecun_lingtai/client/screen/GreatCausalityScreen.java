@@ -19,6 +19,9 @@ import net.seraphina.ninecun_lingtai.common.causality.CausalityRecord;
 import net.seraphina.ninecun_lingtai.common.causality.CausalitySnapshot;
 import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import net.seraphina.ninecun_lingtai.common.network.packet.RequestGreatCausalityPacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.SetGreatCausalitySettingsPacket;
+import net.seraphina.ninecun_lingtai.common.player.GreatCausalitySettings;
+import net.seraphina.ninecun_lingtai.common.player.GreatCausalityTargetMode;
 import org.lwjgl.glfw.GLFW;
 import org.joml.Matrix4f;
 
@@ -28,6 +31,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public final class GreatCausalityScreen extends Screen {
     private static final int VOID_BACKGROUND = 0xA9080C14;
@@ -43,6 +47,10 @@ public final class GreatCausalityScreen extends Screen {
     private static final int MAX_VISIBLE_RECORDS = 8;
     private static final int HEADER_HEIGHT = 84;
     private static final int TIMELINE_LABEL_HEIGHT = 32;
+    private static final int SETTINGS_TOP = 108;
+    private static final int SETTINGS_SECTION_TITLE_HEIGHT = 18;
+    private static final int SETTINGS_ROW_HEIGHT = 22;
+    private static final int SETTINGS_TOGGLE_WIDTH = 16;
     private static final long INTRO_DURATION = 1_250L;
     private static final long NODE_APPEAR_INTERVAL = 95L;
     private static final long NODE_APPEAR_DURATION = 480L;
@@ -57,6 +65,8 @@ public final class GreatCausalityScreen extends Screen {
 
     private final CausalitySnapshot snapshot;
     private ViewMode mode;
+    private ViewMode modeBeforeSettings;
+    private GreatCausalitySettings settings;
     private long openedAt;
     private long viewStartedAt;
     private int selectedNodeIndex = -1;
@@ -67,6 +77,8 @@ public final class GreatCausalityScreen extends Screen {
         super(Component.literal("大因果术"));
         this.snapshot = snapshot;
         this.mode = snapshot.playerListMode() ? ViewMode.PLAYER_LIST : ViewMode.CAUSALITY_LINE;
+        this.modeBeforeSettings = this.mode;
+        this.settings = snapshot.settings();
     }
 
     @Override
@@ -109,8 +121,10 @@ public final class GreatCausalityScreen extends Screen {
             renderPlayerList(guiGraphics, currentTime, mouseX, mouseY);
         } else if (this.mode == ViewMode.CAUSALITY_LINE) {
             renderCausalityLine(guiGraphics, currentTime);
-        } else {
+        } else if (this.mode == ViewMode.RECORD_FILE) {
             renderRecordFile(guiGraphics, currentTime);
+        } else {
+            renderSettings(guiGraphics, currentTime, mouseX, mouseY);
         }
     }
 
@@ -120,6 +134,13 @@ public final class GreatCausalityScreen extends Screen {
             return super.mouseClicked(mouseX, mouseY, button);
         }
 
+        if (this.snapshot.settingsAvailable() && isSettingsButtonAt(mouseX, mouseY)) {
+            toggleSettingsView();
+            return true;
+        }
+        if (this.mode == ViewMode.SETTINGS) {
+            return handleSettingsClick(mouseX, mouseY);
+        }
         if (this.mode == ViewMode.PLAYER_LIST) {
             int playerIndex = getPlayerIndexAt(mouseX, mouseY);
             if (playerIndex >= 0) {
@@ -174,6 +195,10 @@ public final class GreatCausalityScreen extends Screen {
             this.mode = ViewMode.CAUSALITY_LINE;
             this.viewStartedAt = Util.getMillis();
             this.selectedNodeIndex = -1;
+            return true;
+        }
+        if (this.mode == ViewMode.SETTINGS) {
+            toggleSettingsView();
             return true;
         }
         onClose();
@@ -401,6 +426,545 @@ public final class GreatCausalityScreen extends Screen {
                 HEADER_HEIGHT,
                 withAlpha(BRIGHT_GOLD, alpha)
         );
+        if (this.snapshot.settingsAvailable()) {
+            String settingsText = this.mode == ViewMode.SETTINGS ? "返回推衍" : "术式设置";
+            int settingsX = this.width - 52 - this.font.width(settingsText);
+            guiGraphics.drawString(
+                    this.font,
+                    settingsText,
+                    settingsX,
+                    24,
+                    withAlpha(this.mode == ViewMode.SETTINGS ? BRIGHT_GOLD : GOLD, alpha)
+            );
+        }
+    }
+
+    private void renderSettings(
+            GuiGraphics guiGraphics,
+            long currentTime,
+            int mouseX,
+            int mouseY
+    ) {
+        float alpha = easeOut(progress(currentTime - this.openedAt, 600L));
+        drawHeader(
+                guiGraphics,
+                "大因果术 · 圆满术式",
+                "所有附加因果效果在此处生效或停用",
+                currentTime
+        );
+        if (!this.snapshot.settingsAvailable()) {
+            guiGraphics.drawCenteredString(
+                    this.font,
+                    Component.literal("尚未圆满，无法开启附加因果效果"),
+                    this.width / 2,
+                    this.height / 2,
+                    withAlpha(MUTED_TEXT, alpha)
+            );
+            drawFooter(guiGraphics, "ESC 返回推衍");
+            return;
+        }
+
+        boolean compact = usesCompactSettingsLayout();
+        int leftX = 52;
+        int rightX = compact ? leftX : this.width / 2 + 26;
+        int columnWidth = compact ? this.width - 104 : this.width / 2 - 78;
+        int transferSectionY = getSettingsSectionY(false);
+        int tamperSectionY = getSettingsSectionY(true);
+
+        renderSettingsSectionTitle(guiGraphics, "换因果", leftX, transferSectionY, alpha);
+        SettingToggle[] transferToggles = {
+                SettingToggle.TRANSFER_ATTACK,
+                SettingToggle.TRANSFER_HATE,
+                SettingToggle.TRANSFER_TRIBULATION,
+                SettingToggle.TRANSFER_NEGATIVE_EFFECTS,
+                SettingToggle.TRANSFER_VILLAGER_PRICE,
+                SettingToggle.TRANSFER_DAMAGE,
+                SettingToggle.RANDOM_ITEM
+        };
+        for (int index = 0; index < transferToggles.length; index++) {
+            renderToggleRow(
+                    guiGraphics,
+                    transferToggles[index],
+                    leftX,
+                    transferSectionY + SETTINGS_SECTION_TITLE_HEIGHT + index * SETTINGS_ROW_HEIGHT,
+                    columnWidth,
+                    mouseX,
+                    mouseY,
+                    alpha
+            );
+        }
+        renderTargetSelector(
+                guiGraphics,
+                true,
+                leftX,
+                getSettingsTargetY(true),
+                columnWidth,
+                mouseX,
+                mouseY,
+                alpha
+        );
+
+        renderSettingsSectionTitle(guiGraphics, "篡改因果", rightX, tamperSectionY, alpha);
+        SettingToggle[] tamperToggles = {
+                SettingToggle.CORRUPT_BENEFICIAL_EFFECTS,
+                SettingToggle.TRANSFER_ITEMS,
+                SettingToggle.TRANSFER_ADVANCEMENTS,
+                SettingToggle.VOID_CRAFTING
+        };
+        for (int index = 0; index < tamperToggles.length; index++) {
+            renderToggleRow(
+                    guiGraphics,
+                    tamperToggles[index],
+                    rightX,
+                    tamperSectionY + SETTINGS_SECTION_TITLE_HEIGHT + index * SETTINGS_ROW_HEIGHT,
+                    columnWidth,
+                    mouseX,
+                    mouseY,
+                    alpha
+            );
+        }
+        renderTargetSelector(
+                guiGraphics,
+                false,
+                rightX,
+                getSettingsTargetY(false),
+                columnWidth,
+                mouseX,
+                mouseY,
+                alpha
+        );
+        drawFooter(guiGraphics, "ESC 返回推衍");
+    }
+
+    private void renderSettingsSectionTitle(
+            GuiGraphics guiGraphics,
+            String title,
+            int x,
+            int y,
+            float alpha
+    ) {
+        guiGraphics.drawString(this.font, title, x, y, withAlpha(GOLD, alpha));
+        guiGraphics.hLine(
+                x + this.font.width(title) + 12,
+                x + getSettingsColumnWidth(),
+                y + 5,
+                withAlpha(GOLD_LINE, alpha * 0.48F)
+        );
+    }
+
+    private void renderToggleRow(
+            GuiGraphics guiGraphics,
+            SettingToggle toggle,
+            int x,
+            int y,
+            int width,
+            int mouseX,
+            int mouseY,
+            float alpha
+    ) {
+        boolean enabled = isSettingEnabled(toggle);
+        boolean hovered = mouseX >= x
+                && mouseX <= x + width
+                && mouseY >= y
+                && mouseY <= y + SETTINGS_ROW_HEIGHT - 2;
+        int accent = hovered ? BRIGHT_GOLD : GOLD;
+        guiGraphics.fill(
+                x,
+                y + 4,
+                x + SETTINGS_TOGGLE_WIDTH,
+                y + 14,
+                withAlpha(enabled ? accent : FAINT_TEXT, alpha * 0.72F)
+        );
+        if (enabled) {
+            guiGraphics.fill(
+                    x + 3,
+                    y + 6,
+                    x + SETTINGS_TOGGLE_WIDTH - 2,
+                    y + 12,
+                    withAlpha(BRIGHT_GOLD, alpha)
+            );
+        }
+        guiGraphics.drawString(
+                this.font,
+                toggle.displayName,
+                x + SETTINGS_TOGGLE_WIDTH + 8,
+                y + 2,
+                withAlpha(hovered ? BRIGHT_GOLD : TEXT, alpha)
+        );
+        String state = enabled ? "开" : "关";
+        guiGraphics.drawString(
+                this.font,
+                state,
+                x + width - this.font.width(state),
+                y + 2,
+                withAlpha(enabled ? GOLD : FAINT_TEXT, alpha)
+        );
+        guiGraphics.hLine(
+                x,
+                x + width,
+                y + SETTINGS_ROW_HEIGHT - 3,
+                withAlpha(0x5C6B54, alpha * (hovered ? 0.72F : 0.42F))
+        );
+    }
+
+    private void renderTargetSelector(
+            GuiGraphics guiGraphics,
+            boolean transfer,
+            int x,
+            int y,
+            int width,
+            int mouseX,
+            int mouseY,
+            float alpha
+    ) {
+        GreatCausalityTargetMode targetMode = transfer
+                ? this.settings.transferTargetMode()
+                : this.settings.tamperTargetMode();
+        UUID targetId = transfer ? this.settings.transferTargetId() : this.settings.tamperTargetId();
+        String modeName = targetMode == GreatCausalityTargetMode.RANDOM ? "随机" : "指定";
+        String targetName = targetMode == GreatCausalityTargetMode.RANDOM
+                ? "自动选择当前界域玩家"
+                : getSettingsTargetName(targetId);
+        int modeX = x + 50;
+        int targetX = modeX + 68;
+        boolean modeHovered = mouseX >= modeX
+                && mouseX <= targetX - 6
+                && mouseY >= y
+                && mouseY <= y + 20;
+        boolean targetHovered = mouseX >= targetX
+                && mouseX <= x + width
+                && mouseY >= y
+                && mouseY <= y + 20;
+        guiGraphics.drawString(
+                this.font,
+                "目标",
+                x,
+                y + 3,
+                withAlpha(MUTED_TEXT, alpha)
+        );
+        guiGraphics.fill(
+                modeX,
+                y,
+                targetX - 6,
+                y + 19,
+                withAlpha(modeHovered ? 0x806E552A : 0x4C3B3020, alpha)
+        );
+        guiGraphics.drawString(
+                this.font,
+                modeName,
+                modeX + 8,
+                y + 3,
+                withAlpha(modeHovered ? BRIGHT_GOLD : GOLD, alpha)
+        );
+        guiGraphics.fill(
+                targetX,
+                y,
+                x + width,
+                y + 19,
+                withAlpha(targetHovered ? 0x805A4A2E : 0x3A2A2520, alpha)
+        );
+        guiGraphics.drawString(
+                this.font,
+                targetName,
+                targetX + 8,
+                y + 3,
+                withAlpha(targetHovered ? BRIGHT_GOLD : TEXT, alpha)
+        );
+    }
+
+    private boolean handleSettingsClick(double mouseX, double mouseY) {
+        if (!this.snapshot.settingsAvailable()) {
+            return false;
+        }
+        int leftX = 52;
+        int rightX = usesCompactSettingsLayout() ? leftX : this.width / 2 + 26;
+        int columnWidth = getSettingsColumnWidth();
+        SettingToggle[] transferToggles = {
+                SettingToggle.TRANSFER_ATTACK,
+                SettingToggle.TRANSFER_HATE,
+                SettingToggle.TRANSFER_TRIBULATION,
+                SettingToggle.TRANSFER_NEGATIVE_EFFECTS,
+                SettingToggle.TRANSFER_VILLAGER_PRICE,
+                SettingToggle.TRANSFER_DAMAGE,
+                SettingToggle.RANDOM_ITEM
+        };
+        for (int index = 0; index < transferToggles.length; index++) {
+            int y = getSettingsSectionY(false)
+                    + SETTINGS_SECTION_TITLE_HEIGHT
+                    + index * SETTINGS_ROW_HEIGHT;
+            if (isInside(mouseX, mouseY, leftX, y, columnWidth, SETTINGS_ROW_HEIGHT - 2)) {
+                toggleSetting(transferToggles[index]);
+                return true;
+            }
+        }
+        SettingToggle[] tamperToggles = {
+                SettingToggle.CORRUPT_BENEFICIAL_EFFECTS,
+                SettingToggle.TRANSFER_ITEMS,
+                SettingToggle.TRANSFER_ADVANCEMENTS,
+                SettingToggle.VOID_CRAFTING
+        };
+        for (int index = 0; index < tamperToggles.length; index++) {
+            int y = getSettingsSectionY(true)
+                    + SETTINGS_SECTION_TITLE_HEIGHT
+                    + index * SETTINGS_ROW_HEIGHT;
+            if (isInside(mouseX, mouseY, rightX, y, columnWidth, SETTINGS_ROW_HEIGHT - 2)) {
+                toggleSetting(tamperToggles[index]);
+                return true;
+            }
+        }
+        if (isInside(
+                mouseX,
+                mouseY,
+                leftX,
+                getSettingsTargetY(true),
+                columnWidth,
+                20
+        )) {
+            if (mouseX < leftX + 118) {
+                cycleTargetMode(true);
+            } else {
+                cycleTarget(true);
+            }
+            return true;
+        }
+        if (isInside(
+                mouseX,
+                mouseY,
+                rightX,
+                getSettingsTargetY(false),
+                columnWidth,
+                20
+        )) {
+            if (mouseX < rightX + 118) {
+                cycleTargetMode(false);
+            } else {
+                cycleTarget(false);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    private void toggleSettingsView() {
+        if (this.mode == ViewMode.SETTINGS) {
+            this.mode = this.modeBeforeSettings;
+        } else {
+            this.modeBeforeSettings = this.mode;
+            this.mode = ViewMode.SETTINGS;
+        }
+        this.viewStartedAt = Util.getMillis();
+    }
+
+    private boolean isSettingsButtonAt(double mouseX, double mouseY) {
+        String settingsText = this.mode == ViewMode.SETTINGS ? "返回推衍" : "术式设置";
+        int left = this.width - 52 - this.font.width(settingsText) - 8;
+        return mouseX >= left
+                && mouseX <= this.width - 44
+                && mouseY >= 12
+                && mouseY <= 42;
+    }
+
+    private void cycleTargetMode(boolean transfer) {
+        GreatCausalityTargetMode currentMode = transfer
+                ? this.settings.transferTargetMode()
+                : this.settings.tamperTargetMode();
+        GreatCausalityTargetMode nextMode = currentMode == GreatCausalityTargetMode.RANDOM
+                ? GreatCausalityTargetMode.SELECTED
+                : GreatCausalityTargetMode.RANDOM;
+        UUID targetId = transfer ? this.settings.transferTargetId() : this.settings.tamperTargetId();
+        if (nextMode == GreatCausalityTargetMode.SELECTED
+                && targetId == null
+                && !this.snapshot.settingsTargets().isEmpty()) {
+            targetId = this.snapshot.settingsTargets().get(0).playerId();
+        }
+        updateSettings(new GreatCausalitySettings(
+                this.settings.transferAttack(),
+                this.settings.transferHate(),
+                this.settings.transferTribulation(),
+                this.settings.transferNegativeEffects(),
+                this.settings.transferVillagerPrice(),
+                this.settings.transferDamage(),
+                transfer ? nextMode : this.settings.transferTargetMode(),
+                transfer ? targetId : this.settings.transferTargetId(),
+                this.settings.randomItem(),
+                this.settings.corruptBeneficialEffects(),
+                this.settings.transferItems(),
+                this.settings.transferAdvancements(),
+                this.settings.voidCrafting(),
+                transfer ? this.settings.tamperTargetMode() : nextMode,
+                transfer ? this.settings.tamperTargetId() : targetId
+        ));
+    }
+
+    private void cycleTarget(boolean transfer) {
+        List<CausalityPlayerSnapshot> targets = this.snapshot.settingsTargets();
+        if (targets.isEmpty()) {
+            return;
+        }
+        UUID currentId = transfer ? this.settings.transferTargetId() : this.settings.tamperTargetId();
+        int currentIndex = -1;
+        for (int index = 0; index < targets.size(); index++) {
+            if (targets.get(index).playerId().equals(currentId)) {
+                currentIndex = index;
+                break;
+            }
+        }
+        UUID nextId = targets.get((currentIndex + 1) % targets.size()).playerId();
+        updateSettings(new GreatCausalitySettings(
+                this.settings.transferAttack(),
+                this.settings.transferHate(),
+                this.settings.transferTribulation(),
+                this.settings.transferNegativeEffects(),
+                this.settings.transferVillagerPrice(),
+                this.settings.transferDamage(),
+                transfer ? GreatCausalityTargetMode.SELECTED : this.settings.transferTargetMode(),
+                transfer ? nextId : this.settings.transferTargetId(),
+                this.settings.randomItem(),
+                this.settings.corruptBeneficialEffects(),
+                this.settings.transferItems(),
+                this.settings.transferAdvancements(),
+                this.settings.voidCrafting(),
+                transfer ? this.settings.tamperTargetMode() : GreatCausalityTargetMode.SELECTED,
+                transfer ? this.settings.tamperTargetId() : nextId
+        ));
+    }
+
+    private void toggleSetting(SettingToggle toggle) {
+        boolean transferAttack = this.settings.transferAttack();
+        boolean transferHate = this.settings.transferHate();
+        boolean transferTribulation = this.settings.transferTribulation();
+        boolean transferNegativeEffects = this.settings.transferNegativeEffects();
+        boolean transferVillagerPrice = this.settings.transferVillagerPrice();
+        boolean transferDamage = this.settings.transferDamage();
+        boolean randomItem = this.settings.randomItem();
+        boolean corruptBeneficialEffects = this.settings.corruptBeneficialEffects();
+        boolean transferItems = this.settings.transferItems();
+        boolean transferAdvancements = this.settings.transferAdvancements();
+        boolean voidCrafting = this.settings.voidCrafting();
+        switch (toggle) {
+            case TRANSFER_ATTACK -> transferAttack = !transferAttack;
+            case TRANSFER_HATE -> transferHate = !transferHate;
+            case TRANSFER_TRIBULATION -> transferTribulation = !transferTribulation;
+            case TRANSFER_NEGATIVE_EFFECTS -> transferNegativeEffects = !transferNegativeEffects;
+            case TRANSFER_VILLAGER_PRICE -> transferVillagerPrice = !transferVillagerPrice;
+            case TRANSFER_DAMAGE -> transferDamage = !transferDamage;
+            case RANDOM_ITEM -> randomItem = !randomItem;
+            case CORRUPT_BENEFICIAL_EFFECTS -> corruptBeneficialEffects = !corruptBeneficialEffects;
+            case TRANSFER_ITEMS -> transferItems = !transferItems;
+            case TRANSFER_ADVANCEMENTS -> transferAdvancements = !transferAdvancements;
+            case VOID_CRAFTING -> voidCrafting = !voidCrafting;
+        }
+        updateSettings(new GreatCausalitySettings(
+                transferAttack,
+                transferHate,
+                transferTribulation,
+                transferNegativeEffects,
+                transferVillagerPrice,
+                transferDamage,
+                this.settings.transferTargetMode(),
+                this.settings.transferTargetId(),
+                randomItem,
+                corruptBeneficialEffects,
+                transferItems,
+                transferAdvancements,
+                voidCrafting,
+                this.settings.tamperTargetMode(),
+                this.settings.tamperTargetId()
+        ));
+    }
+
+    private void updateSettings(GreatCausalitySettings settings) {
+        this.settings = settings;
+        ModNetwork.sendToServer(new SetGreatCausalitySettingsPacket(settings));
+    }
+
+    private boolean isSettingEnabled(SettingToggle toggle) {
+        return switch (toggle) {
+            case TRANSFER_ATTACK -> this.settings.transferAttack();
+            case TRANSFER_HATE -> this.settings.transferHate();
+            case TRANSFER_TRIBULATION -> this.settings.transferTribulation();
+            case TRANSFER_NEGATIVE_EFFECTS -> this.settings.transferNegativeEffects();
+            case TRANSFER_VILLAGER_PRICE -> this.settings.transferVillagerPrice();
+            case TRANSFER_DAMAGE -> this.settings.transferDamage();
+            case RANDOM_ITEM -> this.settings.randomItem();
+            case CORRUPT_BENEFICIAL_EFFECTS -> this.settings.corruptBeneficialEffects();
+            case TRANSFER_ITEMS -> this.settings.transferItems();
+            case TRANSFER_ADVANCEMENTS -> this.settings.transferAdvancements();
+            case VOID_CRAFTING -> this.settings.voidCrafting();
+        };
+    }
+
+    private String getSettingsTargetName(UUID targetId) {
+        if (targetId == null) {
+            return "未选定";
+        }
+        return this.snapshot.settingsTargets().stream()
+                .filter(target -> target.playerId().equals(targetId))
+                .map(CausalityPlayerSnapshot::playerName)
+                .findFirst()
+                .orElse("目标已离线");
+    }
+
+    private int getSettingsSectionY(boolean tamper) {
+        if (!tamper || !usesCompactSettingsLayout()) {
+            return SETTINGS_TOP;
+        }
+        return getSettingsTargetY(true) + 34;
+    }
+
+    private int getSettingsTargetY(boolean transfer) {
+        int sectionY = getSettingsSectionY(!transfer);
+        int toggleCount = transfer ? 7 : 4;
+        return sectionY + SETTINGS_SECTION_TITLE_HEIGHT + toggleCount * SETTINGS_ROW_HEIGHT + 4;
+    }
+
+    private int getSettingsColumnWidth() {
+        return usesCompactSettingsLayout()
+                ? Math.max(180, this.width - 104)
+                : Math.max(220, this.width / 2 - 78);
+    }
+
+    private boolean usesCompactSettingsLayout() {
+        return this.width < 760;
+    }
+
+    private static boolean isInside(
+            double mouseX,
+            double mouseY,
+            int x,
+            int y,
+            int width,
+            int height
+    ) {
+        return mouseX >= x
+                && mouseX <= x + width
+                && mouseY >= y
+                && mouseY <= y + height;
+    }
+
+    private void updateSettingsTargetSelection(
+            GreatCausalityTargetMode transferMode,
+            UUID transferTargetId,
+            GreatCausalityTargetMode tamperMode,
+            UUID tamperTargetId
+    ) {
+        updateSettings(new GreatCausalitySettings(
+                this.settings.transferAttack(),
+                this.settings.transferHate(),
+                this.settings.transferTribulation(),
+                this.settings.transferNegativeEffects(),
+                this.settings.transferVillagerPrice(),
+                this.settings.transferDamage(),
+                transferMode,
+                transferTargetId,
+                this.settings.randomItem(),
+                this.settings.corruptBeneficialEffects(),
+                this.settings.transferItems(),
+                this.settings.transferAdvancements(),
+                this.settings.voidCrafting(),
+                tamperMode,
+                tamperTargetId
+        ));
     }
 
     private void drawTimeline(
@@ -1160,9 +1724,30 @@ public final class GreatCausalityScreen extends Screen {
         return (clampedAlpha << 24) | (color & 0x00FFFFFF);
     }
 
+    private enum SettingToggle {
+        TRANSFER_ATTACK("转移攻击"),
+        TRANSFER_HATE("转移仇恨"),
+        TRANSFER_TRIBULATION("转移天劫"),
+        TRANSFER_NEGATIVE_EFFECTS("转移负面效果"),
+        TRANSFER_VILLAGER_PRICE("转移村民价格"),
+        TRANSFER_DAMAGE("转移伤害"),
+        RANDOM_ITEM("随机物品"),
+        CORRUPT_BENEFICIAL_EFFECTS("篡改有益效果"),
+        TRANSFER_ITEMS("转移物品"),
+        TRANSFER_ADVANCEMENTS("转移进度"),
+        VOID_CRAFTING("虚空合成");
+
+        private final String displayName;
+
+        SettingToggle(String displayName) {
+            this.displayName = displayName;
+        }
+    }
+
     private enum ViewMode {
         PLAYER_LIST,
         CAUSALITY_LINE,
-        RECORD_FILE
+        RECORD_FILE,
+        SETTINGS
     }
 }

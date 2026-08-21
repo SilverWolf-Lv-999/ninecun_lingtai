@@ -8,6 +8,8 @@ import net.seraphina.ninecun_lingtai.client.causality.ClientCausalityManager;
 import net.seraphina.ninecun_lingtai.common.causality.CausalityPlayerSnapshot;
 import net.seraphina.ninecun_lingtai.common.causality.CausalityRecord;
 import net.seraphina.ninecun_lingtai.common.causality.CausalitySnapshot;
+import net.seraphina.ninecun_lingtai.common.player.GreatCausalitySettings;
+import net.seraphina.ninecun_lingtai.common.player.GreatCausalityTargetMode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +26,8 @@ public record OpenGreatCausalityScreenPacket(CausalitySnapshot snapshot) {
         buffer.writeBoolean(snapshot.playerListMode());
         buffer.writeVarInt(Math.min(MAXIMUM_PLAYERS, snapshot.players().size()));
         snapshot.players().stream().limit(MAXIMUM_PLAYERS).forEach(player -> writePlayer(buffer, player));
+        buffer.writeVarInt(Math.min(MAXIMUM_PLAYERS, snapshot.settingsTargets().size()));
+        snapshot.settingsTargets().stream().limit(MAXIMUM_PLAYERS).forEach(player -> writePlayer(buffer, player));
         buffer.writeBoolean(snapshot.target() != null);
         if (snapshot.target() != null) {
             writePlayer(buffer, snapshot.target());
@@ -33,6 +37,8 @@ public record OpenGreatCausalityScreenPacket(CausalitySnapshot snapshot) {
                 .forEach(record -> writeRecord(buffer, record));
         buffer.writeBoolean(snapshot.fullHistory());
         buffer.writeUtf(snapshot.message(), MAXIMUM_TEXT_LENGTH);
+        writeSettings(buffer, snapshot.settings());
+        buffer.writeBoolean(snapshot.settingsAvailable());
     }
 
     public static OpenGreatCausalityScreenPacket decode(FriendlyByteBuf buffer) {
@@ -42,19 +48,31 @@ public record OpenGreatCausalityScreenPacket(CausalitySnapshot snapshot) {
         for (int index = 0; index < playerCount; index++) {
             players.add(readPlayer(buffer));
         }
+        int settingsTargetCount = readCount(buffer, MAXIMUM_PLAYERS);
+        List<CausalityPlayerSnapshot> settingsTargets = new ArrayList<>(settingsTargetCount);
+        for (int index = 0; index < settingsTargetCount; index++) {
+            settingsTargets.add(readPlayer(buffer));
+        }
         CausalityPlayerSnapshot target = buffer.readBoolean() ? readPlayer(buffer) : null;
         int recordCount = readCount(buffer, MAXIMUM_RECORDS);
         List<CausalityRecord> records = new ArrayList<>(recordCount);
         for (int index = 0; index < recordCount; index++) {
             records.add(readRecord(buffer));
         }
+        boolean fullHistory = buffer.readBoolean();
+        String message = buffer.readUtf(MAXIMUM_TEXT_LENGTH);
+        GreatCausalitySettings settings = readSettings(buffer);
+        boolean settingsAvailable = buffer.readBoolean();
         return new OpenGreatCausalityScreenPacket(new CausalitySnapshot(
                 playerListMode,
                 players,
+                settingsTargets,
                 target,
                 records,
-                buffer.readBoolean(),
-                buffer.readUtf(MAXIMUM_TEXT_LENGTH)
+                fullHistory,
+                message,
+                settings,
+                settingsAvailable
         ));
     }
 
@@ -114,5 +132,79 @@ public record OpenGreatCausalityScreenPacket(CausalitySnapshot snapshot) {
             throw new IllegalArgumentException("Invalid causality packet count: " + count);
         }
         return count;
+    }
+
+    private static void writeSettings(FriendlyByteBuf buffer, GreatCausalitySettings settings) {
+        buffer.writeBoolean(settings.transferAttack());
+        buffer.writeBoolean(settings.transferHate());
+        buffer.writeBoolean(settings.transferTribulation());
+        buffer.writeBoolean(settings.transferNegativeEffects());
+        buffer.writeBoolean(settings.transferVillagerPrice());
+        buffer.writeBoolean(settings.transferDamage());
+        writeTarget(buffer, settings.transferTargetMode(), settings.transferTargetId());
+        buffer.writeBoolean(settings.randomItem());
+        buffer.writeBoolean(settings.corruptBeneficialEffects());
+        buffer.writeBoolean(settings.transferItems());
+        buffer.writeBoolean(settings.transferAdvancements());
+        buffer.writeBoolean(settings.voidCrafting());
+        writeTarget(buffer, settings.tamperTargetMode(), settings.tamperTargetId());
+    }
+
+    private static GreatCausalitySettings readSettings(FriendlyByteBuf buffer) {
+        boolean transferAttack = buffer.readBoolean();
+        boolean transferHate = buffer.readBoolean();
+        boolean transferTribulation = buffer.readBoolean();
+        boolean transferNegativeEffects = buffer.readBoolean();
+        boolean transferVillagerPrice = buffer.readBoolean();
+        boolean transferDamage = buffer.readBoolean();
+        GreatCausalityTargetMode transferTargetMode = readTargetMode(buffer);
+        java.util.UUID transferTargetId = readTargetId(buffer);
+        boolean randomItem = buffer.readBoolean();
+        boolean corruptBeneficialEffects = buffer.readBoolean();
+        boolean transferItems = buffer.readBoolean();
+        boolean transferAdvancements = buffer.readBoolean();
+        boolean voidCrafting = buffer.readBoolean();
+        GreatCausalityTargetMode tamperTargetMode = readTargetMode(buffer);
+        java.util.UUID tamperTargetId = readTargetId(buffer);
+        return new GreatCausalitySettings(
+                transferAttack,
+                transferHate,
+                transferTribulation,
+                transferNegativeEffects,
+                transferVillagerPrice,
+                transferDamage,
+                transferTargetMode,
+                transferTargetId,
+                randomItem,
+                corruptBeneficialEffects,
+                transferItems,
+                transferAdvancements,
+                voidCrafting,
+                tamperTargetMode,
+                tamperTargetId
+        );
+    }
+
+    private static void writeTarget(
+            FriendlyByteBuf buffer,
+            GreatCausalityTargetMode mode,
+            java.util.UUID targetId
+    ) {
+        buffer.writeVarInt(mode.ordinal());
+        buffer.writeBoolean(targetId != null);
+        if (targetId != null) {
+            buffer.writeUUID(targetId);
+        }
+    }
+
+    private static GreatCausalityTargetMode readTargetMode(FriendlyByteBuf buffer) {
+        int ordinal = buffer.readVarInt();
+        return ordinal >= 0 && ordinal < GreatCausalityTargetMode.values().length
+                ? GreatCausalityTargetMode.values()[ordinal]
+                : GreatCausalityTargetMode.RANDOM;
+    }
+
+    private static java.util.UUID readTargetId(FriendlyByteBuf buffer) {
+        return buffer.readBoolean() ? buffer.readUUID() : null;
     }
 }
