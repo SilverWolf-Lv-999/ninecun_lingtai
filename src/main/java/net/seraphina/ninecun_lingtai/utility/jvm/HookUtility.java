@@ -16,9 +16,9 @@ public class HookUtility {
     }
 
     public static void commonReplaceMethod() {
-        SeraphinaHook.replaceMethod(LivingEntity.class, MyLivingEntity.class);
-        SeraphinaHook.replaceMethod(UnsafeHacks.class, ForgeHacksHook.class);
-        SeraphinaHook.replaceMethod(FoodData.class, MyFoodData.class);
+        SeraLegitHook.replaceMethod(LivingEntity.class, MyLivingEntity.class);
+        SeraLegitHook.replaceMethod(UnsafeHacks.class, ForgeHacksHook.class);
+        SeraLegitHook.replaceMethod(FoodData.class, MyFoodData.class);
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -28,8 +28,8 @@ public class HookUtility {
     @OnlyIn(Dist.CLIENT)
     public static void clientReplaceMethod() {
         if (Static.isApfDay()) {
-            SeraphinaHook.replaceMethod(LogoRenderer.class, MyLogoRenderer.class);
-            SeraphinaHook.replaceMethod(SplashRenderer.class, MySplashRenderer.class);
+            SeraLegitHook.replaceMethod(LogoRenderer.class, MyLogoRenderer.class);
+            SeraLegitHook.replaceMethod(SplashRenderer.class, MySplashRenderer.class);
         }
     }
 }

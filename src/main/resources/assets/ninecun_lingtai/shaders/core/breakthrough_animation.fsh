@@ -20,6 +20,13 @@ const float MORTAL_TO_QI_RIPPLE_START = 0.20;
 const float MORTAL_TO_QI_RIPPLE_DURATION = 0.38;
 const float MORTAL_TO_QI_VORTEX_START = 0.36;
 const float MORTAL_TO_QI_VORTEX_DURATION = 0.4875;
+const float QI_TO_FOUNDATION_VORTEX_DURATION = 0.54;
+const float QI_TO_FOUNDATION_PLATFORM_REVEAL_START = 0.24;
+const float QI_TO_FOUNDATION_PLATFORM_REVEAL_END = 0.46;
+const float QI_TO_FOUNDATION_TABLET_REVEAL_START = 0.34;
+const float QI_TO_FOUNDATION_TABLET_REVEAL_END = 0.58;
+const float QI_TO_FOUNDATION_BLOOM_START = 0.46;
+const float QI_TO_FOUNDATION_BLOOM_END = 0.80;
 
 float hash(float value) {
     return fract(sin(value * 91.173) * 43758.5453);
@@ -602,92 +609,372 @@ vec3 renderMortalToQi(
     return color;
 }
 
+float tabletBand(float value, float lower, float upper, float softness) {
+    return smoothstep(lower - softness, lower + softness, value)
+            * (1.0 - smoothstep(upper - softness, upper + softness, value));
+}
+
+float tabletShape(vec2 point) {
+    float body = tabletBand(point.y, -0.132, 0.138, 0.008)
+            * (1.0 - smoothstep(0.092, 0.105, abs(point.x)));
+
+    float topProgress = clamp((point.y + 0.205) / 0.080, 0.0, 1.0);
+    float topWidth = 0.082 * topProgress;
+    float top = tabletBand(point.y, -0.205, -0.118, 0.006)
+            * (1.0 - smoothstep(topWidth, topWidth + 0.010, abs(point.x)));
+
+    float bottomProgress = clamp((point.y - 0.135) / 0.040, 0.0, 1.0);
+    float bottomWidth = mix(0.104, 0.064, bottomProgress);
+    float bottom = tabletBand(point.y, 0.132, 0.175, 0.006)
+            * (1.0 - smoothstep(bottomWidth, bottomWidth + 0.010, abs(point.x)));
+    return max(body, max(top, bottom));
+}
+
+float tabletEdge(vec2 point) {
+    vec2 vertex0 = vec2(0.0, -0.205);
+    vec2 vertex1 = vec2(0.082, -0.118);
+    vec2 vertex2 = vec2(0.104, 0.135);
+    vec2 vertex3 = vec2(0.064, 0.175);
+    vec2 vertex4 = vec2(-0.064, 0.175);
+    vec2 vertex5 = vec2(-0.104, 0.135);
+    vec2 vertex6 = vec2(-0.082, -0.118);
+    float edge = 0.0;
+    edge = max(edge, segmentLine(point, vertex0, vertex1, 0.006));
+    edge = max(edge, segmentLine(point, vertex1, vertex2, 0.006));
+    edge = max(edge, segmentLine(point, vertex2, vertex3, 0.006));
+    edge = max(edge, segmentLine(point, vertex3, vertex4, 0.006));
+    edge = max(edge, segmentLine(point, vertex4, vertex5, 0.006));
+    edge = max(edge, segmentLine(point, vertex5, vertex6, 0.006));
+    edge = max(edge, segmentLine(point, vertex6, vertex0, 0.006));
+    return edge;
+}
+
+float platformTablet(
+        vec2 point,
+        float tabletAngle,
+        float tabletRadius,
+        float reveal,
+        float time,
+        out float sideLayer,
+        out float faceLayer,
+        out float edgeLayer,
+        out float glyph
+) {
+    vec2 radialPoint = rotation(-tabletAngle) * point;
+    float bob = sin(time * 1.15 + tabletAngle * 2.0) * 0.006;
+    vec2 tabletPoint = (radialPoint - vec2(0.0, tabletRadius + bob)) * 1.16;
+
+    vec2 lowerPoint = tabletPoint + vec2(0.0, 0.030);
+    float face = tabletShape(tabletPoint);
+    float side = tabletShape(lowerPoint) * (1.0 - face * 0.94);
+    float underEdge = tabletEdge(lowerPoint) * (1.0 - face * 0.72);
+    float edge = tabletEdge(tabletPoint);
+    float insetFace = tabletShape(tabletPoint / vec2(0.86, 0.80));
+    float insetEdge = tabletEdge(tabletPoint / vec2(0.86, 0.80));
+
+    float centralSpine = segmentLine(
+            tabletPoint,
+            vec2(0.0, -0.135),
+            vec2(0.0, 0.125),
+            0.005
+    );
+    float upperDiamond = segmentLine(
+            tabletPoint,
+            vec2(-0.040, -0.080),
+            vec2(0.0, -0.120),
+            0.005
+    ) + segmentLine(
+            tabletPoint,
+            vec2(0.0, -0.120),
+            vec2(0.040, -0.080),
+            0.005
+    );
+    float lowerDiamond = segmentLine(
+            tabletPoint,
+            vec2(-0.044, 0.055),
+            vec2(0.0, 0.092),
+            0.005
+    ) + segmentLine(
+            tabletPoint,
+            vec2(0.0, 0.092),
+            vec2(0.044, 0.055),
+            0.005
+    );
+    float sideMarks = segmentLine(
+            tabletPoint,
+            vec2(-0.054, -0.012),
+            vec2(-0.026, 0.018),
+            0.004
+    ) + segmentLine(
+            tabletPoint,
+            vec2(0.054, -0.012),
+            vec2(0.026, 0.018),
+            0.004
+    );
+    float runePoint = glow(length(tabletPoint - vec2(0.0, -0.145)), 42.0);
+    glyph = (
+            centralSpine * 0.72
+            + upperDiamond * 0.88
+            + lowerDiamond * 0.84
+            + sideMarks * 0.78
+            + runePoint * 0.26
+    ) * insetFace;
+
+    sideLayer = (side * 0.86 + underEdge * 0.42) * reveal;
+    faceLayer = (face * 0.88 + insetFace * 0.12) * reveal;
+    edgeLayer = (edge * 1.10 + insetEdge * 0.38) * reveal;
+    glyph *= reveal;
+    return max(max(sideLayer, faceLayer), max(edgeLayer, glyph));
+}
+
+float platformArc(
+        float radius,
+        float angle,
+        float targetRadius,
+        float width,
+        float phase,
+        float segmentCount
+) {
+    float ring = softRing(radius, targetRadius, width, 0.022);
+    float segments = smoothstep(
+            0.30,
+            0.92,
+            0.5 + 0.5 * sin(angle * segmentCount + phase)
+    );
+    return ring * (0.20 + segments * 0.80);
+}
+
+float platformSurfaceSigils(vec2 point, float time) {
+    float sigils = 0.0;
+    for (int index = 0; index < 4; index++) {
+        float indexValue = float(index);
+        float sigilAngle = indexValue * PI * 0.5 + PI * 0.25;
+        vec2 sigilPoint = rotation(-sigilAngle) * point - vec2(0.0, 0.34);
+        sigils += segmentLine(
+                sigilPoint,
+                vec2(-0.075, 0.028),
+                vec2(0.0, -0.040),
+                0.005
+        ) + segmentLine(
+                sigilPoint,
+                vec2(0.0, -0.040),
+                vec2(0.075, 0.028),
+                0.005
+        ) + segmentLine(
+                sigilPoint,
+                vec2(-0.042, 0.050),
+                vec2(0.042, 0.050),
+                0.004
+        );
+    }
+    return sigils * (0.72 + 0.28 * sin(time * 0.8));
+}
+
+void blendLayer(
+        inout vec3 baseColor,
+        inout float baseAlpha,
+        vec3 layerColor,
+        float layerAlpha
+) {
+    float clampedAlpha = clamp(layerAlpha, 0.0, 1.0);
+    baseColor = mix(baseColor, layerColor, clampedAlpha);
+    baseAlpha = clampedAlpha + baseAlpha * (1.0 - clampedAlpha);
+}
+
 vec3 renderQiToFoundation(
         vec2 point,
         float progress,
         float time,
         out float alpha
 ) {
-    float vortexProgress = clamp(progress / 0.42, 0.0, 1.0);
-    float platformProgress = clamp((progress - 0.24) / 0.30, 0.0, 1.0);
-    float bloomProgress = clamp((progress - 0.48) / 0.22, 0.0, 1.0);
-    float returnProgress = clamp((progress - 0.70) / 0.24, 0.0, 1.0);
+    float vortexProgress = clamp(
+            progress / QI_TO_FOUNDATION_VORTEX_DURATION,
+            0.0,
+            1.0
+    );
     float vortexEase = easeInOut(vortexProgress);
-    float platformEase = easeOut(platformProgress);
-    float bloomEase = easeInOut(bloomProgress);
-    float returnEase = easeInOut(returnProgress);
+    float platformReveal = smoothstep(
+            QI_TO_FOUNDATION_PLATFORM_REVEAL_START,
+            QI_TO_FOUNDATION_PLATFORM_REVEAL_END,
+            progress
+    );
+    float tabletReveal = smoothstep(
+            QI_TO_FOUNDATION_TABLET_REVEAL_START,
+            QI_TO_FOUNDATION_TABLET_REVEAL_END,
+            progress
+    );
+    float bloomIn = smoothstep(
+            QI_TO_FOUNDATION_BLOOM_START,
+            0.60,
+            progress
+    );
+    float bloomOut = 1.0 - smoothstep(0.66, QI_TO_FOUNDATION_BLOOM_END, progress);
+    float bloomPulse = bloomIn * bloomOut;
+    float platformReturn = smoothstep(0.68, 0.88, progress);
+    float platformScale = mix(0.68, 0.86, easeOut(platformReveal));
+    platformScale *= 1.0 + bloomPulse * 0.12;
+    platformScale = mix(platformScale, 0.79, platformReturn * 0.72);
+    float platformFade = smoothstep(0.18, 0.30, progress);
+    float vortexFade = 1.0 - smoothstep(0.38, 0.58, progress);
 
+    vec3 sideColor = mix(PrimaryColor, vec3(0.0), 0.28);
+    vec3 faceColor = mix(PrimaryColor, SecondaryColor, 0.28);
+    vec3 edgeColor = mix(SecondaryColor, AccentColor, 0.14);
+    vec3 glyphColor = AccentColor;
     vec3 color = vec3(0.0);
-    float mask = 0.0;
-    float radius = length(point);
-    float angle = atan(point.y, point.x);
+    float colorAlpha = 0.0;
 
-    float frozenVortex = smoothstep(0.04, 0.28, vortexProgress)
-            * (1.0 - smoothstep(0.34, 0.58, progress));
-    float vortexAngle = angle
-            + radius * 19.0
-            - time * (1.0 - vortexEase * 0.82);
-    float vortexBand = smoothstep(
-            0.56,
-            0.98,
-            sin(vortexAngle * 8.0 + sin(angle * 3.0) * 1.6) * 0.5 + 0.5
+    float vortexAlpha;
+    vec3 vortexColor = renderVortex(
+            point,
+            vortexEase,
+            time * 0.92,
+            vortexAlpha
+    ) * vortexFade;
+    blendLayer(color, colorAlpha, vortexColor, vortexAlpha * vortexFade * 0.76);
+
+    vec2 platformCenter = vec2(0.0, 0.04);
+    vec2 platformPoint = (point - platformCenter)
+            / vec2(platformScale, platformScale * 0.46);
+    float platformRadius = length(platformPoint);
+    float platformAngle = atan(platformPoint.y, platformPoint.x);
+    float face = 1.0 - smoothstep(0.90, 1.0, platformRadius);
+    float lowerRadius = length(
+            (point - platformCenter - vec2(0.0, 0.070))
+                    / vec2(platformScale * 1.015, platformScale * 0.46)
     );
-    float vortexRing = softRing(
-            radius,
-            mix(0.70, 0.10, vortexEase),
-            0.012,
-            0.025
+    float lowerFace = 1.0 - smoothstep(0.90, 1.0, lowerRadius);
+    float lowerHalf = smoothstep(-0.12, 0.66, platformPoint.y);
+    float side = lowerFace * (1.0 - face * 0.96) * lowerHalf;
+
+    float outerEdge = softRing(platformRadius, 0.935, 0.018, 0.030);
+    float middleEdge = softRing(platformRadius, 0.690, 0.012, 0.024);
+    float innerEdge = softRing(platformRadius, 0.455, 0.010, 0.022);
+    float coreRing = softRing(platformRadius, 0.220, 0.009, 0.020);
+    float outerArc = platformArc(
+            platformRadius,
+            platformAngle,
+            0.82,
+            0.010,
+            time * 0.42,
+            8.0
     );
-    float vortexMask = (vortexBand * 0.66 + vortexRing * 0.86)
-            * (frozenVortex + 0.16 * vortexEase);
-    color += mix(PrimaryColor, SecondaryColor, vortexBand * 0.76)
-            * vortexMask;
-    mask = max(mask, vortexMask);
+    float middleArc = platformArc(
+            platformRadius,
+            platformAngle,
+            0.61,
+            0.008,
+            -time * 0.28 + 1.2,
+            12.0
+    );
+    float innerArc = platformArc(
+            platformRadius,
+            platformAngle,
+            0.36,
+            0.006,
+            time * 0.34 + 2.5,
+            8.0
+    );
+    float surfaceSigils = platformSurfaceSigils(platformPoint, time);
+    float surfaceLight = 0.74 + 0.16 * cloudNoise(
+            platformPoint * 3.2 + vec2(time * 0.05, -time * 0.03)
+    );
+    float platformLayer = platformReveal * platformFade;
 
-    float platformScale = mix(0.72, 1.04, platformEase);
-    platformScale *= 1.0 + (1.0 - returnEase) * bloomEase * 0.12;
-    vec2 platformPoint = point / platformScale;
-    float platformRadius = length(platformPoint * vec2(1.0, 1.76));
-    float platformEdge = softRing(platformRadius, 0.56, 0.014, 0.024);
-    float platformInner = softRing(platformRadius, 0.42, 0.009, 0.020);
-    float platformOuter = softRing(platformRadius, 0.73, 0.009, 0.020);
-    float platformFace = (1.0 - smoothstep(0.45, 0.62, platformRadius))
-            * smoothstep(0.05, 0.28, platformProgress);
-    float platformTop = softLine(platformPoint.y, 0.026, 0.018)
-            * smoothstep(0.18, 0.48, abs(platformPoint.x))
-            * (1.0 - smoothstep(0.48, 0.68, abs(platformPoint.x)));
-    float spokes = (1.0 - smoothstep(0.0, 0.022, abs(sin(angle * 8.0))))
-            * smoothstep(0.24, 0.44, platformRadius)
-            * (1.0 - smoothstep(0.64, 0.76, platformRadius));
-    float runes = smoothstep(
-            0.54,
-            0.92,
-            sin(angle * 18.0 + time * 0.18) * 0.5 + 0.5
-    ) * platformEdge;
-    float platformMask = (
-            platformEdge * 1.05
-            + platformInner * 0.72
-            + platformOuter * 0.52
-            + platformFace * 0.22
-            + platformTop * 0.75
-            + spokes * 0.25
-            + runes * 0.34
-    ) * platformEase;
-    vec3 platformColor = mix(SecondaryColor, AccentColor, bloomEase * 0.76);
-    color += platformColor * platformMask;
-    mask = max(mask, platformMask);
+    float tabletRadius = mix(0.45, 0.72, easeOut(tabletReveal));
+    float tabletLayer = tabletReveal * platformFade;
 
-    float bloom = glow(radius, 7.0)
-            * bloomEase
-            * (1.0 - returnEase * 0.35);
-    float flash = glow(radius, 24.0)
-            * bloomEase
-            * (1.0 - smoothstep(0.52, 0.76, bloomProgress));
-    color += AccentColor * (bloom * 0.62 + flash * 1.6);
-    mask = max(mask, bloom * 0.62 + flash);
+    for (int index = 0; index < 8; index++) {
+        float tabletAngle = float(index) / 8.0 * TAU + PI * 0.125;
+        float tabletDepth = -cos(tabletAngle);
+        if (tabletDepth < 0.0) {
+            float tabletSide;
+            float tabletFace;
+            float tabletEdge;
+            float tabletGlyph;
+            platformTablet(
+                    platformPoint,
+                    tabletAngle,
+                    tabletRadius,
+                    tabletLayer,
+                    time,
+                    tabletSide,
+                    tabletFace,
+                    tabletEdge,
+                    tabletGlyph
+            );
+            blendLayer(color, colorAlpha, sideColor, tabletSide * 0.38);
+            blendLayer(color, colorAlpha, faceColor, tabletFace * 0.42);
+            blendLayer(color, colorAlpha, edgeColor, tabletEdge * 0.72);
+            blendLayer(color, colorAlpha, glyphColor, tabletGlyph * 0.68);
+        }
+    }
 
-    float returnGlow = (1.0 - returnEase) * bloomEase;
-    alpha = clamp(mask * (0.76 + returnGlow * 0.24), 0.0, 1.0);
+    blendLayer(color, colorAlpha, sideColor, side * platformLayer * 0.72);
+    blendLayer(
+            color,
+            colorAlpha,
+            mix(sideColor, faceColor, 0.32),
+            side * platformLayer * 0.20
+    );
+    blendLayer(color, colorAlpha, faceColor, face * platformLayer * 0.42);
+    blendLayer(
+            color,
+            colorAlpha,
+            mix(faceColor, SecondaryColor, 0.28),
+            face * platformLayer * surfaceLight * 0.12
+    );
+    blendLayer(
+            color,
+            colorAlpha,
+            edgeColor,
+            (outerEdge * 0.84 + middleEdge * 0.42)
+                    * platformLayer
+                    * 0.76
+    );
+    blendLayer(
+            color,
+            colorAlpha,
+            glyphColor,
+            (innerEdge * 0.52 + coreRing * 0.62
+                    + outerArc * 0.52 + middleArc * 0.40 + innerArc * 0.30
+                    + surfaceSigils * 0.52)
+                    * platformLayer
+                    * (0.62 + bloomPulse * 0.38)
+    );
+
+    for (int index = 0; index < 8; index++) {
+        float tabletAngle = float(index) / 8.0 * TAU + PI * 0.125;
+        float tabletDepth = -cos(tabletAngle);
+        if (tabletDepth >= 0.0) {
+            float tabletSide;
+            float tabletFace;
+            float tabletEdge;
+            float tabletGlyph;
+            platformTablet(
+                    platformPoint,
+                    tabletAngle,
+                    tabletRadius,
+                    tabletLayer,
+                    time,
+                    tabletSide,
+                    tabletFace,
+                    tabletEdge,
+                    tabletGlyph
+            );
+            blendLayer(color, colorAlpha, sideColor, tabletSide * 0.44);
+            blendLayer(color, colorAlpha, faceColor, tabletFace * 0.48);
+            blendLayer(color, colorAlpha, edgeColor, tabletEdge * 0.82);
+            blendLayer(color, colorAlpha, glyphColor, tabletGlyph * 0.78);
+        }
+    }
+
+    float bloom = glow(platformRadius, 4.2)
+            * bloomPulse
+            * (0.40 + platformReveal * 0.48);
+    blendLayer(color, colorAlpha, mix(edgeColor, glyphColor, 0.28), bloom * 0.24);
+
+    alpha = clamp(colorAlpha, 0.0, 1.0);
     return color;
 }
 

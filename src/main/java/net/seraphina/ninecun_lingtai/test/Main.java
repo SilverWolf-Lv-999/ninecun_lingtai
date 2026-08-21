@@ -1,6 +1,6 @@
 package net.seraphina.ninecun_lingtai.test;
 
-import net.seraphina.ninecun_lingtai.utility.jvm.SeraphinaHook;
+import net.seraphina.ninecun_lingtai.utility.jvm.SeraLegitHook;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -25,7 +25,7 @@ public class Main {
             klass.test2();
         });
 
-        SeraphinaHook.replaceMethod(TestKlass1.class, TestKlass2.class);
+        SeraLegitHook.replaceMethod(TestKlass1.class, TestKlass2.class);
 
         assertOutput(
                 "this is changed" + System.lineSeparator()
@@ -40,7 +40,7 @@ public class Main {
     private static void verifyAddMethod() {
         // Populate the original reflection cache before addMethod invalidates it.
         System.class.getDeclaredMethods();
-        SeraphinaHook.addMethod(System.class, "testPrint", () -> System.out.println("123"));
+        SeraLegitHook.addMethod(System.class, "testPrint", () -> System.out.println("123"));
 
         try {
             MethodHandle methodHandle = MethodHandles.publicLookup()

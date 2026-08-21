@@ -16,7 +16,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class SeraphinaHook {
+public class SeraLegitHook {
 
     /*
      * JDK 17 x64 HotSpot layout:
@@ -93,7 +93,7 @@ public class SeraphinaHook {
         Objects.requireNonNull(methodName, "methodName");
         Objects.requireNonNull(methodBody, "methodBody");
 
-        synchronized (SeraphinaHook.class) {
+        synchronized (SeraLegitHook.class) {
             initialize();
             validateAddMethodTarget(klass, methodName);
 
@@ -222,16 +222,16 @@ public class SeraphinaHook {
 
     private static Class<?> createDonorClass(String callbackId, String methodName) {
         long donorId = NEXT_INJECTED_METHOD_ID.get();
-        String className = SeraphinaHook.class.getPackageName()
+        String className = SeraLegitHook.class.getPackageName()
                 + ".InjectedMethodDonor" + donorId;
         byte[] bytecode = createDonorBytecode(className, methodName, callbackId);
-        return new DonorClassLoader(SeraphinaHook.class.getClassLoader()).define(className, bytecode);
+        return new DonorClassLoader(SeraLegitHook.class.getClassLoader()).define(className, bytecode);
     }
 
     private static byte[] createDonorBytecode(
             String className, String methodName, String callbackId) {
         String internalClassName = className.replace('.', '/');
-        String hookClassName = SeraphinaHook.class.getName().replace('.', '/');
+        String hookClassName = SeraLegitHook.class.getName().replace('.', '/');
 
         try (ByteArrayOutputStream bytes = new ByteArrayOutputStream();
              DataOutputStream output = new DataOutputStream(bytes)) {
@@ -420,7 +420,7 @@ public class SeraphinaHook {
                     originalMethodsAddress + ARRAY_ELEMENTS_OFFSET + (long) index * Long.BYTES);
         }
         methodAddresses[originalMethodCount] = donorMethodAddress;
-        Arrays.sort(methodAddresses, Comparator.comparingLong(SeraphinaHook::methodNameSymbolAddress));
+        Arrays.sort(methodAddresses, Comparator.comparingLong(SeraLegitHook::methodNameSymbolAddress));
 
         long byteCount = ARRAY_ELEMENTS_OFFSET + (long) replacementMethodCount * Long.BYTES;
         long replacementMethodsAddress = JDKUtility.UNSAFE.allocateMemory(byteCount);
@@ -945,7 +945,7 @@ public class SeraphinaHook {
             return;
         }
 
-        synchronized (SeraphinaHook.class) {
+        synchronized (SeraLegitHook.class) {
             if (initialized) {
                 return;
             }
@@ -1086,7 +1086,7 @@ public class SeraphinaHook {
     }
 
     private static void verifyLayout() throws Exception {
-        Method probe = SeraphinaHook.class.getDeclaredMethod("layoutProbe");
+        Method probe = SeraLegitHook.class.getDeclaredMethod("layoutProbe");
         makeAccessible(probe);
         MethodLocation location = locate(probe);
         if (location.codeSize != 2
