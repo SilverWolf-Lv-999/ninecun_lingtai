@@ -15,6 +15,11 @@ out vec4 fragColor;
 
 const float PI = 3.14159265359;
 const float TAU = 6.28318530718;
+const float MORTAL_TO_QI_RAIN_END = 0.31;
+const float MORTAL_TO_QI_RIPPLE_START = 0.20;
+const float MORTAL_TO_QI_RIPPLE_DURATION = 0.38;
+const float MORTAL_TO_QI_VORTEX_START = 0.36;
+const float MORTAL_TO_QI_VORTEX_DURATION = 0.4875;
 
 float hash(float value) {
     return fract(sin(value * 91.173) * 43758.5453);
@@ -125,31 +130,58 @@ vec2 cubicBezier(
 }
 
 vec2 dropletContourPoint(float progress) {
-    float segment = min(floor(progress * 3.0), 2.0);
-    float localProgress = clamp(progress * 3.0 - segment, 0.0, 1.0);
+    float segment = min(floor(progress * 6.0), 5.0);
+    float localProgress = clamp(progress * 6.0 - segment, 0.0, 1.0);
 
     if (segment < 0.5) {
         return cubicBezier(
                 vec2(0.0, -1.0),
-                vec2(0.08, -0.76),
-                vec2(0.63, -0.52),
-                vec2(0.78, 0.18),
+                vec2(0.025, -0.92),
+                vec2(0.34, -0.64),
+                vec2(0.60, -0.20),
                 localProgress
         );
     }
     if (segment < 1.5) {
         return cubicBezier(
-                vec2(0.78, 0.18),
-                vec2(0.93, 0.78),
-                vec2(-0.93, 0.78),
-                vec2(-0.78, 0.18),
+                vec2(0.60, -0.20),
+                vec2(0.72, 0.03),
+                vec2(0.76, 0.28),
+                vec2(0.68, 0.50),
+                localProgress
+        );
+    }
+    if (segment < 2.5) {
+        return cubicBezier(
+                vec2(0.68, 0.50),
+                vec2(0.62, 0.70),
+                vec2(0.34, 0.86),
+                vec2(0.0, 0.88),
+                localProgress
+        );
+    }
+    if (segment < 3.5) {
+        return cubicBezier(
+                vec2(0.0, 0.88),
+                vec2(-0.34, 0.86),
+                vec2(-0.62, 0.70),
+                vec2(-0.68, 0.50),
+                localProgress
+        );
+    }
+    if (segment < 4.5) {
+        return cubicBezier(
+                vec2(-0.68, 0.50),
+                vec2(-0.76, 0.28),
+                vec2(-0.72, 0.03),
+                vec2(-0.60, -0.20),
                 localProgress
         );
     }
     return cubicBezier(
-            vec2(-0.78, 0.18),
-            vec2(-0.63, -0.52),
-            vec2(-0.08, -0.76),
+            vec2(-0.60, -0.20),
+            vec2(-0.34, -0.64),
+            vec2(-0.025, -0.92),
             vec2(0.0, -1.0),
             localProgress
     );
@@ -158,8 +190,8 @@ vec2 dropletContourPoint(float progress) {
 float dropletContourDistance(vec2 localPoint) {
     float contourDistance = 10.0;
     vec2 previousPoint = dropletContourPoint(0.0);
-    for (int index = 1; index <= 48; index++) {
-        float progress = float(index) / 48.0;
+    for (int index = 1; index <= 72; index++) {
+        float progress = float(index) / 72.0;
         vec2 currentPoint = dropletContourPoint(progress);
         vec2 direction = currentPoint - previousPoint;
         float directionLength = max(dot(direction, direction), 0.00001);
@@ -508,9 +540,17 @@ vec3 renderMortalToQi(
         float time,
         out float alpha
 ) {
-    float rainProgress = clamp(progress / 0.31, 0.0, 1.0);
-    float impactProgress = clamp((progress - 0.22) / 0.34, 0.0, 1.0);
-    float vortexProgress = clamp((progress - 0.36) / 0.55, 0.0, 1.0);
+    float rainProgress = clamp(progress / MORTAL_TO_QI_RAIN_END, 0.0, 1.0);
+    float impactProgress = clamp(
+            (progress - MORTAL_TO_QI_RIPPLE_START) / MORTAL_TO_QI_RIPPLE_DURATION,
+            0.0,
+            1.0
+    );
+    float vortexProgress = clamp(
+            (progress - MORTAL_TO_QI_VORTEX_START) / MORTAL_TO_QI_VORTEX_DURATION,
+            0.0,
+            1.0
+    );
     float rainEase = easeInOut(rainProgress);
     float vortexEase = easeInOut(vortexProgress);
 
@@ -523,7 +563,7 @@ vec3 renderMortalToQi(
             sin(time * 1.7) * 0.008,
             dropY
     );
-    vec2 dropScale = vec2(0.18, 0.285);
+    vec2 dropScale = vec2(0.20, 0.26);
     float dropMask = dropletStroke(point, dropCenter, dropScale)
             * dropVisibility;
     float dropPulse = 0.88 + 0.12 * sin(time * 3.2);
@@ -531,7 +571,7 @@ vec3 renderMortalToQi(
     mask = max(mask, dropMask);
 
     float impactVisibility = smoothstep(0.0, 0.08, impactProgress)
-            * (1.0 - smoothstep(0.80, 1.0, impactProgress));
+            * (1.0 - smoothstep(0.86, 1.0, impactProgress));
     float ripples = waterRippleField(point, impactProgress, time);
     float centerFlash = glow(length(point), 34.0)
             * (1.0 - smoothstep(0.0, 0.18, impactProgress))
@@ -543,7 +583,7 @@ vec3 renderMortalToQi(
     color += AccentColor * centerFlash * impactVisibility;
     mask = max(mask, impactStrength);
 
-    float vortexFade = 1.0 - smoothstep(0.88, 1.0, progress);
+    float vortexFade = 1.0 - smoothstep(0.84, 0.92, progress);
     float vortexAlpha;
     vec3 vortexColor = renderVortex(
             point,

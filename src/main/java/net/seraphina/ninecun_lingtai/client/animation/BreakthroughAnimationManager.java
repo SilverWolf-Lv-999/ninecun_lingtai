@@ -9,6 +9,7 @@ import net.seraphina.ninecun_lingtai.client.render.BreakthroughAnimationShader;
 import net.seraphina.ninecun_lingtai.client.render.shader.screen.ScreenShaderEffects;
 import net.seraphina.ninecun_lingtai.client.utility.BezierUtility;
 import net.seraphina.ninecun_lingtai.client.utility.BreakthroughAnimationRenderUtility;
+import net.seraphina.ninecun_lingtai.client.utility.BreakthroughAnimationSoundUtility;
 import net.seraphina.ninecun_lingtai.common.animation.BreakthroughAnimationType;
 import net.seraphina.ninecun_lingtai.utility.ColorUtility;
 import net.seraphina.ninecun_lingtai.utility.SpiritualRootUtility;
@@ -17,6 +18,8 @@ import java.util.Optional;
 
 public final class BreakthroughAnimationManager {
     private static final long ANIMATION_DURATION_MILLIS = 5_200L;
+    private static final long MORTAL_TO_QI_WATER_DROP_IMPACT_MILLIS = 1_612L;
+    private static final long MORTAL_TO_QI_VORTEX_START_MILLIS = 1_872L;
     private static final long BLUR_IN_DURATION_MILLIS = 700L;
     private static final long BLUR_OUT_START_MILLIS = 4_200L;
     private static final long BLUR_OUT_DURATION_MILLIS =
@@ -30,6 +33,8 @@ public final class BreakthroughAnimationManager {
     private static int secondaryColor = DEFAULT_SECONDARY_COLOR;
     private static int accentColor = 0xFFF3C4;
     private static long lastRenderLogMillis = -1L;
+    private static boolean waterDropSoundPlayed;
+    private static boolean vortexSoundPlayed;
 
     private BreakthroughAnimationManager() {
     }
@@ -59,6 +64,9 @@ public final class BreakthroughAnimationManager {
         animationType = type;
         startTimeMillis = Util.getMillis();
         lastRenderLogMillis = -1L;
+        waterDropSoundPlayed = false;
+        vortexSoundPlayed = false;
+        BreakthroughAnimationSoundUtility.stopAll();
         ModMain.LOGGER.info(
                 "Started breakthrough animation: type={}, elementMask={}",
                 type,
@@ -68,7 +76,23 @@ public final class BreakthroughAnimationManager {
     }
 
     public static void tick() {
-        if (isActive() && getElapsedMillis() >= ANIMATION_DURATION_MILLIS) {
+        if (!isActive()) {
+            return;
+        }
+        long elapsedMillis = getElapsedMillis();
+        if (animationType == BreakthroughAnimationType.MORTAL_TO_QI
+                && !waterDropSoundPlayed
+                && elapsedMillis >= MORTAL_TO_QI_WATER_DROP_IMPACT_MILLIS) {
+            BreakthroughAnimationSoundUtility.playWaterDrop();
+            waterDropSoundPlayed = true;
+        }
+        if (animationType == BreakthroughAnimationType.MORTAL_TO_QI
+                && !vortexSoundPlayed
+                && elapsedMillis >= MORTAL_TO_QI_VORTEX_START_MILLIS) {
+            BreakthroughAnimationSoundUtility.playVortex();
+            vortexSoundPlayed = true;
+        }
+        if (elapsedMillis >= ANIMATION_DURATION_MILLIS) {
             reset();
         }
     }
@@ -132,6 +156,9 @@ public final class BreakthroughAnimationManager {
         animationType = null;
         startTimeMillis = -1L;
         lastRenderLogMillis = -1L;
+        waterDropSoundPlayed = false;
+        vortexSoundPlayed = false;
+        BreakthroughAnimationSoundUtility.stopAll();
         ScreenShaderEffects.setBreakthroughBlurActive(false);
     }
 

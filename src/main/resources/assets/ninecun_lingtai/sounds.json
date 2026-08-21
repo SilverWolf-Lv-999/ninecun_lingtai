@@ -6,5 +6,15 @@
         "stream": true
       }
     ]
+  },
+  "breakthrough_water_drop": {
+    "sounds": [
+      "ninecun_lingtai:breakthrough_water_drop"
+    ]
+  },
+  "breakthrough_vortex": {
+    "sounds": [
+      "ninecun_lingtai:breakthrough_vortex"
+    ]
   }
 }

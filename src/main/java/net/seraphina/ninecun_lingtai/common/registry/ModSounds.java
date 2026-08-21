@@ -21,6 +21,20 @@ public final class ModSounds {
             )
     );
 
+    public static final RegistryObject<SoundEvent> BREAKTHROUGH_WATER_DROP = SOUND_EVENTS.register(
+            "breakthrough_water_drop",
+            () -> SoundEvent.createVariableRangeEvent(
+                    ResourceLocation.fromNamespaceAndPath(ModMain.MOD_ID, "breakthrough_water_drop")
+            )
+    );
+
+    public static final RegistryObject<SoundEvent> BREAKTHROUGH_VORTEX = SOUND_EVENTS.register(
+            "breakthrough_vortex",
+            () -> SoundEvent.createVariableRangeEvent(
+                    ResourceLocation.fromNamespaceAndPath(ModMain.MOD_ID, "breakthrough_vortex")
+            )
+    );
+
     public static void register(IEventBus modEventBus) {
         SOUND_EVENTS.register(modEventBus);
     }
