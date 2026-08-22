@@ -50,6 +50,18 @@
       "type": "float",
       "count": 1,
       "values": [0.0]
+    },
+    {
+      "name": "ShakeStrength",
+      "type": "float",
+      "count": 1,
+      "values": [0.0]
+    },
+    {
+      "name": "ShakeTime",
+      "type": "float",
+      "count": 1,
+      "values": [0.0]
     }
   ]
 }

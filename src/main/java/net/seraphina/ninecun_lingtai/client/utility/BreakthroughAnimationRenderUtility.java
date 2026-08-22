@@ -21,6 +21,7 @@ public final class BreakthroughAnimationRenderUtility {
             BreakthroughAnimationType animationType,
             float progress,
             float time,
+            float screenShakeStrength,
             int primaryColor,
             int secondaryColor,
             int accentColor
@@ -42,6 +43,7 @@ public final class BreakthroughAnimationRenderUtility {
         shaderInstance.safeGetUniform("AnimationType").set((float) animationType.ordinal());
         shaderInstance.safeGetUniform("Progress").set(Mth.clamp(progress, 0.0F, 1.0F));
         shaderInstance.safeGetUniform("Time").set(time);
+        shaderInstance.safeGetUniform("ShakeStrength").set(Mth.clamp(screenShakeStrength, 0.0F, 1.0F));
         shaderInstance.safeGetUniform("ScreenSize").set((float) width, (float) height);
         setColorUniform(shaderInstance, "PrimaryColor", primaryColor);
         setColorUniform(shaderInstance, "SecondaryColor", secondaryColor);

@@ -17,15 +17,17 @@ import net.seraphina.ninecun_lingtai.utility.SpiritualRootUtility;
 import java.util.Optional;
 
 public final class BreakthroughAnimationManager {
-    private static final long ANIMATION_DURATION_MILLIS = 5_200L;
+    private static final long DEFAULT_ANIMATION_DURATION_MILLIS = 5_200L;
+    private static final long FOUNDATION_TO_GOLDEN_CORE_ANIMATION_DURATION_MILLIS = 7_500L;
     private static final long GOLDEN_CORE_HOLD_DURATION_MILLIS = 2_000L;
-    private static final float GOLDEN_CORE_HOLD_START_PROGRESS = 0.86F;
+    private static final float GOLDEN_CORE_HOLD_START_PROGRESS = 0.84F;
+    private static final long FOUNDATION_TO_GOLDEN_CORE_BREAK_START_MILLIS = 2_000L;
+    private static final long FOUNDATION_TO_GOLDEN_CORE_VIOLENT_SHAKE_DURATION_MILLIS = 1_000L;
+    private static final long FOUNDATION_TO_GOLDEN_CORE_SETTLE_DURATION_MILLIS = 1_500L;
     private static final long MORTAL_TO_QI_WATER_DROP_IMPACT_MILLIS = 1_612L;
     private static final long MORTAL_TO_QI_VORTEX_START_MILLIS = 1_872L;
     private static final long BLUR_IN_DURATION_MILLIS = 700L;
-    private static final long BLUR_OUT_START_MILLIS = 4_200L;
-    private static final long BLUR_OUT_DURATION_MILLIS =
-            ANIMATION_DURATION_MILLIS - BLUR_OUT_START_MILLIS;
+    private static final long BLUR_OUT_DURATION_MILLIS = 1_000L;
     private static final int DEFAULT_PRIMARY_COLOR = 0x5C7FFF;
     private static final int DEFAULT_SECONDARY_COLOR = 0xB7E6FF;
 
@@ -119,6 +121,7 @@ public final class BreakthroughAnimationManager {
                 animationType,
                 progress,
                 elapsedMillis / 1000.0F,
+                getScreenShakeStrength(),
                 primaryColor,
                 secondaryColor,
                 accentColor
@@ -139,11 +142,12 @@ public final class BreakthroughAnimationManager {
                     1.0F
             );
         }
-        if (elapsedMillis < BLUR_OUT_START_MILLIS) {
+        long blurOutStartMillis = getAnimationDurationMillis() - BLUR_OUT_DURATION_MILLIS;
+        if (elapsedMillis < blurOutStartMillis) {
             return 1.0F;
         }
         return 1.0F - BezierUtility.cubic(
-                (elapsedMillis - BLUR_OUT_START_MILLIS) / (float) BLUR_OUT_DURATION_MILLIS,
+                (elapsedMillis - blurOutStartMillis) / (float) BLUR_OUT_DURATION_MILLIS,
                 0.0F,
                 0.18F,
                 0.92F,
@@ -168,26 +172,82 @@ public final class BreakthroughAnimationManager {
         return animationType != null && startTimeMillis >= 0L;
     }
 
+    public static float getScreenShakeStrength() {
+        if (!isActive() || animationType != BreakthroughAnimationType.FOUNDATION_TO_GOLDEN_CORE) {
+            return 0.0F;
+        }
+
+        long elapsedMillis = getElapsedMillis();
+        if (elapsedMillis < FOUNDATION_TO_GOLDEN_CORE_BREAK_START_MILLIS) {
+            return 0.0F;
+        }
+
+        long violentShakeEndMillis = FOUNDATION_TO_GOLDEN_CORE_BREAK_START_MILLIS
+                + FOUNDATION_TO_GOLDEN_CORE_VIOLENT_SHAKE_DURATION_MILLIS;
+        if (elapsedMillis < violentShakeEndMillis) {
+            float violentProgress = Mth.clamp(
+                    (elapsedMillis - FOUNDATION_TO_GOLDEN_CORE_BREAK_START_MILLIS)
+                            / (float) FOUNDATION_TO_GOLDEN_CORE_VIOLENT_SHAKE_DURATION_MILLIS,
+                    0.0F,
+                    1.0F
+            );
+            return Mth.lerp(violentProgress, 1.0F, 0.82F);
+        }
+
+        float settleProgress = Mth.clamp(
+                (elapsedMillis - violentShakeEndMillis)
+                        / (float) FOUNDATION_TO_GOLDEN_CORE_SETTLE_DURATION_MILLIS,
+                0.0F,
+                1.0F
+        );
+        return 0.82F * (
+                1.0F - BezierUtility.cubic(
+                        settleProgress,
+                        0.0F,
+                        0.10F,
+                        0.72F,
+                        1.0F
+                )
+        );
+    }
+
+    public static float getScreenShakeTime() {
+        if (!isActive()) {
+            return 0.0F;
+        }
+        return getElapsedMillis() / 1000.0F;
+    }
+
     private static long getElapsedMillis() {
         return Math.max(0L, Util.getMillis() - startTimeMillis);
     }
 
     private static long getAnimationDurationMillis() {
         if (animationType == BreakthroughAnimationType.FOUNDATION_TO_GOLDEN_CORE) {
-            return ANIMATION_DURATION_MILLIS + GOLDEN_CORE_HOLD_DURATION_MILLIS;
+            return FOUNDATION_TO_GOLDEN_CORE_ANIMATION_DURATION_MILLIS
+                    + GOLDEN_CORE_HOLD_DURATION_MILLIS;
         }
-        return ANIMATION_DURATION_MILLIS;
+        return DEFAULT_ANIMATION_DURATION_MILLIS;
     }
 
     private static float getAnimationProgress(float elapsedMillis) {
         if (animationType != BreakthroughAnimationType.FOUNDATION_TO_GOLDEN_CORE) {
-            return Mth.clamp(elapsedMillis / ANIMATION_DURATION_MILLIS, 0.0F, 1.0F);
+            return Mth.clamp(
+                    elapsedMillis / DEFAULT_ANIMATION_DURATION_MILLIS,
+                    0.0F,
+                    1.0F
+            );
         }
 
-        float holdStartMillis = ANIMATION_DURATION_MILLIS * GOLDEN_CORE_HOLD_START_PROGRESS;
+        float holdStartMillis = FOUNDATION_TO_GOLDEN_CORE_ANIMATION_DURATION_MILLIS
+                * GOLDEN_CORE_HOLD_START_PROGRESS;
         float holdEndMillis = holdStartMillis + GOLDEN_CORE_HOLD_DURATION_MILLIS;
         if (elapsedMillis <= holdStartMillis) {
-            return Mth.clamp(elapsedMillis / ANIMATION_DURATION_MILLIS, 0.0F, 1.0F);
+            return Mth.clamp(
+                    elapsedMillis / FOUNDATION_TO_GOLDEN_CORE_ANIMATION_DURATION_MILLIS,
+                    0.0F,
+                    1.0F
+            );
         }
         if (elapsedMillis <= holdEndMillis) {
             return GOLDEN_CORE_HOLD_START_PROGRESS;
@@ -195,7 +255,7 @@ public final class BreakthroughAnimationManager {
 
         float fadeProgress = Mth.clamp(
                 (elapsedMillis - holdEndMillis)
-                        / (ANIMATION_DURATION_MILLIS - holdStartMillis),
+                        / (FOUNDATION_TO_GOLDEN_CORE_ANIMATION_DURATION_MILLIS - holdStartMillis),
                 0.0F,
                 1.0F
         );

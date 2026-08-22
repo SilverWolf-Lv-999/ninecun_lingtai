@@ -11,24 +11,23 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.entity.Pose;
-import net.minecraft.world.level.gameevent.GameEvent;
-import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
-import net.seraphina.ninecun_lingtai.common.defense.EntityDefenseResourceData;
 import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.ClassInstanceMultiMap;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Entity.RemovalReason;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.entity.*;
+import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.ForgeHooks;
+import net.seraphina.ninecun_lingtai.common.defense.EntityDefenseResourceData;
+import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -167,9 +166,6 @@ public final class EntityUtility {
         DamageSource damageSource = killer instanceof LivingEntity livingKiller
                 ? targetLiving.damageSources().mobAttack(livingKiller)
                 : targetLiving.damageSources().generic();
-        if (ForgeHooks.onLivingDeath(targetLiving, damageSource)) {
-            // The death event is intentionally observed but cannot veto absolute realm execution.
-        }
         forceActuallyHurt(targetLiving, damageSource, Float.POSITIVE_INFINITY);
         if (killer.level instanceof ServerLevel serverLevel) {
             killer.killedEntity(serverLevel, targetLiving);
@@ -447,8 +443,7 @@ public final class EntityUtility {
         }
     }
 
-    private record DoublePosition(double x, double y, double z) {
-    }
+    private record DoublePosition(double x, double y, double z) { }
 
     public static final class ProtectedLevelCallback implements EntityInLevelCallback {
         private final Entity entity;

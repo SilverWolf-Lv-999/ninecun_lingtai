@@ -6,6 +6,7 @@ in vec2 animationUv;
 uniform float AnimationType;
 uniform float Progress;
 uniform float Time;
+uniform float ShakeStrength;
 uniform vec2 ScreenSize;
 uniform vec3 PrimaryColor;
 uniform vec3 SecondaryColor;
@@ -27,13 +28,17 @@ const float QI_TO_FOUNDATION_TABLET_REVEAL_START = 0.34;
 const float QI_TO_FOUNDATION_TABLET_REVEAL_END = 0.58;
 const float QI_TO_FOUNDATION_BLOOM_START = 0.46;
 const float QI_TO_FOUNDATION_BLOOM_END = 0.80;
-const float FOUNDATION_TO_GOLDEN_CORE_CRACK_START = 0.04;
-const float FOUNDATION_TO_GOLDEN_CORE_CRACK_END = 0.25;
-const float FOUNDATION_TO_GOLDEN_CORE_SHARD_OUT_END = 0.34;
-const float FOUNDATION_TO_GOLDEN_CORE_CORE_REVEAL_START = 0.32;
-const float FOUNDATION_TO_GOLDEN_CORE_CORE_REVEAL_END = 0.61;
-const float FOUNDATION_TO_GOLDEN_CORE_FLOW_START = 0.51;
-const float FOUNDATION_TO_GOLDEN_CORE_FLOW_END = 0.77;
+const float FOUNDATION_TO_GOLDEN_CORE_TREMBLE_END = 0.26666668;
+const float FOUNDATION_TO_GOLDEN_CORE_BREAK_START = 0.26666668;
+const float FOUNDATION_TO_GOLDEN_CORE_BREAK_END = 0.32000000;
+const float FOUNDATION_TO_GOLDEN_CORE_VIOLENT_SHAKE_END = 0.40000000;
+const float FOUNDATION_TO_GOLDEN_CORE_SETTLE_END = 0.60000000;
+const float FOUNDATION_TO_GOLDEN_CORE_GATHER_START = 0.60000000;
+const float FOUNDATION_TO_GOLDEN_CORE_GATHER_END = 0.84000000;
+const float FOUNDATION_TO_GOLDEN_CORE_CORE_REVEAL_START = 0.72000000;
+const float FOUNDATION_TO_GOLDEN_CORE_CORE_REVEAL_END = 0.84000000;
+const float FOUNDATION_TO_GOLDEN_CORE_FLOW_START = 0.76000000;
+const float FOUNDATION_TO_GOLDEN_CORE_FLOW_END = 0.84000000;
 
 float hash(float value) {
     return fract(sin(value * 91.173) * 43758.5453);
@@ -1205,6 +1210,44 @@ float foundationShardEdge(
     return edge;
 }
 
+float shardSphereDistance(
+        vec2 shardPoint,
+        float angle,
+        float displacement,
+        float sphereRadius,
+        float morphProgress,
+        float seed,
+        float time
+) {
+    vec2 direction = vec2(cos(angle), sin(angle));
+    float spin = morphProgress * (0.45 + seed * 0.90);
+    vec2 localPoint = rotation(-angle - spin)
+            * (shardPoint - direction * displacement);
+    float localRadius = length(localPoint);
+    float localAngle = atan(localPoint.y, localPoint.x);
+    float twist = sin(
+            localAngle * (2.0 + seed * 3.0)
+                    + time * (2.10 + seed * 1.20)
+                    + seed * TAU
+    ) * (
+            0.008
+            + (1.0 - morphProgress) * 0.016
+    );
+    float secondaryTwist = cos(
+            localAngle * (3.0 + seed * 2.0)
+                    - time * (1.25 + seed * 0.80)
+                    + seed * 4.7
+    ) * 0.005 * (1.0 - morphProgress * 0.45);
+    float edgeWarp = (
+            cloudNoise(vec2(
+                    localPoint * 8.0 + vec2(seed * 3.4, time * 0.18)
+            )) - 0.5
+    ) * 0.010 * (1.0 - morphProgress * 0.55);
+    float radialWarp = (twist + secondaryTwist + edgeWarp)
+            * smoothstep(0.0, max(sphereRadius, 0.001), localRadius);
+    return localRadius + radialWarp;
+}
+
 float goldenCoreFlow(vec2 localPoint, float time) {
     float radius = length(localPoint);
     float sphereMask = 1.0 - smoothstep(0.82, 1.0, radius);
@@ -1260,21 +1303,67 @@ vec3 renderFoundationToGoldenCore(
         float time,
         out float alpha
 ) {
-    float crackProgress = smoothstep(
-            FOUNDATION_TO_GOLDEN_CORE_CRACK_START,
-            FOUNDATION_TO_GOLDEN_CORE_CRACK_END,
+    float trembleProgress = smoothstep(
+            0.0,
+            FOUNDATION_TO_GOLDEN_CORE_TREMBLE_END,
             progress
     );
+    float breakProgress = smoothstep(
+            FOUNDATION_TO_GOLDEN_CORE_BREAK_START,
+            FOUNDATION_TO_GOLDEN_CORE_BREAK_END,
+            progress
+    );
+    float violentShakeEnvelope = 1.0
+            - smoothstep(
+                    FOUNDATION_TO_GOLDEN_CORE_VIOLENT_SHAKE_END,
+                    FOUNDATION_TO_GOLDEN_CORE_SETTLE_END,
+                    progress
+            );
+    float gatherProgress = smoothstep(
+            FOUNDATION_TO_GOLDEN_CORE_GATHER_START,
+            FOUNDATION_TO_GOLDEN_CORE_GATHER_END,
+            progress
+    );
+    float gatherEase = easeInOut(gatherProgress);
+    float preBreakTremble = trembleProgress * (1.0 - breakProgress);
+    float rupturePulse = exp(-pow(
+            (progress - FOUNDATION_TO_GOLDEN_CORE_BREAK_START) / 0.018,
+            2.0
+    ));
+    float shakeStrength = preBreakTremble * (
+            0.0015
+            + 0.0055 * easeIn(preBreakTremble)
+    ) + breakProgress * violentShakeEnvelope * (
+            0.010
+            + 0.018 * (0.70 + 0.30 * sin(time * 4.0))
+    );
+    vec2 shakeOffset = vec2(
+            sin(time * 31.0 + 0.7) + sin(time * 53.0 + 2.2) * 0.42,
+            cos(time * 37.0 + 1.4) + cos(time * 61.0 + 0.3) * 0.36
+    ) * shakeStrength;
+    float shakeAngle = (
+            sin(time * 28.0 + 1.2) * 0.010
+            + sin(time * 47.0 + 0.6) * 0.006
+    ) * preBreakTremble;
+    shakeAngle += (
+            sin(time * 34.0 + 0.9) * 0.032
+            + sin(time * 67.0 + 2.6) * 0.018
+    ) * breakProgress * violentShakeEnvelope;
+    vec2 animatedPoint = rotation(-shakeAngle) * (point - shakeOffset);
+    float crackProgress = breakProgress;
     float shardOutProgress = smoothstep(
-            0.08,
-            FOUNDATION_TO_GOLDEN_CORE_SHARD_OUT_END,
+            FOUNDATION_TO_GOLDEN_CORE_BREAK_START,
+            FOUNDATION_TO_GOLDEN_CORE_VIOLENT_SHAKE_END,
             progress
     );
-    float shardInProgress = smoothstep(0.34, 0.68, progress);
     float shardVisibility = shardOutProgress
-            * (1.0 - smoothstep(0.64, 0.79, progress));
+            * (1.0 - smoothstep(0.84, 0.96, progress));
     float platformVisibility = 1.0
-            - smoothstep(0.14, 0.38, progress);
+            - smoothstep(
+                    FOUNDATION_TO_GOLDEN_CORE_BREAK_START,
+                    FOUNDATION_TO_GOLDEN_CORE_BREAK_END + 0.055,
+                    progress
+            );
 
     vec3 platformSideColor = mix(PrimaryColor, vec3(0.0), 0.28);
     vec3 platformFaceColor = mix(PrimaryColor, SecondaryColor, 0.28);
@@ -1284,14 +1373,15 @@ vec3 renderFoundationToGoldenCore(
 
     vec2 platformCenter = vec2(0.0, 0.04);
     float platformScale = 0.78
-            + 0.025 * sin(time * 1.4)
-            + crackProgress * 0.045;
-    vec2 platformPoint = (point - platformCenter)
+            + preBreakTremble * 0.012
+            + breakProgress * violentShakeEnvelope * 0.024
+            + crackProgress * 0.020;
+    vec2 platformPoint = (animatedPoint - platformCenter)
             / vec2(platformScale, platformScale * 0.46);
     float platformRadius = length(platformPoint);
     float platformFace = 1.0 - smoothstep(0.90, 1.0, platformRadius);
     float lowerRadius = length(
-            (point - platformCenter - vec2(0.0, 0.070))
+            (animatedPoint - platformCenter - vec2(0.0, 0.070))
                     / vec2(platformScale * 1.015, platformScale * 0.46)
     );
     float lowerFace = 1.0 - smoothstep(0.90, 1.0, lowerRadius);
@@ -1319,9 +1409,9 @@ vec3 renderFoundationToGoldenCore(
     );
     float surfaceSigils = platformSurfaceSigils(platformPoint, time);
     float crackMask = foundationFractureLines(platformPoint, time)
-            * smoothstep(0.24, 0.58, crackProgress);
+            * crackProgress;
     float platformLayer = platformVisibility
-            * (0.92 + 0.08 * sin(time * 2.1));
+            * (0.94 + 0.06 * preBreakTremble);
 
     blendLayer(
             color,
@@ -1360,13 +1450,14 @@ vec3 renderFoundationToGoldenCore(
     );
 
     float fractureFlash = glow(platformRadius, 5.8)
-            * smoothstep(0.12, 0.24, progress)
-            * (1.0 - smoothstep(0.24, 0.39, progress));
+            * rupturePulse
+            * (0.72 + 0.28 * violentShakeEnvelope);
     color += AccentColor * fractureFlash * 0.72;
     colorAlpha = max(colorAlpha, fractureFlash * 0.52);
 
-    vec2 shardPoint = (point - platformCenter)
+    vec2 shardPoint = (animatedPoint - platformCenter)
             / vec2(platformScale, platformScale * 0.46);
+    float targetSphereRadius = 0.19 / max(platformScale, 0.001);
     for (int index = 0; index < 12; index++) {
         float indexValue = float(index);
         float seed = hash(indexValue * 4.37 + 2.1);
@@ -1382,17 +1473,20 @@ vec3 renderFoundationToGoldenCore(
                 0.0,
                 0.62 + seedTwo * 0.20,
                 easeOut(shardOutProgress)
-        );
+        ) + rupturePulse * (0.055 + seedTwo * 0.045);
         float displacement = mix(
                 outwardDistance,
                 0.018 + seed * 0.026,
-                easeInOut(shardInProgress)
+                gatherEase
         );
         float shardAngle = baseAngle
                 + sin(time * (0.72 + seed * 0.26) + indexValue * 1.9)
                 * shardOutProgress
                 * 0.045
-                + easeInOut(shardInProgress) * (0.72 + seed * 0.85);
+                + gatherEase * (0.72 + seed * 0.85)
+                + violentShakeEnvelope
+                * sin(time * (5.6 + seed * 1.5) + indexValue * 2.4)
+                * 0.18;
         float shardMask = foundationShard(
                 shardPoint,
                 shardAngle,
@@ -1402,6 +1496,27 @@ vec3 renderFoundationToGoldenCore(
                 innerRadius,
                 seed
         );
+        float shardMorph = smoothstep(0.08, 0.92, gatherEase);
+        float sphereRadius = mix(
+                0.024 + seed * 0.012,
+                targetSphereRadius * (0.92 + seed * 0.12),
+                gatherEase
+        );
+        float sphereDistance = shardSphereDistance(
+                shardPoint,
+                shardAngle,
+                displacement,
+                sphereRadius,
+                shardMorph,
+                seed,
+                time
+        );
+        float sphereMask = 1.0 - smoothstep(
+                sphereRadius * 0.66,
+                sphereRadius * 0.98,
+                sphereDistance
+        );
+        float morphedShardMask = mix(shardMask, sphereMask, shardMorph);
         float shardEdge = foundationShardEdge(
                 shardPoint,
                 shardAngle,
@@ -1411,6 +1526,12 @@ vec3 renderFoundationToGoldenCore(
                 innerRadius,
                 seed
         );
+        float sphereEdge = softRing(
+                sphereDistance,
+                sphereRadius * 0.88,
+                0.008 + (1.0 - shardMorph) * 0.004,
+                0.018
+        ) * shardMorph;
         vec2 shardDirection = vec2(cos(shardAngle), sin(shardAngle));
         vec2 localShardPoint = rotation(-shardAngle)
                 * (shardPoint - shardDirection * displacement);
@@ -1427,11 +1548,16 @@ vec3 renderFoundationToGoldenCore(
                         vec2(outerRadius * 0.58, -shardWidth * 0.40),
                         0.0055
                 )
-        ) * shardMask;
+        ) * shardMask * (1.0 - shardMorph);
         vec3 shardColor = mix(
                 platformFaceColor,
                 platformSideColor,
                 0.18 + seed * 0.24
+        );
+        shardColor = mix(
+                shardColor,
+                mix(vec3(0.98, 0.58, 0.075), vec3(1.0, 0.82, 0.28), 0.22),
+                shardMorph * 0.82
         );
         float shardPulse = 0.80 + 0.20 * sin(
                 time * (2.0 + seed * 1.0) + indexValue * 2.1
@@ -1441,14 +1567,15 @@ vec3 renderFoundationToGoldenCore(
                 color,
                 colorAlpha,
                 shardColor,
-                shardMask * activeShardVisibility * 0.92
+                morphedShardMask * activeShardVisibility * 0.92
         );
         blendLayer(
                 color,
                 colorAlpha,
                 AccentColor,
                 (
-                        shardEdge * 0.92
+                        shardEdge * (1.0 - shardMorph) * 0.92
+                        + sphereEdge * 1.12
                         + shardGrooves * (0.20 + crackProgress * 0.16)
                 )
                         * activeShardVisibility
@@ -1461,10 +1588,10 @@ vec3 renderFoundationToGoldenCore(
             FOUNDATION_TO_GOLDEN_CORE_CORE_REVEAL_END,
             progress
     );
-    float coreStable = smoothstep(0.60, 0.80, progress);
+    float coreStable = smoothstep(0.78, 0.84, progress);
     float coreScale = mix(0.028, 0.19, easeOut(coreProgress));
-    float coreDistance = length(point - platformCenter);
-    vec2 corePoint = (point - platformCenter) / max(coreScale, 0.001);
+    float coreDistance = length(animatedPoint - platformCenter);
+    vec2 corePoint = (animatedPoint - platformCenter) / max(coreScale, 0.001);
     float coreRadius = length(corePoint);
     float coreMask = 1.0 - smoothstep(0.90, 1.0, coreRadius);
     float surfaceDepth = sqrt(max(1.0 - coreRadius * coreRadius, 0.0));
@@ -1475,7 +1602,7 @@ vec3 renderFoundationToGoldenCore(
             length(corePoint - vec2(-0.22, -0.24))
     );
     float corePulse = 0.94 + 0.06 * sin(time * 2.35);
-    float formationPulse = exp(-pow((progress - 0.64) / 0.075, 2.0));
+    float formationPulse = exp(-pow((progress - 0.80) / 0.055, 2.0));
     float flowReveal = smoothstep(
             FOUNDATION_TO_GOLDEN_CORE_FLOW_START,
             FOUNDATION_TO_GOLDEN_CORE_FLOW_END,
@@ -1579,6 +1706,17 @@ void main() {
 
     vec2 safeScreenSize = max(ScreenSize, vec2(1.0));
     vec2 point = animationUv * 2.0 - 1.0;
+    float shakeStrength = clamp(ShakeStrength, 0.0, 1.0);
+    vec2 shakePixels = vec2(
+            sin(Time * 63.0 + 0.8) + sin(Time * 97.0 + 2.1) * 0.42,
+            cos(Time * 71.0 + 1.4) + cos(Time * 113.0 + 0.3) * 0.36
+    ) * (7.0 + 9.0 * shakeStrength) * shakeStrength;
+    point -= shakePixels / vec2(safeScreenSize.x, safeScreenSize.y);
+    float shakeAngle = (
+            sin(Time * 59.0 + 1.2) * 0.004
+            + sin(Time * 89.0 + 0.6) * 0.0025
+    ) * shakeStrength;
+    point = rotation(shakeAngle) * point;
     point.x *= safeScreenSize.x / safeScreenSize.y;
 
     float alpha;

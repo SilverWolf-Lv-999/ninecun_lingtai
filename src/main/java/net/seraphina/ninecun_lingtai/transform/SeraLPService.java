@@ -287,7 +287,7 @@ public final class SeraLPService implements ILaunchPluginService {
     }
 
     private static void addProtectionAroundCall(
-            org.objectweb.asm.tree.InsnList instructions,
+            InsnList instructions,
             MethodInsnNode call
     ) {
         instructions.insertBefore(call, new InsnNode(Opcodes.DUP));

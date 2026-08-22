@@ -19,6 +19,14 @@
         {
           "name": "Opacity",
           "values": [0.0]
+        },
+        {
+          "name": "ShakeStrength",
+          "values": [0.0]
+        },
+        {
+          "name": "ShakeTime",
+          "values": [0.0]
         }
       ]
     },

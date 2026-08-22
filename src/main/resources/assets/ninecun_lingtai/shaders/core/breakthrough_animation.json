@@ -44,6 +44,12 @@
       "values": [0.0]
     },
     {
+      "name": "ShakeStrength",
+      "type": "float",
+      "count": 1,
+      "values": [0.0]
+    },
+    {
       "name": "ScreenSize",
       "type": "float",
       "count": 2,

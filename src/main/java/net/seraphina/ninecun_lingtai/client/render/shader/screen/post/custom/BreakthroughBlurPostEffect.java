@@ -28,5 +28,15 @@ public final class BreakthroughBlurPostEffect implements CustomScreenEffect {
         PostEffectHandler.updateUniform(this, "BlurRadius", strength * 10.0F);
         PostEffectHandler.updateUniform(this, "Sigma", Math.max(0.001F, strength * 5.0F));
         PostEffectHandler.updateUniform(this, "Opacity", strength);
+        PostEffectHandler.updateUniform(
+                this,
+                "ShakeStrength",
+                BreakthroughAnimationManager.getScreenShakeStrength()
+        );
+        PostEffectHandler.updateUniform(
+                this,
+                "ShakeTime",
+                BreakthroughAnimationManager.getScreenShakeTime()
+        );
     }
 }
