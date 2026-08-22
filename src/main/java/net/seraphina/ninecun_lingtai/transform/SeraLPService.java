@@ -3,10 +3,15 @@ package net.seraphina.ninecun_lingtai.transform;
 import cpw.mods.modlauncher.serviceapi.ILaunchPluginService;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.IEventListener;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.JumpInsnNode;
+import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.VarInsnNode;
@@ -21,6 +26,12 @@ import java.lang.reflect.Modifier;
 import java.util.EnumSet;
 
 public final class SeraLPService implements ILaunchPluginService {
+    private static final String EVENT_BUS_OWNER = "net/minecraftforge/eventbus/EventBus";
+    private static final String EVENT_BUS_REGISTER_METHOD = "register";
+    private static final String EVENT_BUS_REGISTER_DESCRIPTOR = "(Ljava/lang/Object;)V";
+    private static final String REGISTER_GUARD_METHOD = "shouldRegister";
+    private static final String REGISTER_GUARD_DESCRIPTOR = "(Ljava/lang/Object;)Z";
+
     private static final String CLASS_LOADER_FACTORY_OWNER = "net/minecraftforge/eventbus/ClassLoaderFactory";
     private static final String EVENT_LISTENER_OWNER = "net/minecraftforge/eventbus/api/IEventListener";
     private static final String EVENT_LISTENER_FACTORY_METHOD = "create";
@@ -64,7 +75,8 @@ public final class SeraLPService implements ILaunchPluginService {
             return false;
         }
 
-        boolean transformed = transformEventListenerFactory(classNode);
+        boolean transformed = transformEventBusRegister(classNode)
+                || transformEventListenerFactory(classNode);
         for (var method : classNode.methods) {
             for (var instruction = method.instructions.getFirst();
                  instruction != null;
@@ -76,6 +88,43 @@ public final class SeraLPService implements ILaunchPluginService {
                 addProtectionAroundCall(method.instructions, call);
                 transformed = true;
             }
+        }
+        return transformed;
+    }
+
+    private static boolean transformEventBusRegister(ClassNode classNode) {
+        if (!EVENT_BUS_OWNER.equals(classNode.name)) {
+            return false;
+        }
+
+        boolean transformed = false;
+        for (MethodNode method : classNode.methods) {
+            if (!EVENT_BUS_REGISTER_METHOD.equals(method.name)
+                    || !EVENT_BUS_REGISTER_DESCRIPTOR.equals(method.desc)) {
+                continue;
+            }
+
+            AbstractInsnNode originalEntry = method.instructions.getFirst();
+            if (originalEntry == null) {
+                continue;
+            }
+
+            LabelNode originalEntryLabel = new LabelNode();
+            InsnList guard = new InsnList();
+            guard.add(new VarInsnNode(Opcodes.ALOAD, 1));
+            guard.add(new MethodInsnNode(
+                    Opcodes.INVOKESTATIC,
+                    Type.getInternalName(SeraLPService.class),
+                    REGISTER_GUARD_METHOD,
+                    REGISTER_GUARD_DESCRIPTOR,
+                    false
+            ));
+            guard.add(new JumpInsnNode(Opcodes.IFNE, originalEntryLabel));
+            guard.add(new InsnNode(Opcodes.RETURN));
+            guard.add(originalEntryLabel);
+            method.instructions.insertBefore(originalEntry, guard);
+            method.maxStack = Math.max(method.maxStack, 1);
+            transformed = true;
         }
         return transformed;
     }
@@ -155,6 +204,63 @@ public final class SeraLPService implements ILaunchPluginService {
                     throwable
             );
         }
+    }
+
+    public static boolean shouldRegister(Object target) {
+        if (target == null) {
+            return true;
+        }
+
+        if (target instanceof Class<?> targetClass) {
+            return hasStaticEventMethod(targetClass);
+        }
+        return hasInstanceEventMethod(target.getClass());
+    }
+
+    private static boolean hasStaticEventMethod(Class<?> targetClass) {
+        for (Method method : targetClass.getMethods()) {
+            if (Modifier.isStatic(method.getModifiers())
+                    && method.isAnnotationPresent(SubscribeEvent.class)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean hasInstanceEventMethod(Class<?> targetClass) {
+        for (Method method : targetClass.getMethods()) {
+            if (!Modifier.isStatic(method.getModifiers())
+                    && method.isAnnotationPresent(SubscribeEvent.class)) {
+                return true;
+            }
+        }
+
+        return hasAnnotatedInstanceMethodInParents(targetClass);
+    }
+
+    private static boolean hasAnnotatedInstanceMethodInParents(Class<?> targetClass) {
+        for (Class<?> interfaceClass : targetClass.getInterfaces()) {
+            if (hasAnnotatedInstanceMethod(interfaceClass)
+                    || hasAnnotatedInstanceMethodInParents(interfaceClass)) {
+                return true;
+            }
+        }
+
+        Class<?> superClass = targetClass.getSuperclass();
+        return superClass != null
+                && superClass != Object.class
+                && (hasAnnotatedInstanceMethod(superClass)
+                || hasAnnotatedInstanceMethodInParents(superClass));
+    }
+
+    private static boolean hasAnnotatedInstanceMethod(Class<?> targetClass) {
+        for (Method method : targetClass.getDeclaredMethods()) {
+            if (!Modifier.isStatic(method.getModifiers())
+                    && method.isAnnotationPresent(SubscribeEvent.class)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     static boolean isSupportedMethodCall(MethodInsnNode call) {

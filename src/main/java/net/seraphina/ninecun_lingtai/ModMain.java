@@ -1,5 +1,6 @@
 package net.seraphina.ninecun_lingtai;
 
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
@@ -41,6 +42,7 @@ public final class ModMain {
         ModCreativeModeTabs.register(modEventBus);
         context.registerConfig(ModConfig.Type.COMMON, CommonConfig.SPEC);
         context.registerConfig(ModConfig.Type.CLIENT, ClientConfig.SPEC);
+        MinecraftForge.EVENT_BUS.register(this);
         ModNetwork.register();
         if (Boolean.getBoolean(DISABLE_RUNTIME_HOOKS_PROPERTY)) {
             return;
