@@ -88,6 +88,7 @@ public final class CommonConfig {
     public static final ForgeConfigSpec.IntValue DEFAULT_CREATURE_LIFESPAN_YEARS;
     public static final ForgeConfigSpec.IntValue BOSS_CREATURE_LIFESPAN_YEARS;
     public static final ForgeConfigSpec.DoubleValue CREATURE_CULTIVATOR_CHANCE;
+    public static final ForgeConfigSpec.DoubleValue JADE_SLIP_LOOT_CHEST_CHANCE;
     public static final ForgeConfigSpec.EnumValue<AiProvider> AI_PROVIDER;
     public static final ForgeConfigSpec.ConfigValue<String> AI_API_KEY;
     public static final ForgeConfigSpec.ConfigValue<String> AI_MODEL;
@@ -458,6 +459,15 @@ public final class CommonConfig {
                         "cultivation between Qi Refining layer one and Foundation Establishment layer three"
                 )
                 .defineInRange("cultivatorChance", 0.05D, 0.0D, 1.0D);
+        BUILDER.pop();
+
+        BUILDER.push("loot");
+        JADE_SLIP_LOOT_CHEST_CHANCE = BUILDER
+                .comment(
+                        "Chance for a loot container to receive one random jade slip after its loot generates",
+                        "Includes blank jade slips, technique jade slips, blank formula slips, and alchemy recipes"
+                )
+                .defineInRange("jadeSlipLootChestChance", 0.000005D, 0.0D, 1.0D);
         BUILDER.pop();
 
         BUILDER.push("alchemy");
