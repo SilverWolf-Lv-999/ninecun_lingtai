@@ -9,7 +9,7 @@ import org.objectweb.asm.tree.MethodInsnNode;
 
 import java.util.EnumSet;
 
-public final class HealthLaunchPluginService implements ILaunchPluginService {
+public final class SeraLPService implements ILaunchPluginService {
     private static final String ENTITY_OWNER = "net/minecraft/world/entity/Entity";
     private static final String LIVING_ENTITY_OWNER = "net/minecraft/world/entity/LivingEntity";
     private static final String HEALTH_DESCRIPTOR = "()F";
