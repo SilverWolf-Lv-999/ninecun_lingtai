@@ -34,6 +34,7 @@
     "common.ring.EnderChestBlockEntityMixin",
     "common.ring.RandomizableContainerBlockEntityMixin",
     "common.ring.ServerLevelMixin",
+    "common.trade.AbstractVillagerImmortalTradeMixin",
     "common.warden.WardenEntitySensorMixin",
     "common.warden.WardenVibrationUserMixin"
   ],
@@ -50,6 +51,7 @@
     "client.LightTextureMixin",
     "client.LivingEntityRendererMixin",
     "client.MinecraftMixin",
+    "client.MerchantScreenImmortalTradeMixin",
     "client.MouseHandlerMixin",
     "client.compat.InventoryTabsClientMixin",
     "client.compat.badoptimizations.EntityDataCacheMixin",
