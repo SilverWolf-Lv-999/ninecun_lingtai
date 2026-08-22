@@ -15,7 +15,6 @@ import net.seraphina.ninecun_lingtai.utility.ColorUtility;
 import org.joml.Matrix4f;
 
 public final class BreakthroughAnimationRenderUtility {
-
     public static void render(
             GuiGraphics guiGraphics,
             BreakthroughAnimationType animationType,

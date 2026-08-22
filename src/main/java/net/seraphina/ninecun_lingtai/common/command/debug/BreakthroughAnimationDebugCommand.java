@@ -31,6 +31,10 @@ public final class BreakthroughAnimationDebugCommand {
                 .then(createAnimationCommand(
                         "foundation_to_golden_core",
                         BreakthroughAnimationType.FOUNDATION_TO_GOLDEN_CORE
+                ))
+                .then(createAnimationCommand(
+                        "golden_core_to_nascent_soul",
+                        BreakthroughAnimationType.GOLDEN_CORE_TO_NASCENT_SOUL
                 ));
     }
 

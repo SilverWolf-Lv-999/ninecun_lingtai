@@ -24,6 +24,12 @@ public final class BreakthroughAnimationManager {
     private static final long FOUNDATION_TO_GOLDEN_CORE_BREAK_START_MILLIS = 2_000L;
     private static final long FOUNDATION_TO_GOLDEN_CORE_VIOLENT_SHAKE_DURATION_MILLIS = 1_000L;
     private static final long FOUNDATION_TO_GOLDEN_CORE_SETTLE_DURATION_MILLIS = 1_500L;
+    private static final long GOLDEN_CORE_TO_NASCENT_SOUL_ANIMATION_DURATION_MILLIS = 8_400L;
+    private static final long NASCENT_SOUL_HOLD_DURATION_MILLIS = 1_800L;
+    private static final float NASCENT_SOUL_HOLD_START_PROGRESS = 0.82F;
+    private static final long GOLDEN_CORE_TO_NASCENT_SOUL_BREAK_START_MILLIS = 1_680L;
+    private static final long GOLDEN_CORE_TO_NASCENT_SOUL_VIOLENT_SHAKE_DURATION_MILLIS = 800L;
+    private static final long GOLDEN_CORE_TO_NASCENT_SOUL_SETTLE_DURATION_MILLIS = 1_100L;
     private static final long MORTAL_TO_QI_WATER_DROP_IMPACT_MILLIS = 1_612L;
     private static final long MORTAL_TO_QI_VORTEX_START_MILLIS = 1_872L;
     private static final long BLUR_IN_DURATION_MILLIS = 700L;
@@ -173,11 +179,17 @@ public final class BreakthroughAnimationManager {
     }
 
     public static float getScreenShakeStrength() {
-        if (!isActive() || animationType != BreakthroughAnimationType.FOUNDATION_TO_GOLDEN_CORE) {
+        if (!isActive()) {
             return 0.0F;
         }
 
         long elapsedMillis = getElapsedMillis();
+        if (animationType == BreakthroughAnimationType.GOLDEN_CORE_TO_NASCENT_SOUL) {
+            return getGoldenCoreToNascentSoulShakeStrength(elapsedMillis);
+        }
+        if (animationType != BreakthroughAnimationType.FOUNDATION_TO_GOLDEN_CORE) {
+            return 0.0F;
+        }
         if (elapsedMillis < FOUNDATION_TO_GOLDEN_CORE_BREAK_START_MILLIS) {
             return 0.0F;
         }
@@ -211,6 +223,45 @@ public final class BreakthroughAnimationManager {
         );
     }
 
+    private static float getGoldenCoreToNascentSoulShakeStrength(long elapsedMillis) {
+        if (elapsedMillis < GOLDEN_CORE_TO_NASCENT_SOUL_BREAK_START_MILLIS) {
+            float trembleProgress = Mth.clamp(
+                    elapsedMillis / (float) GOLDEN_CORE_TO_NASCENT_SOUL_BREAK_START_MILLIS,
+                    0.0F,
+                    1.0F
+            );
+            return Mth.lerp(trembleProgress, 0.0F, 0.08F);
+        }
+
+        long violentShakeEndMillis = GOLDEN_CORE_TO_NASCENT_SOUL_BREAK_START_MILLIS
+                + GOLDEN_CORE_TO_NASCENT_SOUL_VIOLENT_SHAKE_DURATION_MILLIS;
+        if (elapsedMillis < violentShakeEndMillis) {
+            float violentProgress = Mth.clamp(
+                    (elapsedMillis - GOLDEN_CORE_TO_NASCENT_SOUL_BREAK_START_MILLIS)
+                            / (float) GOLDEN_CORE_TO_NASCENT_SOUL_VIOLENT_SHAKE_DURATION_MILLIS,
+                    0.0F,
+                    1.0F
+            );
+            return Mth.lerp(violentProgress, 0.58F, 0.46F);
+        }
+
+        float settleProgress = Mth.clamp(
+                (elapsedMillis - violentShakeEndMillis)
+                        / (float) GOLDEN_CORE_TO_NASCENT_SOUL_SETTLE_DURATION_MILLIS,
+                0.0F,
+                1.0F
+        );
+        return 0.46F * (
+                1.0F - BezierUtility.cubic(
+                        settleProgress,
+                        0.0F,
+                        0.12F,
+                        0.78F,
+                        1.0F
+                )
+        );
+    }
+
     public static float getScreenShakeTime() {
         if (!isActive()) {
             return 0.0F;
@@ -227,11 +278,16 @@ public final class BreakthroughAnimationManager {
             return FOUNDATION_TO_GOLDEN_CORE_ANIMATION_DURATION_MILLIS
                     + GOLDEN_CORE_HOLD_DURATION_MILLIS;
         }
+        if (animationType == BreakthroughAnimationType.GOLDEN_CORE_TO_NASCENT_SOUL) {
+            return GOLDEN_CORE_TO_NASCENT_SOUL_ANIMATION_DURATION_MILLIS
+                    + NASCENT_SOUL_HOLD_DURATION_MILLIS;
+        }
         return DEFAULT_ANIMATION_DURATION_MILLIS;
     }
 
     private static float getAnimationProgress(float elapsedMillis) {
-        if (animationType != BreakthroughAnimationType.FOUNDATION_TO_GOLDEN_CORE) {
+        if (animationType != BreakthroughAnimationType.FOUNDATION_TO_GOLDEN_CORE
+                && animationType != BreakthroughAnimationType.GOLDEN_CORE_TO_NASCENT_SOUL) {
             return Mth.clamp(
                     elapsedMillis / DEFAULT_ANIMATION_DURATION_MILLIS,
                     0.0F,
@@ -239,26 +295,34 @@ public final class BreakthroughAnimationManager {
             );
         }
 
-        float holdStartMillis = FOUNDATION_TO_GOLDEN_CORE_ANIMATION_DURATION_MILLIS
-                * GOLDEN_CORE_HOLD_START_PROGRESS;
+        long animationDurationMillis = animationType == BreakthroughAnimationType.FOUNDATION_TO_GOLDEN_CORE
+                ? FOUNDATION_TO_GOLDEN_CORE_ANIMATION_DURATION_MILLIS
+                : GOLDEN_CORE_TO_NASCENT_SOUL_ANIMATION_DURATION_MILLIS;
+        float holdStartProgress = animationType == BreakthroughAnimationType.FOUNDATION_TO_GOLDEN_CORE
+                ? GOLDEN_CORE_HOLD_START_PROGRESS
+                : NASCENT_SOUL_HOLD_START_PROGRESS;
+        long holdStartMillis = (long) (animationDurationMillis * holdStartProgress);
         float holdEndMillis = holdStartMillis + GOLDEN_CORE_HOLD_DURATION_MILLIS;
+        if (animationType == BreakthroughAnimationType.GOLDEN_CORE_TO_NASCENT_SOUL) {
+            holdEndMillis = holdStartMillis + NASCENT_SOUL_HOLD_DURATION_MILLIS;
+        }
         if (elapsedMillis <= holdStartMillis) {
             return Mth.clamp(
-                    elapsedMillis / FOUNDATION_TO_GOLDEN_CORE_ANIMATION_DURATION_MILLIS,
+                    elapsedMillis / (float) animationDurationMillis,
                     0.0F,
                     1.0F
             );
         }
         if (elapsedMillis <= holdEndMillis) {
-            return GOLDEN_CORE_HOLD_START_PROGRESS;
+            return holdStartProgress;
         }
 
         float fadeProgress = Mth.clamp(
                 (elapsedMillis - holdEndMillis)
-                        / (FOUNDATION_TO_GOLDEN_CORE_ANIMATION_DURATION_MILLIS - holdStartMillis),
+                        / (animationDurationMillis - holdStartMillis),
                 0.0F,
                 1.0F
         );
-        return Mth.lerp(fadeProgress, GOLDEN_CORE_HOLD_START_PROGRESS, 1.0F);
+        return Mth.lerp(fadeProgress, holdStartProgress, 1.0F);
     }
 }

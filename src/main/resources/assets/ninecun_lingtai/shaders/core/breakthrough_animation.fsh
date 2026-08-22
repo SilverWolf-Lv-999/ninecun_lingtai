@@ -39,6 +39,17 @@ const float FOUNDATION_TO_GOLDEN_CORE_CORE_REVEAL_START = 0.72000000;
 const float FOUNDATION_TO_GOLDEN_CORE_CORE_REVEAL_END = 0.84000000;
 const float FOUNDATION_TO_GOLDEN_CORE_FLOW_START = 0.76000000;
 const float FOUNDATION_TO_GOLDEN_CORE_FLOW_END = 0.84000000;
+const float GOLDEN_CORE_TO_NASCENT_SOUL_TREMBLE_END = 0.20000000;
+const float GOLDEN_CORE_TO_NASCENT_SOUL_BREAK_START = 0.20000000;
+const float GOLDEN_CORE_TO_NASCENT_SOUL_BREAK_END = 0.27000000;
+const float GOLDEN_CORE_TO_NASCENT_SOUL_VIOLENT_SHAKE_END = 0.36500000;
+const float GOLDEN_CORE_TO_NASCENT_SOUL_SETTLE_END = 0.50000000;
+const float GOLDEN_CORE_TO_NASCENT_SOUL_LOTUS_REVEAL_START = 0.28000000;
+const float GOLDEN_CORE_TO_NASCENT_SOUL_LOTUS_REVEAL_END = 0.57000000;
+const float GOLDEN_CORE_TO_NASCENT_SOUL_BABY_REVEAL_START = 0.45500000;
+const float GOLDEN_CORE_TO_NASCENT_SOUL_BABY_REVEAL_END = 0.76000000;
+const float GOLDEN_CORE_TO_NASCENT_SOUL_PURITY_START = 0.62000000;
+const float GOLDEN_CORE_TO_NASCENT_SOUL_PURITY_END = 0.82000000;
 
 float hash(float value) {
     return fract(sin(value * 91.173) * 43758.5453);
@@ -1698,6 +1709,1369 @@ vec3 renderFoundationToGoldenCore(
     return color;
 }
 
+float nascentSoulEllipse(vec2 point, vec2 center, vec2 scale) {
+    float radius = length((point - center) / scale);
+    return 1.0 - smoothstep(0.88, 1.0, radius);
+}
+
+float nascentSoulEllipseEdge(vec2 point, vec2 center, vec2 scale) {
+    float radius = length((point - center) / scale);
+    return softRing(radius, 0.90, 0.025, 0.035);
+}
+
+float nascentSoulOrientedEllipse(
+        vec2 point,
+        vec2 center,
+        vec2 scale,
+        float angle
+) {
+    return nascentSoulEllipse(
+            rotation(-angle) * (point - center),
+            vec2(0.0),
+            scale
+    );
+}
+
+float nascentSoulOrientedEllipseEdge(
+        vec2 point,
+        vec2 center,
+        vec2 scale,
+        float angle
+) {
+    return nascentSoulEllipseEdge(
+            rotation(-angle) * (point - center),
+            vec2(0.0),
+            scale
+    );
+}
+
+float nascentSoulPointedPetal(
+        vec2 point,
+        vec2 basePoint,
+        vec2 tipPoint,
+        float width
+) {
+    vec2 direction = tipPoint - basePoint;
+    float lengthSquared = max(dot(direction, direction), 0.0001);
+    float projection = clamp(
+            dot(point - basePoint, direction) / lengthSquared,
+            0.0,
+            1.0
+    );
+    vec2 centerPoint = mix(basePoint, tipPoint, projection);
+    float distanceToCenter = length(point - centerPoint);
+    float pointedWidth = width * pow(
+            max(sin(projection * PI), 0.0),
+            0.62
+    );
+    float bodyMask = 1.0 - smoothstep(
+            pointedWidth,
+            pointedWidth + 0.028,
+            distanceToCenter
+    );
+    float endMask = smoothstep(0.0, 0.08, projection)
+            * (1.0 - smoothstep(0.90, 1.0, projection));
+    return bodyMask * endMask;
+}
+
+float nascentSoulPointedPetalEdge(
+        vec2 point,
+        vec2 basePoint,
+        vec2 tipPoint,
+        float width
+) {
+    float outer = nascentSoulPointedPetal(
+            point,
+            basePoint,
+            tipPoint,
+            width
+    );
+    float inner = nascentSoulPointedPetal(
+            point,
+            mix(basePoint, tipPoint, 0.035),
+            mix(basePoint, tipPoint, 0.965),
+            width * 0.86
+    );
+    return max(outer - inner, 0.0);
+}
+
+float nascentSoulPointedPetalVein(
+        vec2 point,
+        vec2 basePoint,
+        vec2 tipPoint,
+        float width
+) {
+    vec2 direction = normalize(tipPoint - basePoint);
+    vec2 perpendicular = vec2(-direction.y, direction.x);
+    float centerVein = segmentLine(
+            point,
+            mix(basePoint, tipPoint, 0.12),
+            mix(basePoint, tipPoint, 0.90),
+            0.005
+    );
+    float leftVein = segmentLine(
+            point,
+            mix(basePoint, tipPoint, 0.24) + perpendicular * width * 0.10,
+            mix(basePoint, tipPoint, 0.74) + perpendicular * width * 0.34,
+            0.0035
+    );
+    float rightVein = segmentLine(
+            point,
+            mix(basePoint, tipPoint, 0.24) - perpendicular * width * 0.10,
+            mix(basePoint, tipPoint, 0.74) - perpendicular * width * 0.34,
+            0.0035
+    );
+    return max(centerVein, max(leftVein, rightVein));
+}
+
+float nascentSoulPetal(
+        vec2 point,
+        vec2 center,
+        vec2 scale,
+        float angle
+) {
+    vec2 localPoint = rotation(-angle) * (point - center);
+    localPoint /= scale;
+    float verticalMask = smoothstep(-1.08, -0.90, localPoint.y)
+            * (1.0 - smoothstep(0.82, 1.05, localPoint.y));
+    float width = mix(
+            0.045,
+            0.88,
+            smoothstep(-0.98, 0.50, localPoint.y)
+    );
+    float sideMask = 1.0 - smoothstep(
+            width,
+            width + 0.08,
+            abs(localPoint.x)
+    );
+    return clamp(verticalMask * sideMask, 0.0, 1.0);
+}
+
+float nascentSoulPetalEdge(
+        vec2 point,
+        vec2 center,
+        vec2 scale,
+        float angle
+) {
+    float outer = nascentSoulPetal(point, center, scale, angle);
+    float inner = nascentSoulPetal(
+            point,
+            center,
+            scale * 0.90,
+            angle
+    );
+    return max(outer - inner, 0.0);
+}
+
+float nascentSoulPetalVein(
+        vec2 point,
+        vec2 center,
+        vec2 scale,
+        float angle
+) {
+    vec2 axis = vec2(sin(angle), -cos(angle));
+    return segmentLine(
+            point,
+            center - axis * scale.y * 0.82,
+            center + axis * scale.y * 0.58,
+            0.006
+    );
+}
+
+float nascentSoulHairStrand(
+        vec2 point,
+        vec2 headCenter,
+        float strandIndex,
+        float time
+) {
+    float normalizedIndex = strandIndex / 4.0;
+    float startX = mix(-0.15, 0.15, normalizedIndex);
+    float endX = startX + sin(time * 0.22 + strandIndex * 1.7) * 0.012;
+    vec2 startPoint = headCenter + vec2(startX, -0.17);
+    vec2 endPoint = headCenter + vec2(endX, -0.25 + abs(startX) * 0.14);
+    return segmentLine(point, startPoint, endPoint, 0.009);
+}
+
+vec3 renderNascentSoulFigure(
+        vec2 point,
+        float progress,
+        float time,
+        float lotusReveal,
+        float babyReveal,
+        out float alpha
+) {
+    vec3 color = vec3(0.0);
+    float colorAlpha = 0.0;
+
+    float lotusScale = mix(0.08, 1.0, easeOutBack(lotusReveal));
+    vec2 lotusCenter = vec2(0.0, 0.48);
+    vec3 lotusBaseColor = vec3(0.66, 0.85, 0.83);
+    vec3 lotusShadowColor = vec3(0.48, 0.70, 0.70);
+    vec3 lotusLightColor = vec3(0.93, 1.0, 0.98);
+    vec3 lotusEdgeColor = vec3(1.0, 0.98, 0.84);
+
+    float lotusAura = exp(-pow(
+            length((point - lotusCenter) / vec2(0.86, 0.57)),
+            2.0
+    )) * lotusReveal * (0.18 + 0.08 * sin(time * 2.2));
+    color += lotusLightColor * lotusAura * 0.62;
+    colorAlpha = max(colorAlpha, lotusAura * 0.42);
+
+    float lotusBowl = nascentSoulEllipse(
+            point,
+            lotusCenter + vec2(0.0, 0.13 * lotusScale),
+            vec2(0.67, 0.21) * lotusScale
+    ) * lotusReveal;
+    blendLayer(
+            color,
+            colorAlpha,
+            lotusShadowColor,
+            lotusBowl * 0.55
+    );
+
+    for (int index = 0; index < 13; index++) {
+        float normalizedIndex = float(index) / 12.0;
+        float theta = mix(0.12, PI - 0.12, normalizedIndex);
+        float variation = hash(float(index) * 3.17 + 7.0);
+        vec2 basePoint = lotusCenter
+                + vec2(cos(theta) * 0.065, sin(theta) * 0.045)
+                * lotusScale;
+        vec2 tipPoint = lotusCenter
+                + vec2(
+                        cos(theta) * (0.60 + variation * 0.13),
+                        sin(theta) * (0.40 + variation * 0.07)
+                ) * lotusScale;
+        float petalWidth = 0.13 + variation * 0.065;
+        float petalMask = nascentSoulPointedPetal(
+                point,
+                basePoint,
+                tipPoint,
+                petalWidth
+        ) * lotusReveal;
+        float petalEdge = nascentSoulPointedPetalEdge(
+                point,
+                basePoint,
+                tipPoint,
+                petalWidth
+        ) * lotusReveal;
+        float petalVein = nascentSoulPointedPetalVein(
+                point,
+                basePoint,
+                tipPoint,
+                petalWidth
+        ) * lotusReveal;
+        vec3 petalColor = mix(
+                lotusBaseColor,
+                lotusLightColor,
+                0.18 + normalizedIndex * 0.18
+        );
+        blendLayer(
+                color,
+                colorAlpha,
+                petalColor,
+                petalMask * 0.82
+        );
+        blendLayer(
+                color,
+                colorAlpha,
+                lotusEdgeColor,
+                petalEdge * 0.78 + petalVein * 0.22
+        );
+    }
+
+    float backWispLeft = segmentLine(
+            point,
+            vec2(-0.54, 0.40),
+            vec2(-0.78, 0.13),
+            0.009
+    ) + segmentLine(
+            point,
+            vec2(-0.78, 0.13),
+            vec2(-0.68, -0.04),
+            0.007
+    );
+    float backWispRight = segmentLine(
+            point,
+            vec2(0.54, 0.40),
+            vec2(0.78, 0.13),
+            0.009
+    ) + segmentLine(
+            point,
+            vec2(0.78, 0.13),
+            vec2(0.68, -0.04),
+            0.007
+    );
+    blendLayer(
+            color,
+            colorAlpha,
+            lotusLightColor,
+            (backWispLeft + backWispRight) * lotusReveal * 0.32
+    );
+
+    float babyScale = mix(0.08, 1.0, easeOutBack(babyReveal));
+    vec2 babyAnchor = vec2(0.0, 0.43);
+    vec2 babyPoint = (point - babyAnchor) / babyScale + babyAnchor;
+    vec2 headCenter = vec2(0.0, -0.28);
+
+    vec3 skinColor = vec3(1.0, 0.70, 0.56);
+    vec3 skinLightColor = vec3(1.0, 0.86, 0.74);
+    vec3 skinShadowColor = vec3(0.82, 0.43, 0.32);
+    vec3 hairColor = vec3(0.38, 0.20, 0.11);
+    vec3 hairLightColor = vec3(0.67, 0.40, 0.20);
+    vec3 robeColor = vec3(0.91, 0.96, 0.93);
+    vec3 robeShadowColor = vec3(0.64, 0.78, 0.77);
+    vec3 robeLightColor = vec3(1.0, 0.99, 0.91);
+    vec3 sashColor = vec3(0.45, 0.82, 0.82);
+    vec3 lineColor = vec3(0.40, 0.25, 0.17);
+    vec3 babyLightColor = vec3(0.94, 1.0, 0.98);
+
+    float leftLeg = nascentSoulOrientedEllipse(
+            babyPoint,
+            vec2(-0.19, 0.43),
+            vec2(0.25, 0.105),
+            -0.20
+    );
+    float rightLeg = nascentSoulOrientedEllipse(
+            babyPoint,
+            vec2(0.19, 0.43),
+            vec2(0.25, 0.105),
+            0.20
+    );
+    float leftKnee = nascentSoulEllipse(
+            babyPoint,
+            vec2(-0.28, 0.35),
+            vec2(0.105, 0.085)
+    );
+    float rightKnee = nascentSoulEllipse(
+            babyPoint,
+            vec2(0.28, 0.35),
+            vec2(0.105, 0.085)
+    );
+    blendLayer(
+            color,
+            colorAlpha,
+            skinColor,
+            max(leftLeg, rightLeg) * babyReveal * 0.88
+    );
+    blendLayer(
+            color,
+            colorAlpha,
+            skinLightColor,
+            max(leftKnee, rightKnee) * babyReveal * 0.78
+    );
+
+    float torso = nascentSoulEllipse(
+            babyPoint,
+            vec2(0.0, 0.12),
+            vec2(0.30, 0.29)
+    );
+    float robeSkirt = nascentSoulEllipse(
+            babyPoint,
+            vec2(0.0, 0.38),
+            vec2(0.45, 0.18)
+    );
+    float robeShoulders = nascentSoulEllipse(
+            babyPoint,
+            vec2(0.0, 0.03),
+            vec2(0.39, 0.18)
+    );
+    float leftSleeve = segmentLine(
+            babyPoint,
+            vec2(-0.22, 0.01),
+            vec2(-0.34, 0.29),
+            0.105
+    );
+    float rightSleeve = segmentLine(
+            babyPoint,
+            vec2(0.22, 0.01),
+            vec2(0.34, 0.29),
+            0.105
+    );
+    float robeMask = max(
+            max(torso, robeSkirt),
+            max(robeShoulders, max(leftSleeve, rightSleeve))
+    );
+    blendLayer(
+            color,
+            colorAlpha,
+            robeColor,
+            robeMask * babyReveal * 0.86
+    );
+    blendLayer(
+            color,
+            colorAlpha,
+            robeShadowColor,
+            (robeSkirt * 0.38 + leftSleeve * 0.18 + rightSleeve * 0.18)
+                    * babyReveal
+    );
+
+    float neck = nascentSoulEllipse(
+            babyPoint,
+            headCenter + vec2(0.0, 0.24),
+            vec2(0.13, 0.095)
+    );
+    float leftEar = nascentSoulEllipse(
+            babyPoint,
+            headCenter + vec2(-0.30, 0.01),
+            vec2(0.075, 0.105)
+    );
+    float rightEar = nascentSoulEllipse(
+            babyPoint,
+            headCenter + vec2(0.30, 0.01),
+            vec2(0.075, 0.105)
+    );
+    float headMask = nascentSoulEllipse(
+            babyPoint,
+            headCenter,
+            vec2(0.335, 0.315)
+    );
+    blendLayer(
+            color,
+            colorAlpha,
+            skinShadowColor,
+            neck * babyReveal * 0.54
+    );
+    blendLayer(
+            color,
+            colorAlpha,
+            skinColor,
+            (leftEar + rightEar) * babyReveal * 0.84
+    );
+    blendLayer(
+            color,
+            colorAlpha,
+            skinLightColor,
+            headMask * babyReveal * 0.94
+    );
+    float faceShadow = nascentSoulEllipse(
+            babyPoint,
+            headCenter + vec2(0.0, 0.08),
+            vec2(0.30, 0.21)
+    );
+    blendLayer(
+            color,
+            colorAlpha,
+            skinColor,
+            faceShadow * babyReveal * 0.26
+    );
+    blendLayer(
+            color,
+            colorAlpha,
+            skinLightColor,
+            nascentSoulEllipse(
+                    babyPoint,
+                    headCenter + vec2(-0.10, -0.12),
+                    vec2(0.16, 0.11)
+            ) * babyReveal * 0.18
+    );
+
+    float leftEarInner = nascentSoulEllipse(
+            babyPoint,
+            headCenter + vec2(-0.30, 0.015),
+            vec2(0.038, 0.068)
+    );
+    float rightEarInner = nascentSoulEllipse(
+            babyPoint,
+            headCenter + vec2(0.30, 0.015),
+            vec2(0.038, 0.068)
+    );
+    blendLayer(
+            color,
+            colorAlpha,
+            skinShadowColor,
+            (leftEarInner + rightEarInner) * babyReveal * 0.42
+    );
+
+    float hairCap = nascentSoulEllipse(
+            babyPoint,
+            headCenter + vec2(0.0, -0.105),
+            vec2(0.335, 0.205)
+    ) * (1.0 - step(headCenter.y - 0.015, babyPoint.y));
+    blendLayer(
+            color,
+            colorAlpha,
+            hairColor,
+            hairCap * babyReveal * 0.92
+    );
+    for (int index = 0; index < 9; index++) {
+        float normalizedIndex = float(index) / 8.0;
+        float strandX = mix(-0.27, 0.27, normalizedIndex);
+        float strandCurve = (0.5 - normalizedIndex)
+                * 0.050
+                + sin(time * 0.20 + float(index) * 1.3) * 0.008;
+        float strand = segmentLine(
+                babyPoint,
+                headCenter + vec2(strandX, -0.18),
+                headCenter + vec2(strandX + strandCurve, -0.015),
+                0.010
+        );
+        blendLayer(
+                color,
+                colorAlpha,
+                hairLightColor,
+                strand * babyReveal * 0.58
+        );
+    }
+    float leftSideHair = segmentLine(
+            babyPoint,
+            headCenter + vec2(-0.30, -0.16),
+            headCenter + vec2(-0.32, 0.06),
+            0.009
+    );
+    float rightSideHair = segmentLine(
+            babyPoint,
+            headCenter + vec2(0.30, -0.16),
+            headCenter + vec2(0.32, 0.06),
+            0.009
+    );
+    blendLayer(
+            color,
+            colorAlpha,
+            hairColor,
+            (leftSideHair + rightSideHair) * babyReveal * 0.72
+    );
+
+    float leftEye = segmentLine(
+            babyPoint,
+            headCenter + vec2(-0.20, 0.015),
+            headCenter + vec2(-0.075, 0.030),
+            0.009
+    );
+    float rightEye = segmentLine(
+            babyPoint,
+            headCenter + vec2(0.075, 0.030),
+            headCenter + vec2(0.20, 0.015),
+            0.009
+    );
+    float leftBrow = segmentLine(
+            babyPoint,
+            headCenter + vec2(-0.19, -0.075),
+            headCenter + vec2(-0.08, -0.060),
+            0.005
+    );
+    float rightBrow = segmentLine(
+            babyPoint,
+            headCenter + vec2(0.08, -0.060),
+            headCenter + vec2(0.19, -0.075),
+            0.005
+    );
+    float noseLine = segmentLine(
+            babyPoint,
+            headCenter + vec2(0.0, 0.060),
+            headCenter + vec2(-0.012, 0.097),
+            0.005
+    );
+    float noseTip = nascentSoulEllipse(
+            babyPoint,
+            headCenter + vec2(0.012, 0.098),
+            vec2(0.022, 0.015)
+    );
+    float mouthLeft = segmentLine(
+            babyPoint,
+            headCenter + vec2(-0.050, 0.135),
+            headCenter + vec2(0.0, 0.148),
+            0.006
+    );
+    float mouthRight = segmentLine(
+            babyPoint,
+            headCenter + vec2(0.0, 0.148),
+            headCenter + vec2(0.050, 0.135),
+            0.006
+    );
+    float leftBlush = nascentSoulEllipse(
+            babyPoint,
+            headCenter + vec2(-0.205, 0.105),
+            vec2(0.060, 0.026)
+    );
+    float rightBlush = nascentSoulEllipse(
+            babyPoint,
+            headCenter + vec2(0.205, 0.105),
+            vec2(0.060, 0.026)
+    );
+    blendLayer(
+            color,
+            colorAlpha,
+            lineColor,
+            (leftEye + rightEye + leftBrow + rightBrow
+                    + noseLine + mouthLeft + mouthRight)
+                    * babyReveal * 0.74
+    );
+    blendLayer(
+            color,
+            colorAlpha,
+            skinShadowColor,
+            noseTip * babyReveal * 0.36
+    );
+    blendLayer(
+            color,
+            colorAlpha,
+            vec3(1.0, 0.40, 0.38),
+            (leftBlush + rightBlush) * babyReveal * 0.22
+    );
+
+    float leftCollar = segmentLine(
+            babyPoint,
+            vec2(-0.19, -0.025),
+            vec2(0.14, 0.25),
+            0.030
+    );
+    float rightCollar = segmentLine(
+            babyPoint,
+            vec2(0.19, -0.025),
+            vec2(-0.14, 0.25),
+            0.030
+    );
+    float leftCollarLine = segmentLine(
+            babyPoint,
+            vec2(-0.19, -0.025),
+            vec2(0.14, 0.25),
+            0.006
+    );
+    float rightCollarLine = segmentLine(
+            babyPoint,
+            vec2(0.19, -0.025),
+            vec2(-0.14, 0.25),
+            0.006
+    );
+    float waistSash = segmentLine(
+            babyPoint,
+            vec2(-0.30, 0.26),
+            vec2(0.30, 0.26),
+            0.034
+    );
+    float waistSashEdge = segmentLine(
+            babyPoint,
+            vec2(-0.29, 0.285),
+            vec2(0.29, 0.285),
+            0.007
+    );
+    float leftFold = segmentLine(
+            babyPoint,
+            vec2(-0.24, 0.02),
+            vec2(-0.12, 0.36),
+            0.006
+    );
+    float rightFold = segmentLine(
+            babyPoint,
+            vec2(0.24, 0.02),
+            vec2(0.12, 0.36),
+            0.006
+    );
+    blendLayer(
+            color,
+            colorAlpha,
+            sashColor,
+            (leftCollar + rightCollar + waistSash) * babyReveal * 0.82
+    );
+    blendLayer(
+            color,
+            colorAlpha,
+            robeLightColor,
+            (leftCollarLine + rightCollarLine + waistSashEdge)
+                    * babyReveal * 0.86
+    );
+    blendLayer(
+            color,
+            colorAlpha,
+            robeShadowColor,
+            (leftFold + rightFold) * babyReveal * 0.54
+    );
+
+    float leftHand = nascentSoulEllipse(
+            babyPoint,
+            vec2(-0.24, 0.325),
+            vec2(0.080, 0.095)
+    );
+    float rightHand = nascentSoulEllipse(
+            babyPoint,
+            vec2(0.24, 0.325),
+            vec2(0.080, 0.095)
+    );
+    blendLayer(
+            color,
+            colorAlpha,
+            skinLightColor,
+            (leftHand + rightHand) * babyReveal * 0.92
+    );
+    for (int index = 0; index < 3; index++) {
+        float fingerOffset = (float(index) - 1.0) * 0.020;
+        float leftFinger = segmentLine(
+                babyPoint,
+                vec2(-0.27 + fingerOffset, 0.33),
+                vec2(-0.27 + fingerOffset, 0.375),
+                0.004
+        );
+        float rightFinger = segmentLine(
+                babyPoint,
+                vec2(0.27 - fingerOffset, 0.33),
+                vec2(0.27 - fingerOffset, 0.375),
+                0.004
+        );
+        blendLayer(
+                color,
+                colorAlpha,
+                skinShadowColor,
+                (leftFinger + rightFinger) * babyReveal * 0.42
+        );
+    }
+
+    float babyHalo = exp(-pow(
+            length((point - vec2(0.0, 0.02)) / vec2(0.58, 0.72)),
+            2.0
+    )) * babyReveal * (
+            0.18 + 0.18 * smoothstep(
+                    GOLDEN_CORE_TO_NASCENT_SOUL_PURITY_START,
+                    GOLDEN_CORE_TO_NASCENT_SOUL_PURITY_END,
+                    progress
+            )
+    );
+    float purityPulse = smoothstep(
+            GOLDEN_CORE_TO_NASCENT_SOUL_PURITY_START,
+            GOLDEN_CORE_TO_NASCENT_SOUL_PURITY_END,
+            progress
+    ) * (0.78 + 0.22 * sin(time * 2.0));
+    color += babyLightColor * babyHalo * (0.72 + purityPulse * 0.32);
+    color += babyLightColor
+            * exp(-pow(length(point - vec2(0.0, -0.16)) / 0.20, 2.0))
+            * purityPulse
+            * 0.11;
+    colorAlpha = max(colorAlpha, babyHalo * 0.64);
+
+    for (int index = 0; index < 9; index++) {
+        float normalizedIndex = float(index) / 8.0;
+        float theta = mix(0.22, PI - 0.22, normalizedIndex);
+        float variation = hash(float(index) * 5.41 + 13.0);
+        vec2 basePoint = lotusCenter
+                + vec2(
+                        cos(theta) * (0.035 + variation * 0.025),
+                        0.10 + sin(theta) * 0.035
+                ) * lotusScale;
+        vec2 tipPoint = lotusCenter
+                + vec2(
+                        cos(theta) * (0.46 + variation * 0.12),
+                        0.29 + sin(theta) * (0.28 + variation * 0.06)
+                ) * lotusScale;
+        float petalWidth = 0.15 + variation * 0.065;
+        float petalMask = nascentSoulPointedPetal(
+                point,
+                basePoint,
+                tipPoint,
+                petalWidth
+        ) * lotusReveal;
+        float petalEdge = nascentSoulPointedPetalEdge(
+                point,
+                basePoint,
+                tipPoint,
+                petalWidth
+        ) * lotusReveal;
+        float petalVein = nascentSoulPointedPetalVein(
+                point,
+                basePoint,
+                tipPoint,
+                petalWidth
+        ) * lotusReveal;
+        blendLayer(
+                color,
+                colorAlpha,
+                mix(lotusBaseColor, lotusLightColor, 0.26),
+                petalMask * 0.88
+        );
+        blendLayer(
+                color,
+                colorAlpha,
+                lotusEdgeColor,
+                petalEdge * 0.84 + petalVein * 0.30
+        );
+    }
+
+    float lotusCenterPetal = nascentSoulPointedPetal(
+            point,
+            lotusCenter + vec2(0.0, 0.08) * lotusScale,
+            lotusCenter + vec2(0.0, 0.47) * lotusScale,
+            0.21
+    ) * lotusReveal;
+    blendLayer(
+            color,
+            colorAlpha,
+            lotusLightColor,
+            lotusCenterPetal * 0.72
+    );
+
+    alpha = clamp(
+            colorAlpha
+                    + lotusReveal * 0.07
+                    + babyReveal * 0.10,
+            0.0,
+            1.0
+    );
+    return color;
+}
+
+vec3 renderGoldenCoreToNascentSoul(
+        vec2 point,
+        float progress,
+        float time,
+        out float alpha
+) {
+    float trembleProgress = smoothstep(
+            0.0,
+            GOLDEN_CORE_TO_NASCENT_SOUL_TREMBLE_END,
+            progress
+    );
+    float breakProgress = smoothstep(
+            GOLDEN_CORE_TO_NASCENT_SOUL_BREAK_START,
+            GOLDEN_CORE_TO_NASCENT_SOUL_BREAK_END,
+            progress
+    );
+    float violentShakeEnvelope = 1.0 - smoothstep(
+            GOLDEN_CORE_TO_NASCENT_SOUL_VIOLENT_SHAKE_END,
+            GOLDEN_CORE_TO_NASCENT_SOUL_SETTLE_END,
+            progress
+    );
+    float shardOutProgress = smoothstep(
+            GOLDEN_CORE_TO_NASCENT_SOUL_BREAK_START,
+            GOLDEN_CORE_TO_NASCENT_SOUL_VIOLENT_SHAKE_END,
+            progress
+    );
+    float shardVisibility = shardOutProgress
+            * (1.0 - smoothstep(0.36, 0.50, progress));
+    float coreVisibility = 1.0 - smoothstep(
+            GOLDEN_CORE_TO_NASCENT_SOUL_BREAK_START,
+            GOLDEN_CORE_TO_NASCENT_SOUL_BREAK_END + 0.08,
+            progress
+    );
+
+    vec2 coreShake = vec2(
+            sin(time * 33.0 + 0.8) + sin(time * 61.0 + 2.1) * 0.42,
+            cos(time * 39.0 + 1.4) + cos(time * 73.0 + 0.3) * 0.36
+    ) * (
+            trembleProgress * 0.0035
+            + breakProgress * violentShakeEnvelope * 0.016
+    );
+    float coreAngle = (
+            sin(time * 29.0 + 1.2) * 0.012
+            + sin(time * 47.0 + 0.6) * 0.007
+    ) * trembleProgress;
+    coreAngle += (
+            sin(time * 37.0 + 0.9) * 0.032
+            + sin(time * 67.0 + 2.6) * 0.018
+    ) * breakProgress * violentShakeEnvelope;
+
+    vec2 coreCenter = vec2(0.0, 0.08);
+    vec2 animatedPoint = rotation(-coreAngle)
+            * (point - coreCenter - coreShake);
+    vec2 corePoint = animatedPoint / 0.19;
+    float coreRadius = length(corePoint);
+    float coreMask = 1.0 - smoothstep(0.88, 1.0, coreRadius);
+    float coreSurfaceDepth = sqrt(max(1.0 - coreRadius * coreRadius, 0.0));
+    float coreHighlight = 1.0 - smoothstep(
+            0.0,
+            1.0,
+            length(corePoint - vec2(-0.25, -0.28))
+    );
+    float coreFlow = goldenCoreFlow(corePoint, time * 0.72);
+    vec3 goldenCoreColor = mix(
+            vec3(0.75, 0.25, 0.025),
+            vec3(1.0, 0.62, 0.10),
+            clamp(0.30 + coreSurfaceDepth * 0.38 + coreHighlight * 0.32, 0.0, 1.0)
+    );
+    goldenCoreColor = mix(
+            goldenCoreColor,
+            vec3(1.0, 0.88, 0.40),
+            coreFlow * 0.42
+    );
+
+    vec3 color = vec3(0.0);
+    float colorAlpha = 0.0;
+    float corePulse = 0.92 + 0.08 * sin(time * 2.6);
+    blendLayer(
+            color,
+            colorAlpha,
+            goldenCoreColor * corePulse,
+            coreMask * coreVisibility * 0.94
+    );
+    float coreEdge = nascentSoulEllipseEdge(
+            animatedPoint,
+            vec2(0.0),
+            vec2(0.19)
+    ) * coreVisibility;
+    blendLayer(
+            color,
+            colorAlpha,
+            vec3(1.0, 0.88, 0.42),
+            coreEdge * 0.72
+    );
+
+    float crackMask = foundationFractureLines(corePoint, time * 0.72)
+            * breakProgress;
+    float rupturePulse = exp(-pow(
+            (progress - GOLDEN_CORE_TO_NASCENT_SOUL_BREAK_START) / 0.014,
+            2.0
+    ));
+    blendLayer(
+            color,
+            colorAlpha,
+            vec3(1.0, 0.95, 0.68),
+            crackMask * coreVisibility * 1.18
+                    + rupturePulse * 0.78
+    );
+    color += vec3(1.0, 0.86, 0.32)
+            * rupturePulse
+            * glow(length(animatedPoint), 4.8)
+            * 0.58;
+
+    for (int index = 0; index < 10; index++) {
+        float indexValue = float(index);
+        float seed = hash(indexValue * 4.37 + 18.1);
+        float seedTwo = hash(indexValue * 7.13 + 21.4);
+        float baseAngle = indexValue / 10.0 * TAU
+                + 0.20
+                + (seed - 0.5) * 0.14;
+        float outwardDistance = mix(
+                0.0,
+                0.62 + seedTwo * 0.18,
+                easeOut(shardOutProgress)
+        ) + rupturePulse * (0.04 + seedTwo * 0.04);
+        float displacement = outwardDistance;
+        float shardAngle = baseAngle
+                + shardOutProgress * (0.45 + seed * 0.75)
+                + violentShakeEnvelope
+                * sin(time * (5.0 + seed * 1.7) + indexValue * 2.2)
+                * 0.16;
+        float halfAngle = TAU / 10.0 * (0.42 + seed * 0.025);
+        float outerRadius = 0.72 + seedTwo * 0.18;
+        float innerRadius = 0.025 + seed * 0.024;
+        float shardMask = foundationShard(
+                corePoint,
+                shardAngle,
+                displacement,
+                halfAngle,
+                outerRadius,
+                innerRadius,
+                seed
+        );
+        float shardEdge = foundationShardEdge(
+                corePoint,
+                shardAngle,
+                displacement,
+                halfAngle,
+                outerRadius,
+                innerRadius,
+                seed
+        );
+        vec3 shardColor = mix(
+                vec3(0.70, 0.20, 0.02),
+                vec3(1.0, 0.68, 0.16),
+                0.28 + seed * 0.30
+        );
+        float shardPulse = 0.78 + 0.22 * sin(
+                time * (2.2 + seed * 1.1) + indexValue * 2.4
+        );
+        blendLayer(
+                color,
+                colorAlpha,
+                shardColor,
+                shardMask * shardVisibility * shardPulse * 0.90
+        );
+        blendLayer(
+                color,
+                colorAlpha,
+                vec3(1.0, 0.90, 0.48),
+                shardEdge * shardVisibility * 0.98
+        );
+    }
+
+    {
+        float lotusReveal = smoothstep(
+                GOLDEN_CORE_TO_NASCENT_SOUL_LOTUS_REVEAL_START,
+                GOLDEN_CORE_TO_NASCENT_SOUL_LOTUS_REVEAL_END,
+                progress
+        );
+        float babyReveal = smoothstep(
+                GOLDEN_CORE_TO_NASCENT_SOUL_BABY_REVEAL_START,
+                GOLDEN_CORE_TO_NASCENT_SOUL_BABY_REVEAL_END,
+                progress
+        );
+        float figureAlpha;
+        vec3 figureColor = renderNascentSoulFigure(
+                point,
+                progress,
+                time,
+                lotusReveal,
+                babyReveal,
+                figureAlpha
+        );
+        blendLayer(
+                color,
+                colorAlpha,
+                figureColor,
+                figureAlpha
+        );
+        alpha = clamp(
+                colorAlpha
+                        + shardVisibility * 0.08
+                        + lotusReveal * 0.06
+                        + babyReveal * 0.08,
+                0.0,
+                1.0
+        );
+        return color;
+    }
+
+    float lotusReveal = smoothstep(
+            GOLDEN_CORE_TO_NASCENT_SOUL_LOTUS_REVEAL_START,
+            GOLDEN_CORE_TO_NASCENT_SOUL_LOTUS_REVEAL_END,
+            progress
+    );
+    float lotusScale = mix(0.18, 1.0, easeOut(lotusReveal));
+    vec2 lotusCenter = vec2(0.0, 0.45);
+    vec3 lotusBaseColor = mix(
+            SecondaryColor,
+            vec3(0.78, 0.97, 0.92),
+            0.54
+    );
+    vec3 lotusLightColor = mix(
+            vec3(0.90, 1.0, 0.98),
+            vec3(1.0),
+            0.34
+    );
+
+    for (int index = 0; index < 9; index++) {
+        float normalizedIndex = float(index) / 8.0;
+        float petalAngle = mix(-1.14, 1.14, normalizedIndex);
+        vec2 petalDirection = vec2(
+                sin(petalAngle),
+                -cos(petalAngle)
+        );
+        vec2 petalCenter = lotusCenter
+                + petalDirection * (0.16 * lotusScale);
+        vec2 petalScale = vec2(
+                0.17 * lotusScale,
+                0.33 * lotusScale
+        ) * (0.90 + hash(float(index) + 4.0) * 0.14);
+        float petalMask = nascentSoulPetal(
+                point,
+                petalCenter,
+                petalScale,
+                petalAngle
+        ) * lotusReveal * 0.82;
+        float petalEdge = nascentSoulPetalEdge(
+                point,
+                petalCenter,
+                petalScale,
+                petalAngle
+        ) * lotusReveal;
+        float petalVein = nascentSoulPetalVein(
+                point,
+                petalCenter,
+                petalScale,
+                petalAngle
+        ) * lotusReveal;
+        vec3 petalColor = mix(
+                lotusBaseColor,
+                lotusLightColor,
+                0.24 + normalizedIndex * 0.20
+        );
+        blendLayer(
+                color,
+                colorAlpha,
+                petalColor,
+                petalMask * 0.74
+        );
+        blendLayer(
+                color,
+                colorAlpha,
+                lotusLightColor,
+                petalEdge * 0.84 + petalVein * 0.28
+        );
+    }
+
+    float lotusHalo = exp(-pow(
+            length(point - lotusCenter) / max(0.28 * lotusScale, 0.001),
+            2.0
+    )) * lotusReveal * (
+            0.24 + 0.16 * sin(time * 2.1)
+    );
+    color += lotusLightColor * lotusHalo * 0.56;
+    colorAlpha = max(colorAlpha, lotusHalo * 0.48);
+
+    float babyReveal = smoothstep(
+            GOLDEN_CORE_TO_NASCENT_SOUL_BABY_REVEAL_START,
+            GOLDEN_CORE_TO_NASCENT_SOUL_BABY_REVEAL_END,
+            progress
+    );
+    float babyScale = mix(0.12, 1.0, easeOut(babyReveal));
+    vec2 babyAnchor = vec2(0.0, 0.06);
+    vec2 babyPoint = (point - babyAnchor) / babyScale + babyAnchor;
+    vec2 headCenter = vec2(0.0, -0.29);
+    float headMask = nascentSoulEllipse(
+            babyPoint,
+            headCenter,
+            vec2(0.225, 0.235)
+    );
+    float leftEar = nascentSoulEllipse(
+            babyPoint,
+            headCenter + vec2(-0.205, 0.01),
+            vec2(0.065, 0.085)
+    );
+    float rightEar = nascentSoulEllipse(
+            babyPoint,
+            headCenter + vec2(0.205, 0.01),
+            vec2(0.065, 0.085)
+    );
+    float robeMask = max(
+            nascentSoulEllipse(
+                    babyPoint,
+                    vec2(0.0, 0.13),
+                    vec2(0.27, 0.32)
+            ),
+            nascentSoulEllipse(
+                    babyPoint,
+                    vec2(0.0, 0.34),
+                    vec2(0.30, 0.17)
+            )
+    );
+    float leftSleeve = segmentLine(
+            babyPoint,
+            vec2(-0.19, 0.02),
+            vec2(-0.31, 0.22),
+            0.070
+    );
+    float rightSleeve = segmentLine(
+            babyPoint,
+            vec2(0.19, 0.02),
+            vec2(0.31, 0.22),
+            0.070
+    );
+    float leftHand = nascentSoulEllipse(
+            babyPoint,
+            vec2(-0.31, 0.23),
+            vec2(0.060, 0.067)
+    );
+    float rightHand = nascentSoulEllipse(
+            babyPoint,
+            vec2(0.31, 0.23),
+            vec2(0.060, 0.067)
+    );
+    float leftFoot = nascentSoulEllipse(
+            babyPoint,
+            vec2(-0.13, 0.45),
+            vec2(0.14, 0.095)
+    );
+    float rightFoot = nascentSoulEllipse(
+            babyPoint,
+            vec2(0.13, 0.45),
+            vec2(0.14, 0.095)
+    );
+    vec3 robeColor = mix(
+            vec3(0.82, 0.96, 0.93),
+            vec3(0.98, 1.0, 0.98),
+            0.48
+    );
+    vec3 skinColor = vec3(1.0, 0.73, 0.60);
+    vec3 skinLightColor = vec3(1.0, 0.88, 0.78);
+    vec3 hairColor = vec3(0.52, 0.36, 0.22);
+    vec3 babyLightColor = vec3(0.96, 1.0, 0.99);
+
+    float robeBody = robeMask + max(leftSleeve, rightSleeve) * 0.82;
+    blendLayer(
+            color,
+            colorAlpha,
+            robeColor,
+            robeBody * babyReveal * 0.82
+    );
+    blendLayer(
+            color,
+            colorAlpha,
+            skinColor,
+            (leftFoot + rightFoot) * babyReveal * 0.78
+    );
+    blendLayer(
+            color,
+            colorAlpha,
+            skinColor,
+            (leftHand + rightHand) * babyReveal * 0.90
+    );
+    blendLayer(
+            color,
+            colorAlpha,
+            skinLightColor,
+            (headMask + leftEar + rightEar) * babyReveal * 0.92
+    );
+
+    float hairCap = nascentSoulEllipse(
+            babyPoint,
+            headCenter + vec2(0.0, -0.085),
+            vec2(0.222, 0.145)
+    ) * (1.0 - smoothstep(-0.34, -0.16, babyPoint.y));
+    float hairStrands = 0.0;
+    for (int index = 0; index < 5; index++) {
+        hairStrands = max(
+                hairStrands,
+                nascentSoulHairStrand(
+                        babyPoint,
+                        headCenter,
+                        float(index),
+                        time
+                )
+        );
+    }
+    blendLayer(
+            color,
+            colorAlpha,
+            hairColor,
+            (hairCap * 0.82 + hairStrands * 0.64) * babyReveal
+    );
+
+    float leftEye = segmentLine(
+            babyPoint,
+            headCenter + vec2(-0.115, 0.025),
+            headCenter + vec2(-0.035, 0.020),
+            0.008
+    );
+    float rightEye = segmentLine(
+            babyPoint,
+            headCenter + vec2(0.035, 0.020),
+            headCenter + vec2(0.115, 0.025),
+            0.008
+    );
+    float nose = nascentSoulEllipse(
+            babyPoint,
+            headCenter + vec2(0.0, 0.070),
+            vec2(0.017, 0.022)
+    );
+    float mouth = segmentLine(
+            babyPoint,
+            headCenter + vec2(-0.035, 0.112),
+            headCenter + vec2(0.035, 0.112),
+            0.006
+    );
+    float leftBlush = nascentSoulEllipse(
+            babyPoint,
+            headCenter + vec2(-0.135, 0.082),
+            vec2(0.035, 0.018)
+    );
+    float rightBlush = nascentSoulEllipse(
+            babyPoint,
+            headCenter + vec2(0.135, 0.082),
+            vec2(0.035, 0.018)
+    );
+    blendLayer(
+            color,
+            colorAlpha,
+            mix(hairColor, vec3(0.14, 0.08, 0.05), 0.36),
+            (leftEye + rightEye + mouth) * babyReveal * 0.68
+    );
+    blendLayer(
+            color,
+            colorAlpha,
+            skinLightColor,
+            nose * babyReveal * 0.72
+    );
+    blendLayer(
+            color,
+            colorAlpha,
+            vec3(1.0, 0.42, 0.40),
+            (leftBlush + rightBlush) * babyReveal * 0.24
+    );
+
+    float sashLeft = segmentLine(
+            babyPoint,
+            vec2(-0.17, -0.04),
+            vec2(0.08, 0.26),
+            0.008
+    );
+    float sashRight = segmentLine(
+            babyPoint,
+            vec2(0.17, -0.04),
+            vec2(-0.08, 0.26),
+            0.008
+    );
+    float robeHem = nascentSoulEllipseEdge(
+            babyPoint,
+            vec2(0.0, 0.34),
+            vec2(0.30, 0.17)
+    );
+    blendLayer(
+            color,
+            colorAlpha,
+            mix(SecondaryColor, lotusLightColor, 0.42),
+            (sashLeft + sashRight + robeHem) * babyReveal * 0.66
+    );
+
+    float babyHalo = exp(-pow(
+            length(point - vec2(0.0, -0.04)) / 0.48,
+            2.0
+    )) * babyReveal * (
+            0.24 + 0.22 * smoothstep(
+                    GOLDEN_CORE_TO_NASCENT_SOUL_PURITY_START,
+                    GOLDEN_CORE_TO_NASCENT_SOUL_PURITY_END,
+                    progress
+            )
+    );
+    float purityPulse = smoothstep(
+            GOLDEN_CORE_TO_NASCENT_SOUL_PURITY_START,
+            GOLDEN_CORE_TO_NASCENT_SOUL_PURITY_END,
+            progress
+    ) * (0.78 + 0.22 * sin(time * 2.0));
+    color += babyLightColor * babyHalo * (0.68 + purityPulse * 0.42);
+    color += babyLightColor
+            * exp(-pow(length(point - vec2(0.0, -0.04)) / 0.18, 2.0))
+            * purityPulse
+            * 0.12;
+    colorAlpha = max(colorAlpha, babyHalo * 0.62);
+
+    for (int index = 0; index < 5; index++) {
+        float normalizedIndex = float(index) / 4.0;
+        float petalAngle = mix(-0.72, 0.72, normalizedIndex);
+        vec2 petalDirection = vec2(
+                sin(petalAngle),
+                -cos(petalAngle)
+        );
+        vec2 petalCenter = lotusCenter
+                + petalDirection * (0.18 * lotusScale)
+                + vec2(0.0, 0.075 * lotusScale);
+        vec2 petalScale = vec2(
+                0.19 * lotusScale,
+                0.27 * lotusScale
+        );
+        float petalMask = nascentSoulPetal(
+                point,
+                petalCenter,
+                petalScale,
+                petalAngle
+        ) * lotusReveal * 0.88;
+        float petalEdge = nascentSoulPetalEdge(
+                point,
+                petalCenter,
+                petalScale,
+                petalAngle
+        ) * lotusReveal;
+        blendLayer(
+                color,
+                colorAlpha,
+                mix(lotusBaseColor, lotusLightColor, 0.36),
+                petalMask * 0.78
+        );
+        blendLayer(
+                color,
+                colorAlpha,
+                lotusLightColor,
+                petalEdge * 0.90
+        );
+    }
+
+    alpha = clamp(
+            colorAlpha
+                    + shardVisibility * 0.08
+                    + lotusReveal * 0.06
+                    + babyReveal * 0.08,
+            0.0,
+            1.0
+    );
+    return color;
+}
+
 void main() {
     float progress = clamp(Progress, 0.0, 1.0);
     float fadeIn = smoothstep(0.0, 0.055, progress);
@@ -1725,8 +3099,10 @@ void main() {
         color = renderMortalToQi(point, progress, Time, alpha);
     } else if (AnimationType < 1.5) {
         color = renderQiToFoundation(point, progress, Time, alpha);
-    } else {
+    } else if (AnimationType < 2.5) {
         color = renderFoundationToGoldenCore(point, progress, Time, alpha);
+    } else {
+        color = renderGoldenCoreToNascentSoul(point, progress, Time, alpha);
     }
 
     color = mixLight(color, 0.08 + 0.10 * smoothstep(0.34, 0.82, progress));
