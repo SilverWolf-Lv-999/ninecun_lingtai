@@ -18,6 +18,8 @@ import java.util.Optional;
 
 public final class BreakthroughAnimationManager {
     private static final long ANIMATION_DURATION_MILLIS = 5_200L;
+    private static final long GOLDEN_CORE_HOLD_DURATION_MILLIS = 2_000L;
+    private static final float GOLDEN_CORE_HOLD_START_PROGRESS = 0.86F;
     private static final long MORTAL_TO_QI_WATER_DROP_IMPACT_MILLIS = 1_612L;
     private static final long MORTAL_TO_QI_VORTEX_START_MILLIS = 1_872L;
     private static final long BLUR_IN_DURATION_MILLIS = 700L;
@@ -92,7 +94,7 @@ public final class BreakthroughAnimationManager {
             BreakthroughAnimationSoundUtility.playVortex();
             vortexSoundPlayed = true;
         }
-        if (elapsedMillis >= ANIMATION_DURATION_MILLIS) {
+        if (elapsedMillis >= getAnimationDurationMillis()) {
             reset();
         }
     }
@@ -111,7 +113,7 @@ public final class BreakthroughAnimationManager {
                     BreakthroughAnimationShader.getBreakthroughAnimationShader() != null
             );
         }
-        float progress = Mth.clamp(elapsedMillis / ANIMATION_DURATION_MILLIS, 0.0F, 1.0F);
+        float progress = getAnimationProgress(elapsedMillis);
         BreakthroughAnimationRenderUtility.render(
                 guiGraphics,
                 animationType,
@@ -168,5 +170,35 @@ public final class BreakthroughAnimationManager {
 
     private static long getElapsedMillis() {
         return Math.max(0L, Util.getMillis() - startTimeMillis);
+    }
+
+    private static long getAnimationDurationMillis() {
+        if (animationType == BreakthroughAnimationType.FOUNDATION_TO_GOLDEN_CORE) {
+            return ANIMATION_DURATION_MILLIS + GOLDEN_CORE_HOLD_DURATION_MILLIS;
+        }
+        return ANIMATION_DURATION_MILLIS;
+    }
+
+    private static float getAnimationProgress(float elapsedMillis) {
+        if (animationType != BreakthroughAnimationType.FOUNDATION_TO_GOLDEN_CORE) {
+            return Mth.clamp(elapsedMillis / ANIMATION_DURATION_MILLIS, 0.0F, 1.0F);
+        }
+
+        float holdStartMillis = ANIMATION_DURATION_MILLIS * GOLDEN_CORE_HOLD_START_PROGRESS;
+        float holdEndMillis = holdStartMillis + GOLDEN_CORE_HOLD_DURATION_MILLIS;
+        if (elapsedMillis <= holdStartMillis) {
+            return Mth.clamp(elapsedMillis / ANIMATION_DURATION_MILLIS, 0.0F, 1.0F);
+        }
+        if (elapsedMillis <= holdEndMillis) {
+            return GOLDEN_CORE_HOLD_START_PROGRESS;
+        }
+
+        float fadeProgress = Mth.clamp(
+                (elapsedMillis - holdEndMillis)
+                        / (ANIMATION_DURATION_MILLIS - holdStartMillis),
+                0.0F,
+                1.0F
+        );
+        return Mth.lerp(fadeProgress, GOLDEN_CORE_HOLD_START_PROGRESS, 1.0F);
     }
 }

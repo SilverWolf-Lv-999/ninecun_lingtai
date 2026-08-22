@@ -27,6 +27,13 @@ const float QI_TO_FOUNDATION_TABLET_REVEAL_START = 0.34;
 const float QI_TO_FOUNDATION_TABLET_REVEAL_END = 0.58;
 const float QI_TO_FOUNDATION_BLOOM_START = 0.46;
 const float QI_TO_FOUNDATION_BLOOM_END = 0.80;
+const float FOUNDATION_TO_GOLDEN_CORE_CRACK_START = 0.04;
+const float FOUNDATION_TO_GOLDEN_CORE_CRACK_END = 0.25;
+const float FOUNDATION_TO_GOLDEN_CORE_SHARD_OUT_END = 0.34;
+const float FOUNDATION_TO_GOLDEN_CORE_CORE_REVEAL_START = 0.32;
+const float FOUNDATION_TO_GOLDEN_CORE_CORE_REVEAL_END = 0.61;
+const float FOUNDATION_TO_GOLDEN_CORE_FLOW_START = 0.51;
+const float FOUNDATION_TO_GOLDEN_CORE_FLOW_END = 0.77;
 
 float hash(float value) {
     return fract(sin(value * 91.173) * 43758.5453);
@@ -978,6 +985,592 @@ vec3 renderQiToFoundation(
     return color;
 }
 
+float foundationFractureLines(vec2 point, float time) {
+    float cracks = 0.0;
+    for (int index = 0; index < 9; index++) {
+        float indexValue = float(index);
+        float seed = hash(indexValue + 4.7);
+        float angle = indexValue / 9.0 * TAU
+                + (seed - 0.5) * 0.24
+                + sin(time * 0.45 + indexValue) * 0.012;
+        float lengthValue = 0.46 + seed * 0.36;
+        vec2 endPoint = vec2(cos(angle), sin(angle)) * lengthValue;
+        cracks = max(
+                cracks,
+                segmentLine(point, vec2(0.0), endPoint, 0.0065)
+        );
+
+        float branchProgress = 0.38 + hash(indexValue * 2.31 + 1.0) * 0.30;
+        vec2 branchStart = endPoint * branchProgress;
+        float branchAngle = angle
+                + (hash(indexValue * 3.77 + 7.0) - 0.5) * 1.24;
+        vec2 branchEnd = branchStart
+                + vec2(cos(branchAngle), sin(branchAngle))
+                * (0.085 + seed * 0.08);
+        cracks = max(
+                cracks,
+                segmentLine(point, branchStart, branchEnd, 0.0052)
+        );
+    }
+    return cracks;
+}
+
+float signedAngleDistance(float angle, float target) {
+    return atan(sin(angle - target), cos(angle - target));
+}
+
+float cross2(vec2 first, vec2 second) {
+    return first.x * second.y - first.y * second.x;
+}
+
+float convexShardMask(
+        vec2 point,
+        vec2 vertex0,
+        vec2 vertex1,
+        vec2 vertex2,
+        vec2 vertex3,
+        vec2 vertex4,
+        vec2 vertex5,
+        vec2 vertex6,
+        vec2 vertex7
+) {
+    float edgeDistance = 100.0;
+    edgeDistance = min(
+            edgeDistance,
+            -cross2(vertex1 - vertex0, point - vertex0)
+                    / max(length(vertex1 - vertex0), 0.0001)
+    );
+    edgeDistance = min(
+            edgeDistance,
+            -cross2(vertex2 - vertex1, point - vertex1)
+                    / max(length(vertex2 - vertex1), 0.0001)
+    );
+    edgeDistance = min(
+            edgeDistance,
+            -cross2(vertex3 - vertex2, point - vertex2)
+                    / max(length(vertex3 - vertex2), 0.0001)
+    );
+    edgeDistance = min(
+            edgeDistance,
+            -cross2(vertex4 - vertex3, point - vertex3)
+                    / max(length(vertex4 - vertex3), 0.0001)
+    );
+    edgeDistance = min(
+            edgeDistance,
+            -cross2(vertex5 - vertex4, point - vertex4)
+                    / max(length(vertex5 - vertex4), 0.0001)
+    );
+    edgeDistance = min(
+            edgeDistance,
+            -cross2(vertex6 - vertex5, point - vertex5)
+                    / max(length(vertex6 - vertex5), 0.0001)
+    );
+    edgeDistance = min(
+            edgeDistance,
+            -cross2(vertex7 - vertex6, point - vertex6)
+                    / max(length(vertex7 - vertex6), 0.0001)
+    );
+    edgeDistance = min(
+            edgeDistance,
+            -cross2(vertex0 - vertex7, point - vertex7)
+                    / max(length(vertex0 - vertex7), 0.0001)
+    );
+    return smoothstep(
+            0.0,
+            max(fwidth(edgeDistance) * 1.45, 0.0012),
+            edgeDistance
+    );
+}
+
+float foundationShard(
+        vec2 platformPoint,
+        float angle,
+        float displacement,
+        float halfAngle,
+        float outerRadius,
+        float innerRadius,
+        float seed
+) {
+    vec2 direction = vec2(cos(angle), sin(angle));
+    vec2 localPoint = rotation(-angle)
+            * (platformPoint - direction * displacement);
+    float shardWidth = outerRadius * tan(halfAngle);
+    float outerJitter = (hash(seed * 17.31 + 0.42) - 0.5) * 0.10;
+    float innerJitter = (hash(seed * 23.77 + 1.16) - 0.5) * 0.035;
+    float irregularOuterRadius = outerRadius + outerJitter;
+    float innerPoint = innerRadius + innerJitter;
+    vec2 vertex0 = vec2(
+            innerPoint,
+            -shardWidth * (0.56 + seed * 0.10)
+    );
+    vec2 vertex1 = vec2(
+            innerPoint + 0.055 + seed * 0.035,
+            -shardWidth * (0.30 + seed * 0.11)
+    );
+    vec2 vertex2 = vec2(
+            irregularOuterRadius * (0.60 + seed * 0.10),
+            -shardWidth * (0.96 - seed * 0.08)
+    );
+    vec2 vertex3 = vec2(
+            irregularOuterRadius,
+            -shardWidth * (0.48 + seed * 0.18)
+    );
+    vec2 vertex4 = vec2(
+            irregularOuterRadius * (0.91 - seed * 0.07),
+            shardWidth * (0.68 + seed * 0.18)
+    );
+    vec2 vertex5 = vec2(
+            irregularOuterRadius * (0.52 + seed * 0.12),
+            shardWidth * (1.00 - seed * 0.12)
+    );
+    vec2 vertex6 = vec2(
+            innerPoint + 0.045 + seed * 0.030,
+            shardWidth * (0.27 + seed * 0.13)
+    );
+    vec2 vertex7 = vec2(
+            innerPoint,
+            shardWidth * (0.60 + seed * 0.10)
+    );
+    return convexShardMask(
+            localPoint,
+            vertex0,
+            vertex1,
+            vertex2,
+            vertex3,
+            vertex4,
+            vertex5,
+            vertex6,
+            vertex7
+    );
+}
+
+float foundationShardEdge(
+        vec2 platformPoint,
+        float angle,
+        float displacement,
+        float halfAngle,
+        float outerRadius,
+        float innerRadius,
+        float seed
+) {
+    vec2 direction = vec2(cos(angle), sin(angle));
+    vec2 localPoint = rotation(-angle)
+            * (platformPoint - direction * displacement);
+    float shardWidth = outerRadius * tan(halfAngle);
+    float outerJitter = (hash(seed * 17.31 + 0.42) - 0.5) * 0.10;
+    float innerJitter = (hash(seed * 23.77 + 1.16) - 0.5) * 0.035;
+    float irregularOuterRadius = outerRadius + outerJitter;
+    float innerPoint = innerRadius + innerJitter;
+    vec2 vertex0 = vec2(
+            innerPoint,
+            -shardWidth * (0.56 + seed * 0.10)
+    );
+    vec2 vertex1 = vec2(
+            innerPoint + 0.055 + seed * 0.035,
+            -shardWidth * (0.30 + seed * 0.11)
+    );
+    vec2 vertex2 = vec2(
+            irregularOuterRadius * (0.60 + seed * 0.10),
+            -shardWidth * (0.96 - seed * 0.08)
+    );
+    vec2 vertex3 = vec2(
+            irregularOuterRadius,
+            -shardWidth * (0.48 + seed * 0.18)
+    );
+    vec2 vertex4 = vec2(
+            irregularOuterRadius * (0.91 - seed * 0.07),
+            shardWidth * (0.68 + seed * 0.18)
+    );
+    vec2 vertex5 = vec2(
+            irregularOuterRadius * (0.52 + seed * 0.12),
+            shardWidth * (1.00 - seed * 0.12)
+    );
+    vec2 vertex6 = vec2(
+            innerPoint + 0.045 + seed * 0.030,
+            shardWidth * (0.27 + seed * 0.13)
+    );
+    vec2 vertex7 = vec2(
+            innerPoint,
+            shardWidth * (0.60 + seed * 0.10)
+    );
+    float edge = 0.0;
+    edge = max(edge, segmentLine(localPoint, vertex0, vertex1, 0.009));
+    edge = max(edge, segmentLine(localPoint, vertex1, vertex2, 0.009));
+    edge = max(edge, segmentLine(localPoint, vertex2, vertex3, 0.009));
+    edge = max(edge, segmentLine(localPoint, vertex3, vertex4, 0.009));
+    edge = max(edge, segmentLine(localPoint, vertex4, vertex5, 0.009));
+    edge = max(edge, segmentLine(localPoint, vertex5, vertex6, 0.009));
+    edge = max(edge, segmentLine(localPoint, vertex6, vertex7, 0.009));
+    edge = max(edge, segmentLine(localPoint, vertex7, vertex0, 0.009));
+    return edge;
+}
+
+float goldenCoreFlow(vec2 localPoint, float time) {
+    float radius = length(localPoint);
+    float sphereMask = 1.0 - smoothstep(0.82, 1.0, radius);
+    if (sphereMask <= 0.0) {
+        return 0.0;
+    }
+
+    float surfaceDepth = sqrt(max(1.0 - radius * radius, 0.0));
+    float latitude = asin(clamp(localPoint.y, -1.0, 1.0));
+    float longitude = atan(localPoint.x, max(surfaceDepth, 0.001));
+    float broadWarp = cloudNoise(vec2(
+            longitude * 2.15 + time * 0.10,
+            latitude * 3.60 - time * 0.16
+    ));
+    float detailWarp = cloudNoise(vec2(
+            longitude * 7.0 - time * 0.24,
+            latitude * 9.0 + time * 0.18
+    ));
+    float warp = (broadWarp - 0.5) * 2.8 + (detailWarp - 0.5) * 0.85;
+
+    float streamA = sin(
+            longitude * 4.0
+            + latitude * 6.2
+            - time * 1.45
+            + warp
+    );
+    float streamB = sin(
+            longitude * 7.0
+            - latitude * 3.6
+            - time * 2.05
+            + detailWarp * 4.2
+    );
+    float streamC = sin(
+            longitude * 11.0
+            + latitude * 9.0
+            - time * 2.85
+            + broadWarp * 5.0
+    );
+    float broadStream = smoothstep(0.69, 0.94, 0.5 + 0.5 * streamA);
+    float narrowStream = smoothstep(0.78, 0.985, 0.5 + 0.5 * streamB);
+    float filament = smoothstep(0.84, 0.995, 0.5 + 0.5 * streamC);
+    float frontLighting = 0.28 + 0.72 * smoothstep(0.04, 0.96, surfaceDepth);
+    return sphereMask * frontLighting * (
+            broadStream * 0.62
+            + narrowStream * 0.32
+            + filament * 0.18
+    );
+}
+
+vec3 renderFoundationToGoldenCore(
+        vec2 point,
+        float progress,
+        float time,
+        out float alpha
+) {
+    float crackProgress = smoothstep(
+            FOUNDATION_TO_GOLDEN_CORE_CRACK_START,
+            FOUNDATION_TO_GOLDEN_CORE_CRACK_END,
+            progress
+    );
+    float shardOutProgress = smoothstep(
+            0.08,
+            FOUNDATION_TO_GOLDEN_CORE_SHARD_OUT_END,
+            progress
+    );
+    float shardInProgress = smoothstep(0.34, 0.68, progress);
+    float shardVisibility = shardOutProgress
+            * (1.0 - smoothstep(0.64, 0.79, progress));
+    float platformVisibility = 1.0
+            - smoothstep(0.14, 0.38, progress);
+
+    vec3 platformSideColor = mix(PrimaryColor, vec3(0.0), 0.28);
+    vec3 platformFaceColor = mix(PrimaryColor, SecondaryColor, 0.28);
+    vec3 platformEdgeColor = mix(SecondaryColor, AccentColor, 0.14);
+    vec3 color = vec3(0.0);
+    float colorAlpha = 0.0;
+
+    vec2 platformCenter = vec2(0.0, 0.04);
+    float platformScale = 0.78
+            + 0.025 * sin(time * 1.4)
+            + crackProgress * 0.045;
+    vec2 platformPoint = (point - platformCenter)
+            / vec2(platformScale, platformScale * 0.46);
+    float platformRadius = length(platformPoint);
+    float platformFace = 1.0 - smoothstep(0.90, 1.0, platformRadius);
+    float lowerRadius = length(
+            (point - platformCenter - vec2(0.0, 0.070))
+                    / vec2(platformScale * 1.015, platformScale * 0.46)
+    );
+    float lowerFace = 1.0 - smoothstep(0.90, 1.0, lowerRadius);
+    float lowerHalf = smoothstep(-0.12, 0.66, platformPoint.y);
+    float platformSide = lowerFace
+            * (1.0 - platformFace * 0.96)
+            * lowerHalf;
+    float outerEdge = softRing(platformRadius, 0.935, 0.018, 0.030);
+    float middleEdge = softRing(platformRadius, 0.690, 0.012, 0.024);
+    float innerEdge = softRing(platformRadius, 0.455, 0.010, 0.022);
+    float platformArcs = platformArc(
+            platformRadius,
+            atan(platformPoint.y, platformPoint.x),
+            0.82,
+            0.010,
+            time * 0.42,
+            8.0
+    ) + platformArc(
+            platformRadius,
+            atan(platformPoint.y, platformPoint.x),
+            0.61,
+            0.008,
+            -time * 0.28 + 1.2,
+            12.0
+    );
+    float surfaceSigils = platformSurfaceSigils(platformPoint, time);
+    float crackMask = foundationFractureLines(platformPoint, time)
+            * smoothstep(0.24, 0.58, crackProgress);
+    float platformLayer = platformVisibility
+            * (0.92 + 0.08 * sin(time * 2.1));
+
+    blendLayer(
+            color,
+            colorAlpha,
+            platformSideColor,
+            platformSide * platformLayer * 0.72
+    );
+    blendLayer(
+            color,
+            colorAlpha,
+            platformFaceColor,
+            platformFace * platformLayer * 0.44
+    );
+    blendLayer(
+            color,
+            colorAlpha,
+            platformEdgeColor,
+            (outerEdge * 0.84 + middleEdge * 0.42)
+                    * platformLayer
+                    * 0.78
+    );
+    blendLayer(
+            color,
+            colorAlpha,
+            AccentColor,
+            (innerEdge * 0.52 + platformArcs * 0.46
+                    + surfaceSigils * 0.52)
+                    * platformLayer
+                    * (0.62 + crackProgress * 0.38)
+    );
+    blendLayer(
+            color,
+            colorAlpha,
+            mix(AccentColor, vec3(1.0), 0.28),
+            crackMask * platformLayer * 1.15
+    );
+
+    float fractureFlash = glow(platformRadius, 5.8)
+            * smoothstep(0.12, 0.24, progress)
+            * (1.0 - smoothstep(0.24, 0.39, progress));
+    color += AccentColor * fractureFlash * 0.72;
+    colorAlpha = max(colorAlpha, fractureFlash * 0.52);
+
+    vec2 shardPoint = (point - platformCenter)
+            / vec2(platformScale, platformScale * 0.46);
+    for (int index = 0; index < 12; index++) {
+        float indexValue = float(index);
+        float seed = hash(indexValue * 4.37 + 2.1);
+        float seedTwo = hash(indexValue * 7.13 + 9.4);
+        float sectorAngle = TAU / 12.0;
+        float baseAngle = indexValue * sectorAngle
+                + sectorAngle * 0.5
+                + sin(indexValue * 2.7 + 0.9) * 0.018;
+        float halfAngle = sectorAngle * (0.435 + seed * 0.025);
+        float outerRadius = 0.88 + seedTwo * 0.085;
+        float innerRadius = 0.028 + seed * 0.024;
+        float outwardDistance = mix(
+                0.0,
+                0.62 + seedTwo * 0.20,
+                easeOut(shardOutProgress)
+        );
+        float displacement = mix(
+                outwardDistance,
+                0.018 + seed * 0.026,
+                easeInOut(shardInProgress)
+        );
+        float shardAngle = baseAngle
+                + sin(time * (0.72 + seed * 0.26) + indexValue * 1.9)
+                * shardOutProgress
+                * 0.045
+                + easeInOut(shardInProgress) * (0.72 + seed * 0.85);
+        float shardMask = foundationShard(
+                shardPoint,
+                shardAngle,
+                displacement,
+                halfAngle,
+                outerRadius,
+                innerRadius,
+                seed
+        );
+        float shardEdge = foundationShardEdge(
+                shardPoint,
+                shardAngle,
+                displacement,
+                halfAngle,
+                outerRadius,
+                innerRadius,
+                seed
+        );
+        vec2 shardDirection = vec2(cos(shardAngle), sin(shardAngle));
+        vec2 localShardPoint = rotation(-shardAngle)
+                * (shardPoint - shardDirection * displacement);
+        float shardWidth = outerRadius * tan(halfAngle);
+        float shardGrooves = (
+                segmentLine(
+                        localShardPoint,
+                        vec2(innerRadius + 0.075, -shardWidth * 0.18),
+                        vec2(outerRadius * 0.72, shardWidth * 0.34),
+                        0.0065
+                ) + segmentLine(
+                        localShardPoint,
+                        vec2(innerRadius + 0.11, shardWidth * 0.28),
+                        vec2(outerRadius * 0.58, -shardWidth * 0.40),
+                        0.0055
+                )
+        ) * shardMask;
+        vec3 shardColor = mix(
+                platformFaceColor,
+                platformSideColor,
+                0.18 + seed * 0.24
+        );
+        float shardPulse = 0.80 + 0.20 * sin(
+                time * (2.0 + seed * 1.0) + indexValue * 2.1
+        );
+        float activeShardVisibility = shardVisibility * shardPulse;
+        blendLayer(
+                color,
+                colorAlpha,
+                shardColor,
+                shardMask * activeShardVisibility * 0.92
+        );
+        blendLayer(
+                color,
+                colorAlpha,
+                AccentColor,
+                (
+                        shardEdge * 0.92
+                        + shardGrooves * (0.20 + crackProgress * 0.16)
+                )
+                        * activeShardVisibility
+                        * 0.92
+        );
+    }
+
+    float coreProgress = smoothstep(
+            FOUNDATION_TO_GOLDEN_CORE_CORE_REVEAL_START,
+            FOUNDATION_TO_GOLDEN_CORE_CORE_REVEAL_END,
+            progress
+    );
+    float coreStable = smoothstep(0.60, 0.80, progress);
+    float coreScale = mix(0.028, 0.19, easeOut(coreProgress));
+    float coreDistance = length(point - platformCenter);
+    vec2 corePoint = (point - platformCenter) / max(coreScale, 0.001);
+    float coreRadius = length(corePoint);
+    float coreMask = 1.0 - smoothstep(0.90, 1.0, coreRadius);
+    float surfaceDepth = sqrt(max(1.0 - coreRadius * coreRadius, 0.0));
+    float edgeLight = pow(1.0 - surfaceDepth, 2.25);
+    float centerLight = 1.0 - smoothstep(
+            0.0,
+            1.18,
+            length(corePoint - vec2(-0.22, -0.24))
+    );
+    float corePulse = 0.94 + 0.06 * sin(time * 2.35);
+    float formationPulse = exp(-pow((progress - 0.64) / 0.075, 2.0));
+    float flowReveal = smoothstep(
+            FOUNDATION_TO_GOLDEN_CORE_FLOW_START,
+            FOUNDATION_TO_GOLDEN_CORE_FLOW_END,
+            progress
+    );
+    float flow = goldenCoreFlow(corePoint, time);
+    float flowSpark = pow(clamp(flow * 1.45, 0.0, 1.0), 3.0)
+            * (0.74 + 0.26 * sin(time * 4.1 + corePoint.x * 7.0));
+
+    vec3 goldenBase = vec3(0.72, 0.25, 0.025);
+    vec3 goldenBody = vec3(0.98, 0.58, 0.075);
+    vec3 goldenLight = vec3(1.0, 0.82, 0.28);
+    vec3 whiteGold = vec3(1.0, 0.96, 0.70);
+    vec3 coreColor = mix(
+            goldenBase,
+            goldenBody,
+            clamp(0.30 + centerLight * 0.52 + surfaceDepth * 0.18, 0.0, 1.0)
+    );
+    coreColor = mix(
+            coreColor,
+            goldenLight,
+            edgeLight * 0.28 + centerLight * 0.22
+    );
+    coreColor *= corePulse;
+
+    float coreHalo = exp(-pow(
+            coreDistance / max(coreScale * 1.45, 0.001),
+            2.0
+    ))
+            * coreProgress
+            * (0.30 + coreStable * 0.32 + formationPulse * 0.34);
+    float outerHalo = exp(-pow(
+            coreDistance / max(coreScale * 3.8, 0.001),
+            2.0
+    ))
+            * coreProgress
+            * (0.20 + coreStable * 0.16 + formationPulse * 0.24);
+    float coreContour = softRing(
+            coreRadius,
+            0.915,
+            0.015,
+            0.028
+    ) * coreProgress;
+    float pulseHalo = exp(-pow(
+            coreDistance / max(coreScale * 4.4, 0.001),
+            2.0
+    ))
+            * formationPulse
+            * 0.42;
+    float pulseFlash = exp(-pow(
+            coreDistance / max(coreScale * 8.0, 0.001),
+            2.0
+    ))
+            * formationPulse
+            * 0.18;
+
+    blendLayer(
+            color,
+            colorAlpha,
+            coreColor,
+            coreMask * coreProgress * 0.90
+    );
+    blendLayer(
+            color,
+            colorAlpha,
+            goldenLight,
+            coreContour * (0.14 + coreStable * 0.10)
+    );
+    color += goldenLight * coreHalo * 0.54;
+    color += goldenLight * outerHalo * 0.38;
+    color += goldenLight * pulseHalo * 0.30;
+    color += whiteGold * pulseFlash;
+    color += mix(goldenLight, whiteGold, 0.26)
+            * flow
+            * flowReveal
+            * coreProgress
+            * 0.86;
+    color += whiteGold
+            * flowSpark
+            * flowReveal
+            * coreProgress
+            * 0.38;
+    colorAlpha = max(
+            colorAlpha,
+            coreMask * coreProgress * 0.94
+                    + coreHalo * 0.30
+                    + outerHalo * 0.16
+                    + pulseHalo * 0.20
+                    + flow * flowReveal * 0.34
+    );
+
+    alpha = clamp(colorAlpha, 0.0, 1.0);
+    return color;
+}
+
 void main() {
     float progress = clamp(Progress, 0.0, 1.0);
     float fadeIn = smoothstep(0.0, 0.055, progress);
@@ -992,8 +1585,10 @@ void main() {
     vec3 color;
     if (AnimationType < 0.5) {
         color = renderMortalToQi(point, progress, Time, alpha);
-    } else {
+    } else if (AnimationType < 1.5) {
         color = renderQiToFoundation(point, progress, Time, alpha);
+    } else {
+        color = renderFoundationToGoldenCore(point, progress, Time, alpha);
     }
 
     color = mixLight(color, 0.08 + 0.10 * smoothstep(0.34, 0.82, progress));

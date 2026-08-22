@@ -7,7 +7,8 @@ import java.util.Optional;
 
 public enum BreakthroughAnimationType {
     MORTAL_TO_QI,
-    QI_TO_FOUNDATION;
+    QI_TO_FOUNDATION,
+    FOUNDATION_TO_GOLDEN_CORE;
 
     public static Optional<BreakthroughAnimationType> fromTransition(
             Optional<CultivationStage> previousStage,
@@ -19,6 +20,11 @@ public enum BreakthroughAnimationType {
         if (previousStage.map(CultivationStage::realm).orElse(null) == CultivationRealm.QI_REFINING
                 && currentStage.realm() == CultivationRealm.FOUNDATION_ESTABLISHMENT) {
             return Optional.of(QI_TO_FOUNDATION);
+        }
+        if (previousStage.map(CultivationStage::realm).orElse(null)
+                        == CultivationRealm.FOUNDATION_ESTABLISHMENT
+                && currentStage.realm() == CultivationRealm.GOLDEN_CORE) {
+            return Optional.of(FOUNDATION_TO_GOLDEN_CORE);
         }
         return Optional.empty();
     }
