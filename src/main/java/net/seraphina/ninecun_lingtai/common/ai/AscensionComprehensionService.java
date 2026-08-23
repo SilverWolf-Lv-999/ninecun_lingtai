@@ -14,6 +14,7 @@ import net.seraphina.ninecun_lingtai.common.ascension.AscensionQuestion;
 import net.seraphina.ninecun_lingtai.utility.AiConfigUtility;
 import net.seraphina.ninecun_lingtai.utility.AiResponseUtility;
 import net.seraphina.ninecun_lingtai.utility.AscensionPromptUtility;
+import org.jetbrains.annotations.NotNull;
 
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -33,7 +34,8 @@ public final class AscensionComprehensionService {
             String profileContext,
             String answer
     ) {
-        AiProvider provider = AiConfigUtility.getProvider();
+        AiProvider provider;
+        provider = AiConfigUtility.getProvider();
         String apiKey;
         String model;
         try {
@@ -89,6 +91,11 @@ public final class AscensionComprehensionService {
     }
 
     private static TechniqueAssessment parseResponse(HttpResponse<String> response) {
+        return getTechniqueAssessment(response);
+    }
+
+    @NotNull
+    public static TechniqueAssessment getTechniqueAssessment(HttpResponse<String> response) {
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
             throw new CompletionException(new IllegalStateException(
                     "AI provider returned HTTP " + response.statusCode()

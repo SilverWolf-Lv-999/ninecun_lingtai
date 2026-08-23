@@ -3,24 +3,20 @@ package net.seraphina.ninecun_lingtai.common.ai;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonParser;
 import net.seraphina.ninecun_lingtai.api.ai.AiProvider;
 import net.seraphina.ninecun_lingtai.api.technique.TechniqueAssessment;
 import net.seraphina.ninecun_lingtai.api.technique.TechniqueDefinition;
 import net.seraphina.ninecun_lingtai.utility.AiConfigUtility;
-import net.seraphina.ninecun_lingtai.utility.AiResponseUtility;
 import net.seraphina.ninecun_lingtai.utility.TechniquePromptUtility;
-import net.minecraft.util.GsonHelper;
 
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
+
+import static net.seraphina.ninecun_lingtai.common.ai.AscensionComprehensionService.getTechniqueAssessment;
 
 public final class TechniqueComprehensionService {
     private static final Gson GSON = new GsonBuilder().disableHtmlEscaping().create();
@@ -84,26 +80,6 @@ public final class TechniqueComprehensionService {
     }
 
     private static TechniqueAssessment parseResponse(HttpResponse<String> response) {
-        if (response.statusCode() < 200 || response.statusCode() >= 300) {
-            throw new CompletionException(new IllegalStateException(
-                    "AI provider returned HTTP " + response.statusCode()
-            ));
-        }
-        try {
-            JsonObject responseJson = JsonParser.parseString(response.body()).getAsJsonObject();
-            JsonArray choices = GsonHelper.getAsJsonArray(responseJson, "choices");
-            if (choices.isEmpty()) {
-                throw new JsonParseException("AI response contains no choices");
-            }
-            JsonObject choice = GsonHelper.convertToJsonObject(choices.get(0), "AI choice");
-            JsonObject message = GsonHelper.getAsJsonObject(choice, "message");
-            JsonElement content = message.get("content");
-            if (content == null || !content.isJsonPrimitive()) {
-                throw new JsonParseException("AI response message has no text content");
-            }
-            return AiResponseUtility.parseTechniqueAssessment(content.getAsString());
-        } catch (RuntimeException exception) {
-            throw new CompletionException(new JsonParseException("Unable to parse AI provider response", exception));
-        }
+        return getTechniqueAssessment(response);
     }
 }
