@@ -24,7 +24,8 @@ public final class DebugCommand {
                 .then(TechniqueDebugCommand.create())
                 .then(NotificationDebugCommand.create())
                 .then(AlchemyDebugCommand.create())
-                .then(BreakthroughAnimationDebugCommand.create());
+                .then(BreakthroughAnimationDebugCommand.create())
+                .then(FunctionDebugCommand.create());
     }
 
     private static int showHelp(CommandSourceStack commandSource) {
@@ -61,6 +62,9 @@ public final class DebugCommand {
         ), false);
         commandSource.sendSuccess(() -> Component.literal(
                 "§ebreakthrough_animation§r：播放凡人→练气、练气→筑基、筑基→金丹或金丹→元婴突破动画"
+        ), false);
+        commandSource.sendSuccess(() -> Component.literal(
+                "§efunction§r：执行需要4级权限的功能调试效果"
         ), false);
         commandSource.sendSuccess(() -> Component.literal(
                 "玩家参数支持 @s、玩家名、@a；生物参数支持 @e 选择器；元素与境界支持英文 ID 或中文名。"

@@ -34,6 +34,8 @@ import net.seraphina.ninecun_lingtai.client.render.NotificationScrollShader;
 import net.seraphina.ninecun_lingtai.client.render.SoulConstellationShader;
 import net.seraphina.ninecun_lingtai.client.render.SoulRenderer;
 import net.seraphina.ninecun_lingtai.client.render.SpiritualEnergyShader;
+import net.seraphina.ninecun_lingtai.client.render.SwordQiShader;
+import net.seraphina.ninecun_lingtai.client.render.SwordQiEntityRenderer;
 import net.seraphina.ninecun_lingtai.client.render.TechniqueCloudShader;
 import net.seraphina.ninecun_lingtai.client.render.TestCloudEntityRenderer;
 import net.seraphina.ninecun_lingtai.client.render.TestCloudShader;
@@ -119,6 +121,10 @@ public final class ClientModEventHandler {
     private static final ResourceLocation TEST_CLOUD_SHADER = ResourceLocation.fromNamespaceAndPath(
             ModMain.MOD_ID,
             "test_cloud"
+    );
+    private static final ResourceLocation SWORD_QI_SHADER = ResourceLocation.fromNamespaceAndPath(
+            ModMain.MOD_ID,
+            "sword_qi"
     );
 
     @SubscribeEvent
@@ -206,6 +212,10 @@ public final class ClientModEventHandler {
         event.registerEntityRenderer(
                 ModEntityTypes.TEST_CLOUD_ENTITY.get(),
                 TestCloudEntityRenderer::new
+        );
+        event.registerEntityRenderer(
+                ModEntityTypes.SWORD_QI_ENTITY.get(),
+                SwordQiEntityRenderer::new
         );
     }
 
@@ -329,6 +339,14 @@ public final class ClientModEventHandler {
                         DefaultVertexFormat.POSITION_COLOR_TEX
                 ),
                 TestCloudShader::setTestCloudShader
+        );
+        event.registerShader(
+                new ShaderInstance(
+                        event.getResourceProvider(),
+                        SWORD_QI_SHADER,
+                        DefaultVertexFormat.POSITION_COLOR_TEX
+                ),
+                SwordQiShader::setSwordQiShader
         );
     }
 }
