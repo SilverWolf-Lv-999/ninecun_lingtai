@@ -21,6 +21,7 @@ import net.seraphina.ninecun_lingtai.api.cultivation.CultivationRealm;
 import net.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
 import net.seraphina.ninecun_lingtai.api.technique.TechniqueAssessment;
 import net.seraphina.ninecun_lingtai.common.ai.AscensionComprehensionService;
+import net.seraphina.ninecun_lingtai.common.ai.AscensionQuestionGenerationService;
 import net.seraphina.ninecun_lingtai.common.config.CommonConfig;
 import net.seraphina.ninecun_lingtai.common.entity.tribulation.ThunderTribulationEntity;
 import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
@@ -41,10 +42,12 @@ import net.seraphina.ninecun_lingtai.utility.RealmSpawnUtility;
 import net.seraphina.ninecun_lingtai.utility.SpiritualRealmUtility;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 
@@ -57,10 +60,15 @@ public final class AscensionManager {
     private static final double ASCENSION_STRIKE_SPIRITUAL_ENERGY_RATIO = 0.84D;
     private static final double ASCENSION_DEFENSE_RESOURCE_RATIO = 0.12D;
     private static final Map<UUID, AscensionSession> SESSIONS = new HashMap<>();
+    private static final Set<UUID> QUESTION_GENERATION_PENDING = new HashSet<>();
 
     public static StartResult request(ServerPlayer player) {
+        UUID playerId = player.getUUID();
         if (isInAscension(player)) {
             return StartResult.ALREADY_ACTIVE;
+        }
+        if (QUESTION_GENERATION_PENDING.contains(playerId)) {
+            return StartResult.QUESTION_GENERATING;
         }
         if (!isAscensionRequired(player)) {
             return StartResult.NOT_REQUIRED;
@@ -78,32 +86,91 @@ public final class AscensionManager {
             return StartResult.INSUFFICIENT_SPIRITUAL_ENERGY;
         }
 
+        String profileContext = AscensionPromptUtility.createProfileContext(player);
+        MinecraftServer server = player.server;
+        QUESTION_GENERATION_PENDING.add(playerId);
+        AscensionQuestionGenerationService.generate(profileContext)
+                .whenComplete((questions, error) -> server.execute(() -> finishQuestionGeneration(
+                        server,
+                        playerId,
+                        questions,
+                        error
+                )));
+        return StartResult.QUESTION_GENERATING;
+    }
+
+    private static void finishQuestionGeneration(
+            MinecraftServer server,
+            UUID playerId,
+            List<AscensionQuestion> questions,
+            Throwable error
+    ) {
+        if (!QUESTION_GENERATION_PENDING.remove(playerId)) {
+            return;
+        }
+        ServerPlayer player = server.getPlayerList().getPlayer(playerId);
+        if (player == null || player.hasDisconnected()) {
+            return;
+        }
+        if (error != null || questions == null || questions.isEmpty()) {
+            ModMain.LOGGER.warn("Unable to generate ascension questions for {}", playerId, error);
+            ModNetwork.sendCultivationFeedback(
+                    player,
+                    false,
+                    Component.literal("天道未能临场出题，请确认服务器的 AI 配置后重试。")
+            );
+            return;
+        }
+        if (isInAscension(player)
+                || !isAscensionRequired(player)
+                || TribulationManager.isInTribulation(player)) {
+            return;
+        }
+
+        CultivationStage targetStage = new CultivationStage(CultivationRealm.SPIRIT_TRANSFORMATION, 1);
+        if (!PlayerCultivationManager.hasEnoughEnergyForTarget(player, targetStage)) {
+            ModNetwork.sendCultivationFeedback(
+                    player,
+                    false,
+                    Component.translatable("message.ninecun_lingtai.breakthrough_insufficient_energy")
+            );
+            return;
+        }
+
         AscensionSession session = new AscensionSession(
                 player.getUUID(),
                 player.position(),
                 player.level().dimension(),
-                AscensionPromptUtility.createQuestions(player),
+                questions,
                 CommonConfig.TRIBULATION_PREPARATION_TICKS.get()
         );
-        SESSIONS.put(player.getUUID(), session);
         if (!PlayerMeditationManager.startAscensionMeditating(player)) {
-            SESSIONS.remove(player.getUUID());
-            return StartResult.CANNOT_MEDITATE;
+            ModNetwork.sendCultivationFeedback(
+                    player,
+                    false,
+                    Component.literal("当前状态无法凝神渡飞升劫。")
+            );
+            return;
         }
+        SESSIONS.put(playerId, session);
         if (!PlayerCultivationManager.consumeEnergyForTarget(player, targetStage)) {
-            SESSIONS.remove(player.getUUID());
+            SESSIONS.remove(playerId);
             PlayerMeditationManager.finishAscensionMeditating(player);
-            return StartResult.INSUFFICIENT_SPIRITUAL_ENERGY;
+            ModNetwork.sendCultivationFeedback(
+                    player,
+                    false,
+                    Component.translatable("message.ninecun_lingtai.breakthrough_insufficient_energy")
+            );
+            return;
         }
         PlayerSpiritualEnergyData.retainEnergyRatio(player, ASCENSION_REMAINING_SPIRITUAL_ENERGY_RATIO);
         NotificationUtility.send(
                 player,
                 Component.literal("飞升劫将临"),
-                Component.literal("九九雷劫之后，天道将问你所修之道。"),
+                Component.literal("天道已临场落题，九九雷劫之后问你所修之道。"),
                 20 * 6
         );
         ModNetwork.sendAscensionState(player, session);
-        return StartResult.STARTED;
     }
 
     public static boolean isAscensionRequired(ServerPlayer player) {
@@ -229,6 +296,7 @@ public final class AscensionManager {
 
     public static void clear() {
         SESSIONS.clear();
+        QUESTION_GENERATION_PENDING.clear();
     }
 
     private static void tickPreparing(ServerPlayer player, AscensionSession session) {
@@ -519,6 +587,7 @@ public final class AscensionManager {
 
     public enum StartResult {
         STARTED,
+        QUESTION_GENERATING,
         ALREADY_ACTIVE,
         NOT_REQUIRED,
         TRIBULATION_ACTIVE,

@@ -154,6 +154,11 @@ public final class BreakthroughRequestPacket {
                 ModNetwork.sendCultivationInfo(player);
                 ModNetwork.sendDefenseResource(player);
             }
+            case QUESTION_GENERATING -> ModNetwork.sendCultivationFeedback(
+                    player,
+                    false,
+                    Component.literal("天道正在临场随机出题，请稍候片刻。")
+            );
             case ALREADY_ACTIVE -> ModNetwork.sendCultivationFeedback(
                     player,
                     false,

@@ -1508,10 +1508,6 @@ vec3 renderFoundationToGoldenCore(
                 innerRadius,
                 seed
         );
-        // The old shards kept the foundation-tablet wedge shape until the very
-        // end of the gather. That reads as a broken formation, not as a broken
-        // golden core. Round each fragment as soon as the core ruptures, then
-        // let the fragments compress into the final sphere.
         float shardMorph = smoothstep(0.16, 0.64, shardOutProgress);
         float sphereRadius = mix(
                 0.074 + seed * 0.018,
@@ -2059,8 +2055,6 @@ vec3 renderNascentSoulPortrait(
             0.62
     );
 
-    // The clean light belongs behind the figure. It is deliberately restrained
-    // so that the eyes, collar and hands remain readable at full reveal.
     float aura = exp(-pow(
             length((point - vec2(0.0, 0.08)) / vec2(0.78, 0.75)),
             2.0
@@ -2077,7 +2071,6 @@ vec3 renderNascentSoulPortrait(
     color += vec3(0.88, 1.0, 0.98) * haloRing * (0.08 + purity * 0.10);
     colorAlpha = max(colorAlpha, haloRing * 0.14);
 
-    // Back lotus: broad petals establish the silhouette before the baby is drawn.
     float backBowl = nascentSoulEllipse(
             point,
             lotusCenter + vec2(0.0, 0.12 * lotusScale),
@@ -2140,7 +2133,6 @@ vec3 renderNascentSoulPortrait(
         );
     }
 
-    // Wisps are curved strokes rather than a generic circular glow.
     float leftWisp = nascentSoulBezierStroke(
             point,
             vec2(-0.44, 0.42),
@@ -2218,8 +2210,6 @@ vec3 renderNascentSoulPortrait(
     vec3 softLine = vec3(0.48, 0.25, 0.17);
     vec3 gold = vec3(1.0, 0.78, 0.36);
 
-    // Legs and feet sit behind the robe and give the seated silhouette two
-    // unmistakable outward knees instead of a single lower ellipse.
     float leftThigh = nascentSoulOrientedEllipse(
             babyPoint,
             vec2(-0.205, 0.31),
@@ -2293,7 +2283,6 @@ vec3 renderNascentSoulPortrait(
             (leftKnee + rightKnee) * babyReveal * 0.11
     );
 
-    // Torso, lower robe and sleeve volumes.
     float robeTorso = nascentSoulEllipse(
             babyPoint,
             vec2(0.0, 0.10),
@@ -2355,8 +2344,6 @@ vec3 renderNascentSoulPortrait(
             ) * babyReveal * 0.22
     );
 
-    // Wide sleeves and cuffs make the arm gesture read as hands resting on
-    // the knees, matching the reference pose.
     float leftCuff = nascentSoulBezierStroke(
             babyPoint,
             vec2(-0.31, 0.285),
@@ -2485,8 +2472,6 @@ vec3 renderNascentSoulPortrait(
             (leftEmbroidery + rightEmbroidery) * babyReveal * 0.54
     );
 
-    // Neck, ears and head are painted after the robe so the face remains the
-    // strongest focal point.
     float neck = nascentSoulEllipse(
             babyPoint,
             headCenter + vec2(0.0, 0.235),
@@ -2579,8 +2564,6 @@ vec3 renderNascentSoulPortrait(
             (cheekShadowLeft + cheekShadowRight) * babyReveal * 0.16
     );
 
-    // Hair cap, side locks and separated bangs. The strands are intentionally
-    // darker than the face so the round head is not lost in the glow.
     float hairCap = nascentSoulEllipse(
             babyPoint,
             headCenter + vec2(0.0, -0.105),
@@ -2673,7 +2656,6 @@ vec3 renderNascentSoulPortrait(
             (leftSideLock + rightSideLock) * babyReveal * 0.84
     );
 
-    // Closed eyes are shallow downward arcs, not straight marks.
     float leftEye = nascentSoulBezierStroke(
             babyPoint,
             headCenter + vec2(-0.215, 0.015),
@@ -2803,8 +2785,6 @@ vec3 renderNascentSoulPortrait(
             ) * babyReveal * 0.12
     );
 
-    // Hands are placed above the cuffs and below the face, with short finger
-    // strokes that point inward onto the knees.
     float leftHand = nascentSoulOrientedEllipse(
             babyPoint,
             vec2(-0.235, 0.355),
@@ -2871,8 +2851,6 @@ vec3 renderNascentSoulPortrait(
             (leftThumb + rightThumb) * babyReveal * 0.42
     );
 
-    // Fine contour highlights separate the baby from the lotus without
-    // turning the complete figure into a white silhouette.
     float headEdge = nascentSoulEllipseEdge(
             babyPoint,
             headCenter,
@@ -2908,7 +2886,6 @@ vec3 renderNascentSoulPortrait(
             * 0.075;
     colorAlpha = max(colorAlpha, babyHalo * 0.30);
 
-    // Front lotus petals overlap the lower legs and anchor the seated pose.
     for (int index = 0; index < 9; index++) {
         float normalizedIndex = float(index) / 8.0;
         float theta = mix(0.18, PI - 0.18, normalizedIndex);
@@ -3807,8 +3784,6 @@ vec3 renderReferenceNascentSoulPortrait(
     float pulse = 0.92 + 0.08 * sin(time * 2.15);
     float lotusScale = mix(0.12, 1.0, easeOut(lotusReveal));
 
-    // The reference is a centered, front-facing portrait. Keep the light
-    // behind the figure so the warm face and blue robe remain readable.
     vec3 cleanWhite = vec3(0.96, 1.0, 0.98);
     vec3 cleanBlue = vec3(0.70, 0.94, 0.96);
     float cleanAura = exp(-pow(
@@ -3831,7 +3806,6 @@ vec3 renderReferenceNascentSoulPortrait(
     vec3 lotusLight = vec3(0.88, 0.99, 0.96);
     vec3 lotusEdge = vec3(0.98, 1.0, 0.91);
 
-    // Rear lotus petals form the soft fan behind the seated figure.
     float rearLotusBowl = nascentSoulEllipse(
             point,
             lotusCenter + vec2(0.0, 0.10 * lotusScale),
@@ -3895,7 +3869,6 @@ vec3 renderReferenceNascentSoulPortrait(
         );
     }
 
-    // Curved side wisps reproduce the pale arcs visible around the robe.
     float leftWisp = nascentSoulBezierStroke(
             point,
             vec2(-0.42, 0.72),
@@ -3941,8 +3914,6 @@ vec3 renderReferenceNascentSoulPortrait(
             (leftWispInner + rightWispInner) * lotusReveal * 0.32
     );
 
-    // Grow the baby from the lotus center. The anchor is under the hips, so
-    // the head rises into view instead of scaling from the screen center.
     float babyScale = mix(0.18, 1.0, easeOut(babyReveal));
     vec2 babyAnchor = vec2(0.0, 0.66);
     vec2 babyPoint = (point - babyAnchor) / max(babyScale, 0.001) + babyAnchor;
@@ -3960,7 +3931,6 @@ vec3 renderReferenceNascentSoulPortrait(
     vec3 robeLine = vec3(0.49, 0.87, 0.91);
     vec3 facialLine = vec3(0.37, 0.22, 0.17);
 
-    // Back of the robe and the two rounded sleeves.
     float robeShoulder = nascentSoulEllipse(
             babyPoint,
             vec2(0.0, 0.07),
@@ -4019,7 +3989,6 @@ vec3 renderReferenceNascentSoulPortrait(
                     * babyReveal * 0.18
     );
 
-    // The pale round feet sit in front of the lower robe, as in the sample.
     float leftFoot = nascentSoulOrientedEllipse(
             babyPoint,
             vec2(-0.28, 0.55),
@@ -4080,7 +4049,6 @@ vec3 renderReferenceNascentSoulPortrait(
         );
     }
 
-    // Neck and ears are drawn before the head so the face remains a clean oval.
     float neck = nascentSoulEllipse(
             babyPoint,
             vec2(0.0, -0.045),
@@ -4150,8 +4118,6 @@ vec3 renderReferenceNascentSoulPortrait(
             faceHighlight * babyReveal * 0.24
     );
 
-    // Brown cap, side locks and separated vertical bangs are the strongest
-    // visual identifier in the reference image.
     float hairCap = nascentSoulEllipse(
             babyPoint,
             headCenter + vec2(0.0, -0.18),
@@ -4232,7 +4198,6 @@ vec3 renderReferenceNascentSoulPortrait(
             (leftSideHair + rightSideHair) * babyReveal * 0.66
     );
 
-    // Closed eyes, tiny nose, curved mouth and warm cheeks.
     float leftEye = nascentSoulBezierStroke(
             babyPoint,
             headCenter + vec2(-0.205, 0.035),
@@ -4330,7 +4295,6 @@ vec3 renderReferenceNascentSoulPortrait(
             (leftBlush + rightBlush) * babyReveal * 0.22
     );
 
-    // Blue crossed collar, sleeve piping and the horizontal waist ribbon.
     float leftCollar = nascentSoulBezierStroke(
             babyPoint,
             vec2(-0.205, -0.065),
@@ -4409,7 +4373,6 @@ vec3 renderReferenceNascentSoulPortrait(
                     * babyReveal * 0.72
     );
 
-    // A soft pair of hands rests over the knees and breaks up the robe shape.
     float leftHand = nascentSoulOrientedEllipse(
             babyPoint,
             vec2(-0.225, 0.43),
@@ -4454,8 +4417,6 @@ vec3 renderReferenceNascentSoulPortrait(
         );
     }
 
-    // Foreground lotus bowl and petals overlap the feet and lock the seated
-    // silhouette to the same lower-half composition as the reference.
     float frontBowl = nascentSoulEllipse(
             point,
             lotusCenter + vec2(0.0, 0.17),
@@ -4599,8 +4560,6 @@ vec3 renderReferenceNascentSoulPortraitV2(
     vec3 lotusLight = vec3(0.78, 0.96, 0.94);
     vec3 whiteLight = vec3(0.96, 1.0, 0.98);
 
-    // Keep the lotus behind the child. The reference composition has a
-    // readable seated silhouette, so this layer must not cover the torso.
     vec2 lotusCenter = vec2(0.0, 0.67);
     float lotusScale = mix(0.12, 1.0, easeOut(lotusReveal));
     float lotusBowl = nascentSoulEllipse(
@@ -4658,8 +4617,6 @@ vec3 renderReferenceNascentSoulPortraitV2(
     vec2 babyPoint = (point - babyAnchor) / max(babyScale, 0.001)
             + babyAnchor;
 
-    // This coordinate system intentionally matches the reference: a large
-    // round head, compact torso, knees on both sides, and feet facing forward.
     vec2 headCenter = vec2(0.0, -0.48);
     vec3 skin = vec3(1.0, 0.72, 0.59);
     vec3 skinLight = vec3(1.0, 0.86, 0.72);
@@ -4675,7 +4632,6 @@ vec3 renderReferenceNascentSoulPortraitV2(
     vec3 robeLine = vec3(0.78, 0.97, 0.96);
     vec3 robeGold = vec3(1.0, 0.82, 0.43);
 
-    // Legs are behind the robe, but the knees and feet remain visible.
     float leftThigh = nascentSoulOrientedEllipse(
             babyPoint,
             vec2(-0.24, 0.30),
@@ -4708,9 +4664,6 @@ vec3 renderReferenceNascentSoulPortraitV2(
                     * babyReveal * 0.78
     );
 
-    // Blue robe. The three separate volumes are deliberate: shoulder,
-    // vertical torso and lower hem. This prevents the clothing from reading
-    // as one featureless blob.
     float robeShoulder = nascentSoulEllipse(
             babyPoint,
             vec2(0.0, -0.02),
@@ -4767,7 +4720,6 @@ vec3 renderReferenceNascentSoulPortraitV2(
             ) * babyReveal * 0.22
     );
 
-    // The crossed collar and waist band are the key clothing landmarks.
     float leftCollar = nascentSoulBezierStroke(
             babyPoint,
             vec2(-0.22, -0.09),
@@ -4849,7 +4801,6 @@ vec3 renderReferenceNascentSoulPortraitV2(
             (leftFold + rightFold) * babyReveal * 0.65
     );
 
-    // Feet are drawn on top of the robe and point inward, with visible toes.
     float leftFoot = nascentSoulOrientedEllipse(
             babyPoint,
             vec2(-0.27, 0.58),
@@ -4894,7 +4845,6 @@ vec3 renderReferenceNascentSoulPortraitV2(
         );
     }
 
-    // Head and ears are one clean, dominant silhouette.
     float neck = nascentSoulEllipse(
             babyPoint,
             headCenter + vec2(0.0, 0.26),
@@ -4924,8 +4874,6 @@ vec3 renderReferenceNascentSoulPortraitV2(
     );
     blendLayer(color, colorAlpha, skinLight, head * babyReveal * 0.96);
 
-    // Hair is a solid cap plus separated dark bangs. The bangs are much
-    // thicker than the glow lines, so they remain hair at screenshot scale.
     float hairCap = nascentSoulEllipse(
             babyPoint,
             headCenter + vec2(0.0, -0.17),
@@ -4986,8 +4934,6 @@ vec3 renderReferenceNascentSoulPortraitV2(
         );
     }
 
-    // Face marks are intentionally dark and wide enough to survive the
-    // white nascent-soul glow.
     float leftEye = nascentSoulBezierStroke(
             babyPoint,
             headCenter + vec2(-0.21, 0.035),
@@ -5058,7 +5004,6 @@ vec3 renderReferenceNascentSoulPortraitV2(
             (leftCheek + rightCheek) * babyReveal * 0.28
     );
 
-    // Hands sit over the knees and are separated from the blue sleeves.
     float leftHand = nascentSoulOrientedEllipse(
             babyPoint,
             vec2(-0.25, 0.39),
@@ -5126,8 +5071,6 @@ vec3 renderReferenceNascentSoulPortraitV2(
             whiteLight,
             (headEdge * 0.36 + robeEdge * 0.20) * babyReveal
     );
-
-    // The light is a halo, never a white fill over the character.
     float halo = exp(-pow(
             length((point - vec2(0.0, -0.08)) / vec2(0.62, 0.76)),
             2.0
@@ -5151,9 +5094,6 @@ vec3 renderNascentSoulOutline(
         float time,
         out float alpha
 ) {
-    // Keep the square reference texture square on every window aspect ratio.
-    // The reference is centered in a square whose side is a fraction of the
-    // viewport height; sampling outside that square must remain transparent.
     const float NASCENT_SOUL_REFERENCE_SCALE = 0.78;
     vec2 centeredScreenPoint = animationUv * ScreenSize - ScreenSize * 0.5;
     vec2 referenceUv = centeredScreenPoint
@@ -5219,7 +5159,6 @@ vec3 renderNascentSoulClearSilhouette(
     vec3 robeTrim = vec3(0.78, 0.98, 0.96);
     vec3 cheekColor = vec3(1.0, 0.37, 0.34);
 
-    // A restrained lotus platform gives the figure a base without covering it.
     vec2 lotusCenter = vec2(0.0, 0.68);
     float lotusScale = mix(0.18, 1.0, easeOut(lotusReveal));
     float lotusBowl = nascentSoulEllipse(
@@ -5272,8 +5211,6 @@ vec3 renderNascentSoulClearSilhouette(
     vec2 babyPoint = (point - babyAnchor) / max(babyScale, 0.001)
             + babyAnchor;
 
-    // Stable landmarks. These are deliberately broad and separated so the
-    // result remains a readable baby silhouette at the game UI resolution.
     vec2 headCenter = vec2(0.0, -0.47);
     vec2 headScale = vec2(0.33, 0.35);
 
@@ -5443,7 +5380,6 @@ vec3 renderNascentSoulClearSilhouette(
                     * babyReveal
     );
 
-    // The crossed collar and sash make the torso read as clothing.
     float leftCollar = nascentSoulBezierStroke(
             babyPoint,
             vec2(-0.20, -0.06),
@@ -5515,7 +5451,6 @@ vec3 renderNascentSoulClearSilhouette(
             collarEdge * babyReveal * 0.92
     );
 
-    // Feet are isolated skin shapes in front of the crossed legs.
     float leftFoot = nascentSoulOrientedEllipse(
             babyPoint,
             vec2(-0.25, 0.59),
@@ -5556,7 +5491,6 @@ vec3 renderNascentSoulClearSilhouette(
         );
     }
 
-    // Head and ears remain the largest uninterrupted shape.
     float leftEar = nascentSoulEllipse(
             babyPoint,
             headCenter + vec2(-0.32, 0.02),
@@ -5576,7 +5510,6 @@ vec3 renderNascentSoulClearSilhouette(
     );
     blendLayer(color, colorAlpha, skinLight, head * babyReveal * 0.98);
 
-    // Hair is a dark cap plus a small number of separated bangs.
     float hairCap = nascentSoulEllipse(
             babyPoint,
             headCenter + vec2(0.0, -0.16),
@@ -5636,8 +5569,6 @@ vec3 renderNascentSoulClearSilhouette(
         );
     }
 
-    // Only the strongest facial landmarks are retained for silhouette
-    // readability: two closed eyes, a nose stroke and a real mouth shape.
     float leftEye = nascentSoulBezierStroke(
             babyPoint,
             headCenter + vec2(-0.19, 0.03),
@@ -5702,7 +5633,6 @@ vec3 renderNascentSoulClearSilhouette(
             (leftCheek + rightCheek) * babyReveal * 0.24
     );
 
-    // Hands sit visibly on the knees, above the sleeves.
     float leftHand = nascentSoulOrientedEllipse(
             babyPoint,
             vec2(-0.25, 0.38),
@@ -5761,7 +5691,6 @@ vec3 renderNascentSoulClearSilhouette(
                     * babyReveal
     );
 
-    // The purity light is intentionally kept outside the silhouette.
     float halo = exp(-pow(
             length((point - vec2(0.0, -0.08)) / vec2(0.59, 0.74)),
             2.0
@@ -5892,9 +5821,6 @@ vec3 renderGoldenCoreToNascentSoul(
             * glow(length(animatedPoint), 4.8)
             * 0.58;
 
-    // A golden core should break into rounded, glowing core-stones rather
-    // than long formation wedges. The fragments keep a spherical surface and
-    // inherit the core's molten gold palette while they fly outward.
     for (int index = 0; index < 10; index++) {
         float indexValue = float(index);
         float seed = hash(indexValue * 4.37 + 18.1);
@@ -6023,7 +5949,6 @@ vec3 renderGoldenCoreToNascentSoul(
     }
 
 #if 0
-    // Retained only as a migration reference; the unified figure above is the active path.
     float lotusReveal = smoothstep(
             GOLDEN_CORE_TO_NASCENT_SOUL_LOTUS_REVEAL_START,
             GOLDEN_CORE_TO_NASCENT_SOUL_LOTUS_REVEAL_END,
