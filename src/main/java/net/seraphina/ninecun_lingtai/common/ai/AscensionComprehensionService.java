@@ -100,6 +100,7 @@ public final class AscensionComprehensionService {
             throw new CompletionException(new IllegalStateException(
                     "AI provider returned HTTP " + response.statusCode()
             ));
+
         }
         try {
             JsonObject responseJson = JsonParser.parseString(response.body()).getAsJsonObject();
