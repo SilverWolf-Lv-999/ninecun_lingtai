@@ -6,8 +6,10 @@ import com.mojang.blaze3d.vertex.BufferUploader;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.ShaderInstance;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.seraphina.ninecun_lingtai.client.render.BreakthroughAnimationShader;
 import net.seraphina.ninecun_lingtai.common.animation.BreakthroughAnimationType;
@@ -15,6 +17,8 @@ import net.seraphina.ninecun_lingtai.utility.ColorUtility;
 import org.joml.Matrix4f;
 
 public final class BreakthroughAnimationRenderUtility {
+    private static final ResourceLocation NASCENT_SOUL_REFERENCE_TEXTURE =
+            ResourceLocation.fromNamespaceAndPath("ninecun_lingtai", "textures/gui/nascent_soul_reference.png");
     public static void render(
             GuiGraphics guiGraphics,
             BreakthroughAnimationType animationType,
@@ -39,6 +43,12 @@ public final class BreakthroughAnimationRenderUtility {
         RenderSystem.disableDepthTest();
         RenderSystem.depthMask(false);
         RenderSystem.setShader(() -> shaderInstance);
+        shaderInstance.setSampler(
+                "NascentSoulTexture",
+                Minecraft.getInstance().getTextureManager()
+                        .getTexture(NASCENT_SOUL_REFERENCE_TEXTURE)
+                        .getId()
+        );
         shaderInstance.safeGetUniform("AnimationType").set((float) animationType.ordinal());
         shaderInstance.safeGetUniform("Progress").set(Mth.clamp(progress, 0.0F, 1.0F));
         shaderInstance.safeGetUniform("Time").set(time);

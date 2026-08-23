@@ -11,6 +11,7 @@ uniform vec2 ScreenSize;
 uniform vec3 PrimaryColor;
 uniform vec3 SecondaryColor;
 uniform vec3 AccentColor;
+uniform sampler2D NascentSoulTexture;
 
 out vec4 fragColor;
 
@@ -1507,10 +1508,14 @@ vec3 renderFoundationToGoldenCore(
                 innerRadius,
                 seed
         );
-        float shardMorph = smoothstep(0.08, 0.92, gatherEase);
+        // The old shards kept the foundation-tablet wedge shape until the very
+        // end of the gather. That reads as a broken formation, not as a broken
+        // golden core. Round each fragment as soon as the core ruptures, then
+        // let the fragments compress into the final sphere.
+        float shardMorph = smoothstep(0.16, 0.64, shardOutProgress);
         float sphereRadius = mix(
-                0.024 + seed * 0.012,
-                targetSphereRadius * (0.92 + seed * 0.12),
+                0.074 + seed * 0.018,
+                targetSphereRadius * (0.62 + seed * 0.16),
                 gatherEase
         );
         float sphereDistance = shardSphereDistance(
@@ -1518,13 +1523,13 @@ vec3 renderFoundationToGoldenCore(
                 shardAngle,
                 displacement,
                 sphereRadius,
-                shardMorph,
+                1.0,
                 seed,
                 time
         );
         float sphereMask = 1.0 - smoothstep(
-                sphereRadius * 0.66,
-                sphereRadius * 0.98,
+                sphereRadius * 0.72,
+                sphereRadius * 1.02,
                 sphereDistance
         );
         float morphedShardMask = mix(shardMask, sphereMask, shardMorph);
@@ -1539,9 +1544,9 @@ vec3 renderFoundationToGoldenCore(
         );
         float sphereEdge = softRing(
                 sphereDistance,
-                sphereRadius * 0.88,
-                0.008 + (1.0 - shardMorph) * 0.004,
-                0.018
+                sphereRadius * 0.90,
+                0.010 + (1.0 - shardMorph) * 0.004,
+                0.022
         ) * shardMorph;
         vec2 shardDirection = vec2(cos(shardAngle), sin(shardAngle));
         vec2 localShardPoint = rotation(-shardAngle)
@@ -1561,15 +1566,16 @@ vec3 renderFoundationToGoldenCore(
                 )
         ) * shardMask * (1.0 - shardMorph);
         vec3 shardColor = mix(
-                platformFaceColor,
-                platformSideColor,
-                0.18 + seed * 0.24
+                vec3(0.62, 0.16, 0.012),
+                vec3(0.98, 0.56, 0.065),
+                0.30 + seed * 0.26
         );
-        shardColor = mix(
-                shardColor,
-                mix(vec3(0.98, 0.58, 0.075), vec3(1.0, 0.82, 0.28), 0.22),
-                shardMorph * 0.82
+        vec3 shardHighlight = mix(
+                vec3(1.0, 0.72, 0.16),
+                vec3(1.0, 0.94, 0.54),
+                0.24 + seed * 0.20
         );
+        shardColor = mix(shardColor, shardHighlight, shardMorph * 0.46);
         float shardPulse = 0.80 + 0.20 * sin(
                 time * (2.0 + seed * 1.0) + indexValue * 2.1
         );
@@ -1583,14 +1589,14 @@ vec3 renderFoundationToGoldenCore(
         blendLayer(
                 color,
                 colorAlpha,
-                AccentColor,
+                shardHighlight,
                 (
-                        shardEdge * (1.0 - shardMorph) * 0.92
-                        + sphereEdge * 1.12
-                        + shardGrooves * (0.20 + crackProgress * 0.16)
+                        shardEdge * (1.0 - shardMorph) * 0.42
+                        + sphereEdge * 1.18
+                        + shardGrooves * (0.12 + crackProgress * 0.12)
                 )
                         * activeShardVisibility
-                        * 0.92
+                        * 0.86
         );
     }
 
@@ -5145,130 +5151,32 @@ vec3 renderNascentSoulOutline(
         float time,
         out float alpha
 ) {
-    float figureReveal = smoothstep(0.28, 0.76, progress);
-    float figureScale = mix(0.08, 1.0, easeOutBack(figureReveal));
-    vec2 figureAnchor = vec2(0.0, 0.10);
-    vec2 figurePoint = (point - figureAnchor) / max(figureScale, 0.001)
-            + figureAnchor;
-
-    vec3 color = vec3(0.0);
-    float colorAlpha = 0.0;
-    vec3 lineColor = mix(SecondaryColor, vec3(0.92, 1.0, 0.98), 0.48);
-    float outerWidth = 0.0036;
-    float detailWidth = 0.0026;
-    float outer = 0.0;
-    float detail = 0.0;
-
-    // Head: one continuous bald head/face contour with the ears built into it.
-    outer = max(outer, nascentSoulBezierStroke(
-            figurePoint, vec2(-0.29, -0.47), vec2(-0.28, -0.67),
-            vec2(0.28, -0.67), vec2(0.29, -0.47), outerWidth));
-    outer = max(outer, nascentSoulBezierStroke(
-            figurePoint, vec2(-0.29, -0.47), vec2(-0.32, -0.40),
-            vec2(-0.32, -0.35), vec2(-0.34, -0.29), outerWidth));
-    outer = max(outer, nascentSoulBezierStroke(
-            figurePoint, vec2(-0.34, -0.29), vec2(-0.44, -0.34),
-            vec2(-0.43, -0.18), vec2(-0.30, -0.13), outerWidth));
-    outer = max(outer, nascentSoulBezierStroke(
-            figurePoint, vec2(-0.30, -0.13), vec2(-0.27, -0.06),
-            vec2(-0.16, -0.01), vec2(0.0, -0.01), outerWidth));
-    outer = max(outer, nascentSoulBezierStroke(
-            figurePoint, vec2(0.29, -0.47), vec2(0.32, -0.40),
-            vec2(0.32, -0.35), vec2(0.34, -0.29), outerWidth));
-    outer = max(outer, nascentSoulBezierStroke(
-            figurePoint, vec2(0.34, -0.29), vec2(0.44, -0.34),
-            vec2(0.43, -0.18), vec2(0.30, -0.13), outerWidth));
-    outer = max(outer, nascentSoulBezierStroke(
-            figurePoint, vec2(0.30, -0.13), vec2(0.27, -0.06),
-            vec2(0.16, -0.01), vec2(0.0, -0.01), outerWidth));
-    detail = max(detail, nascentSoulBezierStroke(
-            figurePoint, vec2(-0.35, -0.15), vec2(-0.34, -0.22),
-            vec2(-0.33, -0.27), vec2(-0.32, -0.30), detailWidth));
-    detail = max(detail, nascentSoulBezierStroke(
-            figurePoint, vec2(0.35, -0.15), vec2(0.34, -0.22),
-            vec2(0.33, -0.27), vec2(0.32, -0.30), detailWidth));
-
-    // Robe silhouette: shoulders flow into broad sleeves and stop at the lap.
-    outer = max(outer, nascentSoulBezierStroke(
-            figurePoint, vec2(-0.18, -0.01), vec2(-0.34, 0.02),
-            vec2(-0.49, 0.20), vec2(-0.55, 0.41), outerWidth));
-    outer = max(outer, nascentSoulBezierStroke(
-            figurePoint, vec2(-0.55, 0.41), vec2(-0.58, 0.52),
-            vec2(-0.52, 0.59), vec2(-0.43, 0.59), outerWidth));
-    outer = max(outer, nascentSoulBezierStroke(
-            figurePoint, vec2(-0.43, 0.59), vec2(-0.31, 0.57),
-            vec2(-0.19, 0.45), vec2(-0.07, 0.37), outerWidth));
-    outer = max(outer, nascentSoulBezierStroke(
-            figurePoint, vec2(0.18, -0.01), vec2(0.34, 0.02),
-            vec2(0.49, 0.20), vec2(0.55, 0.41), outerWidth));
-    outer = max(outer, nascentSoulBezierStroke(
-            figurePoint, vec2(0.55, 0.41), vec2(0.58, 0.52),
-            vec2(0.52, 0.59), vec2(0.43, 0.59), outerWidth));
-    outer = max(outer, nascentSoulBezierStroke(
-            figurePoint, vec2(0.43, 0.59), vec2(0.31, 0.57),
-            vec2(0.19, 0.45), vec2(0.07, 0.37), outerWidth));
-
-    // Inner sleeve folds and the two hands resting together in front.
-    detail = max(detail, nascentSoulBezierStroke(
-            figurePoint, vec2(-0.17, 0.01), vec2(-0.17, 0.15),
-            vec2(-0.18, 0.27), vec2(-0.20, 0.35), detailWidth));
-    detail = max(detail, nascentSoulBezierStroke(
-            figurePoint, vec2(0.17, 0.01), vec2(0.17, 0.15),
-            vec2(0.18, 0.27), vec2(0.20, 0.35), detailWidth));
-    detail = max(detail, nascentSoulBezierStroke(
-            figurePoint, vec2(-0.20, 0.34), vec2(-0.13, 0.37),
-            vec2(-0.06, 0.40), vec2(0.0, 0.36), detailWidth));
-    detail = max(detail, nascentSoulBezierStroke(
-            figurePoint, vec2(0.20, 0.34), vec2(0.13, 0.37),
-            vec2(0.06, 0.40), vec2(0.0, 0.36), detailWidth));
-    detail = max(detail, nascentSoulBezierStroke(
-            figurePoint, vec2(-0.08, 0.37), vec2(-0.04, 0.34),
-            vec2(0.04, 0.34), vec2(0.08, 0.37), detailWidth));
-
-    // Rear crossed legs: broad arcs, not closed oval loops.
-    outer = max(outer, nascentSoulBezierStroke(
-            figurePoint, vec2(-0.43, 0.59), vec2(-0.64, 0.57),
-            vec2(-0.76, 0.68), vec2(-0.70, 0.78), outerWidth));
-    outer = max(outer, nascentSoulBezierStroke(
-            figurePoint, vec2(-0.70, 0.78), vec2(-0.64, 0.88),
-            vec2(-0.46, 0.89), vec2(-0.24, 0.80), outerWidth));
-    outer = max(outer, nascentSoulBezierStroke(
-            figurePoint, vec2(-0.24, 0.80), vec2(-0.13, 0.74),
-            vec2(-0.05, 0.68), vec2(0.0, 0.64), outerWidth));
-    outer = max(outer, nascentSoulBezierStroke(
-            figurePoint, vec2(0.43, 0.59), vec2(0.64, 0.57),
-            vec2(0.76, 0.68), vec2(0.70, 0.78), outerWidth));
-    outer = max(outer, nascentSoulBezierStroke(
-            figurePoint, vec2(0.70, 0.78), vec2(0.64, 0.88),
-            vec2(0.46, 0.89), vec2(0.24, 0.80), outerWidth));
-    outer = max(outer, nascentSoulBezierStroke(
-            figurePoint, vec2(0.24, 0.80), vec2(0.13, 0.74),
-            vec2(0.05, 0.68), vec2(0.0, 0.64), outerWidth));
-
-    // Front legs and feet crossing over the rear legs.
-    detail = max(detail, nascentSoulBezierStroke(
-            figurePoint, vec2(-0.69, 0.78), vec2(-0.52, 0.73),
-            vec2(-0.28, 0.60), vec2(0.0, 0.49), detailWidth));
-    detail = max(detail, nascentSoulBezierStroke(
-            figurePoint, vec2(0.69, 0.78), vec2(0.52, 0.73),
-            vec2(0.28, 0.60), vec2(0.0, 0.49), detailWidth));
-    detail = max(detail, nascentSoulBezierStroke(
-            figurePoint, vec2(-0.58, 0.84), vec2(-0.61, 0.91),
-            vec2(-0.48, 0.96), vec2(-0.28, 0.91), detailWidth));
-    detail = max(detail, nascentSoulBezierStroke(
-            figurePoint, vec2(-0.28, 0.91), vec2(-0.08, 0.86),
-            vec2(0.08, 0.82), vec2(0.28, 0.86), detailWidth));
-    detail = max(detail, nascentSoulBezierStroke(
-            figurePoint, vec2(0.58, 0.84), vec2(0.61, 0.91),
-            vec2(0.48, 0.96), vec2(0.28, 0.91), detailWidth));
-    detail = max(detail, nascentSoulBezierStroke(
-            figurePoint, vec2(0.28, 0.91), vec2(0.08, 0.86),
-            vec2(-0.08, 0.82), vec2(-0.28, 0.86), detailWidth));
-
+    // Keep the square reference texture square on every window aspect ratio.
+    // The reference is centered in a square whose side is a fraction of the
+    // viewport height; sampling outside that square must remain transparent.
+    const float NASCENT_SOUL_REFERENCE_SCALE = 0.78;
+    vec2 centeredScreenPoint = animationUv * ScreenSize - ScreenSize * 0.5;
+    vec2 referenceUv = centeredScreenPoint
+            / (max(ScreenSize.y, 1.0) * NASCENT_SOUL_REFERENCE_SCALE)
+            + vec2(0.5);
+    float insideReference = step(0.0, referenceUv.x)
+            * step(referenceUv.x, 1.0)
+            * step(0.0, referenceUv.y)
+            * step(referenceUv.y, 1.0);
+    vec4 referencePixel = texture(
+            NascentSoulTexture,
+            clamp(referenceUv, 0.0, 1.0)
+    );
+    referencePixel.a *= insideReference;
+    float reveal = smoothstep(0.28, 0.76, progress);
     float pulse = 0.90 + 0.04 * sin(time * 2.2);
-    float line = (outer + detail * 0.82) * figureReveal * pulse;
-    blendLayer(color, colorAlpha, lineColor, line * 0.78);
-    alpha = clamp(colorAlpha, 0.0, 1.0);
+    vec3 lineColor = mix(SecondaryColor, vec3(0.92, 1.0, 0.98), 0.44);
+    float lineAlpha = referencePixel.a * reveal * pulse;
+    float glow = referencePixel.a * reveal * (0.08 + 0.04 * sin(time * 2.2));
+
+    vec3 color = lineColor;
+    color += vec3(0.94, 0.82, 1.0) * (0.08 + 0.04 * sin(time * 2.2));
+    alpha = clamp(lineAlpha + glow * 0.22, 0.0, 1.0);
     return color;
 }
 vec3 renderNascentSoulClearSilhouette(
@@ -5984,6 +5892,9 @@ vec3 renderGoldenCoreToNascentSoul(
             * glow(length(animatedPoint), 4.8)
             * 0.58;
 
+    // A golden core should break into rounded, glowing core-stones rather
+    // than long formation wedges. The fragments keep a spherical surface and
+    // inherit the core's molten gold palette while they fly outward.
     for (int index = 0; index < 10; index++) {
         float indexValue = float(index);
         float seed = hash(indexValue * 4.37 + 18.1);
@@ -6023,25 +5934,68 @@ vec3 renderGoldenCoreToNascentSoul(
                 innerRadius,
                 seed
         );
-        vec3 shardColor = mix(
-                vec3(0.70, 0.20, 0.02),
-                vec3(1.0, 0.68, 0.16),
-                0.28 + seed * 0.30
+        float fragmentMorph = smoothstep(0.08, 0.70, shardOutProgress);
+        float fragmentRadius = mix(
+                0.105 + seed * 0.018,
+                0.145 + seedTwo * 0.030,
+                smoothstep(0.30, 0.82, shardOutProgress)
         );
-        float shardPulse = 0.78 + 0.22 * sin(
+        float fragmentDistance = shardSphereDistance(
+                corePoint,
+                shardAngle,
+                displacement,
+                fragmentRadius,
+                1.0,
+                seed,
+                time * 0.72
+        );
+        float fragmentMask = 1.0 - smoothstep(
+                fragmentRadius * 0.68,
+                fragmentRadius * 1.02,
+                fragmentDistance
+        );
+        float fragmentEdge = softRing(
+                fragmentDistance,
+                fragmentRadius * 0.90,
+                0.010,
+                0.022
+        ) * fragmentMorph;
+        float morphedShardMask = mix(shardMask, fragmentMask, fragmentMorph);
+        vec3 fragmentColor = mix(
+                vec3(0.58, 0.14, 0.008),
+                vec3(0.98, 0.54, 0.055),
+                0.30 + seed * 0.25
+        );
+        vec3 fragmentHighlight = mix(
+                vec3(1.0, 0.68, 0.12),
+                vec3(1.0, 0.94, 0.50),
+                0.22 + seedTwo * 0.22
+        );
+        fragmentColor = mix(
+                fragmentColor,
+                fragmentHighlight,
+                fragmentMorph * 0.48
+        );
+        float fragmentPulse = 0.84 + 0.16 * sin(
                 time * (2.2 + seed * 1.1) + indexValue * 2.4
         );
+        float activeFragmentVisibility = shardVisibility * fragmentPulse;
         blendLayer(
                 color,
                 colorAlpha,
-                shardColor,
-                shardMask * shardVisibility * shardPulse * 0.90
+                fragmentColor,
+                morphedShardMask * activeFragmentVisibility * 0.94
         );
         blendLayer(
                 color,
                 colorAlpha,
-                vec3(1.0, 0.90, 0.48),
-                shardEdge * shardVisibility * 0.98
+                fragmentHighlight,
+                (
+                        shardEdge * (1.0 - fragmentMorph) * 0.34
+                        + fragmentEdge * 1.16
+                )
+                        * activeFragmentVisibility
+                        * 0.90
         );
     }
 

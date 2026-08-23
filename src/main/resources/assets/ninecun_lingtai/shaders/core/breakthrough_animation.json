@@ -11,7 +11,11 @@
     "Color",
     "UV0"
   ],
-  "samplers": [],
+  "samplers": [
+    {
+      "name": "NascentSoulTexture"
+    }
+  ],
   "uniforms": [
     {
       "name": "ModelViewMat",
