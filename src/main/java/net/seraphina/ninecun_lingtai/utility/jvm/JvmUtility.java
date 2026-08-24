@@ -16,6 +16,7 @@ public final class JvmUtility {
     private static volatile boolean patched;
     private static ScheduledExecutorService recoveryExecutor;
 
+    // 我超，这个不能用，用了我的agent就炸了，白写了
     public static void patchJvmti() {
         synchronized (LOCK) {
             if (patched) {
