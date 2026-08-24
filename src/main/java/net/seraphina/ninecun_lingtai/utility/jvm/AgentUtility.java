@@ -4,6 +4,7 @@ import com.sun.jna.Function;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
 import cpw.mods.modlauncher.serviceapi.ILaunchPluginService;
+import net.seraphina.ninecun_lingtai.utility.jvm.trans.AntiAttachAgentTransformer;
 import net.seraphina.ninecun_lingtai.utility.jvm.trans.AntiModifyByteCodeTransformer;
 import net.seraphina.ninecun_lingtai.utility.jvm.trans.BytecodeRepairTransformer;
 import net.seraphina.ninecun_lingtai.utility.jvm.trans.ReflectiveAccessTransformer;
@@ -21,6 +22,7 @@ import java.util.List;
 
 @SuppressWarnings("all")
 public final class AgentUtility {
+
     private static final String DISABLE_AGENT_PROPERTY =
             "ninecun_lingtai.disableInstrumentPatch";
     private static final String AGENT_RESOURCE =
@@ -38,6 +40,7 @@ public final class AgentUtility {
     private static BytecodeRepairTransformer transformer;
     private static ReflectiveAccessTransformer reflectiveAccessTransformer;
     private static AntiModifyByteCodeTransformer antiModifyByteCodeTransformer;
+    private static AntiAttachAgentTransformer antiAttachAgent;
 
     public static void patchAgentMain() {
         if (Boolean.getBoolean(DISABLE_AGENT_PROPERTY)) {
@@ -108,6 +111,15 @@ public final class AgentUtility {
                     );
                 }
             }
+            if (antiAttachAgent == null) {
+                antiAttachAgent = new AntiAttachAgentTransformer();
+                try {
+                    agentInstrumentation.addTransformer(antiAttachAgent, true);
+                } catch (RuntimeException exception) {
+                    antiAttachAgent = null;
+                    LOGGER.error("Could not register the anti-attach agent transformer", exception);
+                }
+            }
         }
 
         retransformLoadedClasses(agentInstrumentation);
@@ -159,27 +171,58 @@ public final class AgentUtility {
         }
 
         List<Class<?>> classes = new ArrayList<>();
+        List<Class<?>> attachClasses = new ArrayList<>();
         for (Class<?> loadedClass : agentInstrumentation.getAllLoadedClasses()) {
-            if (!loadedClass.getName().startsWith(
-                    BytecodeRepairTransformer.TARGET_PACKAGE_PREFIX)) {
+            String className = loadedClass.getName();
+            boolean bytecodeRepairTarget = className.startsWith(
+                    BytecodeRepairTransformer.TARGET_PACKAGE_PREFIX);
+            boolean antiAttachTarget = antiAttachAgent != null
+                    && isAntiAttachTargetClass(className);
+            if (!bytecodeRepairTarget && !antiAttachTarget) {
                 continue;
             }
             if (agentInstrumentation.isModifiableClass(loadedClass)) {
-                classes.add(loadedClass);
+                if (bytecodeRepairTarget) {
+                    classes.add(loadedClass);
+                }
+                if (antiAttachTarget) {
+                    attachClasses.add(loadedClass);
+                }
             }
         }
 
         int retransformedClasses = 0;
-        for (Class<?> loadedClass : classes) {
+        int retransformedAttachClasses = 0;
+        List<Class<?>> classesToRetransform = new ArrayList<>(classes);
+        for (Class<?> attachClass : attachClasses) {
+            if (!classesToRetransform.contains(attachClass)) {
+                classesToRetransform.add(attachClass);
+            }
+        }
+        for (Class<?> loadedClass : classesToRetransform) {
             try {
                 agentInstrumentation.retransformClasses(loadedClass);
-                retransformedClasses++;
+                if (classes.contains(loadedClass)) {
+                    retransformedClasses++;
+                }
+                if (attachClasses.contains(loadedClass)) {
+                    retransformedAttachClasses++;
+                }
             } catch (Throwable throwable) {
                 LOGGER.debug("Could not retransform {}", loadedClass.getName(), throwable);
             }
         }
         LOGGER.info("Registered bytecode repair transformer and retransformed {} classes",
                 retransformedClasses);
+        if (antiAttachAgent != null) {
+            LOGGER.info("Registered anti-attach guard and retransformed {} Attach API classes",
+                    retransformedAttachClasses);
+        }
+    }
+
+    private static boolean isAntiAttachTargetClass(String className) {
+        return "com.sun.tools.attach.VirtualMachine".equals(className)
+                || "sun.tools.attach.HotSpotVirtualMachine".equals(className);
     }
 
     private static void retransformLoadedModClasses(Instrumentation agentInstrumentation) {

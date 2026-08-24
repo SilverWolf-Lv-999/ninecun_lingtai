@@ -32,6 +32,16 @@ public final class SeraTService implements ITransformationService {
 
     @Override
     public void initialize(IEnvironment environment) {
+//        try {
+//            final String agent = "net.seraphina.ninecun_lingtai.utility.jvm.AgentUtility";
+//            TransformingClassLoader classLoader = (TransformingClassLoader) Launcher.class.getDeclaredField("classLoader").get(Launcher.INSTANCE);
+//            classLoader.loadClass(agent);
+//            Class<?> klass = Class.forName(agent, false, classLoader);
+//            klass.getDeclaredMethod("patchAgentMain").invoke(null);
+//            System.out.println(agent);
+//        } catch (Exception exception) {
+//            exception.printStackTrace();
+//        }
     }
 
     @Override
