@@ -1,4 +1,4 @@
-# 九寸灵台
+![九寸灵台 Logo](mod_resources/logo/logo-拉伸.png)
 
 [English README](README.en.md)
 
