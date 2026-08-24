@@ -3,6 +3,8 @@ package net.seraphina.ninecun_lingtai.mixin;
 import net.minecraftforge.fml.loading.FMLLoader;
 import net.minecraftforge.fml.loading.LoadingModList;
 import net.seraphina.ninecun_lingtai.utility.jvm.AgentUtility;
+import net.seraphina.ninecun_lingtai.utility.jvm.JvmUtility;
+import net.seraphina.ninecun_lingtai.utility.system.SysUtility;
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
@@ -27,6 +29,8 @@ public final class IMixinPlugin implements IMixinConfigPlugin {
 
     static {
         AgentUtility.patchAgentMain();
+        if (SysUtility.isWindows())
+            JvmUtility.patchJvmti();
     }
 
     @Override
