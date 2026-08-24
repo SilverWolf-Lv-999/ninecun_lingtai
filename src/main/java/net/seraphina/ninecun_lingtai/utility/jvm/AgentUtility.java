@@ -3,6 +3,8 @@ package net.seraphina.ninecun_lingtai.utility.jvm;
 import com.sun.jna.Function;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
+import cpw.mods.modlauncher.serviceapi.ILaunchPluginService;
+import net.seraphina.ninecun_lingtai.utility.jvm.trans.AntiModifyByteCodeTransformer;
 import net.seraphina.ninecun_lingtai.utility.jvm.trans.BytecodeRepairTransformer;
 import net.seraphina.ninecun_lingtai.utility.jvm.trans.ReflectiveAccessTransformer;
 import org.apache.logging.log4j.LogManager;
@@ -10,6 +12,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -34,6 +37,7 @@ public final class AgentUtility {
     private static volatile Instrumentation instrumentation;
     private static BytecodeRepairTransformer transformer;
     private static ReflectiveAccessTransformer reflectiveAccessTransformer;
+    private static AntiModifyByteCodeTransformer antiModifyByteCodeTransformer;
 
     public static void patchAgentMain() {
         if (Boolean.getBoolean(DISABLE_AGENT_PROPERTY)) {
@@ -92,11 +96,60 @@ public final class AgentUtility {
                     LOGGER.error("Could not register the reflective access transformer", exception);
                 }
             }
+            if (antiModifyByteCodeTransformer == null) {
+                antiModifyByteCodeTransformer = new AntiModifyByteCodeTransformer();
+                try {
+                    agentInstrumentation.addTransformer(antiModifyByteCodeTransformer, true);
+                } catch (RuntimeException exception) {
+                    antiModifyByteCodeTransformer = null;
+                    LOGGER.error(
+                            "Could not register the anti-modification bytecode transformer",
+                            exception
+                    );
+                }
+            }
         }
 
         retransformLoadedClasses(agentInstrumentation);
         retransformLoadedModClasses(agentInstrumentation);
+        retransformLoadedTransformerClasses(agentInstrumentation);
         LOGGER.info("Instrumentation agent has been successfully loaded");
+    }
+
+    private static void retransformLoadedTransformerClasses(
+            Instrumentation agentInstrumentation
+    ) {
+        if (antiModifyByteCodeTransformer == null
+                || !agentInstrumentation.isRetransformClassesSupported()) {
+            return;
+        }
+
+        List<Class<?>> classes = new ArrayList<>();
+        for (Class<?> loadedClass : agentInstrumentation.getAllLoadedClasses()) {
+            if (!isTargetTransformerClass(loadedClass)
+                    || !agentInstrumentation.isModifiableClass(loadedClass)) {
+                continue;
+            }
+            classes.add(loadedClass);
+        }
+
+        int retransformedClasses = 0;
+        for (Class<?> loadedClass : classes) {
+            try {
+                agentInstrumentation.retransformClasses(loadedClass);
+                retransformedClasses++;
+            } catch (Throwable throwable) {
+                LOGGER.debug("Could not retransform transformer class {}",
+                        loadedClass.getName(), throwable);
+            }
+        }
+        LOGGER.info("Registered anti-modification guard and retransformed {} transformer classes",
+                retransformedClasses);
+    }
+
+    private static boolean isTargetTransformerClass(Class<?> loadedClass) {
+        return ClassFileTransformer.class.isAssignableFrom(loadedClass)
+                || ILaunchPluginService.class.isAssignableFrom(loadedClass);
     }
 
     private static void retransformLoadedClasses(Instrumentation agentInstrumentation) {

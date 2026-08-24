@@ -1,15 +1,18 @@
 package net.seraphina.ninecun_lingtai.coremod;
 
+import java.io.InputStream;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Method;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
+import java.util.logging.Logger;
 
 public final class CoreMain {
+    public static final Logger LOGGER = Logger.getLogger(CoreMain.class.getName());
+
     private static final String AGENT_TARGET_CLASS =
             "net.seraphina.ninecun_lingtai.utility.jvm.AgentUtility";
     private static final String GUARD_CLASS_RESOURCE =
@@ -19,6 +22,7 @@ public final class CoreMain {
     private static JarFile bootstrapGuardJar;
 
     public static void agentmain(String arguments, Instrumentation instrumentation) {
+        LOGGER.info("Hello world!");
         Class<?> agentTargetClass = findAgentTargetClass(instrumentation);
         if (agentTargetClass == null) {
             return;

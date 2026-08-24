@@ -18,23 +18,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class SeraLegitHook {
 
-    /*
-     * JDK 17 x64 HotSpot layout:
-     * ResolvedMethodName::_vmtarget = 16
-     * Method::_constMethod = 8
-     * Method::_vtable_index = 44
-     * ConstMethod::_constants = 8
-     * ConstMethod::_code_size = 32
-     * ConstMethod::_name_index = 34
-     * ConstMethod::_method_idnum = 38
-     * ConstMethod::_orig_method_idnum = 46
-     * ConstMethod::code_base() = 48
-     * ConstantPool::_length = 60
-     * ConstantPool::base() = 72
-     *
-     * The layout probe below verifies these values before any target method is
-     * modified, so an unsupported VM fails before touching Minecraft metadata.
-     */
     private static final long RESOLVED_METHOD_NAME_VMTARGET_OFFSET = 16L;
     private static final long METHOD_CONST_METHOD_OFFSET = 8L;
     private static final long METHOD_VTABLE_INDEX_OFFSET = 44L;
