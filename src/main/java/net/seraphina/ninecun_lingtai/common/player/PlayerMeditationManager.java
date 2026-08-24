@@ -17,6 +17,7 @@ import net.seraphina.ninecun_lingtai.utility.CultivationDefenseUtility;
 import net.seraphina.ninecun_lingtai.utility.CultivationUtility;
 import net.seraphina.ninecun_lingtai.utility.SpiritualEnergyUtility;
 import net.seraphina.ninecun_lingtai.utility.SpiritualStoneUtility;
+import net.seraphina.ninecun_lingtai.utility.TechniqueUtility;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -30,6 +31,7 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 public final class PlayerMeditationManager {
@@ -214,7 +216,7 @@ public final class PlayerMeditationManager {
             if (session.cultivatingRealm()) {
                 double breathingMultiplier = getBreathingAbsorptionMultiplier(player, session.techniqueId());
                 if (breathingMultiplier > 0.0D) {
-                    absorbSpiritualEnergy(player, breathingMultiplier);
+                    absorbSpiritualEnergy(player, session.techniqueId(), breathingMultiplier);
                     ModNetwork.sendCultivationInfo(player);
                 }
             }
@@ -313,15 +315,24 @@ public final class PlayerMeditationManager {
         player.yBodyRotO = rotation.yBodyRot();
     }
 
-    private static void absorbSpiritualEnergy(ServerPlayer player, double breathingMultiplier) {
+    private static void absorbSpiritualEnergy(
+            ServerPlayer player,
+            ResourceLocation techniqueId,
+            double breathingMultiplier
+    ) {
         Optional<ItemStack> spiritualStone = getHeldUsableSpiritualStone(player);
         if (spiritualStone.isPresent()) {
-            absorbHeldSpiritualStoneEnergy(player, spiritualStone.get(), breathingMultiplier);
+            absorbHeldSpiritualStoneEnergy(player, spiritualStone.get(), techniqueId, breathingMultiplier);
             return;
         }
 
         MeditationAbsorptionProfile absorptionProfile = calculateAbsorptionProfile(player);
-        if (absorptionProfile.absorptionRates().isEmpty()) {
+        Optional<Set<ElementType>> absorptionRestriction = getBreathingAbsorptionRestriction(techniqueId);
+        Map<ElementType, Double> absorptionRates = SpiritualEnergyUtility.restrictAbsorptionRates(
+                absorptionProfile.absorptionRates(),
+                absorptionRestriction
+        );
+        if (absorptionRates.isEmpty()) {
             return;
         }
         double baseAbsorption = CommonConfig.MEDITATION_BASE_ABSORPTION_PER_SECOND.get()
@@ -330,7 +341,7 @@ public final class PlayerMeditationManager {
                 * PlayerPillToxinData.getAbsorptionMultiplier(player);
         Map<ElementType, Double> absorbableEnergy = calculateAbsorbableEnergy(
                 player,
-                absorptionProfile.absorptionRates(),
+                absorptionRates,
                 baseAbsorption
         );
         for (Map.Entry<ElementType, Double> entry : absorbableEnergy.entrySet()) {
@@ -344,6 +355,7 @@ public final class PlayerMeditationManager {
     private static void absorbHeldSpiritualStoneEnergy(
             ServerPlayer player,
             ItemStack spiritualStone,
+            ResourceLocation techniqueId,
             double breathingMultiplier
     ) {
         Optional<SpiritualRoot> spiritualRootOptional = PlayerAptitudeData.getSpiritualRoot(player);
@@ -353,6 +365,10 @@ public final class PlayerMeditationManager {
 
         Map<ElementType, Double> absorptionRates = SpiritualEnergyUtility.createUniversalCultivationAbsorptionRates(
                 spiritualRootOptional.get()
+        );
+        absorptionRates = SpiritualEnergyUtility.restrictAbsorptionRates(
+                absorptionRates,
+                getBreathingAbsorptionRestriction(techniqueId)
         );
         if (absorptionRates.isEmpty()) {
             return;
@@ -434,6 +450,12 @@ public final class PlayerMeditationManager {
                 .orElse(TechniqueMasteryStage.ENTRY)
                 .getEfficiency();
         return technique.get().breathing().get().absorptionMultiplier() * masteryEfficiency;
+    }
+
+    private static Optional<Set<ElementType>> getBreathingAbsorptionRestriction(ResourceLocation techniqueId) {
+        return TechniqueManager.INSTANCE.getTechnique(techniqueId)
+                .map(TechniqueUtility::getBreathingAbsorptionRestriction)
+                .orElse(Optional.of(Set.of()));
     }
 
     private static void remindBreathingTechniqueRequired(ServerPlayer player) {

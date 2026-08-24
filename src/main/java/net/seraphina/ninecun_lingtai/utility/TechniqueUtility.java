@@ -18,6 +18,7 @@ import net.minecraft.world.entity.player.Player;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -95,6 +96,35 @@ public final class TechniqueUtility {
     public static boolean canImprintToJadeSlip(Player player, ResourceLocation techniqueId) {
         return PlayerTechniqueData.hasTechnique(player, techniqueId)
                 || PlayerImprintedTechniqueData.hasTechnique(player, techniqueId);
+    }
+
+    /**
+     * Resolves the elemental restriction of a breathing technique.
+     *
+     * <p>An empty optional means that the technique can absorb every elemental source. This is
+     * intentional for techniques marked as chaos or yin-yang techniques, and for techniques that
+     * do not declare a corresponding elemental affinity. A present set contains the only elemental
+     * qi types that the technique may draw in.</p>
+     */
+    public static Optional<Set<ElementType>> getBreathingAbsorptionRestriction(
+            TechniqueDefinition technique
+    ) {
+        if (!technique.isBreathingTechnique()) {
+            return Optional.of(Set.of());
+        }
+
+        EnumSet<ElementType> declaredElements = EnumSet.noneOf(ElementType.class);
+        declaredElements.addAll(technique.compatibleElements());
+        declaredElements.addAll(technique.requirements().requiredElements());
+        if (declaredElements.contains(ElementType.CHAOS)
+                || declaredElements.contains(ElementType.YIN_YANG)) {
+            return Optional.empty();
+        }
+
+        declaredElements.retainAll(ElementType.FIVE_ELEMENTS);
+        return declaredElements.isEmpty()
+                ? Optional.empty()
+                : Optional.of(Set.copyOf(declaredElements));
     }
 
     private static void checkCompatibleElements(

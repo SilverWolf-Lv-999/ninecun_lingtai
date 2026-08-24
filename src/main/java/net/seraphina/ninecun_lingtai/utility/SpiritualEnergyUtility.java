@@ -8,6 +8,7 @@ import net.seraphina.ninecun_lingtai.common.config.CommonConfig;
 
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 public final class SpiritualEnergyUtility {
@@ -54,6 +55,26 @@ public final class SpiritualEnergyUtility {
             absorptionRates.put(element, rate);
         }
         return Map.copyOf(absorptionRates);
+    }
+
+    public static Map<ElementType, Double> restrictAbsorptionRates(
+            Map<ElementType, Double> absorptionRates,
+            Optional<Set<ElementType>> restriction
+    ) {
+        if (restriction.isEmpty()) {
+            return absorptionRates;
+        }
+        Set<ElementType> allowedElements = restriction.get();
+        if (allowedElements.isEmpty()) {
+            return Map.of();
+        }
+        EnumMap<ElementType, Double> restrictedRates = new EnumMap<>(ElementType.class);
+        for (Map.Entry<ElementType, Double> entry : absorptionRates.entrySet()) {
+            if (allowedElements.contains(entry.getKey())) {
+                restrictedRates.put(entry.getKey(), entry.getValue());
+            }
+        }
+        return Map.copyOf(restrictedRates);
     }
 
     public static double getMultiElementInteractionMultiplier(
