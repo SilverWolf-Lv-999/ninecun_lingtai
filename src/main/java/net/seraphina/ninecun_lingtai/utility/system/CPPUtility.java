@@ -1,24 +1,14 @@
 package net.seraphina.ninecun_lingtai.utility.system;
 
-import com.sun.jna.Callback;
-import com.sun.jna.CallbackReference;
-import com.sun.jna.Function;
-import com.sun.jna.Memory;
-import com.sun.jna.Pointer;
+import com.sun.jna.*;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.LongByReference;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @SuppressWarnings("all")
 public final class CPPUtility {
-    private static final int POINTER_SIZE = com.sun.jna.Native.POINTER_SIZE;
+    private static final int POINTER_SIZE = Native.POINTER_SIZE;
     private static final int JVMTI_MAGIC = 0x71EE;
     private static final int[] JVMTI_VERSIONS = {0x30010200, 0x30010100, 0x30010000};
     private static final int JVMTI_BAD_MAGIC = 0xDEAD;

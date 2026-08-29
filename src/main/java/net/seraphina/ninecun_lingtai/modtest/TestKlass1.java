@@ -1,4 +1,4 @@
-package net.seraphina.ninecun_lingtai.test;
+package net.seraphina.ninecun_lingtai.modtest;
 
 public class TestKlass1 {
     public static void test1() {
