@@ -1,8 +1,7 @@
-# Forge 1.20.1 3D Shader 实现技能（唯一参考：ArcaneVortex 0.6.8）
+# Forge 1.20.1 3D Shader 实现技能
 
 > **适用范围**：Minecraft Forge 1.20.1 客户端的实体、方块实体、世界阶段特效、天空/球体、轨迹、程序水、半透明护盾、体积效果，以及依赖场景颜色/深度的屏幕空间 3D 效果。  
-> **唯一技术参考**：`C:/Users/Administrator/Downloads/ArcaneVortex [Alpha]-0.6.8-1.20.1-Forge.jar`。文中的分类、资源布局、风险和设计规律均从其中的 shader、renderer、PostChain/RenderTarget 使用方式抽取；不以任何项目源码、其他 Mod 或网络样例为参考。  
-> **默认 GLSL**：`#version 150`。ArcaneVortex 的普通 Minecraft Shader 资源采用该版本；除非目标环境已实际验证，禁止默认引入高版本 GLSL、`layout` 限定、compute shader 或不受 Minecraft loader 支持的内建。
+> **默认 GLSL**：`#version 150`。参考实现的普通 Minecraft Shader 资源采用该版本；除非目标环境已实际验证，禁止默认引入高版本 GLSL、`layout` 限定、compute shader 或不受 Minecraft loader 支持的内建。
 
 ---
 
@@ -10,12 +9,12 @@
 
 “3D Shader”至少有四种本质不同的任务，错误地把它们混成一个渲染入口会造成坐标、深度或排序问题：
 
-| 类型 | 输入几何 | 常见入口 | Shader 的关键职责 | ArcaneVortex 观察对象 |
-|---|---|---|---|---|
-| **材质型** | 方块/实体已有网格 | 自定义 `RenderType`、实体或方块实体 renderer | UV、光照、雾、法线、材质颜色 | `water_block`、`cosmic`、`fantasy_block` |
-| **几何特效型** | 自行生成的 quad、球、带状 trail | `RenderLevelStageEvent` 或 renderer | camera-relative 顶点、billboard、透明排序 | `trail`、`melee_trail`、`rendertype_glass_sphere` |
-| **程序体积型** | 简单代理体（quad/box/sphere） | 世界阶段渲染 | view ray、ray marching、early exit、tone mapping | `volumetric_shader` |
-| **屏幕空间场景读取型** | 全屏 quad / NDC quad | 特定世界最终阶段 | scene color/depth copy、坐标重建、深度输出 | `black_hole`、`black_hole_pro` |
+| 类型            | 输入几何                   | 常见入口                               | Shader 的关键职责                                  | 参考实现 观察对象                                       |
+|---------------|------------------------|------------------------------------|-----------------------------------------------|-------------------------------------------------|
+| **材质型**       | 方块/实体已有网格              | 自定义 `RenderType`、实体或方块实体 renderer  | UV、光照、雾、法线、材质颜色                               | `water_block`、`cosmic`、`fantasy_block`          |
+| **几何特效型**     | 自行生成的 quad、球、带状 trail  | `RenderLevelStageEvent` 或 renderer | camera-relative 顶点、billboard、透明排序             | `trail`、`melee_trail`、`rendertype_glass_sphere` |
+| **程序体积型**     | 简单代理体（quad/box/sphere） | 世界阶段渲染                             | view ray、ray marching、early exit、tone mapping | `volumetric_shader`                             |
+| **屏幕空间场景读取型** | 全屏 quad / NDC quad     | 特定世界最终阶段                           | scene color/depth copy、坐标重建、深度输出              | `black_hole`、`black_hole_pro`                   |
 
 **先选最小正确类别，不是最少代码类别。** 例如：
 
@@ -26,20 +25,20 @@
 
 ---
 
-## 1. ArcaneVortex JAR 中可学习的 3D Shader 结构
+## 1. 参考实现 中可学习的 3D Shader 结构
 
-JAR 内 `assets/arcanevortex/shaders/core` 包含大量 core shader。与 3D 最相关、且各自代表不同问题的资源包括：
+core shader 可以覆盖多种 3D 问题。以下资源类型分别代表不同的实现方向：
 
-| 资源 | 可学习主题 | 不应机械复制的部分 |
-|---|---|---|
-| `starfield` | 球面映射、方向向量、星点 hash/noise、星空滚动 | 大量星循环应有严格上限与质量模式 |
-| `water_block` | Position/Color/UV0/UV2/Normal、ChunkOffset、view-space 距离、末尾 fog | 法线不能简单用投影矩阵变换，应使用 normal matrix 思路 |
-| `cosmic` | `#moj_import <light.glsl>`、`<fog.glsl>`、Sampler0 + Sampler2、FogShape | JSON/GLSL 名称与类型须自己严格验证，不能继承任何潜在不一致 |
-| `rendertype_glass_sphere` | view position、normal、Fresnel、rim glow、半透明球 | 观察方向正负必须按视图坐标实测，不可照抄符号 |
-| `volumetric_shader` | 屏幕坐标、yaw/pitch、固定上限 ray marching、ACES/gamma | 固定 80 步只代表参考实现，不能无条件用于所有硬件 |
-| `black_hole` / `black_hole_pro` | 主场景颜色/深度采样、副本 target、投影状态备份恢复、`gl_FragDepth` | 深度重建、矩阵逆和深度写入需要更严格的空间验证 |
+| 资源                              | 可学习主题                                                                | 不应机械复制的部分                          |
+|---------------------------------|----------------------------------------------------------------------|------------------------------------|
+| `starfield`                     | 球面映射、方向向量、星点 hash/noise、星空滚动                                         | 大量星循环应有严格上限与质量模式                   |
+| `water_block`                   | Position/Color/UV0/UV2/Normal、ChunkOffset、view-space 距离、末尾 fog       | 法线不能简单用投影矩阵变换，应使用 normal matrix 思路 |
+| `cosmic`                        | `#moj_import <light.glsl>`、`<fog.glsl>`、Sampler0 + Sampler2、FogShape | JSON/GLSL 名称与类型须自己严格验证，不能继承任何潜在不一致 |
+| `rendertype_glass_sphere`       | view position、normal、Fresnel、rim glow、半透明球                           | 观察方向正负必须按视图坐标实测，不可照抄符号             |
+| `volumetric_shader`             | 屏幕坐标、yaw/pitch、固定上限 ray marching、ACES/gamma                          | 固定 80 步只代表参考实现，不能无条件用于所有硬件         |
+| `black_hole` / `black_hole_pro` | 主场景颜色/深度采样、副本 target、投影状态备份恢复、`gl_FragDepth`                         | 深度重建、矩阵逆和深度写入需要更严格的空间验证            |
 
-JAR 中还有 `sky_block`、`star_sky`、`nebula_cube`、`sun`、`warp_world` 等资源。它们进一步说明：游戏内“3D 效果”可能是模型材质、天空方向采样、程序空间图案或屏幕空间折射；必须根据实际输入数据做架构选择。
+参考实现中还有 `sky_block`、`star_sky`、`nebula_cube`、`sun`、`warp_world` 等资源。它们进一步说明：游戏内“3D 效果”可能是模型材质、天空方向采样、程序空间图案或屏幕空间折射；必须根据实际输入数据做架构选择。
 
 ---
 
@@ -59,28 +58,28 @@ src/main/resources/assets/<modid>/shaders/core/aura_shield.fsh
 
 ### 2.2 `VertexFormat ↔ JSON attributes ↔ GLSL in` 必须逐项相同
 
-ArcaneVortex 的不同 3D 效果使用的输入组合不一样：
+参考实现的不同 3D 效果使用的输入组合不一样：
 
-| JAR Shader | JSON attributes | 适用情形 |
-|---|---|---|
-| `starfield` | `Position`、`UV0` | 简单天空/贴图几何 |
-| `water_block` | `Position`、`Color`、`UV0`、`UV2`、`Normal` | 方块材质、光照/雾、程序水 |
-| `cosmic` | `Position`、`Color`、`UV0`、`UV2`、`Normal` | 纹理 + lightmap + fog 的复杂材质 |
-| `rendertype_glass_sphere` | `Position`、`UV0`、`Color`、`Normal` | 自定义半透明球体 |
-| `volumetric_shader` | `Position`、`UV0`、`Color` | 代理几何上的程序体积效果 |
-| `black_hole` | `Position` | 全屏 NDC 代理 quad |
+| 参考实现 Shader               | JSON attributes                         | 适用情形                      |
+|---------------------------|-----------------------------------------|---------------------------|
+| `starfield`               | `Position`、`UV0`                        | 简单天空/贴图几何                 |
+| `water_block`             | `Position`、`Color`、`UV0`、`UV2`、`Normal` | 方块材质、光照/雾、程序水             |
+| `cosmic`                  | `Position`、`Color`、`UV0`、`UV2`、`Normal` | 纹理 + lightmap + fog 的复杂材质 |
+| `rendertype_glass_sphere` | `Position`、`UV0`、`Color`、`Normal`       | 自定义半透明球体                  |
+| `volumetric_shader`       | `Position`、`UV0`、`Color`                | 代理几何上的程序体积效果              |
+| `black_hole`              | `Position`                              | 全屏 NDC 代理 quad            |
 
 在自己的实现中，先写接口表，再写任何 GLSL：
 
-| 数据 | Java 顶点格式/写入 | JSON attribute | vertex shader | 片元是否需要 |
-|---|---|---|---|---|
-| 顶点位置 | `POSITION_COLOR_TEX_NORMAL` 等 | `Position` | `in vec3 Position` | 间接：经 varying |
-| 顶点色 | 同上 | `Color` | `in vec4 Color` | `out vec4 vertexColor` |
-| 主纹理 UV | 同上 | `UV0` | `in vec2 UV0` | `out vec2 texCoord0` |
-| lightmap UV | 含 UV2 的格式 | `UV2` | `in ivec2 UV2`（依选用格式） | 光照采样/封装函数 |
-| 法线 | 含 Normal 的格式 | `Normal` | `in vec3 Normal` | `out vec3 normalView` |
+| 数据          | Java 顶点格式/写入                  | JSON attribute | vertex shader         | 片元是否需要                 |
+|-------------|-------------------------------|----------------|-----------------------|------------------------|
+| 顶点位置        | `POSITION_COLOR_TEX_NORMAL` 等 | `Position`     | `in vec3 Position`    | 间接：经 varying           |
+| 顶点色         | 同上                            | `Color`        | `in vec4 Color`       | `out vec4 vertexColor` |
+| 主纹理 UV      | 同上                            | `UV0`          | `in vec2 UV0`         | `out vec2 texCoord0`   |
+| lightmap UV | 含 UV2 的格式                     | `UV2`          | `in ivec2 UV2`（依选用格式） | 光照采样/封装函数              |
+| 法线          | 含 Normal 的格式                  | `Normal`       | `in vec3 Normal`      | `out vec3 normalView`  |
 
-禁止将 JAR JSON 中声明但某一 vertex shader 未实际使用的属性视为标准。例如 `water_block` 声明 `UV2`，其可观察 vertex 逻辑重点仍在程序水与 fog；自己的 shader 不应白白传递未使用属性。**但如果你确实用 Minecraft lightmap，就必须从顶点格式到 sampler/GLSL 完整打通。**
+禁止将 参考实现 JSON 中声明但某一 vertex shader 未实际使用的属性视为标准。例如 `water_block` 声明 `UV2`，其可观察 vertex 逻辑重点仍在程序水与 fog；自己的 shader 不应白白传递未使用属性。**但如果你确实用 Minecraft lightmap，就必须从顶点格式到 sampler/GLSL 完整打通。**
 
 ### 2.3 原创 `aura_shield.json` 接口样板
 
@@ -169,7 +168,7 @@ public final class ClientShaderHolder {
 NDC（[-1,1]） -> 屏幕 UV（[0,1]） -> framebuffer 像素
 ```
 
-ArcaneVortex `water_block.vsh` 的核心可观察流程是：`Position + ChunkOffset` 后乘 `ModelViewMat`，再乘 `ProjMat`；并以 view-space 位置计算距离和传递给 fragment。`rendertype_glass_sphere` 也先构造 view position，再得到 clip position。这是最应保留的顺序。
+参考实现 `water_block.vsh` 的核心可观察流程是：`Position + ChunkOffset` 后乘 `ModelViewMat`，再乘 `ProjMat`；并以 view-space 位置计算距离和传递给 fragment。`rendertype_glass_sphere` 也先构造 view position，再得到 clip position。这是最应保留的顺序。
 
 ### 3.2 位置的 `w = 1`，方向/法线的 `w = 0`
 
@@ -275,7 +274,7 @@ void main() {
 vec3 viewDirection = normalize(-viewPos);
 ```
 
-ArcaneVortex `rendertype_glass_sphere` 以 view position 和 normal 构造 Fresnel/rim light，是正确的设计方向；但其片元中的具体符号不能不验证地照搬。用以下诊断检查：
+参考实现 `rendertype_glass_sphere` 以 view position 和 normal 构造 Fresnel/rim light，是正确的设计方向；但其片元中的具体符号不能不验证地照搬。用以下诊断检查：
 
 - 输出 `0.5 + 0.5 * viewDirection`，围绕对象转镜头时方向色应平滑变化；
 - 输出 `abs(dot(normalize(normalView), viewDirection))`，正面和边缘应呈符合直觉的连续分布；
@@ -300,7 +299,7 @@ float alpha = clamp((0.12 + fresnel * 0.55) * Strength, 0.0, 1.0);
 
 ### 4.4 Minecraft 雾：与游戏环境一致地合成
 
-ArcaneVortex `water_block` 通过 `vertexDistance` 和 `smoothstep(FogStart, FogEnd, ...)` 把最终颜色向 `FogColor` 混合；`cosmic` 引入 `#moj_import <fog.glsl>` 和 `#moj_import <light.glsl>`，并使用 `fog_distance(ModelViewMat, Position, FogShape)`。这体现了两个层级：
+参考实现 `water_block` 通过 `vertexDistance` 和 `smoothstep(FogStart, FogEnd, ...)` 把最终颜色向 `FogColor` 混合；`cosmic` 引入 `#moj_import <fog.glsl>` 和 `#moj_import <light.glsl>`，并使用 `fog_distance(ModelViewMat, Position, FogShape)`。这体现了两个层级：
 
 1. **简单可控雾**：自己把 view-space 距离传到 fragment，末尾 mix；
 2. **尽量与 vanilla 一致的雾**：使用 Minecraft 提供的 fog include 和对应 uniform/函数签名。
@@ -329,7 +328,7 @@ vec4 applySimpleFog(vec4 color, float distanceToCamera) {
 
 ### 4.5 UV2/lightmap 与多纹理
 
-ArcaneVortex `cosmic` 的 JSON 包含 `Sampler0` 与 `Sampler2`，以及 `UV2` 和 light/fog import。这代表一种典型方块/实体材质接口：
+参考实现 `cosmic` 的 JSON 包含 `Sampler0` 与 `Sampler2`，以及 `UV2` 和 light/fog import。这代表一种典型方块/实体材质接口：
 
 - `Sampler0`：主材质 / atlas；
 - `Sampler2`：lightmap；
@@ -345,20 +344,20 @@ ArcaneVortex `cosmic` 的 JSON 包含 `Sampler0` 与 `Sampler2`，以及 `UV2` �
 
 Shader 计算正确而 RenderType 状态错误，画面仍会完全错误。对于每个 3D 效果，必须明确下列状态：
 
-| 状态 | 需要决定的问题 | 常见选择 |
-|---|---|---|
-| ShaderState | 使用哪一个 `ShaderInstance` | 客户端 holder 里的当前实例 |
-| TextureState | 哪张主纹理绑定给 sampler | 主 atlas、护盾 mask、噪声图 |
-| TransparencyState | RGB/alpha 怎样累积 | 标准 translucent 或预乘 alpha 专用配置 |
-| DepthTestState | 是否被方块/实体遮挡 | 通常保持 LEQUAL；穿墙效果才显式禁深度 |
-| WriteMaskState | 是否写深度 | 半透明护盾通常颜色写、深度不写 |
-| CullState | 背面是否剔除 | 闭合球外表面可 cull；双面薄片/内部可 no-cull |
-| OutputState | 写入哪个 target | 常规世界主 target；场景复制/特殊 target 必须明确 |
-| sortOnUpload | 半透明顶点是否按需要排序 | 依几何和渲染批次决定，不能想当然 |
+| 状态                | 需要决定的问题                | 常见选择                             |
+|-------------------|------------------------|----------------------------------|
+| ShaderState       | 使用哪一个 `ShaderInstance` | 客户端 holder 里的当前实例                |
+| TextureState      | 哪张主纹理绑定给 sampler       | 主 atlas、护盾 mask、噪声图              |
+| TransparencyState | RGB/alpha 怎样累积         | 标准 translucent 或预乘 alpha 专用配置    |
+| DepthTestState    | 是否被方块/实体遮挡             | 通常保持 LEQUAL；穿墙效果才显式禁深度           |
+| WriteMaskState    | 是否写深度                  | 半透明护盾通常颜色写、深度不写                  |
+| CullState         | 背面是否剔除                 | 闭合球外表面可 cull；双面薄片/内部可 no-cull    |
+| OutputState       | 写入哪个 target            | 常规世界主 target；场景复制/特殊 target 必须明确 |
+| sortOnUpload      | 半透明顶点是否按需要排序           | 依几何和渲染批次决定，不能想当然                 |
 
 ### 5.1 半透明护盾的推荐状态思路
 
-以 ArcaneVortex `rendertype_glass_sphere` 的透明球方向为例：
+以 参考实现 `rendertype_glass_sphere` 的透明球方向为例：
 
 - **深度测试开启**：护盾应被墙遮挡；
 - **深度写入关闭**：防止透明外壳先写深度，错误遮住后面同一对象或其他透明层；
@@ -407,7 +406,7 @@ public final class ClientRenderTypes {
 
 Renderer 不应让下一个 Mod 或原版渲染继承自己的 shader、纹理、blend、cull、color 或 framebuffer。使用 `PoseStack.pushPose()/popPose()` 管理几何矩阵；手动使用 RenderSystem 修改状态时，以 `try/finally` 恢复。Buffer 提交与状态切换之间不要插入无关的 draw。
 
-对于全屏场景读取效果，除普通 RenderType 状态外还必须备份/恢复 projection。ArcaneVortex `BlackHoleRenderer` 明确调用 projection backup 和 restore；这是因为它会在渲染中设置与特效匹配的投影，遗漏 restore 会污染后续世界/UI 渲染。
+对于全屏场景读取效果，除普通 RenderType 状态外还必须备份/恢复 projection。参考实现 `BlackHoleRenderer` 明确调用 projection backup 和 restore；这是因为它会在渲染中设置与特效匹配的投影，遗漏 restore 会污染后续世界/UI 渲染。
 
 ---
 
@@ -444,26 +443,26 @@ Renderer 不应让下一个 Mod 或原版渲染继承自己的 shader、纹理�
 
 ## 7. 每帧参数：时间、相机、yaw/pitch、尺度和世界位置
 
-ArcaneVortex 的 `starfield`、`water_block`、`cosmic`、`volumetric_shader` 都传入时间和/或相机角度；`black_hole` 还传入相机位置、实体位置、投影矩阵、缩放和密度参数。这些 uniform 不是“多传一些备用数据”，而是每个算法的空间协议。
+参考实现的 `starfield`、`water_block`、`cosmic`、`volumetric_shader` 都传入时间和/或相机角度；`black_hole` 还传入相机位置、实体位置、投影矩阵、缩放和密度参数。这些 uniform 不是“多传一些备用数据”，而是每个算法的空间协议。
 
 ### 7.1 统一参数单位表
 
 建议把所有 3D shader 参数列成如下表并写在 renderer/manager 附近：
 
-| uniform | 类型 | 空间/单位 | 生产者 | 使用限制 |
-|---|---|---|---|---|
-| `GameTime` | float | 秒 | 客户端时钟/partial tick | 不传毫秒；必要时 `fract` 防精度丢失 |
-| `CameraPos` | vec3 | 绝对世界坐标 | 当前 camera | 仅用于 world-anchored 算法，不重复平移几何 |
-| `YawRadians` | float | 弧度 | camera yaw 转换 | `sin/cos` 只接受弧度 |
-| `PitchRadians` | float | 弧度 | camera pitch 转换 | 与 yaw 旋转顺序固定 |
-| `EntityPos` | vec3 | 必须注明 world/local/view | effect owner | 与 ray origin 同一空间 |
-| `Scale` | float/vec3 | 模型单位 | renderer 状态 | 先 clamp，避免 0/负值异常 |
-| `ScreenSize` | vec2 | framebuffer 像素 | window/render target | 不与 GUI 逻辑尺寸混用 |
-| `Strength` | float | `[0,1]` | client state | 作为透明/混合上限 |
+| uniform        | 类型         | 空间/单位                 | 生产者                  | 使用限制                          |
+|----------------|------------|-----------------------|----------------------|-------------------------------|
+| `GameTime`     | float      | 秒                     | 客户端时钟/partial tick   | 不传毫秒；必要时 `fract` 防精度丢失        |
+| `CameraPos`    | vec3       | 绝对世界坐标                | 当前 camera            | 仅用于 world-anchored 算法，不重复平移几何 |
+| `YawRadians`   | float      | 弧度                    | camera yaw 转换        | `sin/cos` 只接受弧度               |
+| `PitchRadians` | float      | 弧度                    | camera pitch 转换      | 与 yaw 旋转顺序固定                  |
+| `EntityPos`    | vec3       | 必须注明 world/local/view | effect owner         | 与 ray origin 同一空间             |
+| `Scale`        | float/vec3 | 模型单位                  | renderer 状态          | 先 clamp，避免 0/负值异常             |
+| `ScreenSize`   | vec2       | framebuffer 像素        | window/render target | 不与 GUI 逻辑尺寸混用                 |
+| `Strength`     | float      | `[0,1]`               | client state         | 作为透明/混合上限                     |
 
 ### 7.2 yaw/pitch 的弧度与旋转顺序
 
-ArcaneVortex `starfield` 和 `volumetric_shader` 使用 camera yaw/pitch 来改变方向/射线。Java 角度往往是 degree，GLSL 三角函数输入是 radian：
+参考实现 `starfield` 和 `volumetric_shader` 使用 camera yaw/pitch 来改变方向/射线。Java 角度往往是 degree，GLSL 三角函数输入是 radian：
 
 ```java
 float yawRadians = (float) Math.toRadians(camera.getYRot());
@@ -498,7 +497,7 @@ vec3 rotateYawPitch(vec3 direction, float yawRadians, float pitchRadians) {
 
 ## 8. 球面映射与星空：从 `starfield` 学习方向场
 
-ArcaneVortex `starfield` 的 attributes 是 `Position`、`UV0`，uniform 包括 `CameraYaw`、`CameraPitch`、`StarScale`、`EnableSphericalMapping`、`EnableAdvancedEffects`、`MoveSpeed`、`StarCount`、`StarMask`、`StarMSpeed`、`StarMScale`、`MaxStarCount`、`Opacity`、`ColorModulator`。其 vertex shader 将 Position、UV 和位置相关值传下去；fragment shader 用方向向量转球面 UV，再通过 hash/noise 生成星点、运动、闪烁。
+参考实现 `starfield` 的 attributes 是 `Position`、`UV0`，uniform 包括 `CameraYaw`、`CameraPitch`、`StarScale`、`EnableSphericalMapping`、`EnableAdvancedEffects`、`MoveSpeed`、`StarCount`、`StarMask`、`StarMSpeed`、`StarMScale`、`MaxStarCount`、`Opacity`、`ColorModulator`。其 vertex shader 将 Position、UV 和位置相关值传下去；fragment shader 用方向向量转球面 UV，再通过 hash/noise 生成星点、运动、闪烁。
 
 ### 8.1 方向向量到球面 UV
 
@@ -521,7 +520,7 @@ vec2 directionToSphericalUv(vec3 direction) {
 
 ### 8.2 U seam 的距离必须环绕
 
-星点/星云在 U=0/1 接缝附近比较距离时，普通 `abs(a-b)` 会错误地产生“跨整张图的远距离”。JAR 的星空逻辑考虑了 U 环绕。原创辅助函数：
+星点/星云在 U=0/1 接缝附近比较距离时，普通 `abs(a-b)` 会错误地产生“跨整张图的远距离”。参考实现的星空逻辑考虑了 U 环绕。原创辅助函数：
 
 ```glsl
 vec2 wrappedUvDelta(vec2 a, vec2 b) {
@@ -535,7 +534,7 @@ vec2 wrappedUvDelta(vec2 a, vec2 b) {
 
 ### 8.3 程序星点的固定上限
 
-复杂星点生成常会遍历邻居 cell 或星列表。JAR 含 `MaxStarCount`，说明需要显式限制复杂度。安全结构：
+复杂星点生成常会遍历邻居 cell 或星列表。参考实现 含 `MaxStarCount`，说明需要显式限制复杂度。安全结构：
 
 ```glsl
 const int MAX_STARS = 32;
@@ -564,7 +563,7 @@ for (int starIndex = 0; starIndex < MAX_STARS; starIndex++) {
 
 ## 9. 程序水与方块材质：从 `water_block` 学习
 
-ArcaneVortex `water_block` 声明 `Position`、`Color`、`UV0`、`UV2`、`Normal`，并传入 `Sampler0`、`ColorModulator`、`FogStart`、`FogEnd`、`FogColor`、`time`、`screenSize`、`yaw`、`pitch`。其 vertex 逻辑把 `Position + ChunkOffset` 变换到 view/clip，传递 vertexDistance、Color、UV、normal 和 view-space `fPos`；fragment 使用视线与多层循环构造程序水纹，再与原材质混合，末尾处理 fog。
+参考实现 `water_block` 声明 `Position`、`Color`、`UV0`、`UV2`、`Normal`，并传入 `Sampler0`、`ColorModulator`、`FogStart`、`FogEnd`、`FogColor`、`time`、`screenSize`、`yaw`、`pitch`。其 vertex 逻辑把 `Position + ChunkOffset` 变换到 view/clip，传递 vertexDistance、Color、UV、normal 和 view-space `fPos`；fragment 使用视线与多层循环构造程序水纹，再与原材质混合，末尾处理 fog。
 
 ### 9.1 材质水的合成顺序
 
@@ -589,7 +588,7 @@ fragColor = applySimpleFog(color, vertexDistance);
 
 ### 9.2 多层波纹循环必须有预算
 
-JAR 的水使用固定 `MAX_ITER = 5` 风格的多层程序循环。新的效果应把每层含义写明：波长、速度、振幅、旋转/偏移和累计方式。示例：
+参考实现的水使用固定 `MAX_ITER = 5` 风格的多层程序循环。新的效果应把每层含义写明：波长、速度、振幅、旋转/偏移和累计方式。示例：
 
 ```glsl
 const int WAVE_LAYERS = 4;
@@ -615,13 +614,13 @@ float layeredWave(vec2 uv, float time) {
 
 ### 9.4 Fog 是材质的一部分，不是最后补丁
 
-JAR 在 `water_block` 末尾处理 fog，正确原因是 shader 生成的水色仍应融入世界雾。任何材质型 3D 特效若跳过雾，远处会像“贴在屏幕前”；若重复雾化，又会比原版暗得多。雾方案只选一个主路径并在多天气、下界/末地、夜视等环境测试。
+参考实现 在 `water_block` 末尾处理 fog，正确原因是 shader 生成的水色仍应融入世界雾。任何材质型 3D 特效若跳过雾，远处会像“贴在屏幕前”；若重复雾化，又会比原版暗得多。雾方案只选一个主路径并在多天气、下界/末地、夜视等环境测试。
 
 ---
 
 ## 10. 灵气护盾球：从 `rendertype_glass_sphere` 到完整原创算法
 
-`rendertype_glass_sphere` 使用 `Position`、`UV0`、`Color`、`Normal`，vertex 输出 viewPos、normal、screenPos、distanceFromCenter 等，fragment 以 Fresnel 和 rim light 生成半透明玻璃球。它是最适合作为“自定义 3D core shader”模板的 JAR 资源之一。
+`rendertype_glass_sphere` 使用 `Position`、`UV0`、`Color`、`Normal`，vertex 输出 viewPos、normal、screenPos、distanceFromCenter 等，fragment 以 Fresnel 和 rim light 生成半透明玻璃球。它是最适合作为“自定义 3D core shader”模板的 参考实现 资源之一。
 
 ### 10.1 vertex shader（原创模板）
 
@@ -696,7 +695,7 @@ void main() {
 
 ## 11. 体积 ray marching：从 `volumetric_shader` 学习“代理几何 + 固定步数”
 
-ArcaneVortex `volumetric_shader` 的 attributes 是 `Position`、`UV0`、`Color`，vertex 将 clip/NDC 推导为 `fragCoord`，fragment 使用 yaw/pitch 改变 ray direction，并以固定约 80 次循环进行程序体积采样，最后做 ACES tone mapping 与 gamma。它揭示的是完整流程，而不是建议所有项目默认跑 80 步。
+参考实现 `volumetric_shader` 的 attributes 是 `Position`、`UV0`、`Color`，vertex 将 clip/NDC 推导为 `fragCoord`，fragment 使用 yaw/pitch 改变 ray direction，并以固定约 80 次循环进行程序体积采样，最后做 ACES tone mapping 与 gamma。它揭示的是完整流程，而不是建议所有项目默认跑 80 步。
 
 ### 11.1 代理体与 ray 的空间必须统一
 
@@ -749,16 +748,16 @@ vec3 marchVolume(vec3 rayOrigin, vec3 rayDirection, float time) {
 
 ### 11.3 tone mapping 与 gamma 的边界
 
-JAR 在体积效果末尾使用 ACES tone mapping 和 gamma，说明体积累积可能超过显示范围。规则是：一条渲染链中必须明确由谁负责 tone mapping/gamma。若 Minecraft 主渲染已经做了相关颜色处理，又在自定义 effect 重复做，可能整体过暗/过饱和。先以线性、clamp 的调试输出验证 density，再决定是否使用 tone mapping；这不是装饰性“一键电影感”。
+参考实现 在体积效果末尾使用 ACES tone mapping 和 gamma，说明体积累积可能超过显示范围。规则是：一条渲染链中必须明确由谁负责 tone mapping/gamma。若 Minecraft 主渲染已经做了相关颜色处理，又在自定义 effect 重复做，可能整体过暗/过饱和。先以线性、clamp 的调试输出验证 density，再决定是否使用 tone mapping；这不是装饰性“一键电影感”。
 
 
 ---
 
 ## 12. 场景颜色/深度读取：从 `black_hole` 学习正确的黑洞、折射和引力透镜架构
 
-ArcaneVortex `black_hole` 的 JSON 仅以 `Position` 作为 attribute，却声明了 `MainDepthSampler`、`MainColorSampler`、`TextureSampler`、`ColorSampler`，以及 `ProjMat`、`ModelViewMat`、`time`、`screenSize`、`projectionMatrix`、`modelViewMatrix`、`cameraPos`、`yaw`、`pitch`、`entityPos`、`scale`、`accretionDiskDensity`、`tiltAngle`、`intensity` 等 uniform。其 vertex 直接输出 NDC，fragment 读取场景颜色/深度、重建空间信息、计算偏折画面，并可能写 `gl_FragDepth`。
+参考实现 `black_hole` 的 JSON 仅以 `Position` 作为 attribute，却声明了 `MainDepthSampler`、`MainColorSampler`、`TextureSampler`、`ColorSampler`，以及 `ProjMat`、`ModelViewMat`、`time`、`screenSize`、`projectionMatrix`、`modelViewMatrix`、`cameraPos`、`yaw`、`pitch`、`entityPos`、`scale`、`accretionDiskDensity`、`tiltAngle`、`intensity` 等 uniform。其 vertex 直接输出 NDC，fragment 读取场景颜色/深度、重建空间信息、计算偏折画面，并可能写 `gl_FragDepth`。
 
-JAR 的 `BlackHoleRenderer` 还可观察到以下关键步骤：
+参考实现的 `BlackHoleRenderer` 还可观察到以下关键步骤：
 
 1. 复制主颜色 target（`SceneCopyTarget.copyMainColor()`）；
 2. 备份 projection matrix；
@@ -781,7 +780,7 @@ JAR 的 `BlackHoleRenderer` 还可观察到以下关键步骤：
 
 这是 texture feedback loop。OpenGL 对结果不做有用保证，常见表现为闪烁、上一帧残影、不同显卡不同结果或黑屏。
 
-正确结构必须与 JAR 的“先 copy 再采样”方向一致：
+正确结构必须与 参考实现的“先 copy 再采样”方向一致：
 
 ```text
 Main RenderTarget（当前已完成的场景）
@@ -830,7 +829,7 @@ vec3 reconstructViewPosition(vec2 screenUv, float depthValue, mat4 inverseProjec
 }
 ```
 
-注意：不同深度约定、projection 方向、RenderTarget 格式和当前矩阵状态都必须实测。JAR 的复杂片元中出现的矩阵变量/命名只应作为“需要 projection/model-view/camera 数据”的观察依据，**不能替代你自己的 inverse matrix 验证**。
+注意：不同深度约定、projection 方向、RenderTarget 格式和当前矩阵状态都必须实测。参考实现的复杂片元中出现的矩阵变量/命名只应作为“需要 projection/model-view/camera 数据”的观察依据，**不能替代你自己的 inverse matrix 验证**。
 
 调试步骤：
 
@@ -842,7 +841,7 @@ vec3 reconstructViewPosition(vec2 screenUv, float depthValue, mat4 inverseProjec
 
 ### 12.4 写 `gl_FragDepth` 的风险
 
-ArcaneVortex 黑洞片元会修改 `gl_FragDepth`，这可以让屏幕空间效果与深度遮挡更紧密，但风险非常高：
+参考实现 黑洞片元会修改 `gl_FragDepth`，这可以让屏幕空间效果与深度遮挡更紧密，但风险非常高：
 
 - 输出值必须处于当前 depth 空间的合法范围，通常 clamp 到 `[0,1]`；
 - 不能把线性 view distance 直接写进去；
@@ -867,7 +866,7 @@ texCoord = Position.xy * 0.5 + 0.5;
 - `texCoord` 由 NDC 映射到 `[0,1]`；
 - 不能将相机 relative world position 传给该 `Position`；
 - world 中黑洞的位置不是顶点位置，而是一个 uniform（例如 `BlackHoleCenterWorld`/`EntityPos`）并通过深度重建参与比较；
-- 若临时修改 projection，必须如 JAR renderer 一样 backup/restore。
+- 若临时修改 projection，必须如 参考实现 renderer 一样 backup/restore。
 
 ---
 
@@ -958,18 +957,18 @@ client/render/BlackHoleEffectRenderer
 
 ## 15. 常见错误与诊断序列
 
-| 现象 | 高概率原因 | 先做什么 |
-|---|---|---|
-| 物体跟相机漂移/翻倍移动 | camera-relative 变换应用两次 | 写出 CPU/PoseStack/shader 三层坐标公式，只保留一次 |
-| 模型完全不可见 | stage/RenderType 错、顶点格式不匹配、cull/depth 错 | 用纯色 shader、关闭 cull 诊断、确认 Position 输入 |
-| 只有远处/近处可见 | depth test 或 projection 空间错 | 输出 view-space 距离，检查 RenderType 深度状态 |
-| 护盾边缘黑/透明怪异 | alpha 模型与 blend 不匹配 | 检查预乘/非预乘约定与纹理边缘 RGB |
-| 球内部反光翻转 | viewDirection/normal 符号或双面语义错 | 可视化 normal 与 dot 值，分别测试内外面 |
-| 方块材质远处像贴纸 | 未 fog 或 fog 空间错误 | 使用 view distance，末尾合成 fog |
-| 水纹闪烁 | 高密度/高频噪声、硬 step、时间精度差 | 降低频率，增加 smoothstep，周期化时间 |
-| 黑洞黑屏/闪烁 | 读写同一 main color target | 实现 scene copy 并验证 copy 在 draw 前完成 |
-| 黑洞遮挡全错 | 把 depth 当距离、错误 inverse matrix、错误 `gl_FragDepth` | 先不写 frag depth，单独验证重建空间 |
-| 资源重载后崩溃 | 缓存旧 ShaderInstance/Uniform/target | 重载后重新获取，world exit/resize close |
+| 现象           | 高概率原因                                           | 先做什么                                 |
+|--------------|-------------------------------------------------|--------------------------------------|
+| 物体跟相机漂移/翻倍移动 | camera-relative 变换应用两次                          | 写出 CPU/PoseStack/shader 三层坐标公式，只保留一次 |
+| 模型完全不可见      | stage/RenderType 错、顶点格式不匹配、cull/depth 错         | 用纯色 shader、关闭 cull 诊断、确认 Position 输入 |
+| 只有远处/近处可见    | depth test 或 projection 空间错                     | 输出 view-space 距离，检查 RenderType 深度状态  |
+| 护盾边缘黑/透明怪异   | alpha 模型与 blend 不匹配                             | 检查预乘/非预乘约定与纹理边缘 RGB                  |
+| 球内部反光翻转      | viewDirection/normal 符号或双面语义错                   | 可视化 normal 与 dot 值，分别测试内外面           |
+| 方块材质远处像贴纸    | 未 fog 或 fog 空间错误                                | 使用 view distance，末尾合成 fog            |
+| 水纹闪烁         | 高密度/高频噪声、硬 step、时间精度差                           | 降低频率，增加 smoothstep，周期化时间             |
+| 黑洞黑屏/闪烁      | 读写同一 main color target                          | 实现 scene copy 并验证 copy 在 draw 前完成    |
+| 黑洞遮挡全错       | 把 depth 当距离、错误 inverse matrix、错误 `gl_FragDepth` | 先不写 frag depth，单独验证重建空间              |
+| 资源重载后崩溃      | 缓存旧 ShaderInstance/Uniform/target               | 重载后重新获取，world exit/resize close      |
 
 ### 15.1 每个 3D Shader 的最小诊断输出
 
@@ -1005,7 +1004,7 @@ client/render/BlackHoleEffectRenderer
 
 ### 16.2 验收清单
 
-- [ ] 本次 3D Shader 资源和 Java 客户端逻辑以 ArcaneVortex JAR 的同类结构为唯一参考，没有混入无关实现。
+- [ ] 本次 3D Shader 资源和 Java 客户端逻辑以 参考实现的同类结构为唯一参考，没有混入无关实现。
 - [ ] 所有 3D client 类只在客户端路径加载；服务端状态与客户端视觉状态分离。
 - [ ] VertexFormat、JSON attributes、GLSL `in` 声明和顶点写入顺序逐项一致。
 - [ ] 每个 `vec3` 的空间明确，位置使用 `w=1`、方向/法线使用 `w=0`，`ChunkOffset`/相机相对转换各仅执行一次。

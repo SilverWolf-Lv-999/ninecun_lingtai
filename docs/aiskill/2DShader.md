@@ -1,8 +1,7 @@
-# Forge 1.20.1 2D Shader 实现技能（唯一参考：ArcaneVortex 0.6.8）
+# Forge 1.20.1 2D Shader 实现技能
 
 > **适用范围**：Minecraft Forge 1.20.1 客户端的 GUI、HUD、全屏、屏幕后处理（PostChain）与 2D 程序化特效。  
-> **唯一技术参考**：`C:/Users/Administrator/Downloads/ArcaneVortex [Alpha]-0.6.8-1.20.1-Forge.jar`。本文只从该 JAR 已包含的 shader 资源、后处理链和客户端管理类抽取设计规律；不依赖或假定任何其他 Mod、项目源码或网络资料。  
-> **默认 GLSL**：`#version 150`。ArcaneVortex 的常规 Shader 使用这一版本；除非已经在目标运行环境验证过加载器与显卡上下文，禁止为方便而改用 `#version 330`、`#version 400`、`layout(...)`、compute shader 或其他高版本特性。
+> **默认 GLSL**：`#version 150`。参考实现的常规 Shader 使用这一版本；除非已经在目标运行环境验证过加载器与显卡上下文，禁止为方便而改用 `#version 330`、`#version 400`、`layout(...)`、compute shader 或其他高版本特性。
 
 ---
 
@@ -20,10 +19,10 @@
 
 ### 0.1 本技能的两条实现路线
 
-| 路线 | 资源位置 | 驱动对象 | 适合的效果 | ArcaneVortex 参考 |
-|---|---|---|---|---|
-| **Core 2D Shader** | `shaders/core/<name>.json/.vsh/.fsh` | `ShaderInstance` + 自定义 `RenderType` / 立即绘制 | HUD 图标、法阵、按钮、进度条、局部遮罩、文字/精灵变色 | `flowing_gradient`、`text`、`iap` 等 |
-| **PostChain** | `shaders/post/<chain>.json` 与 `shaders/program/<program>.*` | `PostChain` | 主画面反色、扭曲、扫描、局部全屏过渡、多 pass 效果 | `invert_colors`、`warp` 和 `InvertShaderManager` |
+| 路线                 | 资源位置                                                        | 驱动对象                                       | 适合的效果                         | 参考实现 参考                                        |
+|--------------------|-------------------------------------------------------------|--------------------------------------------|-------------------------------|------------------------------------------------|
+| **Core 2D Shader** | `shaders/core/<name>.json/.vsh/.fsh`                        | `ShaderInstance` + 自定义 `RenderType` / 立即绘制 | HUD 图标、法阵、按钮、进度条、局部遮罩、文字/精灵变色 | `flowing_gradient`、`text`、`iap` 等              |
+| **PostChain**      | `shaders/post/<chain>.json` 与 `shaders/program/<program>.*` | `PostChain`                                | 主画面反色、扭曲、扫描、局部全屏过渡、多 pass 效果  | `invert_colors`、`warp` 和 `InvertShaderManager` |
 
 **选择标准**：
 
@@ -34,16 +33,16 @@
 
 ### 0.2 目录与 ResourceLocation 映射
 
-ArcaneVortex JAR 的结构明确区分为：
+参考实现的结构明确区分为：
 
 ```text
-assets/arcanevortex/shaders/
+assets/<modid>/shaders/
 ├── core/       # ShaderInstance / RenderType 直接使用的 shader
 ├── post/       # 后处理链（target 与 pass 的编排）
 └── program/    # 后处理 pass 的 JSON、vertex shader、fragment shader
 ```
 
-在你的 Mod 中，把 `arcanevortex` 替换成自己的 `modid`：
+资源路径中的 `<modid>` 必须替换为自己的命名空间：
 
 ```text
 src/main/resources/assets/<modid>/shaders/core/aura_panel.json
@@ -63,15 +62,15 @@ src/main/resources/assets/<modid>/shaders/program/screen_pulse.fsh
 - post pass 的 `"name": "<modid>:screen_pulse"` 对应 `shaders/program/screen_pulse.json`；
 - program JSON 内 `"vertex": "<modid>:screen_pulse"` 与 `"fragment": "<modid>:screen_pulse"` 对应 `program/screen_pulse.vsh`、`program/screen_pulse.fsh`。
 
-大小写、下划线、命名空间均为契约的一部分。不要仅因为 JAR 中个别复杂 shader 可观察到 uniform 命名风格不统一，就让自己的新资源出现 `screenSize`/`ScreenSize` 或 `time`/`Time` 混用。**JSON、GLSL 与 Java 查询的名称必须字符级一致。**
+大小写、下划线、命名空间均为契约的一部分。不要仅因为 参考实现中个别复杂 shader 可观察到 uniform 命名风格不统一，就让自己的新资源出现 `screenSize`/`ScreenSize` 或 `time`/`Time` 混用。**JSON、GLSL 与 Java 查询的名称必须字符级一致。**
 
 ---
 
-## 1. ArcaneVortex 的 2D 设计可直接学习的内容
+## 1. 参考实现的 2D 设计可直接学习的内容
 
 ### 1.1 `flowing_gradient`：遮罩驱动的滚动多色渐变
 
-JAR 中的 `core/flowing_gradient` 使用：
+参考实现中的 `core/flowing_gradient` 使用：
 
 - attributes：`Position`、`UV0`；
 - sampler：`Sampler0`；
@@ -84,24 +83,24 @@ JAR 中的 `core/flowing_gradient` 使用：
 
 实现时必须先决定遮罩的语义：
 
-| 遮罩来源 | 适用素材 | 推荐写法 | 风险 |
-|---|---|---|---|
-| `sample.a` | PNG/字体 alpha 已正确 | `mask = sample.a` | 最直观，透明边缘不会被 RGB 污染 |
-| `dot(sample.rgb, vec3(...))` | 黑白亮度图 | `mask = luminance(sample.rgb)` | 必须说明黑白方向，避免“白色才显示”成为隐含规则 |
-| 独立 sampler | 正常纹理 + 单独 mask | `mask = texture(MaskSampler, uv).r` | sampler 增加，须显式绑定 |
+| 遮罩来源                         | 适用素材             | 推荐写法                                | 风险                       |
+|------------------------------|------------------|-------------------------------------|--------------------------|
+| `sample.a`                   | PNG/字体 alpha 已正确 | `mask = sample.a`                   | 最直观，透明边缘不会被 RGB 污染       |
+| `dot(sample.rgb, vec3(...))` | 黑白亮度图            | `mask = luminance(sample.rgb)`      | 必须说明黑白方向，避免“白色才显示”成为隐含规则 |
+| 独立 sampler                   | 正常纹理 + 单独 mask   | `mask = texture(MaskSampler, uv).r` | sampler 增加，须显式绑定         |
 
-JAR 的 16 个 `int` 颜色方式值得理解其目的（Java 易传 `0xRRGGBB`），但新实现不应不加约束地复制 16 段分支。颜色很多时，优先考虑：小型色带纹理、明确数量的 2/3/4 个 `vec4` uniform，或固定上限且所有下标都在 GLSL 允许范围内的方案。资源声明能够加载，比“理论上更灵活”更重要。
+参考实现的 16 个 `int` 颜色方式值得理解其目的（Java 易传 `0xRRGGBB`），但新实现不应不加约束地复制 16 段分支。颜色很多时，优先考虑：小型色带纹理、明确数量的 2/3/4 个 `vec4` uniform，或固定上限且所有下标都在 GLSL 允许范围内的方案。资源声明能够加载，比“理论上更灵活”更重要。
 
 ### 1.2 `invert_colors` / `warp`：将效果拆成“链”和“程序”
 
-ArcaneVortex 的 `post/invert_colors.json` 定义链路，核心结构是：
+参考实现的 `post/invert_colors.json` 定义链路，核心结构是：
 
 ```json
 {
   "targets": ["swap", "temp"],
   "passes": [
     {
-      "name": "arcanevortex:invert_colors",
+      "name": "examplemod:invert_colors",
       "intarget": "minecraft:main",
       "outtarget": "swap"
     },
@@ -119,7 +118,7 @@ ArcaneVortex 的 `post/invert_colors.json` 定义链路，核心结构是：
 - `minecraft:main` 是主画面的 RenderTarget；
 - `swap` 是本链声明的中间 target；
 - `minecraft:blit` 将中间结果写回主 target；
-- JAR 虽声明 `temp`，但这个单效果链没有用到它。新链只能声明实际需要的 target；若要两个/多个 pass 的乒乓读写，才声明 `swap`、`temp` 等明确用途的 target；
+- 参考实现 虽声明 `temp`，但这个单效果链没有用到它。新链只能声明实际需要的 target；若要两个/多个 pass 的乒乓读写，才声明 `swap`、`temp` 等明确用途的 target；
 - **同一个 pass 不能从某 target 采样又写回同一 target**。这会形成 feedback loop，结果未定义，通常表现为闪烁、黑屏或驱动相关错误。
 
 其 `program/invert_colors` 的 vertex shader 只有 `Position`，再用 `ProjMat`、`InSize`、`OutSize` 构造全屏坐标。这和普通 GUI Core shader 的 `Position + UV0` 输入模式不同：PostChain 的全屏网格及 target 尺寸由后处理框架驱动，不能把 GUI shader 的属性定义随意挪过来。
@@ -168,12 +167,12 @@ ArcaneVortex 的 `post/invert_colors.json` 定义链路，核心结构是：
 
 ### 2.2 属性不匹配时的表现与修复
 
-| 错误 | 现象 | 根因 | 修复 |
-|---|---|---|---|
-| Java 发送 `POSITION_TEX`，JSON 只有 `Position` | UV 随机/全零/链接失败 | 顶点布局不一致 | 三处全部改为 Position+UV0，或 Java 改为 POSITION |
-| GLSL 写 `in vec4 Color`，但 JSON/VertexFormat 没有 `Color` | shader 加载失败或颜色异常 | attribute 找不到 | 加 `Color` 并用 `POSITION_COLOR_TEX` 等正确格式 |
-| JSON 是 `UV0`，GLSL 写 `UV` | 链接失败 | 名称不匹配 | 使用 Minecraft 约定属性名 `UV0` |
-| position 分量混乱 | 四边形被裁掉/变成线 | `vec2/vec3/vec4` 契约错误 | GUI 顶点的常规输入使用 `vec3 Position` |
+| 错误                                                    | 现象               | 根因                    | 修复                                      |
+|-------------------------------------------------------|------------------|-----------------------|-----------------------------------------|
+| Java 发送 `POSITION_TEX`，JSON 只有 `Position`             | UV 随机/全零/链接失败    | 顶点布局不一致               | 三处全部改为 Position+UV0，或 Java 改为 POSITION  |
+| GLSL 写 `in vec4 Color`，但 JSON/VertexFormat 没有 `Color` | shader 加载失败或颜色异常 | attribute 找不到         | 加 `Color` 并用 `POSITION_COLOR_TEX` 等正确格式 |
+| JSON 是 `UV0`，GLSL 写 `UV`                              | 链接失败             | 名称不匹配                 | 使用 Minecraft 约定属性名 `UV0`                |
+| position 分量混乱                                         | 四边形被裁掉/变成线       | `vec2/vec3/vec4` 契约错误 | GUI 顶点的常规输入使用 `vec3 Position`           |
 
 禁止“试几个名称看哪个能显示”。先从 Java 顶点格式反推 JSON，再从 JSON 精确写 GLSL 输入；新增数据时同步改完三处后再启动游戏验证。
 
@@ -206,12 +205,12 @@ centeredUv.x *= ScreenSize.x / max(ScreenSize.y, 1.0);
 float radius = length(centeredUv);
 ```
 
-若不做修正，正方形 framebuffer 以外的屏幕上，数学圆会变成椭圆。ArcaneVortex 的反色程序中包含带 aspect 校正的椭圆/暗角模式，说明这不是装饰性细节，而是实际效果一致性的必要条件。
+若不做修正，正方形 framebuffer 以外的屏幕上，数学圆会变成椭圆。参考实现的反色程序中包含带 aspect 校正的椭圆/暗角模式，说明这不是装饰性细节，而是实际效果一致性的必要条件。
 
 ### 3.3 GUI 与 PostChain 不能共用错误的 UV 假设
 
 - GUI shader：`UV0` 通常来自调用者提供的纹理坐标；
-- PostChain：JAR 的 `invert_colors.vsh` 使用 `Position.xy / OutSize` 生成 `texCoord`；
+- PostChain：参考实现的 `invert_colors.vsh` 使用 `Position.xy / OutSize` 生成 `texCoord`；
 - 全屏 clip/NDC quad：`Position` 可能是 `[-1,1]`，也可能由程序的 projection 转为 clip 坐标。必须以该 program vertex shader 的输入约定为准。
 
 不要看见 `texCoord` 变量就假设一定是 GUI 贴图 UV；它只是一对被 vertex shader 传给 fragment shader 的插值数据。
@@ -410,7 +409,7 @@ public final class ShaderUniformUtility {
 
 ### 5.3 时间、进度与平滑变化
 
-ArcaneVortex 的 `InvertShaderManager` 维护 `currentStrength`、`targetStrength` 和 `TRANSITION_DURATION = 0.5F`，用真实时间 delta 平滑逼近目标值。它传达的原则是：**shader 负责基于当前参数插值，不负责猜测何时开始、何时结束。**
+参考实现的 `InvertShaderManager` 维护 `currentStrength`、`targetStrength` 和 `TRANSITION_DURATION = 0.5F`，用真实时间 delta 平滑逼近目标值。它传达的原则是：**shader 负责基于当前参数插值，不负责猜测何时开始、何时结束。**
 
 推荐把动画状态写在客户端管理器：
 
@@ -442,7 +441,7 @@ public final class ScreenEffectState {
 
 ### 5.4 Alpha、预乘与混合公式要配套
 
-ArcaneVortex 的 program JSON 使用源 alpha / one-minus-source-alpha 的常见透明混合。默认非预乘 alpha 的 fragment 输出约定是：
+参考实现的 program JSON 使用源 alpha / one-minus-source-alpha 的常见透明混合。默认非预乘 alpha 的 fragment 输出约定是：
 
 ```glsl
 vec4 outputColor = vec4(rgb, alpha);
@@ -524,9 +523,9 @@ void main() {
 
 ---
 
-## 7. 2D 程序化效果：从 ArcaneVortex 的反色模式提炼可维护算法
+## 7. 2D 程序化效果：从 参考实现的反色模式提炼可维护算法
 
-ArcaneVortex 的 `invert_colors.fsh` 不只做全局 `1.0 - color`。它以 `UseType` 选择多种强度掩码和 UV 操作：全屏、圆形扩散、纵向扫描、FBM 噪声、Voronoi、裂缝感组合噪声、马赛克 hash、径向扭曲和带宽高比修正的椭圆/暗角。这说明一个“屏幕效果”应拆为两步：
+参考实现的 `invert_colors.fsh` 不只做全局 `1.0 - color`。它以 `UseType` 选择多种强度掩码和 UV 操作：全屏、圆形扩散、纵向扫描、FBM 噪声、Voronoi、裂缝感组合噪声、马赛克 hash、径向扭曲和带宽高比修正的椭圆/暗角。这说明一个“屏幕效果”应拆为两步：
 
 1. **计算 effectMask / finalStrength**：效果在哪些像素、以多强作用；
 2. **计算 effectColor 或 distortedUv**：该像素怎样变色或从哪里取样。
@@ -579,7 +578,7 @@ float fbm(vec2 point) {
 
 ### 7.2 Voronoi、马赛克和裂缝感
 
-ArcaneVortex 使用 3×3 邻域的 Voronoi 思路：对当前 cell 及相邻 cell 的随机 feature point 求最小距离。这适合魔法碎片、细胞、结晶和裂缝底图。
+参考实现 使用 3×3 邻域的 Voronoi 思路：对当前 cell 及相邻 cell 的随机 feature point 求最小距离。这适合魔法碎片、细胞、结晶和裂缝底图。
 
 ```glsl
 float voronoiDistance(vec2 point) {
@@ -640,7 +639,7 @@ float scanBand = 1.0 - smoothstep(
 
 ### 7.4 极坐标、径向扭曲与安全 UV
 
-ArcaneVortex 的某个模式会先计算扭曲 UV，再采样主画面。实现这种效果时必须保证采样坐标和强度边界可控：
+参考实现的某个模式会先计算扭曲 UV，再采样主画面。实现这种效果时必须保证采样坐标和强度边界可控：
 
 ```glsl
 vec2 radialDistort(vec2 uv, vec2 screenSize, float strength, float time) {
@@ -691,7 +690,7 @@ vec2 radialDistort(vec2 uv, vec2 screenSize, float strength, float time) {
 }
 ```
 
-JAR 的 `invert_colors`、`warp` 采用的正是“主画面 -> 中间 target -> blit 回主画面”结构。链 JSON 中不能在同 pass 中把 `minecraft:main` 同时作为 `intarget` 和 `outtarget`。
+参考实现的 `invert_colors`、`warp` 采用的正是“主画面 -> 中间 target -> blit 回主画面”结构。链 JSON 中不能在同 pass 中把 `minecraft:main` 同时作为 `intarget` 和 `outtarget`。
 
 多 pass 时才做 ping-pong：
 
@@ -730,7 +729,7 @@ swap           -> minecraft:main (blit)
 }
 ```
 
-JAR 的 `program/invert_colors.json` 同样包含 `Position`、`DiffuseSampler`、`ProjMat`、`InSize`、`OutSize`，并扩展了 `InvertStrength`、`ScreenSize`、`UseType`。它展示的是 **PostChain program 的属性契约**：不要把普通 core shader 的 `UV0` 强行加入，除非你的全屏顶点生成与 program JSON 都为此设计。
+参考实现的 `program/invert_colors.json` 同样包含 `Position`、`DiffuseSampler`、`ProjMat`、`InSize`、`OutSize`，并扩展了 `InvertStrength`、`ScreenSize`、`UseType`。它展示的是 **PostChain program 的属性契约**：不要把普通 core shader 的 `UV0` 强行加入，除非你的全屏顶点生成与 program JSON 都为此设计。
 
 ### 8.3 最小而完整的全屏 vertex shader
 
@@ -752,7 +751,7 @@ void main() {
 }
 ```
 
-这是沿着 JAR `invert_colors.vsh` 的接口形状写出的模板。重点：
+这是沿着 参考实现 `invert_colors.vsh` 的接口形状写出的模板。重点：
 
 - `Position` 的真实数值范围由 PostChain 全屏网格定义，不能假定和 GUI quad 一样；
 - `OutSize` 为零必须防守性处理；
@@ -799,7 +798,7 @@ void main() {
 
 ## 9. PostChain 管理器：必须实现完整生命周期
 
-ArcaneVortex 的 `com.erchien.arcanevortex.TimeStop.InvertShaderManager` 展示的不是“加载一个 chain 后调用 process”这么简单。JAR 内可观察到的状态包括：
+完整的后处理管理器绝不是“加载一个 chain 后调用 process”这么简单。它至少应维护以下状态：
 
 - `isInverting`：逻辑开关；
 - `currentStrength`、`targetStrength`：当前视觉强度和目标强度；
@@ -830,7 +829,7 @@ LoadFailed
   └─ 资源重载、明确重试或下次客户端会话才允许重新尝试
 ```
 
-网络同步与视觉状态必须分开：服务端同步“技能是否生效/剩余时间/效果类型”等权威游戏状态；客户端管理器根据同步状态调整 `targetStrength` 并渲染。JAR 的逻辑会在本地有 client level 时经由请求/状态路径驱动，而非将视觉 bool 误认为唯一游戏真相。不要让 shader toggle 成为服务端判定的依据。
+网络同步与视觉状态必须分开：服务端同步“技能是否生效/剩余时间/效果类型”等权威游戏状态；客户端管理器根据同步状态调整 `targetStrength` 并渲染。参考实现的逻辑会在本地有 client level 时经由请求/状态路径驱动，而非将视觉 bool 误认为唯一游戏真相。不要让 shader toggle 成为服务端判定的依据。
 
 ### 9.2 结构化伪代码
 
@@ -946,7 +945,7 @@ public final class ScreenPulseManager {
 - `PostChain#resize` 必须发生在窗口/target 尺寸变化时，不是只在启动时；
 - `process` 后必须把主 RenderTarget 重新 `bindWrite(true)`，否则后续渲染可能写到错误 framebuffer；
 - `cleanup` 不只是赋 null，必须 `close()`；
-- 在客户端 tick END 阶段或世界/服务器连接结束的确定位置检测 `level == null` 并 cleanup，正是 JAR 管理器体现的清理策略。
+- 在客户端 tick END 阶段或世界/服务器连接结束的确定位置检测 `level == null` 并 cleanup，正是 参考实现 管理器体现的清理策略。
 
 ### 9.3 uniform 更新的正确粒度
 
@@ -963,7 +962,7 @@ public final class ScreenPulseManager {
 
 ### 9.4 何时调用 render
 
-后处理必须发生在“要处理的主画面已被渲染”和“结果还可写回主目标”的正确阶段。ArcaneVortex 的 GUI post 渲染路径调用管理器更新，说明它把该效果定位为屏幕最终展示层的一部分。你的选择必须写清：
+后处理必须发生在“要处理的主画面已被渲染”和“结果还可写回主目标”的正确阶段。参考实现的 GUI post 渲染路径调用管理器更新，说明它把该效果定位为屏幕最终展示层的一部分。你的选择必须写清：
 
 - 想影响世界但不影响特定 GUI：在 GUI 前、世界结束后的合适阶段处理；
 - 想影响 HUD/GUI：在其对应的最终 GUI 阶段处理；
@@ -978,17 +977,17 @@ public final class ScreenPulseManager {
 
 ### 10.1 故障定位表
 
-| 现象 | 优先检查 | 典型修复 |
-|---|---|---|
-| 资源加载报找不到 shader | ResourceLocation、文件目录、core/program/post 混用 | 逐段检查 modid、名称与文件位置；不要传错误扩展名 |
-| 整块纯黑 | fragment 未写正确颜色、sampler 未绑定、PostChain feedback loop | 先输出 `vec4(1,0,1,1)` 验证 shader 运行，再验证采样和 target |
-| 整块纯白 | mask 语义错、alpha 未使用、纹理坐标全落在白区 | 直接可视化 `mask`，检查 alpha/RGB 约定 |
-| GUI 缩放后变形 | GUI 尺寸和 framebuffer 尺寸混用 | 明确每个 uniform 的尺寸来源；圆形计算加入 aspect correction |
-| 后处理仅首次有效 | 未 resize、未 bindWrite、chain 被错误 close | 记录窗口尺寸与调用顺序，确保 process 后绑定主 target |
-| 切世界后崩溃/显存上涨 | PostChain 未 close、旧 shader/uniform 被保留 | 在 level 为 null 和资源重载边界 cleanup/reacquire |
-| 后续 UI 颜色/纹理错 | RenderSystem 状态泄漏、未 flush | 自定义状态前后 flush，`finally` 恢复 shader/color/blend 等 |
-| 强度闪跳 | 毫秒直接传 GLSL、delta 未限幅、每帧重置当前值 | 使用秒、累计状态、平滑 approach |
-| 高分辨率严重掉帧 | 全屏每像素多 octave/多 pass/多采样 | 降低 pass 数和 octave，添加 quality 模式或降低 effect 更新频率 |
+| 现象              | 优先检查                                                | 典型修复                                            |
+|-----------------|-----------------------------------------------------|-------------------------------------------------|
+| 资源加载报找不到 shader | ResourceLocation、文件目录、core/program/post 混用          | 逐段检查 modid、名称与文件位置；不要传错误扩展名                     |
+| 整块纯黑            | fragment 未写正确颜色、sampler 未绑定、PostChain feedback loop | 先输出 `vec4(1,0,1,1)` 验证 shader 运行，再验证采样和 target  |
+| 整块纯白            | mask 语义错、alpha 未使用、纹理坐标全落在白区                        | 直接可视化 `mask`，检查 alpha/RGB 约定                    |
+| GUI 缩放后变形       | GUI 尺寸和 framebuffer 尺寸混用                            | 明确每个 uniform 的尺寸来源；圆形计算加入 aspect correction     |
+| 后处理仅首次有效        | 未 resize、未 bindWrite、chain 被错误 close                | 记录窗口尺寸与调用顺序，确保 process 后绑定主 target              |
+| 切世界后崩溃/显存上涨     | PostChain 未 close、旧 shader/uniform 被保留              | 在 level 为 null 和资源重载边界 cleanup/reacquire        |
+| 后续 UI 颜色/纹理错    | RenderSystem 状态泄漏、未 flush                           | 自定义状态前后 flush，`finally` 恢复 shader/color/blend 等 |
+| 强度闪跳            | 毫秒直接传 GLSL、delta 未限幅、每帧重置当前值                        | 使用秒、累计状态、平滑 approach                            |
+| 高分辨率严重掉帧        | 全屏每像素多 octave/多 pass/多采样                            | 降低 pass 数和 octave，添加 quality 模式或降低 effect 更新频率  |
 
 ### 10.2 开发时的可视化诊断方法
 
@@ -1026,7 +1025,7 @@ public final class ScreenPulseManager {
 7. **明确渲染状态**：在 GUI 批处理边界 flush；设置 blend/depth/cull；用 `try/finally` 恢复。
 8. **若使用 PostChain，完整实现 manager**：惰性加载、平滑 strength、resize、pass uniform、`process` 后 `bindWrite`、world exit cleanup、失败熔断与回退。
 9. **测试矩阵**：至少测试不同 GUI Scale、窗口尺寸变化、全屏切换、资源重载、切换世界/断开连接、shader 不可用时的降级和低质量模式。
-10. **最后才做美术参数调优**：把所有魔数命名化，按秒、像素、UV 或归一化范围记录单位；避免将 JAR 中观察到的任意数值当作通用答案。
+10. **最后才做美术参数调优**：把所有魔数命名化，按秒、像素、UV 或归一化范围记录单位；避免将 参考实现中观察到的任意数值当作通用答案。
 
 ## 12. 完成清单
 
