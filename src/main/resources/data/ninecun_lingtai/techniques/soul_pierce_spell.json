@@ -1,0 +1,42 @@
+{
+  "name": "神识刺",
+  "description": "凝神识为无形之刺直击敌魂的六品魂法，护体灵光形同虚设。",
+  "content": "肉身之伤可医，神魂之创难愈。此术以神御气，不动一丝五行：静凝命宫星光，聚神识为一点锋芒，目注敌首，意念一送，无形之刺已透敌之泥丸。护体罡气、灵光宝甲，拦得住飞剑法火，拦不住这一缕神念。中者魂宫剧震，如遭针贯，神识愈弱者受创愈重。然此术以魂搏魂：敌之神魂若强于我，此刺如以卵击石，反震之力循念而回，轻则头痛欲裂，重则神识受创。故施此术前，务须以神识度其深浅，量力而行。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "spell": {
+    "id": "ninecun_lingtai:soul_pierce",
+    "category": "combat",
+    "grade": 6,
+    "base_cost": 15.0,
+    "cost_elements": []
+  },
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "golden_core",
+      "layer": 1
+    },
+    "minimum_soul_strength": 3
+  },
+  "comprehension": {
+    "minimum_learning_score": 75,
+    "key_concepts": [
+      "神魂之创难愈",
+      "以神御气不动五行",
+      "聚神识为一点锋芒透敌泥丸",
+      "护体灵光拦不住神念",
+      "敌魂强于我反震循念而回"
+    ],
+    "grading_criteria": [
+      "说明此术伤魂不伤身的本质",
+      "理解凝神成刺、意念送出的行功方式",
+      "明白神念无形、穿透护体的杀着所在",
+      "知晓以魂搏魂、魂弱反震的凶险"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 75
+      }
+    ]
+  }
+}

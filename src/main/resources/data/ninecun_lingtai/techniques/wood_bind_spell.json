@@ -1,0 +1,42 @@
+{
+  "name": "缚灵青藤",
+  "description": "催发木气化藤缚敌，困而不杀的三品法术。",
+  "content": "草木有灵，感气而动。此术不以伤敌为先，而以困敌为要。行功之时，木行灵力自涌泉入地，借大地生机催发，敌足之下顷刻青藤丛生，缠足锁臂，越挣越紧。藤之韧性系于施术者心念，念紧则藤紧，念散则藤枯。故与人斗法，须分神一缕常驻藤上，此为此术最难处。困住敌手之后，或走或战，主动皆在我手。惟遇火行高手，青藤易为烈焰所焚，不可恃此久战。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "spell": {
+    "id": "ninecun_lingtai:wood_bind",
+    "category": "combat",
+    "grade": 3,
+    "base_cost": 5.0
+  },
+  "compatible_elements": ["wood"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 3
+    },
+    "required_elements": ["wood"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 65,
+    "key_concepts": [
+      "以困敌为要不以伤敌为先",
+      "灵力自涌泉入地借生机催发",
+      "念紧则藤紧念散则藤枯",
+      "分神一缕常驻藤上",
+      "青藤易为烈焰所焚"
+    ],
+    "grading_criteria": [
+      "说明此术困敌为主的用途定位",
+      "理解借地催藤、生机感应的行功路线",
+      "明白心念系藤、分神维持的关窍",
+      "知晓火克青藤的天然短板"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 65
+      }
+    ]
+  }
+}

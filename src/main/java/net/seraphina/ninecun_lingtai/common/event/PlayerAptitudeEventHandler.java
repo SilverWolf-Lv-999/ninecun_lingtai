@@ -10,6 +10,14 @@ import net.seraphina.ninecun_lingtai.common.player.PlayerDefenseResourceData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerImprintedTechniqueData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerLearnedAlchemyRecipeData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerPillToxinData;
+import net.seraphina.ninecun_lingtai.common.player.PlayerSoulSenseData;
+import net.seraphina.ninecun_lingtai.common.player.PlayerSoulTemperingData;
+import net.seraphina.ninecun_lingtai.common.player.PlayerSoulInjuryData;
+import net.seraphina.ninecun_lingtai.common.player.PlayerBreakthroughBonusData;
+import net.seraphina.ninecun_lingtai.common.player.PlayerBreakthroughFailureData;
+import net.seraphina.ninecun_lingtai.common.behavior.PlayerBehaviorLedgerData;
+import net.seraphina.ninecun_lingtai.common.insight.PlayerInsightData;
+import net.seraphina.ninecun_lingtai.common.status.PlayerScarData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerSpiritInfusionData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerSelectedSpellData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerSpiritualEnergyData;
@@ -52,6 +60,14 @@ public final class PlayerAptitudeEventHandler {
         PlayerPillToxinData.copy(event.getOriginal(), event.getEntity());
         PlayerBreakthroughDiscountData.copy(event.getOriginal(), event.getEntity());
         PlayerSpiritInfusionData.copy(event.getOriginal(), event.getEntity());
+        PlayerSoulTemperingData.copy(event.getOriginal(), event.getEntity());
+        PlayerSoulSenseData.copy(event.getOriginal(), event.getEntity());
+        PlayerScarData.copy(event.getOriginal(), event.getEntity());
+        PlayerSoulInjuryData.copy(event.getOriginal(), event.getEntity());
+        PlayerBreakthroughFailureData.copy(event.getOriginal(), event.getEntity());
+        PlayerBreakthroughBonusData.copy(event.getOriginal(), event.getEntity());
+        PlayerInsightData.copy(event.getOriginal(), event.getEntity());
+        PlayerBehaviorLedgerData.copy(event.getOriginal(), event.getEntity());
     }
 
     @SubscribeEvent

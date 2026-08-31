@@ -9,7 +9,10 @@ import net.seraphina.ninecun_lingtai.client.SeraFont;
 import net.seraphina.ninecun_lingtai.client.render.PillItemRenderer;
 import net.seraphina.ninecun_lingtai.client.utility.ItemFontStyleResolver;
 import net.seraphina.ninecun_lingtai.common.alchemy.PillEffectApplier;
+import net.seraphina.ninecun_lingtai.common.behavior.PlayerBehaviorLedgerData;
 import net.seraphina.ninecun_lingtai.common.data.AlchemyRecipeManager;
+import net.seraphina.ninecun_lingtai.common.inner_demon.MindTrialManager;
+import net.seraphina.ninecun_lingtai.common.player.PlayerMeditationManager;
 import net.seraphina.ninecun_lingtai.common.player.PlayerPillToxinData;
 import net.seraphina.ninecun_lingtai.utility.AlchemyPillUtility;
 import net.seraphina.ninecun_lingtai.utility.AlchemyResultCalculator;
@@ -144,8 +147,10 @@ public final class PillItem extends ColorItem {
                 resistanceCategory,
                 player.level().getGameTime()
         );
+        // 药执心障：丹药效果乘 0.7（经行为账本单点查询门面，接线清单第 10 条）。
         double multiplier = AlchemyPillUtility.getGrade(itemStack).getEffectMultiplier()
                 * PlayerPillToxinData.getPillEffectMultiplier(player)
+                * PlayerBehaviorLedgerData.getPillEffectMultiplier(player)
                 * resistanceMultiplier;
         if (resistanceMultiplier < 1.0D) {
             player.displayClientMessage(
@@ -160,6 +165,18 @@ public final class PillItem extends ColorItem {
             PillEffectApplier.apply(player, effect, multiplier);
         }
         applyToxin(player, recipe, rank);
+        // 行为账本采样（心魔即己 §5.2）：PillItem 即时消耗不触发 UseItemEvent.Finish，在此直采；
+        // 丹毒越阈值判定放在 applyToxin 之后（服后越阈值才算一次毒发）。
+        boolean soulPill = recipe.effects().stream()
+                .anyMatch(effect -> "soul_tempering".equals(effect.type()));
+        PlayerBehaviorLedgerData.recordPillUse(
+                player,
+                soulPill,
+                PlayerPillToxinData.getToxin(player) >= PlayerPillToxinData.OUTBREAK_THRESHOLD
+        );
+        MindTrialManager.onPillUse(player);
+        // 药执心障化解计时：打坐期间服丹则"连续 30 分钟无服丹"归零。
+        PlayerMeditationManager.onPillConsumed(player);
     }
 
     private static void applyToxin(ServerPlayer player, AlchemyRecipeDefinition recipe, int rank) {

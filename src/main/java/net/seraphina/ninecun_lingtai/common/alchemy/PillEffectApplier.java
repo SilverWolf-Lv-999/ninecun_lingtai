@@ -6,6 +6,7 @@ import net.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
 import net.seraphina.ninecun_lingtai.api.element.ElementType;
 import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import net.seraphina.ninecun_lingtai.common.player.PlayerAptitudeData;
+import net.seraphina.ninecun_lingtai.common.player.PlayerBreakthroughBonusData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerBreakthroughDiscountData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerCultivationData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerDefenseResourceData;
@@ -16,9 +17,13 @@ import net.seraphina.ninecun_lingtai.common.player.PlayerSpiritualEnergyData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerTechniqueData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerTechniqueManager;
 import net.seraphina.ninecun_lingtai.common.player.PlayerTechniqueProficiencyData;
+import net.seraphina.ninecun_lingtai.common.qi_deviation.QiDeviationManager;
+import net.seraphina.ninecun_lingtai.common.karma.KarmaUtility;
 import net.seraphina.ninecun_lingtai.common.lifespan.EntityLifespanData;
 import net.seraphina.ninecun_lingtai.utility.CultivationUtility;
 import net.seraphina.ninecun_lingtai.utility.LifespanUtility;
+import net.seraphina.ninecun_lingtai.utility.SoulInjuryUtility;
+import net.seraphina.ninecun_lingtai.utility.SoulTemperingUtility;
 import net.seraphina.ninecun_lingtai.utility.SpiritualRootUtility;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -40,11 +45,16 @@ public final class PillEffectApplier {
             case "restore_spirit" -> applyRestoreSpirit(player, effect, multiplier);
             case "spirit_infusion" -> applySpiritInfusion(player, effect, multiplier);
             case "breakthrough_energy_discount" -> applyBreakthroughDiscount(player, effect);
+            case "breakthrough_success_bonus" -> applyBreakthroughSuccessBonus(player, effect);
             case "proficiency_gain" -> applyProficiencyGain(player, effect, multiplier);
             case "lifespan_add" -> applyLifespanAdd(player, effect, multiplier);
             case "toxin_cleanse" -> applyToxinCleanse(player, effect, multiplier);
             case "defense_repair" -> applyDefenseRepair(player, effect, multiplier);
             case "food" -> applyFood(player, effect, multiplier);
+            case "soul_tempering" -> applySoulTempering(player, effect, multiplier);
+            case "soul_injury_heal" -> applySoulInjuryHeal(player, effect, multiplier);
+            case "resolve_qi_deviation" -> QiDeviationManager.resolveByPill(player);
+            case "karma_redeem" -> applyKarmaRedeem(player, effect, multiplier);
             default -> LOGGER.warn("Unknown alchemy pill effect type: {}", effect.type());
         }
     }
@@ -116,6 +126,29 @@ public final class PillEffectApplier {
         }
         PlayerSpiritInfusionData.addUsed(player, currentStage.get(), injected);
         ModNetwork.sendCultivationInfo(player);
+    }
+
+    private static void applyBreakthroughSuccessBonus(ServerPlayer player, AlchemyPillEffectData effect) {
+        double bonus = effect.getNumber("bonus", 0.0D);
+        int durationTicks = effect.getInt("duration_ticks", 72000);
+        if (bonus <= 0.0D) {
+            return;
+        }
+        boolean applied = PlayerBreakthroughBonusData.applyBonus(
+                player,
+                bonus,
+                player.level().getGameTime() + durationTicks
+        );
+        player.displayClientMessage(
+                Component.translatableWithFallback(
+                        applied
+                                ? "message.ninecun_lingtai.pill_breakthrough_bonus"
+                                : "message.ninecun_lingtai.pill_breakthrough_bonus_wasted",
+                        applied ? "破境把握提升 %s%%（三日内冲关有效）" : "已有同档或更强的破境加成，此丹白费了",
+                        Math.round(bonus * 100.0D)
+                ),
+                true
+        );
     }
 
     private static void applyBreakthroughDiscount(ServerPlayer player, AlchemyPillEffectData effect) {
@@ -195,6 +228,38 @@ public final class PillEffectApplier {
         if (repairAmount > 0 && PlayerDefenseResourceData.repair(player, repairAmount) > 0) {
             ModNetwork.sendDefenseResource(player);
         }
+    }
+
+    private static void applySoulTempering(ServerPlayer player, AlchemyPillEffectData effect, double multiplier) {
+        double amount = effect.getNumber("amount", 0.0D) * multiplier;
+        if (amount <= 0.0D) {
+            return;
+        }
+        SoulTemperingUtility.addProgress(player, amount);
+    }
+
+    private static void applySoulInjuryHeal(ServerPlayer player, AlchemyPillEffectData effect, double multiplier) {
+        double amount = effect.getNumber("amount", 0.0D) * multiplier;
+        if (amount <= 0.0D) {
+            return;
+        }
+        SoulInjuryUtility.heal(player, amount, SoulInjuryUtility.HealSource.PILL);
+    }
+
+    /** 忏心丹（道心杀孽）：消解杀孽，redeemed 记账走 KarmaUtility 统一口径。 */
+    private static void applyKarmaRedeem(ServerPlayer player, AlchemyPillEffectData effect, double multiplier) {
+        double amount = effect.getNumber("amount", 0.0D) * multiplier;
+        if (amount <= 0.0D) {
+            return;
+        }
+        KarmaUtility.redeem(player, amount);
+        player.displayClientMessage(
+                Component.translatableWithFallback(
+                        "message.ninecun_lingtai.pill_karma_redeem",
+                        "诵经忏悔，手上血腥渐淡，心口滞涩稍平"
+                ),
+                true
+        );
     }
 
     private static void applyFood(ServerPlayer player, AlchemyPillEffectData effect, double multiplier) {

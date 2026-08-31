@@ -1,0 +1,9 @@
+{
+  "block": "ninecun_lingtai:nine_dragon_alchemy_furnace",
+  "heat_cap": 900,
+  "heat_decay_rate": 0.6,
+  "tolerance_bonus": 0.1,
+  "element": "chaos",
+  "max_recipe_tier": 9,
+  "max_durability": 5000
+}

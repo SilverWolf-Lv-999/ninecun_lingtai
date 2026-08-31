@@ -4,14 +4,14 @@ import net.seraphina.ninecun_lingtai.api.cultivation.BreakthroughResult;
 import net.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
 import net.seraphina.ninecun_lingtai.api.aptitude.SpiritualRoot;
 import net.seraphina.ninecun_lingtai.common.animation.BreakthroughAnimationType;
-import net.seraphina.ninecun_lingtai.common.ascension.AscensionManager;
+import net.seraphina.ninecun_lingtai.common.breakthrough.BreakthroughRitualManager;
 import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
+import net.seraphina.ninecun_lingtai.common.player.PlayerBreakthroughFailureData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerAptitudeData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerCultivationData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerCultivationManager;
 import net.seraphina.ninecun_lingtai.common.player.PlayerDefenseResourceData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerSoulRoamingManager;
-import net.seraphina.ninecun_lingtai.common.tribulation.TribulationManager;
 import net.seraphina.ninecun_lingtai.utility.ChineseNumberUtility;
 import net.seraphina.ninecun_lingtai.utility.CultivationUtility;
 import net.minecraft.network.FriendlyByteBuf;
@@ -47,17 +47,18 @@ public final class BreakthroughRequestPacket {
         if (PlayerSoulRoamingManager.isSoulRoaming(player)) {
             return;
         }
-        TribulationManager.StartResult tribulationResult = TribulationManager.request(player);
-        if (tribulationResult != TribulationManager.StartResult.NOT_REQUIRED) {
-            handleTribulationResult(player, tribulationResult);
-            return;
-        }
-        AscensionManager.StartResult ascensionResult = AscensionManager.request(player);
-        if (ascensionResult != AscensionManager.StartResult.NOT_REQUIRED) {
-            handleAscensionResult(player, ascensionResult);
-            return;
-        }
         Optional<CultivationStage> previousStage = PlayerCultivationData.getStage(player);
+        // P4 路由（§5.2）：巅峰大境界一律先过引灵仪式掷骰；掷骰成功后由仪式分派——
+        // 目标 ∈ [金丹, ∞) 起天劫、目标 = 化神起飞升劫、目标 = 筑基直接晋升。
+        // 天劫/飞升不再由本包直连（防止跳过掷骰）。
+        if (previousStage.isPresent()) {
+            BreakthroughRitualManager.RequestResult ritualResult =
+                    BreakthroughRitualManager.request(player);
+            if (ritualResult != BreakthroughRitualManager.RequestResult.NOT_MAJOR_TARGET) {
+                handleRitualResult(player, ritualResult);
+                return;
+            }
+        }
         BreakthroughResult result = previousStage.isEmpty()
                 ? PlayerCultivationManager.tryBreakthrough(player)
                 : PlayerCultivationManager.tryBreakthroughRealm(player);
@@ -79,9 +80,12 @@ public final class BreakthroughRequestPacket {
                         CultivationUtility.getDisplayName(stage)
                 );
                 player.displayClientMessage(
-                        Component.empty()
-                                .append(player.getDisplayName())
-                                .append(" 踏入" + CultivationUtility.getDisplayName(stage)),
+                        Component.translatableWithFallback(
+                                "message.ninecun_lingtai.breakthrough_success_broadcast",
+                                "%s 踏入%s",
+                                player.getDisplayName(),
+                                CultivationUtility.getDisplayName(stage)
+                        ),
                         false
                 );
                 ModNetwork.sendCultivationFeedback(player, true, message);
@@ -114,13 +118,24 @@ public final class BreakthroughRequestPacket {
         ModNetwork.sendDefenseResource(player);
     }
 
-    private static void handleTribulationResult(
+    private static void handleRitualResult(
             ServerPlayer player,
-            TribulationManager.StartResult result
+            BreakthroughRitualManager.RequestResult result
     ) {
         switch (result) {
-            case STARTED -> ModNetwork.sendCultivationInfo(player);
-            case ALREADY_ACTIVE -> ModNetwork.sendCultivationFeedback(
+            case STARTED -> {
+                ModNetwork.sendCultivationInfo(player);
+                ModNetwork.sendDefenseResource(player);
+            }
+            case ALREADY_IN_RITUAL -> ModNetwork.sendCultivationFeedback(
+                    player,
+                    false,
+                    Component.translatableWithFallback(
+                            "message.ninecun_lingtai.breakthrough_ritual_active",
+                            "引灵仪式正在进行，不可再次引动。"
+                    )
+            );
+            case BLOCKED_BY_TRIBULATION -> ModNetwork.sendCultivationFeedback(
                     player,
                     false,
                     Component.literal("天劫正在进行，不可再次引动。")
@@ -130,58 +145,39 @@ public final class BreakthroughRequestPacket {
                     false,
                     Component.translatable("message.ninecun_lingtai.breakthrough_no_root")
             );
+            case IN_BOTTLENECK -> ModNetwork.sendCultivationFeedback(
+                    player,
+                    false,
+                    Component.translatableWithFallback(
+                            "message.ninecun_lingtai.breakthrough_bottleneck",
+                            "道基未稳，%s 日后方可再度冲关",
+                            getBottleneckRemainingDaysText(player)
+                    )
+            );
             case INSUFFICIENT_SPIRITUAL_ENERGY -> ModNetwork.sendCultivationFeedback(
                     player,
                     false,
-                    Component.translatable("message.ninecun_lingtai.breakthrough_insufficient_energy")
+                    Component.translatable(
+                            "message.ninecun_lingtai.breakthrough_insufficient_energy",
+                            getRequiredEnergyText(PlayerCultivationData.getStage(player))
+                    )
             );
             case CANNOT_MEDITATE -> ModNetwork.sendCultivationFeedback(
                     player,
                     false,
-                    Component.literal("当前状态无法凝神渡劫。")
+                    Component.literal("当前状态无法凝神引灵。")
             );
-            case NOT_REQUIRED -> {
+            case NOT_MAJOR_TARGET -> {
             }
         }
     }
 
-    private static void handleAscensionResult(
-            ServerPlayer player,
-            AscensionManager.StartResult result
-    ) {
-        switch (result) {
-            case STARTED -> {
-                ModNetwork.sendCultivationInfo(player);
-                ModNetwork.sendDefenseResource(player);
-            }
-            case QUESTION_GENERATING -> ModNetwork.sendCultivationFeedback(
-                    player,
-                    false,
-                    Component.literal("天道正在临场随机出题，请稍候片刻。")
-            );
-            case ALREADY_ACTIVE -> ModNetwork.sendCultivationFeedback(
-                    player,
-                    false,
-                    Component.literal("飞升劫正在进行，不可再次引动。")
-            );
-            case TRIBULATION_ACTIVE -> ModNetwork.sendCultivationFeedback(
-                    player,
-                    false,
-                    Component.literal("天劫正在进行，不可再次引动。")
-            );
-            case INSUFFICIENT_SPIRITUAL_ENERGY -> ModNetwork.sendCultivationFeedback(
-                    player,
-                    false,
-                    Component.translatable("message.ninecun_lingtai.breakthrough_insufficient_energy")
-            );
-            case CANNOT_MEDITATE -> ModNetwork.sendCultivationFeedback(
-                    player,
-                    false,
-                    Component.literal("当前状态无法凝神渡飞升劫。")
-            );
-            case NOT_REQUIRED -> {
-            }
-        }
+    private static String getBottleneckRemainingDaysText(ServerPlayer player) {
+        long remainingTicks = PlayerBreakthroughFailureData.getBottleneckRemainingTicks(
+                player,
+                player.serverLevel().getGameTime()
+        );
+        return Long.toString(Math.max(1L, (remainingTicks + 23999L) / 24000L));
     }
 
     private static String getRequiredEnergyText(Optional<CultivationStage> currentStage) {

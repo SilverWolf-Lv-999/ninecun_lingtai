@@ -1,0 +1,76 @@
+{
+  "name": "驻颜丹",
+  "description": "四阶一品延寿丹方，月露兰为君，服之驻颜留春，寿数绵长。",
+  "content": "月露兰性寒，须以文火慢煨半程，令寒露化津；转中火后投入金苹果，果津与兰露交融之际最忌猛火。末段收文火凝丹，丹成色若初樱。此丹以水木之精养人枯荣，寿元添注，容颜不老。",
+  "grade": {
+    "tier": 4,
+    "rank": 1
+  },
+  "allowed_realms": [
+    "nascent_soul",
+    "spirit_transformation"
+  ],
+  "minimum_refining_realm": "nascent_soul",
+  "ingredients": {
+    "primary": {
+      "item": "ninecun_lingtai:moon_dew_orchid",
+      "count": 2
+    },
+    "secondary": [
+      {
+        "item": "minecraft:golden_apple",
+        "count": 1
+      },
+      {
+        "item": "minecraft:glow_berries",
+        "count": 8
+      }
+    ],
+    "auxiliary": [
+      {
+        "item": "minecraft:glistering_melon_slice",
+        "count": 4
+      },
+      {
+        "item": "minecraft:sugar",
+        "count": 8
+      }
+    ]
+  },
+  "output_item": "ninecun_lingtai:youth_preserving_pill",
+  "output_count": 1,
+  "brewing_duration": 1800,
+  "element_profile": {
+    "primary_element": "water"
+  },
+  "heat_stages": [
+    {
+      "band": "gentle",
+      "portion": 0.4
+    },
+    {
+      "band": "medium",
+      "portion": 0.4
+    },
+    {
+      "band": "gentle",
+      "portion": 0.2
+    }
+  ],
+  "feed_plan": [
+    {
+      "slot": "secondary_1",
+      "stage": 2,
+      "window_start": 0.2,
+      "ideal": 0.5,
+      "window_end": 0.8
+    }
+  ],
+  "pill_toxin": 20,
+  "effects": [
+    {
+      "type": "lifespan_add",
+      "years": 12
+    }
+  ]
+}

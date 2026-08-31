@@ -8,7 +8,9 @@ import net.seraphina.ninecun_lingtai.api.spell.SpellCastContext;
 import net.seraphina.ninecun_lingtai.api.technique.TechniqueDefinition;
 import net.seraphina.ninecun_lingtai.api.technique.TechniqueMasteryStage;
 import net.seraphina.ninecun_lingtai.api.technique.TechniqueSpell;
+import net.seraphina.ninecun_lingtai.common.behavior.PlayerBehaviorLedgerData;
 import net.seraphina.ninecun_lingtai.common.data.TechniqueManager;
+import net.seraphina.ninecun_lingtai.common.inner_demon.MindDemonSnapshot;
 import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import net.seraphina.ninecun_lingtai.common.player.PlayerSelectedSpellData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerSpiritualEnergyData;
@@ -17,6 +19,8 @@ import net.seraphina.ninecun_lingtai.common.player.PlayerTechniqueData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerTechniqueManager;
 import net.seraphina.ninecun_lingtai.common.player.PlayerTechniqueProficiencyData;
 import net.seraphina.ninecun_lingtai.common.registry.ModSpells;
+import net.seraphina.ninecun_lingtai.common.status.ScarManager;
+import net.seraphina.ninecun_lingtai.common.status.ScarType;
 import net.seraphina.ninecun_lingtai.utility.ChineseNumberUtility;
 import net.seraphina.ninecun_lingtai.utility.SpellCostUtility;
 import net.seraphina.ninecun_lingtai.utility.SpellPowerUtility;
@@ -57,24 +61,28 @@ public final class SpellCastManager {
         ));
     }
 
-    public static void castSelectedSpell(ServerPlayer player) {
-        castSelectedSpell(player, null);
+    public static boolean castSelectedSpell(ServerPlayer player) {
+        return castSelectedSpell(player, null);
     }
 
-    public static void castSelectedSpell(ServerPlayer player, UUID targetPlayerId) {
+    /**
+     * @return 是否真正施放成功（灵力消费且 spell.cast 生效）——行为账本按成功采样
+     *         （心魔即己接线清单第 11 条），失败请求不计入施法滑窗。
+     */
+    public static boolean castSelectedSpell(ServerPlayer player, UUID targetPlayerId) {
         Optional<ResourceLocation> selectedTechniqueId = PlayerSelectedSpellData.getSelectedSpell(player);
         if (selectedTechniqueId.isEmpty()) {
             sendActionBar(player, "尚未择定任何法术");
-            return;
+            return false;
         }
         Optional<TechniqueDefinition> techniqueOptional =
                 TechniqueManager.INSTANCE.getTechnique(selectedTechniqueId.get());
         if (techniqueOptional.isEmpty() || techniqueOptional.get().spell().isEmpty()) {
             PlayerSelectedSpellData.clearSelectedSpell(player);
             sendActionBar(player, "所择法术已失传，请重新择法");
-            return;
+            return false;
         }
-        castTechnique(player, techniqueOptional.get(), false, targetPlayerId);
+        return castTechnique(player, techniqueOptional.get(), false, targetPlayerId);
     }
 
     public static void castTechnique(ServerPlayer player, TechniqueDefinition technique) {
@@ -85,42 +93,53 @@ public final class SpellCastManager {
         castTechnique(player, technique, true);
     }
 
-    private static void castTechnique(
+    private static boolean castTechnique(
             ServerPlayer player,
             TechniqueDefinition technique,
             boolean interactionTriggered
     ) {
-        castTechnique(player, technique, interactionTriggered, null);
+        return castTechnique(player, technique, interactionTriggered, null);
     }
 
-    private static void castTechnique(
+    private static boolean castTechnique(
             ServerPlayer player,
             TechniqueDefinition technique,
             boolean interactionTriggered,
             UUID targetPlayerId
     ) {
+        // 走火入魔发作期灵力逆行，一切法术禁施（M4 走火入魔切片，化解见 QiDeviationManager）。
+        if (ScarManager.hasScar(player, ScarType.QI_DEVIATION)) {
+            player.displayClientMessage(
+                    Component.translatableWithFallback(
+                            "message.ninecun_lingtai.qi_deviation_cast_blocked",
+                            "灵力逆冲经脉，强行施法只会走火焚身！"
+                    ),
+                    true
+            );
+            return false;
+        }
         if (technique.spell().isEmpty()) {
             sendActionBar(player, "此功并非法术，无从施展");
-            return;
+            return false;
         }
         TechniqueSpell spellData = technique.spell().get();
         if (!PlayerTechniqueData.hasTechnique(player, technique.id())) {
             sendActionBar(player, "尚未参悟《" + technique.name() + "》，无法施展");
-            return;
+            return false;
         }
         Spell spell = ModSpells.REGISTRY.get().getValue(spellData.spellId());
         if (spell == null) {
             sendActionBar(player, "《" + technique.name() + "》玄机晦涩，此方天地暂无法回应");
-            return;
+            return false;
         }
         if (spell.cancelIfActive(player)) {
             sendActionBar(player, "已解除《" + technique.name() + "》");
-            return;
+            return false;
         }
         Optional<CultivationStage> stage = CultivationApi.getStage(player);
         if (stage.isEmpty()) {
             sendActionBar(player, "凡人之躯，无法驱动灵力施法");
-            return;
+            return false;
         }
         TechniqueMasteryStage masteryStage = PlayerTechniqueData.getTechnique(player, technique.id())
                 .flatMap(progress -> TechniqueMasteryStage.fromMastery(progress.mastery()))
@@ -137,6 +156,10 @@ public final class SpellCastManager {
                 cultivationStrength,
                 powerEfficiency
         );
+        // 遁逃之执心障：位移法术耗灵 ×1.3（经行为账本单点查询门面，避免 if 散落）。
+        if (MindDemonSnapshot.isMobilitySpell(spellData.spellId())) {
+            cost *= PlayerBehaviorLedgerData.getMobilityCostMultiplier(player);
+        }
         Set<ElementType> costElements = SpellCostUtility.getEffectiveCostElements(
                 spellData,
                 PlayerAptitudeData.getSpiritualRoot(player)
@@ -150,7 +173,7 @@ public final class SpellCastManager {
                         technique.name(),
                         describeCost(costElements, cost)
                 ));
-                return;
+                return false;
             }
         } else if (!PlayerSpiritualEnergyData.consumeEnergy(player, costElements, cost)) {
             sendActionBar(player, String.format(
@@ -158,7 +181,7 @@ public final class SpellCastManager {
                     technique.name(),
                     describeCost(costElements, cost)
             ));
-            return;
+            return false;
         }
         SpellCastContext context = new SpellCastContext(
                 technique,
@@ -181,7 +204,7 @@ public final class SpellCastManager {
             }
             ModNetwork.sendCultivationInfo(player);
             sendActionBar(player, "施法未成，灵力已归丹田");
-            return;
+            return false;
         }
         PlayerTechniqueManager.addProficiency(player, technique.id(), PROFICIENCY_PER_CAST);
         ModNetwork.sendCultivationInfo(player);
@@ -191,6 +214,7 @@ public final class SpellCastManager {
                 masteryStage.getChineseName(),
                 describeCost(costElements, cost)
         ));
+        return true;
     }
 
     public static int getCultivationStrength(CultivationStage stage) {

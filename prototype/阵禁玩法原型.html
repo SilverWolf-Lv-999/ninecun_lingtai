@@ -1,0 +1,1803 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>阵禁篇 · 玩法原型</title>
+<style>
+:root{
+  --bg:#0a0d16; --panel:rgba(18,24,38,.92); --line:#2a3450;
+  --gold:#d8b36a; --gold-dim:#8a744a; --text:#cfd6e4; --dim:#7d8699;
+  --metal:#e8c874; --water:#5ab4e8; --wood:#6fd66f; --fire:#e8695a; --earth:#c9a06a;
+  --danger:#e05252; --ok:#6fd6a3;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:radial-gradient(1200px 800px at 50% -10%, #131a2e 0%, var(--bg) 55%);color:var(--text);
+  font-family:"Noto Serif SC","Source Han Serif SC",Georgia,"Microsoft YaHei",serif;min-height:100vh;overflow-x:hidden}
+header{display:flex;align-items:center;gap:24px;padding:14px 26px;border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg,rgba(20,26,42,.95),rgba(12,16,26,.9));position:sticky;top:0;z-index:50}
+header h1{font-size:20px;letter-spacing:6px;color:var(--gold);font-weight:600;text-shadow:0 0 18px rgba(216,179,106,.35)}
+header .sub{font-size:12px;color:var(--dim);letter-spacing:2px}
+nav{margin-left:auto;display:flex;gap:8px}
+nav button{background:transparent;border:1px solid var(--line);color:var(--dim);padding:7px 18px;cursor:pointer;
+  font-family:inherit;font-size:14px;letter-spacing:3px;border-radius:3px;transition:.2s}
+nav button:hover{color:var(--gold);border-color:var(--gold-dim)}
+nav button.on{color:var(--gold);border-color:var(--gold);box-shadow:0 0 12px rgba(216,179,106,.25) inset}
+main{display:none;padding:16px 22px;max-width:1500px;margin:0 auto}
+main.on{display:block}
+.layout{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px}
+.panel h3{font-size:14px;color:var(--gold);letter-spacing:3px;margin-bottom:10px;border-bottom:1px solid var(--line);padding-bottom:7px}
+.side{width:252px;flex-shrink:0}
+.side .row{display:flex;justify-content:space-between;align-items:center;margin:9px 0;font-size:13px}
+.side label{color:var(--dim)}
+.side select,.side input[type=range]{accent-color:var(--gold)}
+.side select{background:#141a2b;color:var(--text);border:1px solid var(--line);padding:3px 6px;font-family:inherit;border-radius:3px}
+.side .val{color:var(--gold);min-width:34px;text-align:right}
+.switch{position:relative;width:34px;height:18px;background:#232c44;border-radius:9px;cursor:pointer;border:1px solid var(--line);transition:.2s}
+.switch::after{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#5a6478;transition:.2s}
+.switch.on{background:#3a3423;border-color:var(--gold-dim)}
+.switch.on::after{left:18px;background:var(--gold)}
+button.act{width:100%;margin-top:10px;background:linear-gradient(180deg,#3a3120,#2a2416);border:1px solid var(--gold-dim);
+  color:var(--gold);padding:10px;font-family:inherit;font-size:15px;letter-spacing:6px;cursor:pointer;border-radius:4px;transition:.2s}
+button.act:hover{box-shadow:0 0 14px rgba(216,179,106,.3);border-color:var(--gold)}
+button.act:disabled{opacity:.35;cursor:default;box-shadow:none}
+button.mini{background:#141a2b;border:1px solid var(--line);color:var(--text);padding:5px 12px;cursor:pointer;
+  font-family:inherit;font-size:12px;border-radius:3px;letter-spacing:1px}
+button.mini:hover{border-color:var(--gold-dim);color:var(--gold)}
+.stage{position:relative;flex:1;min-width:520px}
+.stage canvas{display:block;width:100%;aspect-ratio:860/600;border:1px solid var(--line);border-radius:6px;
+  background:radial-gradient(640px 500px at 50% 42%, #10182c 0%, #0a0e19 70%);cursor:crosshair}
+.hud{display:flex;gap:16px;align-items:center;flex-wrap:wrap;padding:9px 12px;border:1px solid var(--line);
+  border-bottom:none;border-radius:6px 6px 0 0;background:rgba(14,18,30,.9);font-size:13px}
+.hud .item{display:flex;gap:6px;align-items:center;color:var(--dim)}
+.hud .item b{color:var(--text);font-weight:500}
+.bar{width:110px;height:9px;background:#1a2136;border:1px solid var(--line);border-radius:5px;overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,#3b6fd0,#5ab4e8);transition:width .18s}
+.hearts{color:var(--gold);letter-spacing:2px;font-size:15px}
+.alerts{color:var(--danger);letter-spacing:2px}
+.phase{margin-left:auto;color:var(--gold);letter-spacing:2px;font-size:13px}
+.log{width:262px;flex-shrink:0;max-height:620px;overflow-y:auto}
+.log .entry{font-size:12px;padding:5px 2px;border-bottom:1px dashed #1e2740;color:var(--dim);line-height:1.6}
+.log .entry.gold{color:var(--gold)} .log .entry.red{color:var(--danger)} .log .entry.blue{color:var(--water)} .log .entry.green{color:var(--ok)}
+.pouch{display:flex;gap:6px;align-items:center}
+.pouch .slot{width:30px;height:30px;border:1px solid var(--line);border-radius:4px;background:#10162a;display:flex;
+  align-items:center;justify-content:center;font-size:15px;cursor:pointer;transition:.15s}
+.pouch .slot.has{border-color:var(--gold-dim);box-shadow:0 0 8px rgba(216,179,106,.25)}
+.pouch .slot:hover.has{border-color:var(--gold)}
+.overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(6,8,14,.72);
+  border-radius:6px;z-index:10;backdrop-filter:blur(2px)}
+.overlay.on{display:flex}
+.card{background:linear-gradient(180deg,#181f33,#10162a);border:1px solid var(--gold-dim);border-radius:8px;
+  padding:26px 34px;max-width:460px;text-align:center;box-shadow:0 0 40px rgba(0,0,0,.6)}
+.card h2{color:var(--gold);letter-spacing:5px;font-size:20px;margin-bottom:14px}
+.card p{font-size:13px;color:var(--text);line-height:2;margin:6px 0}
+.card .dim{color:var(--dim);font-size:12px}
+.card .btns{display:flex;gap:10px;justify-content:center;margin-top:18px;flex-wrap:wrap}
+.card button{background:#1a2136;border:1px solid var(--gold-dim);color:var(--gold);padding:9px 20px;cursor:pointer;
+  font-family:inherit;font-size:14px;letter-spacing:3px;border-radius:4px}
+.card button:hover{box-shadow:0 0 12px rgba(216,179,106,.3)}
+.card button.plain{border-color:var(--line);color:var(--dim)}
+.tag{display:inline-block;padding:1px 8px;border:1px solid var(--line);border-radius:10px;font-size:11px;color:var(--dim);margin:0 3px}
+.wx{display:inline-block;width:11px;height:11px;border-radius:50%;vertical-align:-1px;margin-right:4px}
+table.doc{border-collapse:collapse;width:100%;font-size:13px;margin:10px 0 22px}
+table.doc th,table.doc td{border:1px solid var(--line);padding:7px 10px;text-align:left;line-height:1.7}
+table.doc th{color:var(--gold);background:#141a2c;font-weight:500;letter-spacing:1px}
+table.doc td{color:var(--text)}
+.rules h2{color:var(--gold);letter-spacing:4px;font-size:17px;margin:26px 0 6px}
+.rules p{font-size:13px;line-height:2;color:var(--text);margin:6px 0}
+.rules .layout{display:block;max-width:980px;margin:0 auto}
+.flagrack{display:flex;gap:8px;margin:8px 0}
+.flag-btn{width:38px;height:38px;border:1px solid var(--line);border-radius:4px;cursor:pointer;display:flex;
+  align-items:center;justify-content:center;font-size:15px;background:#10162a;transition:.15s;color:#0a0d16;font-weight:700}
+.flag-btn.sel{border-color:#fff;box-shadow:0 0 10px rgba(255,255,255,.4)}
+.stat{font-size:13px;line-height:2.1}
+.stat b{color:var(--gold);font-weight:500}
+.footnote{font-size:11px;color:var(--dim);margin-top:8px;line-height:1.8}
+.process{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:0 0 10px}
+.process span{border:1px solid var(--line);border-radius:4px;padding:6px 3px;text-align:center;
+  color:var(--dim);font-size:11px;letter-spacing:1px;background:#10162a;transition:.2s}
+.process span.on{color:var(--gold);border-color:var(--gold-dim);box-shadow:0 0 10px rgba(216,179,106,.2) inset}
+.process span.done{color:var(--ok);border-color:rgba(111,214,163,.5)}
+.se-tools{display:none;gap:6px;margin-top:8px}
+.se-tools.on{display:flex}
+.se-tools button{flex:1}
+.layer-badge{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:12px;
+  padding:2px 8px;margin:2px;color:var(--dim);font-size:11px}
+.layer-badge i{width:7px;height:7px;border-radius:50%;display:inline-block}
+@media (max-width:1100px){.side,.log{width:100%}}
+</style>
+</head>
+<body>
+<header>
+  <h1>阵 禁 篇</h1><span class="sub">锁纹 · 布阵 · 玩法交互原型</span>
+  <nav>
+    <button id="nav-seal">刻禁绑定</button>
+    <button id="nav-lock" class="on">锁纹对弈</button>
+    <button id="nav-array">布阵模拟</button>
+    <button id="nav-rules">规则速览</button>
+  </nav>
+</header>
+
+<main id="view-seal">
+<div class="layout">
+  <div class="side panel">
+    <h3>刻 印 之 人</h3>
+    <div class="row"><label>境界</label>
+      <select id="se-realm">
+        <option value="1">练气（灵力 120）</option>
+        <option value="2" selected>筑基（灵力 260）</option>
+        <option value="3">金丹（灵力 520）</option>
+        <option value="4">元婴（灵力 900）</option>
+        <option value="5">化神（灵力 1500）</option>
+        <option value="6">炼虚（灵力 2400）</option>
+        <option value="7">合体（灵力 3600）</option>
+      </select></div>
+    <div class="row"><label>魂强（每星 2 锚位）</label><input type="range" id="se-soul" min="1" max="7" value="4" style="width:100px"><span class="val" id="se-soul-v">4 星</span></div>
+    <div class="row"><label>锚位占用</label><span class="val" id="se-anchor">0 / 8</span></div>
+    <h3 style="margin-top:14px">禁 制 之 构</h3>
+    <div class="row"><label>禁制品阶</label><input type="range" id="se-grade" min="1" max="7" value="2" style="width:100px"><span class="val" id="se-grade-v">二阶</span></div>
+    <div class="row"><label>叠刻层数</label><input type="range" id="se-layers" min="1" max="4" value="2" style="width:100px"><span class="val" id="se-layers-v">2</span></div>
+    <div class="row"><label>第一层（最外）</label><select id="se-k1" class="se-kind"></select></div>
+    <div class="row"><label>第二层</label><select id="se-k2" class="se-kind"></select></div>
+    <div class="row"><label>第三层</label><select id="se-k3" class="se-kind"></select></div>
+    <div class="row"><label>第四层（最里）</label><select id="se-k4" class="se-kind"></select></div>
+    <button class="act" id="se-carve">凝 神 刻 印</button>
+    <div class="se-tools" id="se-tools">
+      <button class="mini" id="se-undo">退回一笔</button>
+      <button class="mini" id="se-reset">重织本层</button>
+    </div>
+    <div id="se-actions" style="display:none">
+      <button class="mini" id="se-touch-owner" style="width:100%;margin-top:8px">以主人身份触碰</button>
+      <button class="mini" id="se-touch-thief" style="width:100%;margin-top:6px">以外人身份触碰</button>
+      <button class="mini" id="se-unbind" style="width:100%;margin-top:6px">主人主动解契（触碰 5 秒）</button>
+      <button class="mini" id="se-owner-die" style="width:100%;margin-top:6px">推演：主人陨落之后</button>
+      <h3 style="margin-top:14px">解 禁 推 演</h3>
+      <div class="row"><label>试破者境界</label>
+        <select id="se-thief-realm">
+          <option value="1">练气</option><option value="2" selected>筑基</option>
+          <option value="3">金丹</option><option value="4">元婴</option><option value="5">化神</option>
+          <option value="6">炼虚</option><option value="7">合体</option>
+        </select></div>
+      <div class="row"><label>试破者魂强</label><input type="range" id="se-thief-soul" min="1" max="7" value="3" style="width:100px"><span class="val" id="se-thief-soul-v">3 星</span></div>
+      <button class="act" id="se-to-lock" style="margin-top:10px;font-size:13px;letter-spacing:2px">此戒失落他人之手（转入破解）</button>
+    </div>
+    <div class="footnote">刻印即加密：你的神念在器物上织出星轨锁纹，主径就是你神念的笔迹——日后真流光走的路，正是此刻你亲手走过的路。锚位是神念的"手指"，刻下多少禁，就有多少根手指长年按在上面。</div>
+  </div>
+  <div class="stage">
+    <div class="process" id="se-process">
+      <span>一·验器</span><span>二·立锚</span><span>三·织纹</span><span>四·写令</span><span>五·合契</span>
+    </div>
+    <div class="hud">
+      <div class="item">状态 <b id="se-state">未起笔</b></div>
+      <div class="item">灵力耗 <b id="se-mana">—</b></div>
+      <div class="item">温养耗 <b id="se-warm">—</b></div>
+      <div class="item">成契强度 <b id="se-str">—</b></div>
+      <div class="phase" id="se-phase"></div>
+    </div>
+    <canvas id="cv-seal" width="860" height="600"></canvas>
+    <div class="overlay" id="ov-seal"><div class="card" id="ov-seal-card"></div></div>
+  </div>
+  <div class="log panel"><h3>契 语</h3><div id="seal-log"></div></div>
+</div>
+</main>
+
+<main id="view-lock" class="on">
+<div class="layout">
+  <div class="side panel">
+    <h3>禁 制 规 格</h3>
+    <div class="row"><label>禁制品阶</label><input type="range" id="cfg-grade" min="1" max="7" value="2" style="width:110px"><span class="val" id="cfg-grade-v">二阶</span></div>
+    <div class="row"><label>魂强差（我−主人）</label><input type="range" id="cfg-soul" min="-3" max="3" value="0" style="width:110px"><span class="val" id="cfg-soul-v">0</span></div>
+    <div class="row"><label>叠刻层数</label><input type="range" id="cfg-layers" min="1" max="4" value="2" style="width:110px"><span class="val" id="cfg-layers-v">2</span></div>
+    <div class="row"><label>我方灵力池</label>
+      <select id="cfg-mana"><option value="120">练气 120</option><option value="260" selected>筑基 260</option><option value="520">金丹 520</option><option value="900">元婴 900</option><option value="1500">化神 1500</option><option value="2400">炼虚 2400</option><option value="3600">合体 3600</option></select></div>
+    <h3 style="margin-top:16px">变 数</h3>
+    <div class="row"><label>末层为反噬禁</label><div class="switch" id="cfg-backfire"></div></div>
+    <div class="row"><label>首层带传讯禁</label><div class="switch on" id="cfg-message"></div></div>
+    <div class="row"><label>支径出现</label><div class="switch on" id="cfg-branch"></div></div>
+    <div class="row"><label>处境压力（巡逻）</label><div class="switch" id="cfg-patrol"></div></div>
+    <div class="row"><label>音效</label><div class="switch on" id="cfg-sound"></div></div>
+    <div class="row"><label>显示答案（调试）</label><div class="switch" id="cfg-debug"></div></div>
+    <button class="act" id="btn-start">神 识 沉 入</button>
+    <button class="act" id="btn-retreat" disabled style="letter-spacing:3px;font-size:13px">主动收手（惊扰 +1）</button>
+    <div class="footnote">相生：金→水→木→火→土→金。真流光有呼吸感、走势平滑；假流光生硬，且必在某步「跳环」。落子须按相生序。魂强不低于主人时，按住错处指下会起滞涩微颤——察觉后把指针挪开可免罚，松手即落定。</div>
+  </div>
+
+  <div class="stage">
+    <div class="hud">
+      <div class="item">层 <b id="hud-layer">—</b></div>
+      <div class="item">容错 <span class="hearts" id="hud-tol">—</span></div>
+      <div class="item">灵力 <div class="bar"><i id="hud-mana" style="width:100%"></i></div></div>
+      <div class="item">惊扰 <span class="alerts" id="hud-alert">○○○</span></div>
+      <div class="item pouch">囊 <div class="slot" data-i="0"></div><div class="slot" data-i="1"></div><div class="slot" data-i="2"></div></div>
+      <div class="item" id="hud-patrol" style="display:none">巡逻 <b id="hud-patrol-v"></b></div>
+      <div class="phase" id="hud-phase">未入定</div>
+    </div>
+    <canvas id="cv-lock" width="860" height="600"></canvas>
+    <div class="overlay" id="ov-lock"><div class="card" id="ov-lock-card"></div></div>
+  </div>
+
+  <div class="log panel"><h3>心 音 志</h3><div id="log-box"></div></div>
+</div>
+</main>
+
+<main id="view-array">
+<div class="layout">
+  <div class="side panel">
+    <h3>阵 图</h3>
+    <div class="row"><label>选择阵图</label>
+      <select id="arr-blueprint">
+        <option value="sixiang">四象护府阵 · 二阶</option>
+        <option value="wuxing">五行聚灵阵 · 一阶</option>
+        <option value="qixing">七星困灵阵 · 三阶</option>
+      </select></div>
+    <div class="row"><label>选旗（点色再点格）</label></div>
+    <div class="flagrack" id="flagrack"></div>
+    <button class="act" id="arr-place">铺 设 幻 影 指 引</button>
+    <button class="act" id="arr-check" disabled>成 阵 检 验</button>
+    <button class="act" id="arr-surge" disabled style="font-size:13px;letter-spacing:2px">移旗激灵（阵眼暴涨）</button>
+    <h3 style="margin-top:16px">生 门 试 炼</h3>
+    <div class="row"><label>我方魂强</label><input type="range" id="arr-soul" min="1" max="7" value="4" style="width:110px"><span class="val" id="arr-soul-v">4 星</span></div>
+    <button class="act" id="arr-gate" style="font-size:13px;letter-spacing:2px">攻入他人之阵（找生门）</button>
+    <div class="footnote">布阵：旗距幻影位 ≤0.5 格效率 120%、≤1 格 100%、≤2 格 80%、再远即溃。顺位相邻旗全部相生 +20%，出现相克 −30%。生门旗的灵力流转存在细微逆流，魂强越高越易看穿；拔错旗会遭反冲。</div>
+  </div>
+  <div class="stage">
+    <div class="hud">
+      <div class="item">状态 <b id="arr-state">未布阵</b></div>
+      <div class="item">效率 <b id="arr-eff">—</b></div>
+      <div class="item">阵眼浓度 <b id="arr-conc">—</b></div>
+      <div class="item">邻域存量 <b id="arr-nb">—</b></div>
+      <div class="phase" id="arr-phase"></div>
+    </div>
+    <canvas id="cv-arr" width="860" height="600"></canvas>
+    <div class="overlay" id="ov-arr"><div class="card" id="ov-arr-card"></div></div>
+  </div>
+  <div class="log panel"><h3>阵 语</h3><div id="arr-log"></div></div>
+</div>
+</main>
+
+<main id="view-rules">
+<div class="layout rules">
+  <h2>刻禁、神魂绑定、解禁 · 完整闭环</h2>
+  <table class="doc">
+    <tr><th>阶段</th><th>玩家实际做什么</th><th>器物内部发生什么</th><th>失败与边界</th></tr>
+    <tr><td>一·验器</td><td>选器物、品阶、层数与每层禁制功能</td><td>服务端检查器物可刻、境界够品阶、层数不超过 ⌈魂强/2⌉、剩余锚位足够</td><td>任一不足即不允许起笔，不扣资源</td></tr>
+    <tr><td>二·立锚</td><td>盘坐持物，把一缕神念压入器物</td><td>建立主人神魂标识与远端锚位；每层占 1 锚位，总锚位=魂强×2</td><td>仪式被攻击或移动则中断，尚未合契不留半成品</td></tr>
+    <tr><td>三·织纹</td><td>在星轨上从「锚」起笔，沿相邻节点按五行相生选择自己的主径</td><td>你走过的路径成为该层真纹；系统另生假纹、雾区、守纹等防御结构</td><td>走入死路可退笔重织；一阶不强制五行，二阶起必须相生</td></tr>
+    <tr><td>四·写令</td><td>为该层写入认主、传讯、隐匿、反噬、自毁或遗念规则</td><td>规则挂在该层真纹之后；外层不破，里层及其规则都不可见</td><td>规则有最低品阶；例如反噬、自毁至少三阶</td></tr>
+    <tr><td>五·合契</td><td>依次封闭各层，维持三十秒仪式</td><td>扣灵力与温养，快照每层强度，写入主人标识、魂强、境界、元素、真纹与规则；锚位开始长期占用</td><td>完成后主人需亲触五秒才可主动废除并收回锚位</td></tr>
+  </table>
+  <h2>绑定后如何开门：主人不是「输入密码」</h2>
+  <p>器物每次被触碰都会临时发出一道随机「问念」。触碰者的神魂沿原真纹作出「回念」，服务端把回念与合契时留下的主人标识比对。匹配者只获得本次开启许可，禁制本身不消失；外人无法复制上一次回念，因为下一次问念已经不同。主人魂魄不是被整份塞进物品，物品里只有锚点与校验标识，活的回应仍来自主人当前神魂。</p>
+  <table class="doc">
+    <tr><th>触碰者</th><th>问念结果</th><th>后续</th></tr>
+    <tr><td>主人开启</td><td>回念与锚点共鸣，逐层认主校验一次通过</td><td>直接开启，不耗破解资源、不移除禁制</td></tr>
+    <tr><td>主人解契</td><td>本人持续触碰五秒，再通过一次问念校验</td><td>安全撤掉全部层，内容无损，立即收回占用锚位</td></tr>
+    <tr><td>合法转契</td><td>旧主先解契，新主再以自己的神魂重新刻印</td><td>不允许只改名字而保留旧魂标；转手必留下重新刻印的资源成本</td></tr>
+    <tr><td>外人</td><td>无共鸣或回念不符</td><td>认主禁拒绝；传讯禁报警；若主动破解则留下神念指纹</td></tr>
+    <tr><td>主人正常死亡</td><td>锚仍在，禁制进入三日死契，强度 ×1.5</td><td>给主人复活追索的窗口；三日后恢复原强度</td></tr>
+    <tr><td>主人魂飞魄散</td><td>活锚断绝，禁制进入七日衰减</td><td>期满自行崩解；期间仍可被破解</td></tr>
+  </table>
+  <p>实现边界：客户端物品数据只应携带不透明的禁制编号、品阶与必要外观信息；主人神魂密种、原始真纹、里层令式和本次问念都由服务端保存与判定。否则改装客户端直接读取 NBT 就会跳过整个玩法。</p>
+  <h2>外人所谓「解密」：不是算出主人的魂魄，而是逐层废掉校验规则</h2>
+  <table class="doc">
+    <tr><th>步骤</th><th>过程</th><th>所得信息 / 代价</th></tr>
+    <tr><td>一·探壳</td><td>神识触及最外层，只估出品阶、主属性与大致强弱</td><td>层数与里层类型仍未知；触碰可能让传讯禁报警</td></tr>
+    <tr><td>二·择法</td><td>力破、破禁锥、巧破三选一</td><td>力破必触发反噬与自毁；器破烧钱；巧破慢但可控</td></tr>
+    <tr><td>三·搭桥</td><td>把自己的神识铺到外层锁纹，借「问念—回念」泄出的灵流观察真纹</td><td>真流光是主人回应走过的主径；假流光用于诱导；持续耗自身灵力</td></tr>
+    <tr><td>四·辨纹</td><td>结合流光呼吸差异与五行相生序，记下候选主径</td><td>魂强差决定雾区、真假辨识、容错与滞涩预警</td></tr>
+    <tr><td>五·覆写</td><td>从「引」位开始，以自己的神识按序点亮真纹</td><td>每次落子都在服务端判定；点错则神念相撞、回退稳固点并留痕</td></tr>
+    <tr><td>六·断令</td><td>主径全亮，该层校验闭环被截断，附着规则失效</td><td>不是得到主人密钥；只是把这一层锁拆掉。随后才看见下一层</td></tr>
+    <tr><td>七·剥尽</td><td>逐层重复，期间可走支径擦指纹、读残念或预亮里层</td><td>全层尽去后解除旧认主，旧主人锚位释放，器物才真正可开启并重新认主</td></tr>
+  </table>
+  <h2>锁纹对弈 · 一局的骨架</h2>
+  <p>潜行长按沉入 → <b style="color:var(--gold)">一望</b>开图（魂强差决定雾区）→ <b style="color:var(--gold)">二观</b>读流光（真伪之辨 + 五行推理，灵力每秒燃烧）→ <b style="color:var(--gold)">三行</b>落子（流光隐去，凭记忆按相生序点亮；连对三节自动稳固）→ 主径尽亮则此层碎，支径可加走，层层向里，直至禁去或人败。</p>
+  <table class="doc">
+    <tr><th>难度来源</th><th>机制</th><th>拟合</th></tr>
+    <tr><td>规模</td><td>节点数与路径长随品阶增长</td><td>锁本身的精密度</td></tr>
+    <tr><td>干扰</td><td>假流光走相生序但必有「跳环」破绽</td><td>刻印者布下的迷踪</td></tr>
+    <tr><td>时限</td><td>无倒计时，但神识铺锁每秒烧灵力</td><td>修为即从容</td></tr>
+    <tr><td>处境</td><td>现实不暂停，巡逻与危机在门外</td><td>难的一半在谜题外</td></tr>
+    <tr><td>未知</td><td>层数未知、反噬与否未知</td><td>每层之间都是赌</td></tr>
+    <tr><td>博弈</td><td>守纹巡逻熄灭未稳固节点；支径诱人加注</td><td>锁不是死物，贪心有价</td></tr>
+  </table>
+  <h2>先例考据 · 各取其精</h2>
+  <table class="doc">
+    <tr><th>来源</th><th>取用</th><th>落点</th></tr>
+    <tr><td>上古卷轴 / 辐射</td><td>撬棍断裂前一帧重颤可救回</td><td>滞涩预警（高魂强特权）</td></tr>
+    <tr><td>Deus Ex</td><td>不暂停世界、布局随机</td><td>实时制 + 每局生成</td></tr>
+    <tr><td>System Shock 2</td><td>难度即角色能力表达</td><td>魂强差 → 雾/辨识/容错/预警</td></tr>
+    <tr><td>赛博朋克 2077</td><td>一锁多序列自选奖励</td><td>支径：拭痕 / 摄念 / 引路</td></tr>
+    <tr><td>EVE 遗迹破解</td><td>防御节点生态、盘内道具、赌点</td><td>守纹 / 灵光碎片 / 浑光</td></tr>
+    <tr><td>Thaumcraft</td><td>谜题考世界知识体系</td><td>五行经络（相生序走线）</td></tr>
+    <tr><td>觅长生</td><td>驱阵、阵联</td><td>阵主主动催动 / 阵间联动</td></tr>
+    <tr><td>了不起的修仙模拟器</td><td>灵气位势差、相生摆旗</td><td>聚灵位势模型 / 五行旗序 / 移旗激灵</td></tr>
+    <tr><td>鬼谷八荒</td><td>破境三选一</td><td>总纲 3.8 悟道印记</td></tr>
+  </table>
+  <h2>五行速查</h2>
+  <p><span class="wx" style="background:var(--metal)"></span>金 → <span class="wx" style="background:var(--water)"></span>水 → <span class="wx" style="background:var(--wood)"></span>木 → <span class="wx" style="background:var(--fire)"></span>火 → <span class="wx" style="background:var(--earth)"></span>土 → 金（相生循环）。相克隔一位：金克木、木克土、土克水、水克火、火克金。假流光的「跳环」即越过一行直接连隔位（如金后直接接木）。</p>
+</div>
+</main>
+
+<script>
+"use strict";
+/* ============ common ============ */
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const WX=["金","水","木","火","土"];
+const WXC=["#e8c874","#5ab4e8","#6fd66f","#e8695a","#c9a06a"];
+const sheng=i=>(i+1)%5, ke=i=>(i+2)%5;
+const rnd=(a,b)=>a+Math.random()*(b-a), ri=(a,b)=>Math.floor(rnd(a,b+1));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const easeIO=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+const CN=["","一","二","三","四","五","六","七","八","九"];
+const REALM_MANA={1:120,2:260,3:520,4:900,5:1500,6:2400,7:3600};
+
+$$("nav button").forEach(b=>b.addEventListener("click",()=>{
+  $$("nav button").forEach(x=>x.classList.remove("on"));
+  $$("main").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on");
+  $("#view-"+b.id.slice(4)).classList.add("on");
+}));
+$$(".switch").forEach(s=>s.addEventListener("click",()=>s.classList.toggle("on")));
+const swOn=id=>$(id).classList.contains("on");
+
+/* ============ sfx ============ */
+const SFX={ctx:null,
+  ac(){ if(!this.ctx) this.ctx=new (window.AudioContext||window.webkitAudioContext)(); return this.ctx; },
+  on(){ return swOn("#cfg-sound"); },
+  tone(f,dur,type="sine",vol=.16,delay=0){
+    if(!this.on())return; const c=this.ac(),o=c.createOscillator(),g=c.createGain();
+    o.type=type;o.frequency.value=f;o.connect(g);g.connect(c.destination);
+    const t=c.currentTime+delay; g.gain.setValueAtTime(0,t);
+    g.gain.linearRampToValueAtTime(vol,t+.015); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+    o.start(t);o.stop(t+dur+.05);
+  },
+  step(n){ this.tone(392*Math.pow(2,n/12),.28); },
+  stable(){ this.tone(523,.3,"sine",.13); this.tone(784,.42,"sine",.1,.04); },
+  err(){ this.tone(96,.34,"sawtooth",.2); this.tone(70,.4,"square",.12,.02); },
+  crack(){ [1046,1568,2093].forEach((f,i)=>this.tone(f,.7,"sine",.12,i*.06)); },
+  fail(){ this.tone(60,.9,"sawtooth",.22); },
+  pick(){ this.tone(1318,.16,"triangle",.12); },
+  alarm(){ this.tone(880,.14,"square",.12); this.tone(880,.14,"square",.12,.2); },
+  heart(v){ this.tone(52,.12,"sine",v); }
+};
+
+/* ============ lockgrid game ============ */
+const LK={
+  cv:$("#cv-lock"), ctx:null, W:860,H:600, dpr:1,
+  state:"idle", // idle|view|act|branch|gap|over
+  cfg:{}, layerIdx:0, layers:[],
+  customSeal:null,
+  g:null, // current layer graph {nodes,edges,adj,path,fakes,frag..}
+  progress:0, stableCount:0, tol:0, mana:0, manaMax:0, alerts:0,
+  pouch:[null,null,null], effects:{reveal:0,freezeT:0,solid:0},
+  branch:null, bProgress:0, rewards:[], fingerprintWiped:false,
+  patrolT:0, patrolMax:0, holdN:null, holdT:0, lastT:0, cycleT0:0,
+  wave:0, crackFx:[], preLit:0, infoNote:"",
+  init(){
+    this.dpr=window.devicePixelRatio||1;
+    this.cv.width=this.W*this.dpr; this.cv.height=this.H*this.dpr;
+    this.ctx=this.cv.getContext("2d");
+    this.cv.addEventListener("pointerdown",e=>this.onDown(e));
+    this.cv.addEventListener("pointerup",e=>this.onUp(e));
+    this.cv.addEventListener("pointermove",e=>this.onMove(e));
+    this.cv.addEventListener("pointerleave",()=>this.cancelHold());
+    $("#btn-start").addEventListener("click",()=>{this.customSeal=null;this.start(false);});
+    $("#btn-retreat").addEventListener("click",()=>this.eject("你摸了摸锁，收回了神识。","主动收手",true));
+    $$(".pouch .slot").forEach(s=>s.addEventListener("click",()=>this.useFrag(+s.dataset.i)));
+    const gv=()=>{$("#cfg-grade-v").textContent=CN[+$("#cfg-grade").value]+"阶";
+      $("#cfg-soul-v").textContent=(+$("#cfg-soul").value>0?"+":"")+$("#cfg-soul").value;
+      $("#cfg-layers-v").textContent=$("#cfg-layers").value;};
+    ["cfg-grade","cfg-soul","cfg-layers"].forEach(id=>$("#"+id).addEventListener("input",gv)); gv();
+  },
+  gradeSpec(g){ // nodes, pathLen, fakes, cycle sec
+    const t={1:[9,4,1,4],2:[12,5,2,5],3:[16,6,3,6],4:[20,8,5,8]};
+    if(t[g]) return t[g];
+    return [20+(g-4)*4, 8+(g-4)*2, 5+(g-4)*2, 8+(g-4)*2];
+  },
+  start(useCustom=false){
+    SFX.ac();
+    if(!useCustom)this.customSeal=null;
+    const source=useCustom?this.customSeal:null;
+    const grade=source?source.grade:+$("#cfg-grade").value;
+    const soul=source?clamp(source.thiefSoul-source.ownerSoul,-3,3):+$("#cfg-soul").value;
+    const nl=source?source.layers.length:+$("#cfg-layers").value;
+    this.cfg={grade,soul,layers:nl,backfire:swOn("#cfg-backfire"),msg:swOn("#cfg-message"),
+      branch:swOn("#cfg-branch"),patrol:swOn("#cfg-patrol"),debug:swOn("#cfg-debug"),
+      deadContract:!!(source&&source.deadContract)};
+    this.layers=[];
+    for(let i=0;i<nl;i++){
+      const s=this.gradeSpec(grade), sealed=source&&source.layers[i];
+      this.layers.push({nodes:s[0]+i*2, plen:sealed?sealed.blueprint.path.length:s[1]+(i>0?i:0),
+        fakes:Math.ceil((s[2]+i)*(this.cfg.deadContract?1.5:1)), cycle:s[3],
+        backfire:sealed?sealed.kind==="backlash":this.cfg.backfire&&i===nl-1,
+        msg:sealed?sealed.kind==="message":this.cfg.msg&&i===0,
+        kind:sealed?sealed.kind:null, kindName:sealed?sealed.kindName:null,
+        blueprint:sealed?sealed.blueprint:null,
+        destroyThreshold:sealed?sealed.destroyThreshold:null,
+        legacyText:sealed?sealed.legacyText:null});
+    }
+    this.layerIdx=0; this.alerts=0; this.pouch=[null,null,null]; this.rewards=[]; this.fingerprintWiped=false;
+    this.manaMax=source?REALM_MANA[source.thiefRealm]:+$("#cfg-mana").value; this.mana=this.manaMax;
+    this.tol=clamp(soul+2,0,9);
+    this.patrolMax=this.cfg.patrol?rnd(50,95):0; this.patrolT=this.patrolMax;
+    $("#hud-patrol").style.display=this.cfg.patrol?"flex":"none";
+    $("#btn-retreat").disabled=false;
+    clearLog(); log("神识沉入。锁纹自黑暗中浮现……","gold");
+    if(source){
+      log("这正是方才亲手刻下的禁制：真纹未变，但你如今站在门外。","gold");
+      log("探壳所得：约 "+CN[grade]+" 阶、"+WX[source.element]+"属；里层数与令式仍不可知。","blue");
+    }
+    if(this.cfg.deadContract)log("其主刚死，死契凝结：强度 ×1.5、假流增多、神识铺锁耗灵加剧。","red");
+    if(soul<=-2) log("对方神念远比你细腻，锁纹深处一片重雾。","red");
+    else if(soul===-1) log("你的神识略逊于刻印者，部分星位隐入雾中。","red");
+    this.preLit=0;
+    this.enterLayer();
+    hideOv();
+  },
+  startFromSeal(seal,thiefRealm,thiefSoul){
+    this.customSeal=JSON.parse(JSON.stringify(seal));
+    this.customSeal.thiefRealm=thiefRealm;
+    this.customSeal.thiefSoul=thiefSoul;
+    $("#cfg-grade").value=seal.grade;
+    $("#cfg-layers").value=seal.layers.length;
+    $("#cfg-soul").value=clamp(thiefSoul-seal.ownerSoul,-3,3);
+    $("#cfg-mana").value=REALM_MANA[thiefRealm]||260;
+    $("#cfg-grade").dispatchEvent(new Event("input"));
+    this.start(true);
+  },
+  restart(){ this.start(!!this.customSeal); },
+  enterLayer(){
+    const L=this.layers[this.layerIdx];
+    this.g=this.genGraph(L);
+    this.progress=0; this.stableCount=0; this.state="view";
+    this.effects={reveal:0,freezeT:0,solid:0}; this.branch=null; this.cycleT0=performance.now();
+    if(this.preLit>0){
+      for(let i=0;i<Math.min(this.preLit,this.g.path.length);i++) this.g.nodes[this.g.path[i]].hint=true;
+      log("支径引路：里层 "+Math.min(this.preLit,this.g.path.length)+" 处星位隐隐发亮。","green"); this.preLit=0;
+    }
+    log("第 "+CN[this.layerIdx+1]+" 层："+this.g.nodes.length+" 星位，"+L.fakes+" 缕假光"
+      +(L.msg?"（附传讯禁）":"")+(this.cfg.debug&&L.backfire?"（反噬禁·调试可见）":"")+"。","blue");
+    if(L.msg&&!L.messageFired){
+      L.messageFired=true;
+      log("你搭上锁纹的一刻，传讯禁已把方向与模糊距离送回主人心头。","red");
+    }
+    if(L.kind==="destroy")log("此层深处有一根灵流与储物空间相连，像一根绷紧的毁引。","red");
+    log("凝神观纹——点『引』位起手，落子即入行。");
+    this.updHud();
+  },
+  genGraph(L){
+    if(L.blueprint)return this.graphFromBlueprint(L);
+    for(let attempt=0;attempt<80;attempt++){
+      const N=L.nodes, nodes=[], cx=this.W/2, cy=this.H/2+6;
+      const rings=N<=12?[[Math.ceil(N*.35),95],[N-Math.ceil(N*.35),185]]
+                       :[[Math.round(N*.22),78],[Math.round(N*.36),150],[N-Math.round(N*.22)-Math.round(N*.36),225]];
+      rings.forEach(([cnt,rad],ring)=>{
+        for(let k=0;k<cnt;k++){
+          const a=(k/cnt)*Math.PI*2+rnd(-.14,.14)+ring*.5;
+          nodes.push({x:cx+Math.cos(a)*(rad+rnd(-13,13)), y:cy+Math.sin(a)*(rad+rnd(-11,11))*0.86,
+            wx:0,lit:false,fog:false,frag:null,murk:false,hint:false,revealT:0,glow:0,ring});
+        }
+      });
+      const adj=nodes.map(()=>new Set());
+      const dist=(a,b)=>Math.hypot(nodes[a].x-nodes[b].x,nodes[a].y-nodes[b].y);
+      // ring neighbors
+      let off=0;
+      rings.forEach(([cnt])=>{
+        for(let k=0;k<cnt;k++){adj[off+k].add(off+(k+1)%cnt);adj[off+(k+1)%cnt].add(off+k);}
+        off+=cnt;
+      });
+      // cross-ring nearest
+      for(let i=0;i<N;i++){
+        const cand=[...Array(N).keys()].filter(j=>j!==i&&nodes[j].ring!==nodes[i].ring)
+          .sort((a,b)=>dist(i,a)-dist(i,b)).slice(0,2);
+        cand.forEach(j=>{adj[i].add(j);adj[j].add(i);});
+      }
+      const adjA=adj.map(s=>[...s]);
+      // main path: random walk
+      let path=null;
+      for(let t=0;t<220&&!path;t++){
+        const p=[ri(0,N-1)], used=new Set(p);
+        while(p.length<L.plen){
+          const nx=adjA[p[p.length-1]].filter(j=>!used.has(j));
+          if(!nx.length)break;
+          const j=pick(nx); p.push(j); used.add(j);
+        }
+        if(p.length===L.plen) path=p;
+      }
+      if(!path)continue;
+      // coloring
+      const start=ri(0,4);
+      path.forEach((n,i)=>nodes[n].wx=(start+i)%5);
+      const onPath=new Set(path);
+      nodes.forEach((nd,i)=>{ if(!onPath.has(i)) nd.wx=ri(0,4); });
+      // decoy coloring: neighbors of path nodes often get the "next sheng"
+      path.forEach((n,i)=>{ if(i>=path.length-1)return;
+        adjA[n].forEach(j=>{ if(!onPath.has(j)&&Math.random()<.55) nodes[j].wx=sheng(nodes[n].wx); });
+      });
+      // fakes: from same start node, walks preferring sheng, must differ from path
+      const fakes=[];
+      for(let f=0;f<L.fakes;f++){
+        let best=null;
+        for(let t=0;t<60;t++){
+          const p=[path[0]], used=new Set(p);
+          while(p.length<L.plen+ri(-1,1)){
+            const cur=p[p.length-1];
+            let nx=adjA[cur].filter(j=>!used.has(j));
+            if(!nx.length)break;
+            const good=nx.filter(j=>nodes[j].wx===sheng(nodes[cur].wx));
+            const j=(good.length&&Math.random()<.8)?pick(good):pick(nx);
+            p.push(j);used.add(j);
+          }
+          if(p.length<4)continue;
+          let overlap=0; p.forEach((n,i)=>{if(path[i]===n)overlap++;});
+          if(overlap/p.length>.6)continue;
+          best=p;break;
+        }
+        if(best)fakes.push(best);
+      }
+      if(fakes.length<Math.min(1,L.fakes))continue;
+      // fog
+      const soul=this.cfg.soul;
+      nodes.forEach((nd,i)=>{
+        if(i===path[0])return;
+        if(soul<=-2)nd.fog=true;
+        else if(soul===-1)nd.fog=Math.random()<.3;
+      });
+      // fragments & murk on non-path nodes
+      const free=[...Array(N).keys()].filter(i=>!onPath.has(i));
+      const nf=ri(1,3), types=["reveal","freeze","solid"];
+      for(let k=0;k<nf&&free.length;k++){
+        const i=free.splice(ri(0,free.length-1),1)[0];
+        nodes[i].frag=(this.cfg.grade>=5||k>0)?pick(types):"reveal";
+      }
+      const nm=ri(0,2);
+      for(let k=0;k<nm&&free.length;k++){
+        const i=free.splice(ri(0,free.length-1),1)[0]; nodes[i].murk=true;
+      }
+      // sentinels
+      const sent=[];
+      const ns=this.cfg.grade>=7?2:(this.cfg.grade>=5?1:0);
+      for(let k=0;k<ns;k++) sent.push({at:pick(free.length?free:[...Array(N).keys()]),t:0,x:0,y:0,frozen:0});
+      return {nodes,adj:adjA,path,fakes,sent,edges:this.edgeList(adjA)};
+    }
+    // fallback tiny
+    return this.genGraph({nodes:9,plen:4,fakes:1,cycle:4,msg:false,backfire:false});
+  },
+  graphFromBlueprint(L){
+    const bp=L.blueprint;
+    const nodes=bp.nodes.map(n=>({x:n.x,y:n.y,wx:n.wx,ring:n.ring||0,lit:false,fog:false,
+      frag:null,murk:false,hint:false,revealT:0,glow:0}));
+    const adj=bp.adj.map(a=>[...a]), path=[...bp.path], onPath=new Set(path), fakes=[];
+    for(let f=0;f<L.fakes;f++){
+      let best=null;
+      for(let t=0;t<80;t++){
+        const p=[path[0]],used=new Set(p);
+        while(p.length<Math.max(4,path.length+ri(-1,1))){
+          const cur=p[p.length-1],nx=adj[cur].filter(j=>!used.has(j));
+          if(!nx.length)break;
+          const good=nx.filter(j=>nodes[j].wx===sheng(nodes[cur].wx));
+          const j=good.length&&Math.random()<.78?pick(good):pick(nx);
+          p.push(j);used.add(j);
+        }
+        if(p.length<4)continue;
+        let overlap=0;p.forEach((n,i)=>{if(path[i]===n)overlap++;});
+        if(overlap/p.length<=.65){best=p;break;}
+      }
+      if(best)fakes.push(best);
+    }
+    nodes.forEach((n,i)=>{
+      if(i===path[0])return;
+      if(this.cfg.soul<=-2)n.fog=true;
+      else if(this.cfg.soul===-1)n.fog=Math.random()<.3;
+    });
+    const free=[...Array(nodes.length).keys()].filter(i=>!onPath.has(i));
+    for(let k=0;k<ri(1,3)&&free.length;k++){
+      const i=free.splice(ri(0,free.length-1),1)[0];
+      nodes[i].frag=this.cfg.grade>=5||k>0?pick(["reveal","freeze","solid"]):"reveal";
+    }
+    for(let k=0;k<ri(0,2)&&free.length;k++){
+      const i=free.splice(ri(0,free.length-1),1)[0];nodes[i].murk=true;
+    }
+    const sent=[],ns=this.cfg.grade>=7?2:(this.cfg.grade>=5?1:0);
+    for(let k=0;k<ns;k++)sent.push({at:pick(free.length?free:[...Array(nodes.length).keys()]),t:0});
+    return {nodes,adj,path,fakes,sent,edges:bp.edges.map(e=>[...e])};
+  },
+  edgeList(adj){ const e=[]; adj.forEach((l,i)=>l.forEach(j=>{if(j>i)e.push([i,j]);})); return e; },
+  /* ---- interactions ---- */
+  ptNode(e){
+    const r=this.cv.getBoundingClientRect();
+    const x=(e.clientX-r.left)*this.W/r.width, y=(e.clientY-r.top)*this.H/r.height;
+    let best=-1,bd=1e9;
+    this.g.nodes.forEach((n,i)=>{const d=Math.hypot(n.x-x,n.y-y); if(d<bd){bd=d;best=i;}});
+    return bd<=20?best:-1;
+  },
+  onDown(e){
+    if(!this.g||this.state==="over"||this.state==="gap")return;
+    const i=this.ptNode(e); if(i<0)return;
+    const nd=this.g.nodes[i];
+    if(nd.frag){ this.pickFrag(i);return; }
+    if(nd.murk){ this.openMurk(i);return; }
+    if(this.state==="view"){
+      if(i===this.g.path[0]){
+        if(!nd.lit){ this.litNode(i,0); this.progress=Math.max(this.progress,1); }
+        this.state="act";
+        log("落子起手——流光隐去，凭记忆与五行相生推路。","gold"); this.updHud(); }
+      else { log("此处不是『引』位。起手须自引位始。"); }
+      return;
+    }
+    if(this.state==="act"||this.state==="branch"){
+      const path=this.state==="act"?this.g.path:this.branch.path;
+      const prog=this.state==="act"?this.progress:this.bProgress;
+      // relight extinguished earlier node
+      if(this.state==="act"){
+        const k=path.indexOf(i);
+        if(k>-1&&k<prog&&!this.g.nodes[i].lit){ this.g.nodes[i].lit=true; SFX.step(k); log("重燃被守纹熄灭的星位。","blue"); return; }
+      }
+      if(i===path[prog]){ this.commitStep(i); return; }
+      if(path.indexOf(i)>-1&&path.indexOf(i)<prog) return; // already lit, ignore
+      // wrong node: with warning, a tremor window opens on press;
+      // dragging off the node cancels, releasing on it confirms the mistake
+      if(this.cfg.soul>=0){
+        this.holdN=i; this.holdT=performance.now();
+      } else this.punish(i);
+    }
+  },
+  onUp(){
+    if(this.holdN==null)return;
+    const i=this.holdN; this.holdN=null; this.punish(i);
+  },
+  onMove(e){
+    if(this.holdN==null)return;
+    const i=this.ptNode(e);
+    if(i!==this.holdN){ this.holdN=null; log("指尖一滞——你及时挪开，未触其纹。","green"); }
+  },
+  cancelHold(){
+    if(this.holdN==null)return;
+    this.holdN=null; log("指尖一滞——你及时挪开，未触其纹。","green");
+  },
+  commitStep(i){
+    if(this.state==="act"){
+      this.litNode(i,this.progress); this.progress++;
+      if(this.effects.solid>0){ this.effects.solid--; this.stableCount=this.progress; log("固辉护持，此子落定即稳。","green"); }
+      if(this.progress-this.stableCount>=3){ this.stableCount=this.progress; SFX.stable(); log("三子连成，纹路稳固。","blue"); }
+      const L=this.layers[this.layerIdx],ratio=this.progress/this.g.path.length;
+      if(L.kind==="destroy"&&!L.destroyed&&ratio>=(L.destroyThreshold||.7)){
+        L.destroyed=true;this.destroyContent();return;
+      }
+      if(this.progress>=this.g.path.length && this.g.path.every(n=>this.g.nodes[n].lit)) this.mainDone();
+    } else {
+      this.g.nodes[i].lit=true; SFX.step(8+this.bProgress); this.bProgress++;
+      if(this.bProgress>=this.branch.path.length) this.branchDone();
+    }
+    this.updHud();
+  },
+  destroyContent(){
+    this.state="over";SFX.fail();
+    log("越过毁引阈值——储物空间从内部坍缩，所有内容化作虚无。","red");
+    showOv("#ov-lock-card",`<h2>玉 石 俱 焚</h2>
+      <p>破解进度越过自毁阈值，毁引抢在校验闭环断开前烧穿储物空间。</p>
+      <p style="color:var(--danger)">禁制未替你保住宝物，却让你什么也没得到。</p>
+      <p class="dim">力破同样必触发自毁。安全解法需要预先识别毁引，并以同阶破禁锥跳过该层；巧破不是万能钥匙。</p>
+      <div class="btns"><button id="bt-re">重 演 此 戒</button></div>`);
+    $("#bt-re").onclick=()=>{hideOv();this.restart();};
+    $("#btn-retreat").disabled=true;
+    if(this.customSeal&&typeof SE!=="undefined")SE.onSealDestroyed();
+  },
+  litNode(i,step){ this.g.nodes[i].lit=true; SFX.step(step); },
+  punish(i){
+    this.g.nodes[i].flash=performance.now();
+    this.tol--; SFX.err();
+    log("神念相撞！锁纹一惊，纹路乱作一团。","red");
+    if(this.tol<0){ this.failLayer(); return; }
+    if(this.state==="act"){
+      for(let k=this.stableCount;k<this.progress;k++) this.g.nodes[this.g.path[k]].lit=false;
+      this.progress=this.stableCount;
+      this.state="view"; this.cycleT0=performance.now();
+      log("退回上一处稳固点。流光重现，再观——续行时先点『引』位。");
+    }
+    this.updHud();
+  },
+  pickFrag(i){
+    const nd=this.g.nodes[i]; const slot=this.pouch.indexOf(null);
+    if(slot<0){ log("囊中已满，此缕灵光散去。","red"); nd.frag=null; return; }
+    this.pouch[slot]=nd.frag; nd.frag=null; SFX.pick();
+    log("拾得灵光碎片·"+({reveal:"显真",freeze:"定纹",solid:"固辉"})[this.pouch[slot]]+"。","green");
+    this.updHud();
+  },
+  openMurk(i){
+    const nd=this.g.nodes[i]; nd.murk=false;
+    if(Math.random()<.5){
+      nd.frag=pick(["reveal","freeze","solid"]); log("浑光散开——竟是一枚灵光碎片。","green"); SFX.pick();
+    } else {
+      this.alerts++; nd.flash=performance.now(); SFX.alarm();
+      log("浑光是暗桩！禁制惊扰 +1。","red");
+      this.checkAlerts();
+    }
+    this.updHud();
+  },
+  useFrag(s){
+    const f=this.pouch[s]; if(!f||this.state==="over")return;
+    this.pouch[s]=null;
+    if(f==="reveal"){ this.effects.reveal=1; log("显真既用——下一轮真流光将纤毫毕现。","green");
+      if(this.state==="act"){this.state="view";this.cycleT0=performance.now();log("你重新凝神观纹。");} }
+    if(f==="freeze"){ this.effects.freezeT=performance.now()+5000; log("定纹既用——守纹凝滞五息。","green"); }
+    if(f==="solid"){ this.effects.solid=2; log("固辉既用——接下来两子落定即稳。","green"); }
+    this.updHud();
+  },
+  mainDone(){
+    const L=this.layers[this.layerIdx];
+    if(this.cfg.branch&&Math.random()<.85){
+      const b=this.genBranch();
+      if(b){ this.state="branch"; this.branch=b; this.bProgress=0; this.showBranchChoice(); return; }
+    }
+    this.crackLayer();
+  },
+  genBranch(){
+    const g=this.g, used=new Set(g.path);
+    const len=Math.max(3,Math.round(g.path.length*rnd(.6,.8)));
+    for(let t=0;t<120;t++){
+      const p=[g.path[g.path.length-1]]; const u=new Set([...used]);
+      while(p.length<len+1){
+        const nx=g.adj[p[p.length-1]].filter(j=>!u.has(j));
+        if(!nx.length)break;
+        const j=pick(nx);p.push(j);u.add(j);
+      }
+      if(p.length===len+1){
+        const kinds=[["wipe","甲·拭痕","擦去此番留下的神念指纹"],["mind","乙·摄念","读取主人一缕残念（情报）"],["light","丙·引路","下层锁纹预亮三处星位"]];
+        const k=pick(this.layerIdx>=this.layers.length-1?kinds.slice(0,2):kinds);
+        return {path:p.slice(1),kind:k[0],name:k[1],desc:k[2]};
+      }
+    }
+    return null;
+  },
+  showBranchChoice(){
+    showOv("#ov-lock-card",`<h2>主 径 已 通</h2>
+      <p>此层锁纹将碎。暗处另有一条支径未走——</p>
+      <p><b style="color:#b48ae8">${this.branch.name}</b> <span class="dim">｜ ${this.branch.desc}</span></p>
+      <p class="dim">续走则灵力照烧、容错照扣、守纹照巡；紫晕轮廓即支径，按序点亮。</p>
+      <div class="btns"><button id="bt-go">续 走 支 径</button><button id="bt-skip" class="plain">见好就收，破层</button></div>`);
+    $("#bt-go").onclick=()=>{ hideOv(); log("你咬牙循支径深入——"+this.branch.desc+"。","gold"); this.updHud(); };
+    $("#bt-skip").onclick=()=>{ hideOv(); this.branch=null; this.crackLayer(); };
+  },
+  branchDone(){
+    const k=this.branch.kind;
+    if(k==="wipe"){ this.fingerprintWiped=true; log("支径尽头，你抹去了自己的神念指纹。","green"); }
+    if(k==="mind"){ this.infoNote="残念浮现：主人魂强 "+ri(3,6)+" 星，"+pick(["金丹初期","筑基巅峰","金丹中期"])+"，三日前最后一次开启于"+pick(["西南","东北","正北"])+"方向。";
+      log(this.infoNote,"green"); }
+    if(k==="light"){ this.preLit=3; log("支径尽头，里层纹路的走向映入识海。","green"); }
+    this.rewards.push(this.branch.name);
+    this.branch=null; this.crackLayer();
+  },
+  crackLayer(){
+    const broken=this.layers[this.layerIdx];
+    this.state="gap"; SFX.crack();
+    this.g.nodes.forEach(n=>{ this.crackFx.push({x:n.x,y:n.y,vx:rnd(-1.6,1.6),vy:rnd(-2.2,-0.4),t:1,c:WXC[n.wx]}); });
+    log("咔——第 "+CN[this.layerIdx+1]+" 层禁制碎裂，星轨如雪崩散。","gold");
+    if(broken.kindName)log(broken.kindName+"所附的校验规则已经断令失效——你没有得到主人密钥，只是拆掉了这一层。","green");
+    if(broken.kind==="legacy"&&broken.legacyText)log("一缕遗念在识海响起：「"+broken.legacyText+"」","red");
+    setTimeout(()=>{
+      this.layerIdx++;
+      if(this.layerIdx>=this.layers.length){ this.win(); return; }
+      const nx=this.layers[this.layerIdx];
+      const warn=(this.cfg.soul>=4&&nx.backfire)?`<p style="color:var(--danger)">你的神识隐约看见——里层纹路透着一层血光（反噬禁！）</p>`
+        :(this.cfg.soul>=4?`<p class="dim">你的神识看不出里层有血光。</p>`:`<p class="dim">你的魂强不足以窥探里层吉凶。</p>`);
+      showOv("#ov-lock-card",`<h2>里 层 浮 现</h2>
+        <p>外层已碎，更精密的里层纹路自深处浮起。</p>${warn}
+        <p class="dim">继续则前功可期，收手则此物依旧封存（惊扰 +1，指纹已留）。</p>
+        <div class="btns"><button id="bt-in">凝 神 再 入</button><button id="bt-out" class="plain">见好就收</button></div>`);
+      $("#bt-in").onclick=()=>{ hideOv(); this.enterLayer(); };
+      $("#bt-out").onclick=()=>{ hideOv(); this.eject("你放开神识，禁制里层犹在——这戒指终究没能打开。","层间收手",true); };
+    },1900);
+    this.updHud();
+  },
+  failLayer(){
+    const L=this.layers[this.layerIdx];
+    this.state="over"; SFX.fail();
+    let msg=`<p>容错耗尽——两股神念轰然相撞，锁纹暴起反扑。</p><p>基础魂伤 <b style="color:var(--danger)">+5</b></p>`;
+    if(L.backfire) msg+=`<p style="color:var(--danger)">此层竟是反噬禁！神念倒卷，追加魂伤 +${15*this.cfg.grade}（全额）。</p>`;
+    if(L.msg) msg+=`<p style="color:var(--danger)">传讯禁已向主人发出警报——他知道了。</p>`;
+    msg+=`<p class="dim">神念指纹已留在残骸上。惊扰 +1。</p>`;
+    this.alerts++;
+    showOv("#ov-lock-card",`<h2>破 解 失 败</h2>${msg}
+      <div class="btns"><button id="bt-re">再 试 一 局</button></div>`);
+    $("#bt-re").onclick=()=>{ hideOv(); this.restart(); };
+    $("#btn-retreat").disabled=true;
+  },
+  eject(text,title,alert){
+    if(alert)this.alerts++;
+    this.state="over";
+    showOv("#ov-lock-card",`<h2>${title}</h2><p>${text}</p>
+      <p class="dim">惊扰 ${this.alerts}/3${this.alerts>=3?"——禁制已入戒备，一日之内巧破无门":""}。未受魂伤。</p>
+      <div class="btns"><button id="bt-re">再 试 一 局</button></div>`);
+    $("#bt-re").onclick=()=>{ hideOv(); this.restart(); };
+    $("#btn-retreat").disabled=true;
+    this.updHud();
+  },
+  checkAlerts(){
+    if(this.alerts>=3){
+      this.state="over"; SFX.alarm();
+      showOv("#ov-lock-card",`<h2>禁 制 戒 备</h2>
+        <p>惊扰三度，禁制警觉——全部灵力流转沉入死寂。</p>
+        <p class="dim">一游戏日内，巧破之门对你关闭。</p>
+        <div class="btns"><button id="bt-re">再 试 一 局</button></div>`);
+      $("#bt-re").onclick=()=>{ hideOv(); this.restart(); };
+      $("#btn-retreat").disabled=true;
+    }
+  },
+  win(){
+    this.state="over";
+    const loot=this.customSeal?["方才封入的灵石 ×108","刻禁玉简","一枚未署名的传讯符"]:
+      ["下品灵石 ×"+ri(60,240),"聚气丹 ×"+ri(2,5),pick(["青纹剑胚","紫玉葫芦","缩地符 ×2","残破玉简·引雷诀上篇","二阶妖丹"])];
+    showOv("#ov-lock-card",`<h2>禁 去 器 开</h2>
+      <p>最后一层锁纹如冰绽裂，戒指内的乾坤向你敞开。</p>
+      <p>${loot.join("　")}</p>
+      ${this.infoNote?`<p class="dim">${this.infoNote}</p>`:""}
+      <p class="dim">${this.fingerprintWiped?"支径拭痕奏效——残骸上寻不到你的神念指纹。":"神念指纹已留在残骸上——若主人魂强过人，或能循迹而来。"}</p>
+      ${this.customSeal?`<p class="dim">旧认主标识已解除，旧主的 ${this.customSeal.layers.length} 个远端锚位随之释放；器物现在可以被重新刻印认主。</p>`:""}
+      <p class="dim">余灵力 ${Math.round(this.mana)} ｜ 惊扰 ${this.alerts}/3 ${this.rewards.length?"｜ 支径："+this.rewards.join("、"):""}</p>
+      <div class="btns"><button id="bt-re">再 开 一 局</button></div>`);
+    $("#bt-re").onclick=()=>{ hideOv(); this.restart(); };
+    $("#btn-retreat").disabled=true;
+    if(this.customSeal&&typeof SE!=="undefined")SE.onSealBroken();
+    this.updHud();
+  },
+  updHud(){
+    $("#hud-layer").textContent=this.layers.length?`${this.layerIdx+1} / ${this.layers.length}`:"—";
+    $("#hud-tol").textContent=this.tol>=0?"✦".repeat(this.tol)||"—":"—";
+    $("#hud-mana").style.width=(100*this.mana/this.manaMax)+"%";
+    $("#hud-alert").textContent="●".repeat(this.alerts)+"○".repeat(Math.max(0,3-this.alerts));
+    $$(".pouch .slot").forEach((s,i)=>{
+      const f=this.pouch[i];
+      s.textContent=f?({reveal:"◉",freeze:"❄",solid:"◆"})[f]:"";
+      s.title=f?({reveal:"显真：下一轮真流光高亮",freeze:"定纹：守纹凝滞 5 秒",solid:"固辉：下两子落定即稳"})[f]:"空";
+      s.classList.toggle("has",!!f);
+    });
+    const ph={idle:"未入定",view:"凝神观纹",act:"落子（流光已隐）",branch:"支径深入",gap:"层裂",over:"局终"};
+    $("#hud-phase").textContent=ph[this.state]||"";
+  },
+  /* ---- per-frame ---- */
+  tick(now,dt){
+    if(!this.g)return;
+    // hold resolve
+    if(this.holdN!=null&&now-this.holdT>=300){ const i=this.holdN;this.holdN=null;this.punish(i); }
+    if(this.state==="view"||this.state==="act"||this.state==="branch"){
+      this.mana-=dt*this.cfg.grade*1.9*(this.cfg.deadContract?1.5:1);
+      if(this.mana<=0){ this.mana=0;this.updHud();this.eject("灵力见底，神识被锁纹弹出。","灵力枯竭",true); }
+      $("#hud-mana").style.width=(100*this.mana/this.manaMax)+"%";
+      if(this.cfg.patrol){
+        this.patrolT-=dt;
+        $("#hud-patrol-v").textContent=Math.ceil(this.patrolT)+"s";
+        $("#hud-patrol-v").style.color=this.patrolT<12?"var(--danger)":"";
+        if(this.patrolT<12&&Math.floor(this.patrolT*2)!==Math.floor((this.patrolT+dt)*2))SFX.heart(.12);
+        if(this.patrolT<=0){ this.eject("脚步声到了门口——你仓皇撤出神识，遁入暗处。","被人撞破",true); }
+      }
+      // sentinels
+      const frozen=now<this.effects.freezeT;
+      this.g.sent.forEach(s=>{
+        if(frozen)return;
+        s.t+=dt;
+        if(s.t>1.2){
+          s.t=0;
+          const targets=this.g.path.slice(this.stableCount,this.progress).filter(n=>this.g.nodes[n].lit);
+          if(targets.length&&Math.random()<.75){
+            // step toward nearest lit-unstable via BFS one step
+            const goal=targets[0];
+            const prev=this.bfsStep(s.at,goal);
+            s.at=prev;
+            if(s.at===goal){ this.g.nodes[goal].lit=false; log("守纹掠过——一处星位被熄灭！","red"); }
+          } else s.at=pick(this.g.adj[s.at]);
+        }
+      });
+    }
+    // crack fx
+    this.crackFx.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.05;p.t-=dt*.8;});
+    this.crackFx=this.crackFx.filter(p=>p.t>0);
+    this.draw(now);
+  },
+  bfsStep(from,to){
+    if(from===to)return to;
+    const q=[to],seen=new Set([to]); // reverse BFS to find neighbor of `from` closer to `to`
+    const depth=new Map([[to,0]]);
+    while(q.length){ const c=q.shift(); this.g.adj[c].forEach(j=>{ if(!seen.has(j)){seen.add(j);depth.set(j,depth.get(c)+1);q.push(j);} }); }
+    let best=from,bd=depth.get(from)??1e9;
+    this.g.adj[from].forEach(j=>{const d=depth.get(j)??1e9; if(d<bd){bd=d;best=j;}});
+    return best;
+  },
+  draw(now){
+    const c=this.ctx; c.setTransform(this.dpr,0,0,this.dpr,0,0);
+    c.clearRect(0,0,this.W,this.H);
+    // starfield
+    c.save(); c.globalAlpha=.5;
+    for(let i=0;i<40;i++){ const x=(i*97.3)%this.W,y=(i*53.7)%this.H;
+      c.fillStyle="rgba(180,200,255,"+(0.04+0.05*Math.sin(now*.001+i))+")"; c.fillRect(x,y,1.5,1.5); }
+    c.restore();
+    if(!this.g)return;
+    const g=this.g, soul=this.cfg.soul;
+    // edges
+    c.lineWidth=1;
+    g.edges.forEach(([a,b])=>{
+      c.strokeStyle="rgba(90,110,160,.22)";
+      c.beginPath();c.moveTo(g.nodes[a].x,g.nodes[a].y);c.lineTo(g.nodes[b].x,g.nodes[b].y);c.stroke();
+    });
+    // branch outline
+    if(this.branch){
+      c.save();c.setLineDash([4,5]);c.lineWidth=1.6;c.strokeStyle="rgba(180,138,232,.6)";
+      let px=g.nodes[g.path[g.path.length-1]];
+      this.branch.path.forEach(n=>{ const nd=g.nodes[n];
+        c.beginPath();c.moveTo(px.x,px.y);c.lineTo(nd.x,nd.y);c.stroke(); px=nd; });
+      c.restore();
+      this.branch.path.forEach((n,i)=>{ const nd=g.nodes[n];
+        c.strokeStyle=i===this.bProgress?"#b48ae8":"rgba(180,138,232,.5)";
+        c.lineWidth=i===this.bProgress?2:1;
+        c.beginPath();c.arc(nd.x,nd.y,13,0,7);c.stroke(); });
+    }
+    // debug answer
+    if(this.cfg.debug){
+      c.save();c.lineWidth=2.4;c.strokeStyle="rgba(216,179,106,.35)";
+      c.beginPath();
+      g.path.forEach((n,i)=>{const nd=g.nodes[n]; i?c.lineTo(nd.x,nd.y):c.moveTo(nd.x,nd.y);});
+      c.stroke();
+      g.fakes.forEach(f=>{ c.setLineDash([2,4]);c.strokeStyle="rgba(224,82,82,.3)";c.lineWidth=1.2;
+        c.beginPath(); f.forEach((n,i)=>{const nd=g.nodes[n]; i?c.lineTo(nd.x,nd.y):c.moveTo(nd.x,nd.y);}); c.stroke(); c.setLineDash([]); });
+      c.restore();
+    }
+    // flows during view phase
+    if(this.state==="view") this.drawFlows(now);
+    // nodes
+    g.nodes.forEach((nd,i)=>{
+      const fogged=nd.fog&&!nd.lit&&now-nd.revealT>900;
+      const col=WXC[nd.wx];
+      const glow=nd.glow||0; nd.glow=Math.max(0,glow-.03);
+      if(fogged){
+        c.fillStyle="rgba(120,130,155,.16)";
+        c.beginPath();c.arc(nd.x,nd.y,4,0,7);c.fill();
+        c.fillStyle="rgba(120,130,155,.3)";c.font="9px serif";c.fillText("?",nd.x-2.5,nd.y+3);
+        return;
+      }
+      // halo
+      if(nd.lit||glow>0){
+        const r=nd.lit?17:12+glow*7;
+        const gr=c.createRadialGradient(nd.x,nd.y,2,nd.x,nd.y,r);
+        gr.addColorStop(0,col+(nd.lit?"e6":"88"));gr.addColorStop(1,col+"00");
+        c.fillStyle=gr;c.beginPath();c.arc(nd.x,nd.y,r,0,7);c.fill();
+      }
+      c.fillStyle="#0c1120";
+      c.beginPath();c.arc(nd.x,nd.y,nd.lit?8:7,0,7);c.fill();
+      c.fillStyle=nd.lit?col:col+"c9";
+      c.strokeStyle=col+(nd.lit?"ff":"e0");
+      c.lineWidth=1.6;
+      c.beginPath();c.arc(nd.x,nd.y,nd.lit?7:5.8,0,7);c.fill();c.stroke();
+      if(nd.hint&&!nd.lit){ c.strokeStyle="rgba(216,179,106,.8)";c.setLineDash([3,3]);
+        c.beginPath();c.arc(nd.x,nd.y,11,0,7);c.stroke();c.setLineDash([]); }
+      if(nd.frag){ c.fillStyle="#ffe6a0";c.font="12px serif";
+        c.fillText(({reveal:"◉",freeze:"❄",solid:"◆"})[nd.frag],nd.x+9,nd.y-8); }
+      if(nd.murk){ c.fillStyle="rgba(200,200,220,.5)";
+        c.beginPath();c.arc(nd.x+11,nd.y-11,4+Math.sin(now*.004+i)*1.2,0,7);c.fill(); }
+      if(i===g.path[0]&&!nd.lit){ c.fillStyle="#d8b36a";c.font="13px serif";
+        c.fillText("引",nd.x-6.5,nd.y-15);
+        c.strokeStyle="rgba(216,179,106,"+(0.5+0.3*Math.sin(now*.004))+")";c.lineWidth=1.4;
+        c.beginPath();c.arc(nd.x,nd.y,11.5,0,7);c.stroke(); }
+      // stable mark
+      const pi=g.path.indexOf(i);
+      if(pi>-1&&pi<this.stableCount&&nd.lit){ c.strokeStyle="rgba(255,255,255,.75)";c.lineWidth=1;
+        c.beginPath();c.arc(nd.x,nd.y,10.5,0,7);c.stroke(); }
+      // wrong flash
+      if(nd.flash&&now-nd.flash<420){ c.strokeStyle="rgba(224,82,82,"+(1-(now-nd.flash)/420)+")";
+        c.lineWidth=3;c.beginPath();c.arc(nd.x,nd.y,14,0,7);c.stroke(); }
+      // hold wiggle
+      if(this.holdN===i){ const w=Math.sin(now*.09)*2.4;
+        c.strokeStyle="rgba(255,210,140,.9)";c.lineWidth=1.6;
+        c.beginPath();c.arc(nd.x+w,nd.y,12,0,7);c.stroke(); }
+    });
+    // sentinels
+    const frozen=now<this.effects.freezeT;
+    g.sent.forEach(s=>{
+      const nd=g.nodes[s.at];
+      const r=8+Math.sin(now*.006)*1.6;
+      c.strokeStyle=frozen?"rgba(140,200,255,.9)":"rgba(216,150,60,.9)";
+      c.lineWidth=2;
+      c.beginPath();c.arc(nd.x,nd.y,r+6,0,7);c.stroke();
+      c.fillStyle=frozen?"rgba(140,200,255,.25)":"rgba(216,150,60,.22)";
+      c.beginPath();c.arc(nd.x,nd.y,r+6,0,7);c.fill();
+    });
+    // crack particles
+    this.crackFx.forEach(p=>{ c.globalAlpha=Math.max(0,p.t); c.fillStyle=p.c;
+      c.fillRect(p.x,p.y,2.4,2.4); c.globalAlpha=1; });
+    // red vignette under patrol pressure
+    if(this.cfg.patrol&&this.patrolT<12&&this.state!=="over"){
+      const a=.12+.1*Math.sin(now*.008);
+      const gr=c.createRadialGradient(this.W/2,this.H/2,220,this.W/2,this.H/2,430);
+      gr.addColorStop(0,"rgba(200,40,40,0)");gr.addColorStop(1,"rgba(200,40,40,"+a+")");
+      c.fillStyle=gr;c.fillRect(0,0,this.W,this.H);
+    }
+  },
+  drawFlows(now){
+    const g=this.g, c=this.ctx, soul=this.cfg.soul;
+    const L=this.layers[this.layerIdx];
+    if(!L)return;
+    const cyc=L.cycle*1000, runT=Math.min(3400,g.path.length*430);
+    const t0=(now-this.cycleT0)%(cyc);
+    if(t0>runT)return;
+    const prog=t0/runT;
+    const drawDot=(path,p,isReal)=>{
+      if(!path||path.length<2)return;
+      p=clamp(p,0,1);
+      const seg=p*(path.length-1), k=clamp(Math.floor(seg),0,path.length-2);
+      let f=seg-k;
+      if(isReal){ const mix=soul>=0?1:(soul===-1?.4:.08); f=f*(1-mix)+easeIO(f)*mix; }
+      const a=g.nodes[path[k]], b=g.nodes[path[k+1]];
+      const x=a.x+(b.x-a.x)*f, y=a.y+(b.y-a.y)*f;
+      // pre-glow on upcoming node (real only, scaled by soul)
+      if(isReal){ const amt=soul>=0?1:(soul===-1?.45:0);
+        if(amt>0){ g.nodes[path[k+1]].glow=Math.max(g.nodes[path[k+1]].glow||0,f*amt);
+          g.nodes[path[k]].glow=Math.max(g.nodes[path[k]].glow||0,(1-f)*.5*amt); } }
+      else { if(f>.82)g.nodes[path[k+1]].glow=Math.max(g.nodes[path[k+1]].glow||0,.5); }
+      // fog reveal
+      const nn=g.nodes[path[k+1]]; if(nn.fog)nn.revealT=now;
+      const nn0=g.nodes[path[k]]; if(nn0.fog)nn0.revealT=now;
+      const hl=isReal&&(this.effects.reveal>0||soul>=2);
+      const r=hl?7:5;
+      const gr=c.createRadialGradient(x,y,0,x,y,r*2.4);
+      gr.addColorStop(0,hl?"rgba(255,230,160,.95)":"rgba(210,225,255,.9)");
+      gr.addColorStop(1,"rgba(210,225,255,0)");
+      c.fillStyle=gr;c.beginPath();c.arc(x,y,r*2.4,0,7);c.fill();
+      c.fillStyle=hl?"#ffe6a0":"#dce6ff";
+      c.beginPath();c.arc(x,y,r*.55,0,7);c.fill();
+      // breathing ring for real (visible when soul>=-1)
+      if(isReal&&soul>=-1){ c.strokeStyle="rgba(255,255,255,"+(0.25+0.2*Math.sin(now*.008))+")";
+        c.lineWidth=1;c.beginPath();c.arc(x,y,r+3+Math.sin(now*.008)*1.5,0,7);c.stroke(); }
+    };
+    drawDot(g.path,prog,true);
+    g.fakes.forEach((f,i)=>drawDot(f,Math.min(1,prog*(1+i*.02)),false));
+    if(t0>runT-60&&this.effects.reveal>0)this.effects.reveal=0;
+  }
+};
+
+/* ============ seal carving and soul binding ============ */
+const SEAL_KINDS={
+  owner:{name:"认主禁",min:1,color:"#d8b36a",desc:"外人无法开启或使用，主人问念共鸣后直接通行"},
+  message:{name:"传讯禁",min:1,color:"#5ab4e8",desc:"触碰或破解时，把方向与模糊距离送回主人心头"},
+  conceal:{name:"隐匿禁",min:2,color:"#8d77c9",desc:"物品从神识扫描中隐去，但已拿到手后仍可尝试破解"},
+  backlash:{name:"反噬禁",min:3,color:"#e05252",desc:"破解失败时追加魂伤 15 × 层品阶"},
+  destroy:{name:"自毁禁",min:3,color:"#d8793f",desc:"破解越过设定阈值即湮灭内容，力破必然触发"},
+  legacy:{name:"遗念禁",min:4,color:"#b48ae8",desc:"破层时播放主人遗念，并把破解者神念指纹留存"}
+};
+
+const SE={
+  cv:$("#cv-seal"),ctx:null,W:860,H:600,dpr:1,
+  state:"idle",cfg:null,g:null,path:[],targetLen:0,layerIndex:0,builtLayers:[],
+  bindStart:0,unbindStart:0,bound:false,seal:null,challenge:null,deadMode:null,decayed:false,
+  init(){
+    this.dpr=window.devicePixelRatio||1;
+    this.cv.width=this.W*this.dpr;this.cv.height=this.H*this.dpr;
+    this.ctx=this.cv.getContext("2d");
+    const defaults=["message","owner","backlash","destroy"];
+    $$(".se-kind").forEach((s,i)=>{
+      Object.entries(SEAL_KINDS).forEach(([key,k])=>{
+        const o=document.createElement("option");o.value=key;o.textContent=k.name+"（"+CN[k.min]+"阶起）";s.appendChild(o);
+      });
+      s.value=defaults[i];
+    });
+    ["se-realm","se-soul","se-grade","se-layers"].forEach(id=>$("#"+id).addEventListener("input",()=>this.updateConfig()));
+    $("#se-thief-soul").addEventListener("input",()=>$("#se-thief-soul-v").textContent=$("#se-thief-soul").value+" 星");
+    $("#se-carve").addEventListener("click",()=>this.begin());
+    $("#se-undo").addEventListener("click",()=>this.undo());
+    $("#se-reset").addEventListener("click",()=>this.resetLayer());
+    $("#se-touch-owner").addEventListener("click",()=>this.touchOwner());
+    $("#se-touch-thief").addEventListener("click",()=>this.touchThief());
+    $("#se-unbind").addEventListener("click",()=>this.unbind());
+    $("#se-owner-die").addEventListener("click",()=>this.deathAction());
+    $("#se-to-lock").addEventListener("click",()=>this.toLock());
+    this.cv.addEventListener("pointerdown",e=>this.onDown(e));
+    this.updateConfig();
+  },
+  updateConfig(){
+    const soul=+$("#se-soul").value,grade=+$("#se-grade").value,layers=+$("#se-layers").value;
+    $("#se-soul-v").textContent=soul+" 星";
+    $("#se-grade-v").textContent=CN[grade]+"阶";
+    $("#se-layers-v").textContent=layers;
+    for(let i=1;i<=4;i++)$("#se-k"+i).parentElement.style.display=i<=layers?"flex":"none";
+    const used=this.bound&&!this.decayed&&this.state!=="broken"?this.seal.layers.length:0;
+    $("#se-anchor").textContent=used+" / "+(soul*2);
+    const mana=30*grade*layers,warm=5*grade*layers;
+    $("#se-mana").textContent=mana+" / "+REALM_MANA[+$("#se-realm").value];
+    $("#se-warm").textContent=warm+" 点";
+    const base=soul*(1+(+$("#se-realm").value)*.5);
+    $("#se-str").textContent=layers===1?base.toFixed(1):base.toFixed(1)+" → "+(base*(1+.1*(layers-1))).toFixed(1);
+  },
+  validate(){
+    const realm=+$("#se-realm").value,soul=+$("#se-soul").value,grade=+$("#se-grade").value,layers=+$("#se-layers").value;
+    const errors=[];
+    if(grade>realm)errors.push("境界不足："+CN[grade]+"阶禁制至少需第 "+CN[grade]+" 境。");
+    if(layers>Math.ceil(soul/2))errors.push("叠层过多：魂强 "+soul+" 星最多叠 "+Math.ceil(soul/2)+" 层。");
+    if(layers>soul*2)errors.push("锚位不足：每层需要 1 个锚位。");
+    if(30*grade*layers>REALM_MANA[realm])errors.push("灵力不足：本次需 "+(30*grade*layers)+"，当前灵力池仅 "+REALM_MANA[realm]+"。");
+    const kinds=[];
+    for(let i=1;i<=layers;i++){
+      const key=$("#se-k"+i).value,k=SEAL_KINDS[key];kinds.push(key);
+      if(grade<k.min)errors.push("第 "+CN[i]+" 层「"+k.name+"」至少需 "+CN[k.min]+"阶禁制。");
+    }
+    return {errors,realm,soul,grade,layers,kinds};
+  },
+  begin(){
+    const v=this.validate();
+    if(v.errors.length){
+      showOv("#ov-seal-card",`<h2>无 法 起 笔</h2>${v.errors.map(x=>`<p style="color:var(--danger)">${x}</p>`).join("")}
+        <p class="dim">验器失败不扣灵力、温养或锚位。</p><div class="btns"><button onclick="hideOv()">回 去 调 整</button></div>`);
+      return;
+    }
+    SFX.ac();hideOv();$("#seal-log").innerHTML="";
+    this.cfg=v;this.layerIndex=0;this.builtLayers=[];this.bound=false;this.seal=null;
+    this.deadMode=null;this.decayed=false;this.challenge=null;
+    $("#se-actions").style.display="none";$("#se-tools").classList.add("on");
+    $("#se-owner-die").disabled=false;$("#se-owner-die").textContent="推演：主人陨落之后";
+    $("#se-to-lock").disabled=false;$("#se-unbind").disabled=false;
+    $("#se-carve").disabled=true;
+    this.setProcess(2);
+    slog("验器无碍：品阶、境界、叠层、锚位与资源均可承载。","green");
+    slog("立锚：一缕神念自识海分出，暂压入戒面。合契前它还不是永久绑定。","gold");
+    this.prepareLayer();
+  },
+  setProcess(active,allDone=false){
+    $$("#se-process span").forEach((s,i)=>{
+      s.classList.toggle("done",allDone||i<active);
+      s.classList.toggle("on",!allDone&&i===active);
+    });
+  },
+  prepareLayer(){
+    this.state="weave";this.path=[];
+    const spec=LK.gradeSpec(this.cfg.grade);
+    this.targetLen=spec[1]+this.layerIndex;
+    this.g=this.makeLoom(spec[0]+this.layerIndex*2,this.targetLen);
+    $("#se-state").textContent="织第 "+CN[this.layerIndex+1]+" 层";
+    $("#se-phase").textContent="从「锚」起笔 · "+this.targetLen+" 节";
+    this.setProcess(2);
+    slog("第 "+CN[this.layerIndex+1]+" 层起笔：写入「"+SEAL_KINDS[this.cfg.kinds[this.layerIndex]].name+"」。","blue");
+    slog(this.cfg.grade===1?"一阶教学纹不强制五行，只需沿相邻星位织满。":"二阶以上须按金→水→木→火→土相生循环行笔。");
+  },
+  makeLoom(N,plen){
+    for(let attempt=0;attempt<100;attempt++){
+      const nodes=[],cx=485,cy=305;
+      const rings=N<=12?[[Math.ceil(N*.35),92],[N-Math.ceil(N*.35),185]]:
+        [[Math.round(N*.22),76],[Math.round(N*.36),145],[N-Math.round(N*.22)-Math.round(N*.36),220]];
+      rings.forEach(([cnt,rad],ring)=>{
+        for(let k=0;k<cnt;k++){
+          const a=k/cnt*Math.PI*2+rnd(-.13,.13)+ring*.48;
+          nodes.push({x:cx+Math.cos(a)*(rad+rnd(-12,12)),y:cy+Math.sin(a)*(rad+rnd(-11,11))*.84,
+            wx:0,ring});
+        }
+      });
+      const adj=nodes.map(()=>new Set());
+      const dist=(a,b)=>Math.hypot(nodes[a].x-nodes[b].x,nodes[a].y-nodes[b].y);
+      let off=0;
+      rings.forEach(([cnt])=>{
+        for(let k=0;k<cnt;k++){const a=off+k,b=off+(k+1)%cnt;adj[a].add(b);adj[b].add(a);}
+        off+=cnt;
+      });
+      for(let i=0;i<N;i++){
+        [...Array(N).keys()].filter(j=>j!==i&&nodes[j].ring!==nodes[i].ring)
+          .sort((a,b)=>dist(i,a)-dist(i,b)).slice(0,2).forEach(j=>{adj[i].add(j);adj[j].add(i);});
+      }
+      const aa=adj.map(s=>[...s]);let guide=null;
+      for(let t=0;t<260&&!guide;t++){
+        const p=[ri(0,N-1)],used=new Set(p);
+        while(p.length<plen){
+          const nx=aa[p[p.length-1]].filter(j=>!used.has(j));
+          if(!nx.length)break;
+          const j=pick(nx);p.push(j);used.add(j);
+        }
+        if(p.length===plen)guide=p;
+      }
+      if(!guide)continue;
+      const start=ri(0,4);
+      guide.forEach((n,i)=>nodes[n].wx=(start+i)%5);
+      const gp=new Set(guide);
+      nodes.forEach((n,i)=>{if(!gp.has(i))n.wx=ri(0,4);});
+      guide.forEach((n,i)=>{
+        if(i===guide.length-1)return;
+        aa[n].forEach(j=>{if(!gp.has(j)&&Math.random()<.55)nodes[j].wx=sheng(nodes[n].wx);});
+      });
+      return {nodes,adj:aa,edges:LK.edgeList(aa),guide};
+    }
+    throw new Error("无法生成可织锁纹");
+  },
+  pointNode(e){
+    if(!this.g)return-1;
+    const r=this.cv.getBoundingClientRect(),x=(e.clientX-r.left)*this.W/r.width,y=(e.clientY-r.top)*this.H/r.height;
+    let best=-1,bd=1e9;
+    this.g.nodes.forEach((n,i)=>{const d=Math.hypot(n.x-x,n.y-y);if(d<bd){bd=d;best=i;}});
+    return bd<=22?best:-1;
+  },
+  validNext(){
+    if(!this.g)return[];
+    if(!this.path.length)return[this.g.guide[0]];
+    const last=this.path[this.path.length-1],used=new Set(this.path);
+    return this.g.adj[last].filter(i=>!used.has(i)&&(this.cfg.grade===1||this.g.nodes[i].wx===sheng(this.g.nodes[last].wx)));
+  },
+  onDown(e){
+    if(this.state!=="weave")return;
+    const i=this.pointNode(e);if(i<0)return;
+    const valid=this.validNext();
+    if(!valid.includes(i)){
+      SFX.err();
+      if(!this.path.length)slog("起笔必须落在金圈标出的「锚」位。","red");
+      else slog("此笔不通：必须相邻、不可重走，且五行须承接上一节点。","red");
+      return;
+    }
+    this.path.push(i);SFX.step(this.path.length-1);
+    slog("第 "+this.path.length+" 笔落于「"+WX[this.g.nodes[i].wx]+"」位。");
+    if(this.path.length>=this.targetLen)this.layerReady();
+    else if(!this.validNext().length)slog("前方已成死路——退回一笔，另择相生支路。","red");
+  },
+  undo(){
+    if(!["weave","ready"].includes(this.state)||!this.path.length)return;
+    hideOv();this.state="weave";this.path.pop();
+    slog("收回末笔，神念沿原路退返。","blue");
+  },
+  resetLayer(){
+    if(!["weave","ready"].includes(this.state))return;
+    hideOv();this.state="weave";this.path=[];
+    slog("本层未合，旧笔尽散；从锚位重新起笔。","blue");
+  },
+  layerReady(){
+    this.state="ready";this.setProcess(3);
+    const key=this.cfg.kinds[this.layerIndex],kind=SEAL_KINDS[key];
+    const seq=this.path.map(i=>WX[this.g.nodes[i].wx]).join(" → ");
+    showOv("#ov-seal-card",`<h2>第 ${CN[this.layerIndex+1]} 层 纹 成</h2>
+      <p>${seq}</p><p><b style="color:${kind.color}">${kind.name}</b>：${kind.desc}</p>
+      ${key==="destroy"?`<p class="dim">本次自毁阈值定为 70%；破解主径越过七成便烧毁内容。</p>`:""}
+      <p class="dim">封层后真纹固定；外人日后看到的真流光，就沿你刚才亲手走过的路径流动。</p>
+      <div class="btns"><button id="se-close-layer">写 令 封 层</button><button id="se-redo-layer" class="plain">重 织</button></div>`);
+    $("#se-close-layer").onclick=()=>{hideOv();this.closeLayer();};
+    $("#se-redo-layer").onclick=()=>this.resetLayer();
+  },
+  closeLayer(){
+    const key=this.cfg.kinds[this.layerIndex],kind=SEAL_KINDS[key];
+    const blueprint={nodes:this.g.nodes.map(n=>({x:n.x,y:n.y,wx:n.wx,ring:n.ring})),
+      adj:this.g.adj.map(a=>[...a]),edges:this.g.edges.map(e=>[...e]),path:[...this.path]};
+    this.builtLayers.push({kind:key,kindName:kind.name,blueprint,
+      destroyThreshold:key==="destroy"?.7:null,
+      legacyText:key==="legacy"?"后来者，取我遗物，便替我承下这段因果。":null});
+    SFX.stable();slog("第 "+CN[this.layerIndex+1]+" 层已闭合，令式「"+kind.name+"」附着其后。","green");
+    this.layerIndex++;
+    if(this.layerIndex<this.cfg.layers)this.prepareLayer();
+    else this.beginBinding();
+  },
+  beginBinding(){
+    this.state="binding";this.bindStart=performance.now();this.setProcess(4);
+    $("#se-tools").classList.remove("on");
+    $("#se-state").textContent="合契中";
+    $("#se-phase").textContent="演示压缩为 5 秒 · 设定仪式 30 秒";
+    slog("诸层皆成。现在封闭内外回路，扣除灵力与温养，把临时神念锚烧成活契。","gold");
+  },
+  finishBinding(){
+    if(this.state!=="binding")return;
+    const strengths=[];
+    for(let i=0;i<this.cfg.layers;i++)strengths.push(this.cfg.soul*(1+this.cfg.realm*.5)*(1+.1*i));
+    this.seal={ownerSoul:this.cfg.soul,ownerRealm:this.cfg.realm,grade:this.cfg.grade,
+      layers:JSON.parse(JSON.stringify(this.builtLayers)),strengths,
+      element:this.builtLayers[0].blueprint.nodes[this.builtLayers[0].blueprint.path[0]].wx,
+      ownerSig:Math.random().toString(16).slice(2,14).padEnd(12,"0"),
+      manaCost:30*this.cfg.grade*this.cfg.layers,warmCost:5*this.cfg.grade*this.cfg.layers,
+      deadContract:false};
+    this.bound=true;this.state="bound";this.setProcess(5,true);
+    $("#se-state").textContent="神魂已绑定";
+    $("#se-phase").textContent="问念—回念校验待命";
+    $("#se-actions").style.display="block";$("#se-carve").disabled=false;$("#se-carve").textContent="重 刻 此 戒";
+    this.updateConfig();SFX.crack();
+    slog("合契完成：扣灵力 "+this.seal.manaCost+"、温养 "+this.seal.warmCost+"，占锚位 "+this.seal.layers.length+"。","gold");
+    slog("主人标识已与真纹闭环绑定。器物里没有可抄走的明文密码。","green");
+    showOv("#ov-seal-card",`<h2>神 魂 成 契</h2>
+      <p>每层强度：${strengths.map(x=>x.toFixed(1)).join(" / ")}</p>
+      <p>占用锚位 ${this.seal.layers.length} / ${this.cfg.soul*2}　｜　魂标 ${this.seal.ownerSig}</p>
+      <p class="dim">此魂标只是原型中的校验摘要。正式实现必须由服务端保存并判定，客户端不能拿到可直接复刻的答案。</p>
+      <div class="btns"><button onclick="hideOv()">查 看 成 契 之 物</button></div>`);
+  },
+  touchOwner(){
+    if(!this.seal)return;
+    if(this.deadMode){
+      showOv("#ov-seal-card",`<h2>回 念 无 应</h2><p>主人当前不在生者之列，活的神魂无法作出回念。</p>
+        <p class="dim">禁制仍由远端锚维持；正常死亡进入死契，魂飞魄散则开始衰减。</p><div class="btns"><button onclick="hideOv()">明 白</button></div>`);
+      return;
+    }
+    this.challenge={type:"owner",start:performance.now()};
+    slog("器物发出一次性问念；主人神魂循真纹回响。","blue");
+    setTimeout(()=>{
+      if(!this.seal)return;
+      SFX.stable();
+      showOv("#ov-seal-card",`<h2>共 鸣 通 过</h2>
+        <p>① 器物生成本次随机问念　→　② 主人神魂沿原真纹回念</p>
+        <p>③ 服务端核对魂标与路径　→　④ 只签发本次开启许可</p>
+        <p style="color:var(--ok)">储物戒开启；全部禁制原样保留。</p>
+        <p class="dim">下一次触碰会换一道问念，因此录下本次回念也不能重放冒充。</p>
+        <div class="btns"><button onclick="hideOv()">收 起 戒 指</button></div>`);
+    },1500);
+  },
+  touchThief(){
+    if(!this.seal)return;
+    this.challenge={type:"thief",start:performance.now()};SFX.err();
+    const kinds=this.seal.layers.map(x=>x.kind),effects=[];
+    if(kinds.includes("owner"))effects.push("认主禁：回念不符，拒绝开启");
+    if(kinds.includes("message"))effects.push("传讯禁：主人心头一悸，收到方向与模糊距离");
+    if(kinds.includes("conceal"))effects.push("隐匿禁：它本不该被普通神识扫描发现；既已拿在手中仍可破");
+    if(kinds.includes("backlash"))effects.push("反噬禁：暂不攻击，只有破解失败才全额反噬");
+    if(kinds.includes("destroy"))effects.push("自毁禁：暂不自毁，破解越过阈值或力破时才触发");
+    if(kinds.includes("legacy"))effects.push("遗念禁：静默记录这次外来神念特征");
+    const blocked=kinds.includes("owner");
+    if(!blocked)effects.unshift("未刻认主禁：问念虽不相合，却没有拒入规则——外人可以直接开启，这是布置漏洞");
+    slog(blocked?"外人触碰：问念得不到正确回响，器物闭锁。":"外人触碰：没有认主令阻断，器物竟直接开放。",blocked?"red":"gold");
+    showOv("#ov-seal-card",`<h2>${blocked?"外 念 不 合":"无 令 可 拦"}</h2>
+      ${effects.map(x=>`<p>${x}</p>`).join("")}
+      <p class="dim">${blocked?"单纯触碰不是破解。要开此戒，必须转入力破、器破或锁纹巧破。":"神魂锚位只说明谁刻了它；真正负责拒绝外人的，是认主禁规则。"}</p>
+      <div class="btns"><button onclick="hideOv()">退 开</button></div>`);
+  },
+  unbind(){
+    if(!this.seal||!this.bound)return;
+    if(this.deadMode){
+      showOv("#ov-seal-card",`<h2>无 人 可 解</h2><p>主动解契必须由活着的主人再次通过问念校验。</p>
+        <p class="dim">当前只能等待复活、七日衰减，或由外人破禁。</p><div class="btns"><button onclick="hideOv()">明 白</button></div>`);
+      return;
+    }
+    showOv("#ov-seal-card",`<h2>主 动 解 契</h2>
+      <p>主人将持续触碰五秒，再通过一次问念—回念校验。</p>
+      <p>完成后全部禁制安全撤除，内容物不损，${this.seal.layers.length} 个锚位立即收回。</p>
+      <div class="btns"><button id="se-confirm-unbind">开 始 解 契</button><button class="plain" onclick="hideOv()">取 消</button></div>`);
+    $("#se-confirm-unbind").onclick=()=>{
+      hideOv();this.state="unbinding";this.unbindStart=performance.now();
+      $("#se-state").textContent="主人解契中";$("#se-phase").textContent="持续触碰 5 秒";
+      slog("主人再次以活魂回应问念，开始逆序收回各层锚线。","gold");
+    };
+  },
+  finishUnbind(){
+    if(this.state!=="unbinding")return;
+    this.bound=false;this.state="unbound";
+    $("#se-state").textContent="主人已主动解契";$("#se-phase").textContent="内容无损 · 锚位全数收回";
+    $("#se-anchor").textContent="0 / "+(this.seal.ownerSoul*2);
+    $("#se-to-lock").disabled=true;$("#se-unbind").disabled=true;SFX.crack();
+    slog("五秒校验完成：诸层由内向外安全散去，内容无损，锚位全部归还。","green");
+    showOv("#ov-seal-card",`<h2>解 契 已 成</h2><p>全部禁制安全撤除，储物戒回到无主状态。</p>
+      <p class="dim">合法转手必须由旧主先走这一步，新主再消耗自己的资源重新刻印；不能只改一个主人名字。</p>
+      <div class="btns"><button onclick="hideOv()">收 起 无 主 戒</button></div>`);
+  },
+  deathAction(){
+    if(!this.seal)return;
+    if(this.deadMode==="contract"){
+      this.deadMode=null;this.seal.deadContract=false;this.state="bound";
+      $("#se-owner-die").textContent="推演：主人陨落之后";$("#se-state").textContent="主人复活 · 契归常态";
+      $("#se-str").textContent=this.seal.strengths.map(x=>x.toFixed(1)).join(" / ");
+      slog("主人复活，死契散去，禁制回落原强度。","green");return;
+    }
+    if(this.deadMode==="decay"&&!this.decayed){
+      this.decayed=true;this.bound=false;this.state="decayed";
+      $("#se-owner-die").textContent="禁制已自然崩解";$("#se-owner-die").disabled=true;
+      $("#se-to-lock").disabled=true;$("#se-state").textContent="七日尽 · 禁制自解";
+      $("#se-anchor").textContent="0 / "+(this.seal.ownerSoul*2);
+      SFX.crack();slog("七日衰减已尽，失去活锚的锁纹自行崩解，内容物无损开放。","gold");return;
+    }
+    showOv("#ov-seal-card",`<h2>主 人 陨 落</h2>
+      <p>要推演哪一种死亡？两者不是同一回事。</p>
+      <div class="btns"><button id="se-normal-death">正常死亡（可复活）</button><button id="se-soul-death">魂飞魄散</button></div>
+      <p class="dim">正常死亡：三日死契强度 ×1.5。魂飞魄散：七日衰减后自动崩解。</p>`);
+    $("#se-normal-death").onclick=()=>{
+      hideOv();this.deadMode="contract";this.state="dead";this.seal.deadContract=true;
+      $("#se-owner-die").textContent="推演：主人复活";$("#se-state").textContent="死契 · 三日";
+      $("#se-str").textContent=this.seal.strengths.map(x=>(x*1.5).toFixed(1)).join(" / ");
+      slog("主人正常死亡：锚未断，死契骤凝，三日内强度 ×1.5。","red");
+    };
+    $("#se-soul-death").onclick=()=>{
+      hideOv();this.deadMode="decay";this.state="decay";this.seal.deadContract=false;
+      $("#se-owner-die").textContent="推进至七日后";$("#se-state").textContent="无主衰减 · 七日";
+      slog("主人魂飞魄散：活锚断绝，锁纹开始七日衰减。期满自行崩解。","red");
+    };
+  },
+  toLock(){
+    if(!this.seal||this.decayed)return;
+    if(!this.seal.layers.some(x=>x.kind==="owner")){
+      showOv("#ov-seal-card",`<h2>无 须 解 禁</h2><p>此戒没有认主禁。外人无需破解便能开启内容。</p>
+        <p class="dim">传讯、隐匿、反噬等令式各管一事，不能代替认主层的拒入职责。</p>
+        <div class="btns"><button onclick="hideOv()">回 去 重 刻</button></div>`);
+      return;
+    }
+    const thiefRealm=+$("#se-thief-realm").value,thiefSoul=+$("#se-thief-soul").value;
+    this.seal.deadContract=this.deadMode==="contract";
+    $("#nav-lock").click();
+    LK.startFromSeal(this.seal,thiefRealm,thiefSoul);
+  },
+  onSealBroken(){
+    if(!this.seal)return;
+    this.bound=false;this.state="broken";this.decayed=true;
+    $("#se-state").textContent="旧契已破";$("#se-anchor").textContent="0 / "+(this.seal.ownerSoul*2);
+    $("#se-to-lock").disabled=true;
+    slog("远端传来断契之痛：诸层尽破，旧认主标识被解除，"+this.seal.layers.length+" 个锚位释放。","red");
+  },
+  onSealDestroyed(){
+    if(!this.seal)return;
+    slog("毁引回响：戒中内容已经湮灭，但尚未被剥掉的禁制与锚位仍然存在。","red");
+  },
+  tick(now){
+    if(this.state==="binding"){
+      const e=(now-this.bindStart)/1000;
+      $("#se-phase").textContent=e<1.2?"封闭诸层":e<2.4?"扣除灵力与温养":e<3.6?"烙入主人魂标":e<4.8?"首轮问念校验":"合契将成";
+      if(e>=5)this.finishBinding();
+    }
+    if(this.state==="unbinding"){
+      const e=(now-this.unbindStart)/1000;
+      $("#se-phase").textContent="逆序收锚 "+Math.min(5,e).toFixed(1)+" / 5.0 秒";
+      if(e>=5)this.finishUnbind();
+    }
+    if(this.challenge&&now-this.challenge.start>2400)this.challenge=null;
+    this.draw(now);
+  },
+  draw(now){
+    const c=this.ctx;c.setTransform(this.dpr,0,0,this.dpr,0,0);c.clearRect(0,0,this.W,this.H);
+    for(let i=0;i<55;i++){
+      c.fillStyle="rgba(180,200,255,"+(0.035+0.04*Math.sin(now*.001+i)) +")";
+      c.fillRect((i*83.7)%this.W,(i*47.9)%this.H,1.4,1.4);
+    }
+    this.drawOwnerAndVessel(now);
+    if(["weave","ready"].includes(this.state))this.drawLoom(now);
+    if(this.state==="binding")this.drawBinding(now);
+    if(["bound","dead","decay","decayed","broken","unbinding","unbound"].includes(this.state))this.drawBound(now);
+  },
+  drawOwnerAndVessel(now){
+    const c=this.ctx,dead=!!this.deadMode;
+    const ox=112,oy=300,vx=485,vy=305;
+    const og=c.createRadialGradient(ox,oy,3,ox,oy,42);
+    og.addColorStop(0,dead?"rgba(110,105,125,.85)":"rgba(180,220,255,.9)");
+    og.addColorStop(1,"rgba(100,160,230,0)");
+    c.fillStyle=og;c.beginPath();c.arc(ox,oy,42,0,7);c.fill();
+    c.fillStyle=dead?"#777687":"#cce7ff";c.beginPath();c.arc(ox,oy,8+Math.sin(now*.004)*1.2,0,7);c.fill();
+    c.fillStyle="rgba(207,214,228,.65)";c.font="12px serif";c.fillText(dead?"寂灭神魂":"主人神魂",ox-28,oy+58);
+    const tether=!this.decayed&&(this.bound||this.state==="binding"||!!this.deadMode);
+    if(tether){
+      c.strokeStyle=dead?"rgba(140,90,100,.4)":"rgba(150,205,255,.4)";c.lineWidth=1.4;c.setLineDash([4,5]);
+      c.beginPath();c.moveTo(ox+12,oy);c.quadraticCurveTo(290,245,vx-24,vy);c.stroke();c.setLineDash([]);
+    }
+    c.save();c.translate(vx,vy);c.rotate(now*.00035);
+    c.strokeStyle=this.decayed?"rgba(100,105,120,.45)":"#d8b36a";c.lineWidth=2;
+    c.beginPath();c.arc(0,0,25,0,7);c.stroke();
+    c.beginPath();c.arc(0,0,15,0,7);c.stroke();
+    c.restore();
+    c.fillStyle="rgba(216,179,106,.85)";c.font="12px serif";c.fillText("储物戒",vx-20,vy+48);
+    if(this.challenge){
+      const t=clamp((now-this.challenge.start)/1500,0,1),fromOwner=this.challenge.type==="owner";
+      const px=fromOwner?ox+(vx-ox)*easeIO(t):vx-(vx-ox)*easeIO(t);
+      const py=oy+(vy-oy)*t;
+      const gr=c.createRadialGradient(px,py,0,px,py,14);
+      gr.addColorStop(0,fromOwner?"rgba(150,220,255,.95)":"rgba(224,82,82,.95)");
+      gr.addColorStop(1,"rgba(255,255,255,0)");
+      c.fillStyle=gr;c.beginPath();c.arc(px,py,14,0,7);c.fill();
+    }
+  },
+  drawLoom(now){
+    const c=this.ctx,g=this.g,selected=new Set(this.path),valid=new Set(this.validNext());
+    g.edges.forEach(([a,b])=>{
+      c.strokeStyle="rgba(90,110,160,.24)";c.lineWidth=1;c.beginPath();
+      c.moveTo(g.nodes[a].x,g.nodes[a].y);c.lineTo(g.nodes[b].x,g.nodes[b].y);c.stroke();
+    });
+    if(this.path.length){
+      c.strokeStyle="rgba(216,179,106,.9)";c.lineWidth=3;c.beginPath();
+      this.path.forEach((i,k)=>{const n=g.nodes[i];k?c.lineTo(n.x,n.y):c.moveTo(n.x,n.y);});c.stroke();
+    }
+    g.nodes.forEach((n,i)=>{
+      const col=WXC[n.wx],sel=selected.has(i),ok=valid.has(i);
+      if(ok){
+        c.strokeStyle="rgba(216,179,106,"+(.5+.35*Math.sin(now*.006+i))+")";c.lineWidth=2;
+        c.beginPath();c.arc(n.x,n.y,15,0,7);c.stroke();
+      }
+      c.fillStyle=sel?col:"#0c1120";c.strokeStyle=col;c.lineWidth=1.5;
+      c.beginPath();c.arc(n.x,n.y,9,0,7);c.fill();c.stroke();
+      c.fillStyle=sel?"#0a0d16":col;c.font="11px serif";c.textAlign="center";c.textBaseline="middle";
+      c.fillText(WX[n.wx],n.x,n.y+.5);c.textAlign="start";c.textBaseline="alphabetic";
+      if(i===g.guide[0]&&!this.path.length){
+        c.fillStyle="#d8b36a";c.font="13px serif";c.fillText("锚",n.x-7,n.y-18);
+      }
+    });
+    c.fillStyle="rgba(207,214,228,.6)";c.font="13px serif";
+    c.fillText("第 "+CN[this.layerIndex+1]+" 层 · 已织 "+this.path.length+" / "+this.targetLen+" 笔",365,575);
+  },
+  drawBinding(now){
+    const c=this.ctx,t=(now-this.bindStart)/1000;
+    for(let i=0;i<45;i++){
+      const p=(t*.28+i/45)%1,a=i*.7;
+      const x=112+(485-112)*p,y=300+Math.sin(a+p*12)*24*(1-p);
+      c.fillStyle="rgba(175,220,255,"+(1-p)*.75+")";c.fillRect(x,y,2,2);
+    }
+    this.builtLayers.forEach((l,i)=>{
+      c.strokeStyle=SEAL_KINDS[l.kind].color+"aa";c.lineWidth=1.7;
+      c.beginPath();c.arc(485,305,42+i*13,now*.0004*(i%2?1:-1),now*.0004*(i%2?1:-1)+Math.PI*1.72);c.stroke();
+    });
+  },
+  drawBound(now){
+    if(!this.seal)return;
+    const c=this.ctx;
+    this.seal.layers.forEach((l,i)=>{
+      const r=43+i*14,a=now*.00035*(i%2?1:-1);
+      c.strokeStyle=SEAL_KINDS[l.kind].color+(this.decayed?"55":"bb");c.lineWidth=2;
+      c.beginPath();c.arc(485,305,r,a,a+Math.PI*1.75);c.stroke();
+      const x=485+Math.cos(a)*r,y=305+Math.sin(a)*r;
+      c.fillStyle=SEAL_KINDS[l.kind].color;c.beginPath();c.arc(x,y,4,0,7);c.fill();
+      c.fillStyle="rgba(207,214,228,.7)";c.font="12px serif";
+      c.fillText((i+1)+"·"+SEAL_KINDS[l.kind].name,690,235+i*27);
+    });
+    if(this.deadMode==="contract"){
+      c.strokeStyle="rgba(190,55,55,.75)";c.lineWidth=3;
+      for(let i=0;i<4;i++){c.beginPath();c.arc(485,305,82+i*5,i*.8+now*.0002,i*.8+2.2+now*.0002);c.stroke();}
+      c.fillStyle="#e05252";c.font="14px serif";c.fillText("死契 ×1.5",445,420);
+    }
+    if(this.deadMode==="decay"){
+      c.fillStyle="rgba(140,140,160,.65)";c.font="14px serif";c.fillText(this.decayed?"锚断 · 纹散":"七日衰减中",445,420);
+    }
+    if(this.state==="broken"){
+      c.fillStyle="rgba(111,214,163,.8)";c.font="15px serif";c.fillText("旧契已解，可重新认主",410,420);
+    }
+    if(this.state==="unbound"){
+      c.fillStyle="rgba(111,214,163,.8)";c.font="15px serif";c.fillText("主人解契 · 内容无损",410,420);
+    }
+  }
+};
+
+/* ============ log helpers ============ */
+function log(t,cls){ const d=document.createElement("div");d.className="entry "+(cls||"");
+  d.textContent=t; const box=$("#log-box"); box.prepend(d);
+  while(box.children.length>60)box.lastChild.remove(); }
+function clearLog(){ $("#log-box").innerHTML=""; }
+function alog(t,cls){ const d=document.createElement("div");d.className="entry "+(cls||"");
+  d.textContent=t; const box=$("#arr-log"); box.prepend(d);
+  while(box.children.length>60)box.lastChild.remove(); }
+function slog(t,cls){ const d=document.createElement("div");d.className="entry "+(cls||"");
+  d.textContent=t; const box=$("#seal-log"); box.prepend(d);
+  while(box.children.length>80)box.lastChild.remove(); }
+function showOv(sel,html){ $(sel).innerHTML=html; $(sel).parentElement.classList.add("on"); }
+function hideOv(){ $$(".overlay").forEach(o=>o.classList.remove("on")); }
+
+/* ============ formation sim ============ */
+const AR={
+  cv:$("#cv-arr"), ctx:null, W:860,H:600, dpr:1, cell:16,
+  bp:null, flags:[], selWx:0, state:"idle", // idle|placing|active|gate
+  eff:0, conc:0, nb:100, surgeT:0, surgeCd:0, flow:[],
+  gate:{on:false,flags:[],gi:-1,alerts:0,paralyzed:0},
+  bps:{
+    sixiang:{name:"四象护府阵",grade:2,slots:[[0,8],[90,8],[180,8],[270,8]]},
+    wuxing:{name:"五行聚灵阵",grade:1,slots:[[-90,7],[-18,7],[54,7],[126,7],[198,7]]},
+    qixing:{name:"七星困灵阵",grade:3,slots:[[-90,9],[-38.6,9],[12.9,9],[64.3,9],[115.7,9],[167.1,9],[218.6,9]]}
+  },
+  init(){
+    this.dpr=window.devicePixelRatio||1;
+    this.cv.width=this.W*this.dpr;this.cv.height=this.H*this.dpr;
+    this.ctx=this.cv.getContext("2d");
+    const rack=$("#flagrack");
+    WX.forEach((w,i)=>{ const b=document.createElement("div");
+      b.className="flag-btn";b.textContent=w;b.style.background=WXC[i];
+      b.addEventListener("click",()=>{ this.selWx=i;
+        $$(".flag-btn").forEach(x=>x.classList.remove("sel")); b.classList.add("sel"); });
+      if(i===0)b.classList.add("sel");
+      rack.appendChild(b);
+    });
+    $("#arr-place").addEventListener("click",()=>this.beginPlace());
+    $("#arr-check").addEventListener("click",()=>this.check());
+    $("#arr-surge").addEventListener("click",()=>this.surge());
+    $("#arr-gate").addEventListener("click",()=>this.beginGate());
+    $("#arr-soul").addEventListener("input",()=>$("#arr-soul-v").textContent=$("#arr-soul").value+" 星");
+    this.cv.addEventListener("pointerdown",e=>this.onDown(e));
+  },
+  ctr(){ return {x:this.W/2,y:this.H/2}; },
+  slotPos(s){ const c=this.ctr(); const a=s[0]*Math.PI/180;
+    return {x:c.x+Math.cos(a)*s[1]*this.cell, y:c.y+Math.sin(a)*s[1]*this.cell}; },
+  beginPlace(){
+    this.bp=this.bps[$("#arr-blueprint").value];
+    this.flags=[];this.state="placing";this.eff=0;this.conc=0;this.nb=100;this.surgeT=0;this.flow=[];
+    this.gate.on=false;
+    $("#arr-state").textContent="布阵中";$("#arr-eff").textContent="—";
+    $("#arr-conc").textContent="—";$("#arr-nb").textContent="—";
+    $("#arr-check").disabled=false;$("#arr-surge").disabled=true;
+    alog("『"+this.bp.name+"』幻影指引已铺开——按方位落旗，毫厘之差便是阵威之差。","gold");
+  },
+  onDown(e){
+    const r=this.cv.getBoundingClientRect();
+    const x=(e.clientX-r.left)*this.W/r.width, y=(e.clientY-r.top)*this.H/r.height;
+    if(this.state==="placing"){
+      // click existing flag -> remove
+      const hit=this.flags.findIndex(f=>Math.hypot(f.x-x,f.y-y)<12);
+      if(hit>-1){ this.flags.splice(hit,1); alog("拔起一面旗。"); return; }
+      if(this.flags.length>=this.bp.slots.length){ alog("旗数已足，先拔再插。","red"); return; }
+      const gx=Math.round(x/this.cell)*this.cell, gy=Math.round(y/this.cell)*this.cell;
+      this.flags.push({x:gx,y:gy,wx:this.selWx});
+      alog("落"+WX[this.selWx]+"旗（"+this.flags.length+"/"+this.bp.slots.length+"）。");
+    } else if(this.state==="gate"&&this.gate.paralyzed<=0){
+      const hit=this.gate.flags.findIndex(f=>Math.hypot(f.x-x,f.y-y)<14);
+      if(hit<0)return;
+      if(hit===this.gate.gi){
+        this.gate.paralyzed=60; SFX.crack();
+        alog("生门旗应手而出——全阵灵力紊乱，六十息内形同虚设！","gold");
+        showOv("#ov-arr-card",`<h2>生 门 得 手</h2><p>你拔中了生门旗，大阵瘫痪 60 秒。</p>
+          <p class="dim">此刻阵主已收到剧烈警报，可在瘫痪期内重插旗恢复——真实攻防里，这一分钟就是全部。</p>
+          <div class="btns"><button onclick="hideOv()">继 续 观 摩</button></div>`);
+      } else {
+        this.gate.alerts++; SFX.err();
+        alog("拔错了！旗中灵力反冲，气血一荡（惊扰 "+this.gate.alerts+"/3）。","red");
+        if(this.gate.alerts>=3){
+          this.state="idle";
+          showOv("#ov-arr-card",`<h2>大 阵 戒 备</h2><p>惊扰三度，全阵灵力流转尽数隐去——巧破之门关闭。</p>
+            <div class="btns"><button onclick="hideOv()">退 下</button></div>`);
+        }
+      }
+    }
+  },
+  check(){
+    if(this.flags.length<this.bp.slots.length){ alog("旗未布齐。","red"); return; }
+    // assign flags to nearest slots greedily
+    const slots=this.bp.slots.map(s=>this.slotPos(s));
+    const used=new Set(); let maxDev=0; const order=[];
+    slots.forEach((sp,si)=>{
+      let bi=-1,bd=1e9;
+      this.flags.forEach((f,fi)=>{ if(used.has(fi))return;
+        const d=Math.hypot(f.x-sp.x,f.y-sp.y); if(d<bd){bd=d;bi=fi;} });
+      used.add(bi); order.push(this.flags[bi]); maxDev=Math.max(maxDev,bd/this.cell);
+    });
+    let eff=0;
+    if(maxDev<=0.5)eff=120; else if(maxDev<=1)eff=100; else if(maxDev<=2)eff=80;
+    if(!eff){
+      this.state="idle";SFX.err();
+      $("#arr-state").textContent="布阵失败";
+      alog("偏差过甚（最大 "+maxDev.toFixed(1)+" 格）——灵力反冲布阵者，阵图作废。","red");
+      showOv("#ov-arr-card",`<h2>布 阵 失 败</h2><p>旗位偏差 ${maxDev.toFixed(1)} 格，灵力逆行反冲己身。</p>
+        <p class="dim">走火入魔判定（原型内仅演示）。</p><div class="btns"><button onclick="hideOv()">重 来</button></div>`);
+      return;
+    }
+    // wuxing order bonus
+    let allSheng=true,anyKe=false;
+    for(let i=0;i<order.length-1;i++){
+      if(order[i+1].wx!==sheng(order[i].wx))allSheng=false;
+      if(order[i+1].wx===ke(order[i].wx)||order[i].wx===ke(order[i+1].wx))anyKe=true;
+    }
+    let bonus=anyKe?-30:(allSheng?20:0);
+    this.eff=eff+bonus;
+    this.state="active"; this.flowSeed();
+    this.conc=100; this.nb=100; this.surgeT=0;
+    $("#arr-state").textContent="运转中";
+    $("#arr-eff").textContent=this.eff+"%";
+    $("#arr-surge").disabled=false;
+    SFX.stable();
+    alog("成阵！精度 "+eff+"%"+(bonus>0?"，五行顺生 +20%":bonus<0?"，旗序相克 −30%":"，旗序无生克")+"——合 "+this.eff+"%。","gold");
+    if(anyKe)alog("相邻旗五行相克，灵机滞涩——换旗重摆可解。","red");
+    else if(!allSheng)alog("若按相生序摆旗（如金→水→木→火→土），阵威更盛两成。","blue");
+    alog("灵气如水向低处流：阵旗锁灵压出位势差，阵眼正在成为灵气洼地。","blue");
+  },
+  flowSeed(){
+    this.flow=[];
+    for(let i=0;i<70;i++){
+      const a=rnd(0,Math.PI*2), d=rnd(200,330);
+      const c=this.ctr();
+      this.flow.push({x:c.x+Math.cos(a)*d,y:c.y+Math.sin(a)*d*.8,sp:rnd(.25,.7)});
+    }
+  },
+  surge(){
+    if(this.surgeCd>0){ alog("移旗激灵未至冷却（"+Math.ceil(this.surgeCd)+"s）。","red"); return; }
+    this.surgeT=30;this.surgeCd=60;SFX.crack();
+    alog("阵主亲手拔旗再插——位势重算，阵眼灵气暴涨！（30 秒）","gold");
+  },
+  beginGate(){
+    this.state="gate"; this.bp=this.bps.sixiang;
+    this.gate.on=true;this.gate.alerts=0;this.gate.paralyzed=0;
+    this.gate.flags=this.bp.slots.map(s=>{const p=this.slotPos(s);return {x:p.x,y:p.y,wx:ri(0,4)};});
+    this.gate.gi=ri(0,this.gate.flags.length-1);
+    this.flags=[];this.flowSeed();
+    $("#arr-state").textContent="敌阵在前";
+    $("#arr-eff").textContent="—";$("#arr-conc").textContent="—";$("#arr-nb").textContent="—";
+    $("#arr-surge").disabled=true;$("#arr-check").disabled=true;
+    alog("他人的四象阵横在面前。开神识细看旗间灵流——生门旗必有细微逆流。","gold");
+    alog("当前魂强 "+$("#arr-soul").value+" 星：逆流"+(+$("#arr-soul").value>=6?"清晰可辨":(+$("#arr-soul").value>=4?"隐约可察":"几不可见"))+"。","blue");
+  },
+  tick(now,dt){
+    if(this.surgeCd>0)this.surgeCd-=dt;
+    if(this.state==="active"){
+      if(this.surgeT>0)this.surgeT-=dt;
+      const target=100+this.eff*2.2+(this.surgeT>0?180*(this.surgeT/30):0);
+      this.conc+=(target-this.conc)*dt*.6;
+      this.nb=Math.max(28,this.nb-dt*1.7*(this.eff/100));
+      $("#arr-conc").textContent=Math.round(this.conc)+"%";
+      $("#arr-nb").textContent=Math.round(this.nb)+"%";
+    }
+    if(this.state==="gate"&&this.gate.paralyzed>0){
+      this.gate.paralyzed-=dt;
+      $("#arr-state").textContent="敌阵瘫痪 "+Math.ceil(Math.max(0,this.gate.paralyzed))+"s";
+      if(this.gate.paralyzed<=0){ $("#arr-state").textContent="敌阵在前"; alog("阵主重插生门旗，大阵嗡然复原。","red"); this.gate.gi=ri(0,this.gate.flags.length-1); }
+    }
+    this.draw(now,dt);
+  },
+  draw(now,dt){
+    const c=this.ctx;c.setTransform(this.dpr,0,0,this.dpr,0,0);
+    c.clearRect(0,0,this.W,this.H);
+    const ctr=this.ctr();
+    // grid
+    c.strokeStyle="rgba(80,100,150,.10)";c.lineWidth=1;
+    for(let x=0;x<=this.W;x+=this.cell){c.beginPath();c.moveTo(x,0);c.lineTo(x,this.H);c.stroke();}
+    for(let y=0;y<=this.H;y+=this.cell){c.beginPath();c.moveTo(0,y);c.lineTo(this.W,y);c.stroke();}
+    // heat field when active
+    if(this.state==="active"){
+      const R=240+(this.surgeT>0?40:0);
+      const gr=c.createRadialGradient(ctr.x,ctr.y,10,ctr.x,ctr.y,R);
+      const a=clamp((this.conc-100)/400,.05,.5)+(this.surgeT>0?.16:0);
+      gr.addColorStop(0,"rgba(90,180,232,"+a+")");gr.addColorStop(1,"rgba(90,180,232,0)");
+      c.fillStyle=gr;c.beginPath();c.arc(ctr.x,ctr.y,R,0,7);c.fill();
+      // inflow particles
+      this.flow.forEach(p=>{
+        const dx=ctr.x-p.x,dy=ctr.y-p.y,d=Math.hypot(dx,dy);
+        p.x+=dx/d*p.sp*(this.surgeT>0?2.4:1);p.y+=dy/d*p.sp*(this.surgeT>0?2.4:1);
+        if(d<26){const ang=rnd(0,Math.PI*2),dd=rnd(220,330);p.x=ctr.x+Math.cos(ang)*dd;p.y=ctr.y+Math.sin(ang)*dd*.8;}
+        c.fillStyle="rgba(140,200,255,.55)";c.fillRect(p.x,p.y,1.8,1.8);
+      });
+    }
+    // plate
+    c.save();
+    c.translate(ctr.x,ctr.y);c.rotate(now*.0003);
+    c.strokeStyle="#d8b36a";c.lineWidth=1.6;
+    c.strokeRect(-11,-11,22,22);
+    c.rotate(Math.PI/4);c.strokeStyle="rgba(216,179,106,.5)";c.strokeRect(-11,-11,22,22);
+    c.restore();
+    c.fillStyle="#d8b36a";c.font="11px serif";c.fillText("阵盘",ctr.x-11,ctr.y+30);
+    const drawFlag=(f,i,gate)=>{
+      c.save();c.translate(f.x,f.y);
+      c.strokeStyle="#94a0b8";c.lineWidth=1.4;
+      c.beginPath();c.moveTo(0,8);c.lineTo(0,-12);c.stroke();
+      c.fillStyle=WXC[f.wx];
+      c.beginPath();c.moveTo(0,-12);c.lineTo(13,-8);c.lineTo(0,-4);c.closePath();c.fill();
+      c.restore();
+      if(gate){
+        // spinning flow ring; gate flag shows reverse ticks by soul
+        const soul=+$("#arr-soul").value;
+        const rev=i===this.gate.gi;
+        const n=10;
+        for(let k=0;k<n;k++){
+          const base=now*.002*(rev?-1:1);
+          const vis=rev?clamp((soul-2)/5,.06,.85):.5;
+          if(rev&&Math.random()>vis+.5)continue;
+          const a=base+k/n*Math.PI*2;
+          const rr=17;
+          c.fillStyle=rev?"rgba(255,190,120,"+(0.25+vis*.5)+")":"rgba(140,200,255,.5)";
+          c.fillRect(f.x+Math.cos(a)*rr,f.y+Math.sin(a)*rr,2,2);
+        }
+        if(this.gate.paralyzed>0){ c.strokeStyle="rgba(120,120,140,.7)";
+          c.beginPath();c.moveTo(f.x-8,f.y-8);c.lineTo(f.x+8,f.y+8);c.stroke(); }
+      }
+    };
+    if(this.state==="placing"||this.state==="active"){
+      // ghost slots
+      if(this.bp&&this.state==="placing"){
+        this.bp.slots.forEach(s=>{ const p=this.slotPos(s);
+          c.strokeStyle="rgba(216,179,106,.5)";c.setLineDash([3,4]);c.lineWidth=1.2;
+          c.beginPath();c.arc(p.x,p.y,9,0,7);c.stroke();c.setLineDash([]);
+          c.strokeStyle="rgba(216,179,106,.25)";
+          c.beginPath();c.moveTo(ctr.x,ctr.y);c.lineTo(p.x,p.y);c.stroke();
+        });
+      }
+      this.flags.forEach((f,i)=>drawFlag(f,i,false));
+    }
+    if(this.state==="gate"){
+      this.gate.flags.forEach((f,i)=>drawFlag(f,i,true));
+      c.fillStyle="rgba(207,214,228,.6)";c.font="12px serif";
+      c.fillText("点击你认定的生门旗将其拔除",ctr.x-78,this.H-24);
+    }
+  }
+};
+
+/* ============ main loop ============ */
+window.__errs=[];window.onerror=(m,s,l,c,e)=>{window.__errs.push((e&&e.stack)||m+" @"+l);};
+LK.init();SE.init();AR.init();
+let last=performance.now();
+function frame(now){
+  const dt=Math.min(.1,(now-last)/1000); last=now;
+  try{
+    if($("#view-seal").classList.contains("on")) SE.tick(now,dt);
+    if($("#view-lock").classList.contains("on")) LK.tick(now,dt);
+    if($("#view-array").classList.contains("on")) AR.tick(now,dt);
+  }catch(e){ window.__errs.push((e&&e.stack)||String(e)); }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

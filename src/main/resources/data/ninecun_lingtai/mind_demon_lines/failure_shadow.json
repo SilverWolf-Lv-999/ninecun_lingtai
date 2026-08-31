@@ -1,0 +1,10 @@
+{
+  "phase": "reveal",
+  "conditions": {
+    "min_breakthrough_fails": 2
+  },
+  "lines": [
+    "message.ninecun_lingtai.demon_line.failure_shadow_1",
+    "message.ninecun_lingtai.demon_line.failure_shadow_2"
+  ]
+}

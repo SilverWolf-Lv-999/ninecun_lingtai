@@ -1,0 +1,42 @@
+{
+  "name": "混沌裂灭",
+  "description": "混沌灵根独有的九品灭法，一击之下万物归墟。",
+  "content": "混沌者，天地未分之气，无形无相，无生无克。此法为混沌灵根独传，他根纵然参悟，亦无从驱动。行功之时，不引不导，只将周身混沌之气尽数归于一念，念动之间，以我为心，方圆之内五行俱灭，灵力成空，血肉之躯若纸糊泥塑，触之即溃。此法无光无声，唯有一圈空无荡开，所过之处，草木成灰，顽石成粉。灭法伤天和，每施一次，心境须静养多日方复。化神之下强行催动，混沌反卷，形神俱灭，慎之慎之。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "spell": {
+    "id": "ninecun_lingtai:chaos_rend",
+    "category": "combat",
+    "grade": 9,
+    "base_cost": 60.0
+  },
+  "compatible_elements": ["chaos"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "spirit_transformation",
+      "layer": 1
+    },
+    "required_elements": ["chaos"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 85,
+    "key_concepts": [
+      "混沌无形无相无生无克",
+      "混沌灵根独传他根无从驱动",
+      "周身之气归于一念",
+      "方圆之内五行俱灭",
+      "化神之下强行催动形神俱灭"
+    ],
+    "grading_criteria": [
+      "说明混沌之气不入五行的本质",
+      "理解归气于念、一念灭世的行功方式",
+      "明白此法荡灭五行、触之即溃的威能",
+      "知晓伤天和损心境与境界不足反卷的代价"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 85
+      }
+    ]
+  }
+}

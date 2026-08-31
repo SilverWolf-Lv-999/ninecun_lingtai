@@ -67,6 +67,8 @@ import net.seraphina.ninecun_lingtai.common.network.packet.SetPlayerValueControl
 import net.seraphina.ninecun_lingtai.common.network.packet.SetLightFlightPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.SetMeditationStatePacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.SetPressureStatePacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.SetSoulSenseFilterPacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.SetSoulSenseStatePacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.SubmitAptitudePacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.SubmitAscensionAnswerPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.SubmitDaoScrollPacket;
@@ -84,11 +86,29 @@ import net.seraphina.ninecun_lingtai.common.network.packet.SyncPressureStatePack
 import net.seraphina.ninecun_lingtai.common.network.packet.SyncPlayerValueControlSettingsPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.SyncShrinkEarthPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.SyncSoulRoamingPacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.SyncSoulSensePacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.SyncStorageRingProjectionPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.SyncSwordFlightPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.SyncTechniqueLibraryPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.SyncAlchemyRecipesPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.SyncBookCatalogPacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.SyncBreakthroughRitualPacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.CancelBreakthroughRitualPacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.OpenInsightSelectionPacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.SelectInsightPacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.SyncSoulInjuryPacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.SyncMindTrialPacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.SubmitResolveChoicePacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.OpenSealCarveScreenPacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.SealCarvePacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.SealAlertPacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.OpenLockGridPacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.LockGridFlowPacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.LockGridClickPacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.LockGridResultPacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.LockGridExitPacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.OpenDeathRouteScreenPacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.ChooseDeathRoutePacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.SyncTribulationStatePacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.SyncThreeThousandRealmCatalogPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.ThreeThousandRealmTravelResultPacket;
@@ -136,7 +156,7 @@ import java.util.Set;
 import java.util.UUID;
 
 public final class ModNetwork {
-    private static final String PROTOCOL_VERSION = "67676771";
+    private static final String PROTOCOL_VERSION = "67676774";
     private static final float ASCENSION_TRIBULATION_RADIUS = 24.0F;
     private static final float ASCENSION_TRIBULATION_INTENSITY = 1.65F;
     private static final SimpleChannel CHANNEL = NetworkRegistry.ChannelBuilder
@@ -247,6 +267,33 @@ public final class ModNetwork {
                 .encoder(SyncPressureStatePacket::encode)
                 .decoder(SyncPressureStatePacket::decode)
                 .consumerMainThread(SyncPressureStatePacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        SetSoulSenseStatePacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(SetSoulSenseStatePacket::encode)
+                .decoder(SetSoulSenseStatePacket::decode)
+                .consumerMainThread(SetSoulSenseStatePacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        SetSoulSenseFilterPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(SetSoulSenseFilterPacket::encode)
+                .decoder(SetSoulSenseFilterPacket::decode)
+                .consumerMainThread(SetSoulSenseFilterPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        SyncSoulSensePacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(SyncSoulSensePacket::encode)
+                .decoder(SyncSoulSensePacket::decode)
+                .consumerMainThread(SyncSoulSensePacket::handle)
                 .add();
         CHANNEL.messageBuilder(
                         SyncMeditationStatePacket.class,
@@ -833,6 +880,205 @@ public final class ModNetwork {
                 .decoder(SyncBookCatalogPacket::decode)
                 .consumerMainThread(SyncBookCatalogPacket::handle)
                 .add();
+        CHANNEL.messageBuilder(
+                        SyncBreakthroughRitualPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(SyncBreakthroughRitualPacket::encode)
+                .decoder(SyncBreakthroughRitualPacket::decode)
+                .consumerMainThread(SyncBreakthroughRitualPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        CancelBreakthroughRitualPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(CancelBreakthroughRitualPacket::encode)
+                .decoder(CancelBreakthroughRitualPacket::decode)
+                .consumerMainThread(CancelBreakthroughRitualPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        OpenInsightSelectionPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(OpenInsightSelectionPacket::encode)
+                .decoder(OpenInsightSelectionPacket::decode)
+                .consumerMainThread(OpenInsightSelectionPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        SelectInsightPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(SelectInsightPacket::encode)
+                .decoder(SelectInsightPacket::decode)
+                .consumerMainThread(SelectInsightPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        SyncSoulInjuryPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(SyncSoulInjuryPacket::encode)
+                .decoder(SyncSoulInjuryPacket::decode)
+                .consumerMainThread(SyncSoulInjuryPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        SyncMindTrialPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(SyncMindTrialPacket::encode)
+                .decoder(SyncMindTrialPacket::decode)
+                .consumerMainThread(SyncMindTrialPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        SubmitResolveChoicePacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(SubmitResolveChoicePacket::encode)
+                .decoder(SubmitResolveChoicePacket::decode)
+                .consumerMainThread(SubmitResolveChoicePacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        OpenSealCarveScreenPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(OpenSealCarveScreenPacket::encode)
+                .decoder(OpenSealCarveScreenPacket::decode)
+                .consumerMainThread(OpenSealCarveScreenPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        SealCarvePacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(SealCarvePacket::encode)
+                .decoder(SealCarvePacket::decode)
+                .consumerMainThread(SealCarvePacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        SealAlertPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(SealAlertPacket::encode)
+                .decoder(SealAlertPacket::decode)
+                .consumerMainThread(SealAlertPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        OpenLockGridPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(OpenLockGridPacket::encode)
+                .decoder(OpenLockGridPacket::decode)
+                .consumerMainThread(OpenLockGridPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        LockGridFlowPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(LockGridFlowPacket::encode)
+                .decoder(LockGridFlowPacket::decode)
+                .consumerMainThread(LockGridFlowPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        LockGridClickPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(LockGridClickPacket::encode)
+                .decoder(LockGridClickPacket::decode)
+                .consumerMainThread(LockGridClickPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        LockGridResultPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(LockGridResultPacket::encode)
+                .decoder(LockGridResultPacket::decode)
+                .consumerMainThread(LockGridResultPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        LockGridExitPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(LockGridExitPacket::encode)
+                .decoder(LockGridExitPacket::decode)
+                .consumerMainThread(LockGridExitPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        OpenDeathRouteScreenPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(OpenDeathRouteScreenPacket::encode)
+                .decoder(OpenDeathRouteScreenPacket::decode)
+                .consumerMainThread(OpenDeathRouteScreenPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        ChooseDeathRoutePacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(ChooseDeathRoutePacket::encode)
+                .decoder(ChooseDeathRoutePacket::decode)
+                .consumerMainThread(ChooseDeathRoutePacket::handle)
+                .add();
+    }
+
+    public static void sendOpenSealCarveScreen(ServerPlayer player, OpenSealCarveScreenPacket packet) {
+        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), packet);
+    }
+
+    public static void sendSealAlert(ServerPlayer player, SealAlertPacket packet) {
+        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), packet);
+    }
+
+    public static void sendOpenLockGrid(ServerPlayer player, OpenLockGridPacket packet) {
+        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), packet);
+    }
+
+    public static void sendLockGridFlow(ServerPlayer player, LockGridFlowPacket packet) {
+        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), packet);
+    }
+
+    public static void sendLockGridResult(ServerPlayer player, LockGridResultPacket packet) {
+        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), packet);
+    }
+
+    public static void sendOpenDeathRouteScreen(ServerPlayer player, OpenDeathRouteScreenPacket packet) {
+        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), packet);
+    }
+
+    public static void sendBreakthroughRitual(
+            ServerPlayer player,
+            SyncBreakthroughRitualPacket packet
+    ) {
+        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), packet);
+    }
+
+    public static void sendOpenInsightSelection(
+            ServerPlayer player,
+            OpenInsightSelectionPacket packet
+    ) {
+        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), packet);
+    }
+
+    public static void sendSoulInjury(ServerPlayer player, SyncSoulInjuryPacket packet) {
+        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), packet);
+    }
+
+    public static void sendMindTrial(ServerPlayer player, SyncMindTrialPacket packet) {
+        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), packet);
     }
 
     public static int getId() {
@@ -973,6 +1219,19 @@ public final class ModNetwork {
         CHANNEL.send(
                 PacketDistributor.PLAYER.with(() -> player),
                 new SyncPressureStatePacket(affected, severity, immobilized)
+        );
+    }
+
+    public static void sendSoulSense(
+            ServerPlayer player,
+            boolean active,
+            int filterMask,
+            List<SyncSoulSensePacket.EntityEntry> entities,
+            List<SyncSoulSensePacket.BlockEntry> blocks
+    ) {
+        CHANNEL.send(
+                PacketDistributor.PLAYER.with(() -> player),
+                new SyncSoulSensePacket(active, filterMask, entities, blocks)
         );
     }
 

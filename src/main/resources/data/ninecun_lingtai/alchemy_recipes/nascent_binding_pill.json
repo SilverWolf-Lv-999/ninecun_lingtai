@@ -1,0 +1,84 @@
+{
+  "name": "凝婴丹",
+  "description": "四阶三品突破丹方，木灵滋养、金精定魄，凝聚元婴前的续命稻草。",
+  "content": "灵石十二枚为主，青翠之精为佐，另备紫晶与金锭分投。文火养气起手，中程转中火细炼木灵，末段武火收魄一气呵成。丛林深处木灵气最盛，炼此丹当择其地。服后三日之内冲击元婴，把握可增两成——但同类丹药只吃一颗，贪多无益。",
+  "grade": {
+    "tier": 4,
+    "rank": 3
+  },
+  "allowed_realms": [
+    "golden_core",
+    "nascent_soul"
+  ],
+  "minimum_refining_realm": "nascent_soul",
+  "ingredients": {
+    "primary": {
+      "item": "ninecun_lingtai:spiritual_stone",
+      "count": 12
+    },
+    "secondary": [
+      {
+        "item": "minecraft:emerald",
+        "count": 3
+      },
+      {
+        "item": "minecraft:glow_berries",
+        "count": 8
+      }
+    ],
+    "auxiliary": [
+      {
+        "item": "minecraft:amethyst_shard",
+        "count": 6
+      },
+      {
+        "item": "minecraft:gold_ingot",
+        "count": 4
+      }
+    ]
+  },
+  "output_item": "ninecun_lingtai:nascent_binding_pill",
+  "output_count": 1,
+  "brewing_duration": 2400,
+  "element_profile": {
+    "primary_element": "wood"
+  },
+  "heat_stages": [
+    {
+      "band": "gentle",
+      "portion": 0.3
+    },
+    {
+      "band": "medium",
+      "portion": 0.4
+    },
+    {
+      "band": "fierce",
+      "portion": 0.3
+    }
+  ],
+  "feed_plan": [
+    {
+      "slot": "auxiliary_1",
+      "stage": 2,
+      "window_start": 0.2,
+      "ideal": 0.5,
+      "window_end": 0.75
+    },
+    {
+      "slot": "auxiliary_2",
+      "stage": 3,
+      "window_start": 0.15,
+      "ideal": 0.5,
+      "window_end": 0.8
+    }
+  ],
+  "pill_toxin": 35,
+  "effects": [
+    {
+      "type": "breakthrough_success_bonus",
+      "bonus": 0.2,
+      "duration_ticks": 72000
+    }
+  ]
+}

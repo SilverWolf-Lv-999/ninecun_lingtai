@@ -43,6 +43,15 @@ public final class RingStorageUtility {
         return ringId;
     }
 
+    /** 只读取不生成（阵禁自毁判定用：没打开过的物品不该被动获得 ringId）。 */
+    public static java.util.Optional<UUID> getRingId(ItemStack itemStack) {
+        if (itemStack.isEmpty() || itemStack.getTag() == null
+                || !itemStack.getTag().hasUUID(RING_ID_TAG)) {
+            return java.util.Optional.empty();
+        }
+        return java.util.Optional.of(itemStack.getTag().getUUID(RING_ID_TAG));
+    }
+
     public static StoragePocket getPocket(int pocketIndex) {
         int column = Math.floorMod(pocketIndex, POCKETS_PER_ROW);
         int row = Math.floorDiv(pocketIndex, POCKETS_PER_ROW);

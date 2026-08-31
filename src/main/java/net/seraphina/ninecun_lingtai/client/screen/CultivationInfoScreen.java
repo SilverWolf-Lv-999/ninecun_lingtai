@@ -28,10 +28,10 @@ import java.util.Set;
 
 public final class CultivationInfoScreen extends AbstractContainerScreen<CultivationInfoMenu> {
     private static final int PREFERRED_IMAGE_WIDTH = 286;
-    private static final int PREFERRED_IMAGE_HEIGHT = 226;
+    private static final int PREFERRED_IMAGE_HEIGHT = 241;
     private static final int MINIMUM_IMAGE_WIDTH = 230;
     private static final int MINIMUM_IMAGE_HEIGHT = 178;
-    private static final int PROFILE_HEIGHT = 102;
+    private static final int PROFILE_HEIGHT = 117;
     private static final int CULTIVATION_OVERVIEW_HEIGHT = 30;
     private static final int CARD_HEIGHT = 44;
     private static final int CARD_GAP = 5;
@@ -239,6 +239,20 @@ public final class CultivationInfoScreen extends AbstractContainerScreen<Cultiva
                 top + 83,
                 maximumWidth,
                 PRIMARY_TEXT_COLOR
+        );
+        String auraQualityName = cultivationInfo.auraQuality()
+                .map(quality -> Component.translatableWithFallback(
+                        quality.getLanguageKey(),
+                        quality.getChineseName()
+                ).getString())
+                .orElse("尚未探明");
+        drawFittedText(
+                guiGraphics,
+                styledText("灵气质量　" + auraQualityName, SECONDARY_TEXT_COLOR),
+                textLeft,
+                top + 98,
+                maximumWidth,
+                SECONDARY_TEXT_COLOR
         );
     }
 

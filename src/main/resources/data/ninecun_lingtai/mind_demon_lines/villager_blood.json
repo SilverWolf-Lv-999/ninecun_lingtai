@@ -1,0 +1,10 @@
+{
+  "phase": "reveal",
+  "conditions": {
+    "min_kills_villager": 5
+  },
+  "lines": [
+    "message.ninecun_lingtai.demon_line.villager_blood_1",
+    "message.ninecun_lingtai.demon_line.villager_blood_2"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "type": "forge:add_features",
+  "biomes": "#minecraft:is_overworld",
+  "features": "ninecun_lingtai:cultivator_tomb",
+  "step": "underground_structures"
+}

@@ -1,0 +1,20 @@
+{
+  "multipart": [
+    {
+      "when": { "facing": "north" },
+      "apply": { "model": "ninecun_lingtai:block/earth_marrow_ginseng" }
+    },
+    {
+      "when": { "facing": "south" },
+      "apply": { "model": "ninecun_lingtai:block/earth_marrow_ginseng", "y": 180 }
+    },
+    {
+      "when": { "facing": "west" },
+      "apply": { "model": "ninecun_lingtai:block/earth_marrow_ginseng", "y": 270 }
+    },
+    {
+      "when": { "facing": "east" },
+      "apply": { "model": "ninecun_lingtai:block/earth_marrow_ginseng", "y": 90 }
+    }
+  ]
+}

@@ -66,6 +66,15 @@ public final class TechniqueApi {
         return TechniqueComprehensionService.evaluate(technique, playerUnderstanding);
     }
 
+    /** 带魂伤扣分的评估入口（神思恍惚起参悟评分 −10，见魂伤体系 §5）。 */
+    public static CompletableFuture<TechniqueAssessment> evaluateUnderstanding(
+            TechniqueDefinition technique,
+            String playerUnderstanding,
+            net.minecraft.server.level.ServerPlayer player
+    ) {
+        return TechniqueComprehensionService.evaluate(technique, playerUnderstanding, player);
+    }
+
     public static TechniqueLearningResult applyAssessment(
             Player player,
             ResourceLocation techniqueId,

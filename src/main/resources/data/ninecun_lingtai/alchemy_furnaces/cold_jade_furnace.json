@@ -1,0 +1,9 @@
+{
+  "block": "ninecun_lingtai:cold_jade_alchemy_furnace",
+  "heat_cap": 700,
+  "heat_decay_rate": 0.75,
+  "tolerance_bonus": 0.04,
+  "element": "water",
+  "max_recipe_tier": 5,
+  "max_durability": 2000
+}

@@ -102,6 +102,11 @@ public final class ModItems {
             "calm_mind_pill",
             0xE0784A
     );
+    /** 忏心丹（道心杀孽：消解杀孽）。 */
+    public static final RegistryObject<Item> REPENTANCE_PILL = registerPill(
+            "repentance_pill",
+            0xF0EAE0
+    );
     public static final RegistryObject<Item> VEIN_EXTENSION_PILL = registerPill(
             "vein_extension_pill",
             0xE8C84A
@@ -126,6 +131,43 @@ public final class ModItems {
     public static final RegistryObject<Item> SPIRIT_CONDENSING_PILL = registerPill(
             "spirit_condensing_pill",
             0x3E5C68
+    );
+    public static final RegistryObject<Item> SOUL_NOURISHING_PILL = registerPill(
+            "soul_nourishing_pill",
+            0x7A6AC8
+    );
+
+    /** 凝婴丹（T13 破境丹重定位：元婴冲关成功率 +20%）。 */
+    public static final RegistryObject<Item> NASCENT_BINDING_PILL = registerPill(
+            "nascent_binding_pill",
+            0xB07FD8
+    );
+    /** 破神丹（T13 破境丹重定位：化神冲关成功率 +15%）。 */
+    public static final RegistryObject<Item> SPIRIT_BREAKING_PILL = registerPill(
+            "spirit_breaking_pill",
+            0xE8DFA8
+    );
+
+    // ==== 四阶丹药（炼丹 M4-e）====
+    /** 驻颜丹：驻颜延寿。 */
+    public static final RegistryObject<Item> YOUTH_PRESERVING_PILL = registerPill(
+            "youth_preserving_pill",
+            0xF6D7E4
+    );
+    /** 洗髓丹：涤荡丹毒、生肌疗伤。 */
+    public static final RegistryObject<Item> MARROW_CLEANSING_PILL = registerPill(
+            "marrow_cleansing_pill",
+            0xD8C89A
+    );
+    /** 凝神丹：淬炼魂魄、疗愈魂伤。 */
+    public static final RegistryObject<Item> MIND_CONDENSING_PILL = registerPill(
+            "mind_condensing_pill",
+            0x9FD8C0
+    );
+    /** 玄元丹：回灵护体。 */
+    public static final RegistryObject<Item> PROFOUND_ORIGIN_PILL = registerPill(
+            "profound_origin_pill",
+            0x7A5FD0
     );
 
     public static final RegistryObject<Item> DREGS_PILL = registerDregs();
@@ -157,10 +199,73 @@ public final class ModItems {
             )
     );
 
+    public static final RegistryObject<Item> RED_COPPER_ALCHEMY_FURNACE = ITEMS.register(
+            "red_copper_alchemy_furnace",
+            () -> new StyledBlockItem(
+                    ModBlocks.RED_COPPER_ALCHEMY_FURNACE.get(),
+                    new Item.Properties(),
+                    ItemFontStyle.ALCHEMY_FURNACE
+            )
+    );
+
+    public static final RegistryObject<Item> COLD_JADE_ALCHEMY_FURNACE = ITEMS.register(
+            "cold_jade_alchemy_furnace",
+            () -> new StyledBlockItem(
+                    ModBlocks.COLD_JADE_ALCHEMY_FURNACE.get(),
+                    new Item.Properties(),
+                    ItemFontStyle.ALCHEMY_FURNACE
+            )
+    );
+
+    public static final RegistryObject<Item> DARK_CRYSTAL_ALCHEMY_FURNACE = ITEMS.register(
+            "dark_crystal_alchemy_furnace",
+            () -> new StyledBlockItem(
+                    ModBlocks.DARK_CRYSTAL_ALCHEMY_FURNACE.get(),
+                    new Item.Properties(),
+                    ItemFontStyle.ALCHEMY_FURNACE
+            )
+    );
+
+    public static final RegistryObject<Item> NINE_DRAGON_ALCHEMY_FURNACE = ITEMS.register(
+            "nine_dragon_alchemy_furnace",
+            () -> new StyledBlockItem(
+                    ModBlocks.NINE_DRAGON_ALCHEMY_FURNACE.get(),
+                    new Item.Properties(),
+                    ItemFontStyle.ALCHEMY_FURNACE
+            )
+    );
+
     public static final RegistryObject<Item> FIRE_LINGZHI = ITEMS.register(
             "fire_lingzhi",
             () -> new StyledBlockItem(
                     ModBlocks.FIRE_LINGZHI.get(),
+                    new Item.Properties(),
+                    ItemFontStyle.FIRE_LINGZHI
+            )
+    );
+
+    public static final RegistryObject<Item> MOON_DEW_ORCHID = ITEMS.register(
+            "moon_dew_orchid",
+            () -> new StyledBlockItem(
+                    ModBlocks.MOON_DEW_ORCHID.get(),
+                    new Item.Properties(),
+                    ItemFontStyle.FIRE_LINGZHI
+            )
+    );
+
+    public static final RegistryObject<Item> EARTH_MARROW_GINSENG = ITEMS.register(
+            "earth_marrow_ginseng",
+            () -> new StyledBlockItem(
+                    ModBlocks.EARTH_MARROW_GINSENG.get(),
+                    new Item.Properties(),
+                    ItemFontStyle.FIRE_LINGZHI
+            )
+    );
+
+    public static final RegistryObject<Item> JADE_MIND_FLOWER = ITEMS.register(
+            "jade_mind_flower",
+            () -> new StyledBlockItem(
+                    ModBlocks.JADE_MIND_FLOWER.get(),
                     new Item.Properties(),
                     ItemFontStyle.FIRE_LINGZHI
             )

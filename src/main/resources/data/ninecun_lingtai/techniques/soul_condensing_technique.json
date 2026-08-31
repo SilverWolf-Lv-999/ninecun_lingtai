@@ -1,0 +1,42 @@
+{
+  "name": "凝魂诀",
+  "description": "静守命宫、温养魂魄的入门炼魂功法。",
+  "content": "魂居泥丸，如烛居风口，不养则昏，不炼则散。此诀不行气、不导脉，只以一点清明内照命宫。行功之时，收摄五感，意如捧水，缓缓注于眉心深处，觉有微光如豆，便以神守之，勿助勿忘。守之既久，微光渐凝，命宫诸星次第可见。星光每亮一分，神识便利一分，然此事急不得，一念躁进，光散如雾，前功尽弃。故炼魂一道，功在日积，贵在心恒，晨昏各守一坐，百日方见初效。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "foundation_establishment",
+      "layer": 1
+    }
+  },
+  "effects": [
+    {
+      "type": "ninecun_lingtai:soul_tempering",
+      "parameters": {
+        "progress_per_minute": 1.0
+      }
+    }
+  ],
+  "comprehension": {
+    "minimum_learning_score": 60,
+    "key_concepts": [
+      "魂居泥丸不养则昏不炼则散",
+      "以一点清明内照命宫",
+      "意如捧水勿助勿忘",
+      "微光渐凝命宫诸星次第可见",
+      "一念躁进光散如雾"
+    ],
+    "grading_criteria": [
+      "说明魂魄须温养，不可放任昏沉",
+      "理解内照命宫、收摄五感的行功方式",
+      "明白守而不逼、勿助勿忘的火候分寸",
+      "知晓躁进散光、功亏一篑的后果"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 60
+      }
+    ]
+  }
+}

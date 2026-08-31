@@ -1,0 +1,42 @@
+{
+  "name": "烈焰焚海",
+  "description": "以身为炉、纵火成海的六品火法，金丹真火方可驾驭。",
+  "content": "火法练至金丹，丹田自生真火，方可修此术。行功之时，以己身为炉鼎，真火自丹田升腾，走十二正经，透百会涌泉，周身毛孔齐张，烈焰喷薄而出，以我为心，纵横丈许，顷刻间火借灵势，燎原成海。身在火海中央者，衣袂不焚，此为炉心自守之妙。此术一出，群敌辟易，然灵力消耗如江河决堤，金丹初成者全力施为不过两三次，须慎度己力。火海无眼，殃及无辜草木生灵，用时择地。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "spell": {
+    "id": "ninecun_lingtai:flame_sea",
+    "category": "combat",
+    "grade": 6,
+    "base_cost": 18.0
+  },
+  "compatible_elements": ["fire"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "golden_core",
+      "layer": 1
+    },
+    "required_elements": ["fire"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 75,
+    "key_concepts": [
+      "金丹自生真火方可修此术",
+      "以己身为炉鼎真火走经透穴",
+      "以我为心燎原成海",
+      "炉心自守衣袂不焚",
+      "灵力消耗如江河决堤"
+    ],
+    "grading_criteria": [
+      "说明金丹真火是此术的根基门槛",
+      "理解以身为炉、真火行经的行功路线",
+      "明白炉心自守、火不焚己的关窍",
+      "知晓耗灵剧烈、须慎度己力的分寸"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 75
+      }
+    ]
+  }
+}

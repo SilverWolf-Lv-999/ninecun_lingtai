@@ -1,0 +1,71 @@
+{
+  "name": "忏心丹",
+  "description": "二阶二品忏心丹方，为杀孽缠身者洗涤戾气、重正道心。",
+  "content": "杀孽入心，非药石可解，唯忏悔可涤。甜浆果承露而生，性至柔和，武火只取一瞬引出果中生机，随即转文火慢煨——如长跪蒲团，一炷香复一炷香。紫晶定神，蜜脾养和，丹成色白如霜，服之如闻晨钟，戾气稍平。然洗心须循序渐进，囤丹瞬服者，其悔不诚，其效自薄。",
+  "grade": {
+    "tier": 2,
+    "rank": 2
+  },
+  "allowed_realms": [
+    "foundation_establishment",
+    "golden_core"
+  ],
+  "minimum_refining_realm": "foundation_establishment",
+  "ingredients": {
+    "primary": {
+      "item": "minecraft:sweet_berries",
+      "count": 4
+    },
+    "secondary": [
+      {
+        "item": "minecraft:pink_petals",
+        "count": 2
+      },
+      {
+        "item": "minecraft:amethyst_shard",
+        "count": 2
+      }
+    ],
+    "auxiliary": [
+      {
+        "item": "minecraft:honeycomb",
+        "count": 2
+      },
+      {
+        "item": "minecraft:sugar",
+        "count": 1
+      }
+    ]
+  },
+  "output_item": "ninecun_lingtai:repentance_pill",
+  "output_count": 1,
+  "brewing_duration": 900,
+  "element_profile": {
+    "primary_element": "water"
+  },
+  "heat_stages": [
+    {
+      "band": "fierce",
+      "portion": 0.1
+    },
+    {
+      "band": "medium",
+      "portion": 0.3
+    },
+    {
+      "band": "gentle",
+      "portion": 0.6
+    }
+  ],
+  "pill_toxin": 8,
+  "effects": [
+    {
+      "type": "karma_redeem",
+      "amount": 15
+    },
+    {
+      "type": "heal",
+      "flat_healing": 2
+    }
+  ]
+}

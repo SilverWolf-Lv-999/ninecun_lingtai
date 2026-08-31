@@ -88,7 +88,10 @@ public final class PlayerCultivationManager {
         return consumed;
     }
 
-    private static double getDiscountedRequirement(Player player, CultivationStage targetStage) {
+    /**
+     * 折扣后的单池灵力需求（破境仪式启动时锁定需求快照用，§5.4 防仪式中吃丹改折扣）。
+     */
+    public static double getDiscountedRequirement(Player player, CultivationStage targetStage) {
         double requiredEnergy = CultivationUtility.getRequiredSpiritualEnergy(targetStage).doubleValue();
         if (!isRealmBreakthrough(player, targetStage)) {
             return requiredEnergy;
@@ -104,6 +107,36 @@ public final class PlayerCultivationManager {
         return PlayerCultivationData.getStage(player)
                 .map(stage -> stage.realm() != targetStage.realm())
                 .orElse(false);
+    }
+
+    /**
+     * 按仪式启动时锁定的需求快照消费灵力：所有独立灵根元素池各自 ≥ 快照值才消费、
+     * 各扣一份。供破境仪式掷骰结算调用（消费额以快照为准，不重算折扣）。
+     */
+    public static boolean consumeSnapshotEnergyForTarget(Player player, double snapshotAmount) {
+        Optional<SpiritualRoot> spiritualRoot = PlayerAptitudeData.getSpiritualRoot(player);
+        if (spiritualRoot.isEmpty() || snapshotAmount < 0.0D) {
+            return false;
+        }
+        Set<ElementType> rootElements = SpiritualRootUtility.getIndependentRootElements(spiritualRoot.get());
+        boolean sufficient = rootElements.stream()
+                .allMatch(element -> PlayerSpiritualEnergyData.getEnergy(player, element) >= snapshotAmount);
+        if (!sufficient) {
+            return false;
+        }
+        return PlayerSpiritualEnergyData.consumeEnergy(player, rootElements, snapshotAmount);
+    }
+
+    /**
+     * 无校验落境：原 {@code tryReachStage} 去掉能量部分——只 setStage + 清大境界折扣。
+     * 供破境仪式掷骰成功（及日后天劫 tickAftermath）在各自完成消费后调用。
+     */
+    public static void commitStageUnchecked(Player player, CultivationStage targetStage) {
+        boolean realmBreakthrough = isRealmBreakthrough(player, targetStage);
+        PlayerCultivationData.setStage(player, targetStage);
+        if (realmBreakthrough) {
+            PlayerBreakthroughDiscountData.clearDiscount(player);
+        }
     }
 
     private static BreakthroughResult tryReachStage(Player player, CultivationStage targetStage) {

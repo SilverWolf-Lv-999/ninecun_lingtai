@@ -1,0 +1,6 @@
+{
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "ninecun_lingtai:block/alchemy_furnace"
+  }
+}

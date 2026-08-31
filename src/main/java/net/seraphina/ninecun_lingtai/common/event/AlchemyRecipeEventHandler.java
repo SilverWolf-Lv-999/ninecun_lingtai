@@ -1,6 +1,8 @@
 package net.seraphina.ninecun_lingtai.common.event;
 
 import net.seraphina.ninecun_lingtai.ModMain;
+import net.seraphina.ninecun_lingtai.common.data.AlchemyFurnaceDefinitionManager;
+import net.seraphina.ninecun_lingtai.common.data.AlchemyHerbManager;
 import net.seraphina.ninecun_lingtai.common.data.AlchemyRecipeManager;
 import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import net.minecraftforge.event.AddReloadListenerEvent;
@@ -14,6 +16,8 @@ public final class AlchemyRecipeEventHandler {
     @SubscribeEvent
     public static void onAddReloadListener(AddReloadListenerEvent event) {
         event.addListener(AlchemyRecipeManager.INSTANCE);
+        event.addListener(AlchemyFurnaceDefinitionManager.INSTANCE);
+        event.addListener(AlchemyHerbManager.INSTANCE);
     }
 
     @SubscribeEvent

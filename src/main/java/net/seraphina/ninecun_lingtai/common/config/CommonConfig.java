@@ -63,6 +63,94 @@ public final class CommonConfig {
     public static final ForgeConfigSpec.IntValue TRIBULATION_LIGHTNING_LIFETIME_TICKS;
     public static final ForgeConfigSpec.IntValue TRIBULATION_PROMOTION_DELAY_TICKS;
     public static final ForgeConfigSpec.IntValue TRIBULATION_DISSIPATION_TICKS;
+    public static final ForgeConfigSpec.IntValue TRIBULATION_INNER_DEMON_COUNT;
+    public static final ForgeConfigSpec.IntValue TRIBULATION_INNER_DEMON_DURATION_TICKS;
+    public static final ForgeConfigSpec.DoubleValue TRIBULATION_INNER_DEMON_SOUL_DAMAGE;
+    public static final ForgeConfigSpec.IntValue TRIBULATION_FAILURE_LIFESPAN_YEARS;
+    public static final ForgeConfigSpec.DoubleValue TRIBULATION_REALM_STRENGTH_GROWTH;
+    public static final ForgeConfigSpec.DoubleValue TRIBULATION_FAILURE_LIFESPAN_SCALE_DEATH;
+    public static final ForgeConfigSpec.DoubleValue TRIBULATION_FAILURE_LIFESPAN_SCALE_LOGOUT;
+    public static final ForgeConfigSpec.DoubleValue TRIBULATION_FAILURE_LIFESPAN_SCALE_DIMENSION_CHANGED;
+    public static final ForgeConfigSpec.DoubleValue TRIBULATION_FAILURE_LIFESPAN_SCALE_INNER_DEMON_TIMEOUT;
+    public static final ForgeConfigSpec.DoubleValue TRIBULATION_FAILURE_LIFESPAN_SCALE_INTERRUPTED;
+    public static final ForgeConfigSpec.DoubleValue SOUL_SENSE_BASE_RANGE;
+    public static final ForgeConfigSpec.DoubleValue SOUL_SENSE_PER_STAR_RANGE;
+    public static final ForgeConfigSpec.DoubleValue SOUL_SENSE_REALM_RANGE_BONUS;
+    public static final ForgeConfigSpec.DoubleValue SOUL_SENSE_MAX_RANGE;
+    public static final ForgeConfigSpec.DoubleValue SOUL_SENSE_BLOCK_RANGE;
+    public static final ForgeConfigSpec.DoubleValue SOUL_SENSE_BASE_COST_PER_SECOND;
+    public static final ForgeConfigSpec.DoubleValue SOUL_SENSE_RANGE_COST_FACTOR;
+    public static final ForgeConfigSpec.IntValue SOUL_SENSE_SCAN_INTERVAL_TICKS;
+    public static final ForgeConfigSpec.IntValue SOUL_SENSE_BACKLASH_STAR_GAP;
+    public static final ForgeConfigSpec.IntValue SOUL_SENSE_BLOCK_SCAN_INTERVAL_TICKS;
+    public static final ForgeConfigSpec.IntValue SOUL_SENSE_BLOCK_CACHE_MAX_AGE_TICKS;
+    public static final ForgeConfigSpec.IntValue RISK_BREAKTHROUGH_FAILURE_BASE_BUDGET;
+    public static final ForgeConfigSpec.IntValue RISK_TRIBULATION_FAILURE_BASE_BUDGET;
+    public static final ForgeConfigSpec.IntValue RISK_DEATH_BASE_BUDGET;
+    public static final ForgeConfigSpec.IntValue RISK_QI_DEVIATION_BASE_BUDGET;
+    public static final ForgeConfigSpec.DoubleValue RISK_REALM_BUDGET_STEP;
+    public static final ForgeConfigSpec.DoubleValue RISK_CORE_LOSS_RATIO_PER_BUDGET;
+    public static final ForgeConfigSpec.DoubleValue RISK_MAX_CORE_LOSS_RATIO;
+    public static final ForgeConfigSpec.IntValue RISK_LONG_TERM_SCAR_BUDGET_THRESHOLD;
+    public static final ForgeConfigSpec.IntValue RISK_SHORT_TERM_SCAR_BUDGET_THRESHOLD;
+    public static final ForgeConfigSpec.IntValue RISK_SEVERITY_BUDGET_STEP;
+    public static final ForgeConfigSpec.LongValue RISK_SHORT_TERM_DURATION_TICKS_PER_BUDGET;
+    public static final ForgeConfigSpec.DoubleValue BREAKTHROUGH_BASE_RATE_FOUNDATION;
+    public static final ForgeConfigSpec.DoubleValue BREAKTHROUGH_BASE_RATE_GOLDEN_CORE;
+    public static final ForgeConfigSpec.DoubleValue BREAKTHROUGH_BASE_RATE_NASCENT_SOUL;
+    public static final ForgeConfigSpec.DoubleValue BREAKTHROUGH_BASE_RATE_SPIRIT_TRANSFORMATION;
+    public static final ForgeConfigSpec.DoubleValue BREAKTHROUGH_BASE_RATE_DAO_INTEGRATION;
+    public static final ForgeConfigSpec.DoubleValue BREAKTHROUGH_BASE_RATE_VOID_REFINEMENT;
+    public static final ForgeConfigSpec.DoubleValue BREAKTHROUGH_BASE_RATE_MAHAYANA;
+    public static final ForgeConfigSpec.DoubleValue BREAKTHROUGH_BASE_RATE_IMMORTAL;
+    public static final ForgeConfigSpec.DoubleValue BREAKTHROUGH_CHANCE_FLOOR;
+    public static final ForgeConfigSpec.DoubleValue BREAKTHROUGH_CHANCE_CEILING;
+    public static final ForgeConfigSpec.DoubleValue BREAKTHROUGH_PITY_STEP;
+    public static final ForgeConfigSpec.DoubleValue BREAKTHROUGH_PITY_CAP;
+    public static final ForgeConfigSpec.IntValue BREAKTHROUGH_RITUAL_SECONDS;
+    public static final ForgeConfigSpec.DoubleValue BREAKTHROUGH_FAIL_DISSIPATION_LOW;
+    public static final ForgeConfigSpec.DoubleValue BREAKTHROUGH_FAIL_DISSIPATION_MID;
+    public static final ForgeConfigSpec.DoubleValue BREAKTHROUGH_FAIL_DISSIPATION_HIGH;
+    public static final ForgeConfigSpec.DoubleValue BREAKTHROUGH_INTERRUPT_DISSIPATION;
+    public static final ForgeConfigSpec.IntValue BREAKTHROUGH_BOTTLENECK_DAYS;
+    public static final ForgeConfigSpec.BooleanValue BREAKTHROUGH_INTERRUPT_ON_ENTITY_DAMAGE_ONLY;
+    public static final ForgeConfigSpec.LongValue BREAKTHROUGH_INSIGHT_CHOICE_EXPIRE_TICKS;
+    public static final ForgeConfigSpec.DoubleValue BREAKTHROUGH_QUALITY_COEF_TURBID;
+    public static final ForgeConfigSpec.DoubleValue BREAKTHROUGH_QUALITY_COEF_NEUTRAL;
+    public static final ForgeConfigSpec.DoubleValue BREAKTHROUGH_QUALITY_COEF_CLEAR;
+    public static final ForgeConfigSpec.DoubleValue BREAKTHROUGH_QUALITY_COEF_PRISTINE;
+    public static final ForgeConfigSpec.DoubleValue SOUL_INJURY_THRESHOLD_DAZED;
+    public static final ForgeConfigSpec.DoubleValue SOUL_INJURY_THRESHOLD_SHAKEN;
+    public static final ForgeConfigSpec.DoubleValue SOUL_INJURY_THRESHOLD_PERIL;
+    public static final ForgeConfigSpec.DoubleValue SOUL_INJURY_SOURCE_PIERCE;
+    public static final ForgeConfigSpec.DoubleValue SOUL_INJURY_SOURCE_SHOCK;
+    public static final ForgeConfigSpec.DoubleValue SOUL_INJURY_SOURCE_BACKLASH;
+    public static final ForgeConfigSpec.DoubleValue SOUL_INJURY_SOURCE_WEAK_CAST;
+    public static final ForgeConfigSpec.DoubleValue SOUL_INJURY_SOURCE_SENSE_RECOIL;
+    public static final ForgeConfigSpec.DoubleValue SOUL_INJURY_SOURCE_MIND_DEMON_HIT;
+    public static final ForgeConfigSpec.DoubleValue SOUL_INJURY_NATURAL_HEAL_PER_DAY;
+    public static final ForgeConfigSpec.DoubleValue SOUL_INJURY_SEVEN_STAR_HEAL_MULTIPLIER;
+    public static final ForgeConfigSpec.IntValue SOUL_INJURY_PERIL_LIFESPAN_YEARS_PER_DAY;
+    public static final ForgeConfigSpec.DoubleValue SOUL_INJURY_SENSE_RANGE_MULT_DAZED;
+    public static final ForgeConfigSpec.DoubleValue SOUL_INJURY_SENSE_RANGE_MULT_SHAKEN;
+    public static final ForgeConfigSpec.DoubleValue SOUL_INJURY_COMPREHENSION_PENALTY;
+    public static final ForgeConfigSpec.BooleanValue SOUL_INJURY_SEVEN_STAR_REQUIRES_OPPORTUNITY;
+    public static final ForgeConfigSpec.BooleanValue MIND_DEMON_ENABLED;
+    public static final ForgeConfigSpec.IntValue MIND_DEMON_REVEAL_SECONDS;
+    public static final ForgeConfigSpec.IntValue MIND_DEMON_SPAR_SECONDS;
+    public static final ForgeConfigSpec.IntValue MIND_DEMON_REFLECT_SECONDS;
+    public static final ForgeConfigSpec.IntValue MIND_DEMON_RESOLVE_CHOICE_SECONDS;
+    public static final ForgeConfigSpec.IntValue MIND_DEMON_SEVER_TIME_LIMIT_SECONDS;
+    public static final ForgeConfigSpec.IntValue MIND_DEMON_HOLD_TIME_LIMIT_SECONDS;
+    public static final ForgeConfigSpec.DoubleValue MIND_DEMON_BODY_ECHO_RATIO;
+    public static final ForgeConfigSpec.DoubleValue MIND_DEMON_KARMA_SCALE_BASE;
+    public static final ForgeConfigSpec.DoubleValue MIND_DEMON_KARMA_SCALE_PER_KILL;
+    public static final ForgeConfigSpec.DoubleValue MIND_DEMON_KARMA_SCALE_CAP;
+    public static final ForgeConfigSpec.IntValue MIND_DEMON_POCKET_STRIDE;
+    public static final ForgeConfigSpec.BooleanValue MIND_DEMON_PVE_OFFLINE_PAUSE;
+    public static final ForgeConfigSpec.DoubleValue MIND_DEMON_SOUL_INJURY_CAP_PER_TRIAL;
+    public static final ForgeConfigSpec.DoubleValue SOUL_TEMPERING_BASE_PROGRESS;
+    public static final ForgeConfigSpec.DoubleValue SOUL_TEMPERING_STAR_GROWTH;
     public static final ForgeConfigSpec.DoubleValue LIGHT_FLIGHT_SPEED_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue LIGHT_FLIGHT_BOOST_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue LIGHT_FLIGHT_ENERGY_COST_PER_SECOND;
@@ -107,10 +195,67 @@ public final class CommonConfig {
     public static final ForgeConfigSpec.BooleanValue ALCHEMY_EXPLOSION_BREAKS_BLOCKS;
     public static final ForgeConfigSpec.DoubleValue ALCHEMY_TOXIN_DECAY_PER_DAY;
     public static final ForgeConfigSpec.DoubleValue ALCHEMY_TOXIN_MEDITATION_DECAY_PER_MINUTE;
+    public static final ForgeConfigSpec.DoubleValue KARMA_VILLAGER_KILL_KARMA;
+    public static final ForgeConfigSpec.DoubleValue KARMA_CULTIVATOR_KILL_KARMA;
+    public static final ForgeConfigSpec.DoubleValue KARMA_ALLY_KILL_KARMA;
+    public static final ForgeConfigSpec.DoubleValue KARMA_CAP;
+    public static final ForgeConfigSpec.DoubleValue KARMA_TIER_NEUTRAL_THRESHOLD;
+    public static final ForgeConfigSpec.DoubleValue KARMA_TIER_STAINED_THRESHOLD;
+    public static final ForgeConfigSpec.DoubleValue KARMA_TIER_DRENCHED_THRESHOLD;
+    public static final ForgeConfigSpec.DoubleValue KARMA_DAO_HEART_PURE;
+    public static final ForgeConfigSpec.DoubleValue KARMA_DAO_HEART_NEUTRAL;
+    public static final ForgeConfigSpec.DoubleValue KARMA_DAO_HEART_STAINED;
+    public static final ForgeConfigSpec.DoubleValue KARMA_DAO_HEART_DRENCHED;
+    public static final ForgeConfigSpec.DoubleValue AURA_RESERVE_CAP_UNITS;
+    public static final ForgeConfigSpec.DoubleValue AURA_REGEN_RATIO_PER_DAY;
+    public static final ForgeConfigSpec.DoubleValue AURA_FULL_SPEED_RESERVE_RATIO;
+    public static final ForgeConfigSpec.DoubleValue AURA_EXHAUSTED_RESERVE_UNITS;
+    public static final ForgeConfigSpec.DoubleValue AURA_HARVEST_RESERVE_REFUND_UNITS;
+    public static final ForgeConfigSpec.IntValue AURA_OVERHARVEST_DAILY_THRESHOLD;
+    public static final ForgeConfigSpec.IntValue AURA_OVERHARVEST_PENALTY_TIERS;
+    public static final ForgeConfigSpec.IntValue AURA_OVERHARVEST_PENALTY_DAYS;
+    public static final ForgeConfigSpec.IntValue AURA_QUALITY_CACHE_TTL_TICKS;
+    public static final ForgeConfigSpec.IntValue AURA_POPULATION_SCAN_RADIUS;
+    public static final ForgeConfigSpec.IntValue AURA_POPULATION_LIGHT_HOMES;
+    public static final ForgeConfigSpec.IntValue AURA_POPULATION_HEAVY_HOMES;
+    public static final ForgeConfigSpec.IntValue AURA_HIGHLAND_MIN_SURFACE_Y;
+    public static final ForgeConfigSpec.IntValue ALCHEMY_FURNACE_DURABILITY_LOSS_PER_REFINE;
+    public static final ForgeConfigSpec.DoubleValue ALCHEMY_HERB_AGE_POTENCY_CAP;
+    public static final ForgeConfigSpec.DoubleValue ALCHEMY_FIRE_SOURCE_SPIRITUAL_STABILITY;
+    public static final ForgeConfigSpec.DoubleValue ALCHEMY_FIRE_SOURCE_EARTH_STABILITY;
+    public static final ForgeConfigSpec.DoubleValue ALCHEMY_FIRE_SOURCE_SAMADHI_STABILITY;
+    public static final ForgeConfigSpec.IntValue ALCHEMY_FIRE_SOURCE_EARTH_HEAT_BONUS;
+    public static final ForgeConfigSpec.IntValue ALCHEMY_FIRE_SOURCE_SAMADHI_HEAT_BONUS;
     public static final ForgeConfigSpec.IntValue THREE_THOUSAND_REALMS_MAXIMUM_REALM_COUNT;
     public static final ForgeConfigSpec.BooleanValue THREE_THOUSAND_REALMS_RANDOMIZE_ON_RESPAWN;
     public static final ForgeConfigSpec.IntValue THREE_THOUSAND_REALMS_RANDOM_SPAWN_RADIUS;
     public static final ForgeConfigSpec.IntValue THREE_THOUSAND_REALMS_UNLOAD_DELAY_TICKS;
+    // 阵禁（seal 组）
+    public static final ForgeConfigSpec.IntValue SEAL_ANCHORS_PER_SOUL_STAR;
+    public static final ForgeConfigSpec.DoubleValue SEAL_CARVE_ENERGY_PER_GRADE;
+    public static final ForgeConfigSpec.DoubleValue SEAL_CARVE_TEMPERING_COST_PER_GRADE;
+    public static final ForgeConfigSpec.IntValue SEAL_CARVE_RITUAL_TICKS;
+    public static final ForgeConfigSpec.IntValue SEAL_REVOKE_TICKS;
+    public static final ForgeConfigSpec.DoubleValue SEAL_LOCK_GRID_FAIL_SOUL_INJURY;
+    public static final ForgeConfigSpec.IntValue SEAL_LOCK_GRID_DISTURB_LOCK_DAYS;
+    public static final ForgeConfigSpec.DoubleValue SEAL_LOCK_GRID_ENERGY_PER_SECOND_PER_GRADE;
+    public static final ForgeConfigSpec.DoubleValue SEAL_FORCE_BREAK_CRUSH_MULTIPLIER;
+    public static final ForgeConfigSpec.IntValue SEAL_FORCE_BREAK_BASE_SECONDS;
+    public static final ForgeConfigSpec.DoubleValue SEAL_FORCE_BREAK_ENERGY_PER_SECOND;
+    public static final ForgeConfigSpec.IntValue SEAL_DEATH_PACT_DAYS;
+    public static final ForgeConfigSpec.DoubleValue SEAL_DEATH_PACT_STRENGTH_MULTIPLIER;
+    public static final ForgeConfigSpec.IntValue SEAL_DECAY_DAYS;
+    public static final ForgeConfigSpec.IntValue SEAL_DEATH_PACT_ALERT_INTERVAL_TICKS;
+    // 死亡路线（death 组）
+    public static final ForgeConfigSpec.IntValue DEATH_CHOOSE_TIMEOUT_SECONDS;
+    public static final ForgeConfigSpec.IntValue DEATH_RESPAWN_QI_LAYER_LOSS;
+    public static final ForgeConfigSpec.DoubleValue DEATH_RESPAWN_PROGRESS_LOSS_RATIO;
+    public static final ForgeConfigSpec.DoubleValue DEATH_RESPAWN_SOUL_INJURY;
+    public static final ForgeConfigSpec.IntValue DEATH_SOUL_RETURN_MINUTES_PER_STAR;
+    public static final ForgeConfigSpec.DoubleValue DEATH_SOUL_RETURN_SUCCESS_SOUL_INJURY;
+    public static final ForgeConfigSpec.DoubleValue DEATH_SOUL_RETURN_TIMEOUT_EXTRA_SOUL_INJURY;
+    public static final ForgeConfigSpec.DoubleValue DEATH_BURN_NASCENT_LIFESPAN_LOSS_RATIO;
+    public static final ForgeConfigSpec.BooleanValue DEATH_PVE_MODE;
     public static final ForgeConfigSpec SPEC;
 
     static {
@@ -335,6 +480,81 @@ public final class CommonConfig {
         TRIBULATION_DISSIPATION_TICKS = BUILDER
                 .comment("Time for the tribulation clouds to dissipate after promotion")
                 .defineInRange("dissipationTicks", 100, 1, 72000);
+        TRIBULATION_INNER_DEMON_COUNT = BUILDER
+                .comment("Number of inner-demon phantoms spawned during an inner-demon phase")
+                .defineInRange("innerDemonCount", 4, 1, 16);
+        TRIBULATION_INNER_DEMON_DURATION_TICKS = BUILDER
+                .comment("Maximum duration of an inner-demon phase")
+                .defineInRange("innerDemonDurationTicks", 300, 20, 72000);
+        TRIBULATION_INNER_DEMON_SOUL_DAMAGE = BUILDER
+                .comment("Damage suffered every second while inner demons remain alive")
+                .defineInRange("innerDemonSoulDamage", 2.0D, 0.0D, MAXIMUM_BASE_ABSORPTION_PER_SECOND);
+        TRIBULATION_FAILURE_LIFESPAN_YEARS = BUILDER
+                .comment("Lifespan lost when failing a tribulation at Nascent Soul or above")
+                .defineInRange("failureLifespanYears", 10, 0, MAXIMUM_LIFESPAN_YEARS);
+        TRIBULATION_REALM_STRENGTH_GROWTH = BUILDER
+                .comment("Extra strength multiplier per realm above Spirit Transformation for nine-nine tribulations")
+                .defineInRange("realmStrengthGrowth", 0.6D, 0.0D, MAXIMUM_MULTIPLIER);
+        TRIBULATION_FAILURE_LIFESPAN_SCALE_DEATH = defineFailureLifespanScale(
+                "failureLifespanScaleDeath", 1.0D, "dying to the tribulation (BODY_SLAIN uses the same scale)"
+        );
+        TRIBULATION_FAILURE_LIFESPAN_SCALE_LOGOUT = defineFailureLifespanScale(
+                "failureLifespanScaleLogout", 1.5D, "logging out mid-tribulation (deserting is punished hardest)"
+        );
+        TRIBULATION_FAILURE_LIFESPAN_SCALE_DIMENSION_CHANGED = defineFailureLifespanScale(
+                "failureLifespanScaleDimensionChanged", 1.2D, "escaping through another dimension"
+        );
+        TRIBULATION_FAILURE_LIFESPAN_SCALE_INNER_DEMON_TIMEOUT = defineFailureLifespanScale(
+                "failureLifespanScaleInnerDemonTimeout", 1.0D, "failing the inner-demon phase"
+        );
+        TRIBULATION_FAILURE_LIFESPAN_SCALE_INTERRUPTED = defineFailureLifespanScale(
+                "failureLifespanScaleInterrupted", 0.8D, "external interruption (lightest scale)"
+        );
+        BUILDER.pop();
+
+        BUILDER.push("soulSense");
+        SOUL_SENSE_BASE_RANGE = BUILDER
+                .comment("Soul-sense radius in blocks at one illuminated star")
+                .defineInRange("baseRange", 8.0D, 1.0D, 512.0D);
+        SOUL_SENSE_PER_STAR_RANGE = BUILDER
+                .comment("Additional radius granted by every star beyond the first")
+                .defineInRange("perStarRange", 4.0D, 0.0D, 512.0D);
+        SOUL_SENSE_REALM_RANGE_BONUS = BUILDER
+                .comment("Radius multiplier bonus per major realm")
+                .defineInRange("realmRangeBonus", 0.5D, 0.0D, MAXIMUM_MULTIPLIER);
+        SOUL_SENSE_MAX_RANGE = BUILDER
+                .comment("Hard maximum soul-sense radius in blocks")
+                .defineInRange("maxRange", 128.0D, 1.0D, 512.0D);
+        SOUL_SENSE_BLOCK_RANGE = BUILDER
+                .comment("Maximum radius when scanning blocks such as ores and containers")
+                .defineInRange("blockRange", 16.0D, 1.0D, 64.0D);
+        SOUL_SENSE_BASE_COST_PER_SECOND = BUILDER
+                .comment("Base spiritual energy consumed per second while soul sense is active")
+                .defineInRange("baseCostPerSecond", 0.3D, 0.0D, MAXIMUM_BASE_ABSORPTION_PER_SECOND);
+        SOUL_SENSE_RANGE_COST_FACTOR = BUILDER
+                .comment("Extra energy per second for every block of effective radius")
+                .defineInRange("rangeCostFactor", 0.02D, 0.0D, MAXIMUM_BASE_ABSORPTION_PER_SECOND);
+        SOUL_SENSE_SCAN_INTERVAL_TICKS = BUILDER
+                .comment("Ticks between soul-sense scans")
+                .defineInRange("scanIntervalTicks", 10, 1, 200);
+        SOUL_SENSE_BACKLASH_STAR_GAP = BUILDER
+                .comment("Star gap at or above which scanning a mightier soul triggers backlash")
+                .defineInRange("backlashStarGap", 2, 1, 7);
+        SOUL_SENSE_BLOCK_SCAN_INTERVAL_TICKS = BUILDER
+                .comment("Ticks between block scans, throttled separately from entity scans")
+                .defineInRange("blockScanIntervalTicks", 40, 1, 1200);
+        SOUL_SENSE_BLOCK_CACHE_MAX_AGE_TICKS = BUILDER
+                .comment("Hard expiry age in ticks for cached block scan results")
+                .defineInRange("blockCacheMaxAgeTicks", 200, 20, 6000);
+        BUILDER.pop();
+
+        BUILDER.push("soulTempering");
+        SOUL_TEMPERING_BASE_PROGRESS = BUILDER
+                .comment("Tempering progress required to illuminate the second star")
+                .defineInRange("baseProgress", 100.0D, 1.0D, MAXIMUM_BASE_ABSORPTION_PER_SECOND);
+        SOUL_TEMPERING_STAR_GROWTH = BUILDER
+                .comment("Progress requirement multiplier applied for every star already illuminated")
+                .defineInRange("starGrowth", 2.0D, 1.0D, MAXIMUM_MULTIPLIER);
         BUILDER.pop();
 
         BUILDER.push("lightFlight");
@@ -508,6 +728,99 @@ public final class CommonConfig {
                 .defineInRange("toxinMeditationDecayPerMinute", 2.0D, 0.0D, MAXIMUM_BASE_ABSORPTION_PER_SECOND);
         BUILDER.pop();
 
+        BUILDER.push("karma");
+        KARMA_VILLAGER_KILL_KARMA = BUILDER
+                .comment("Karma gained per villager kill")
+                .defineInRange("villagerKillKarma", 3.0D, 0.0D, 1000.0D);
+        KARMA_CULTIVATOR_KILL_KARMA = BUILDER
+                .comment("Karma gained per cultivator-creature kill")
+                .defineInRange("cultivatorKillKarma", 5.0D, 0.0D, 1000.0D);
+        KARMA_ALLY_KILL_KARMA = BUILDER
+                .comment("Karma gained per player kill")
+                .defineInRange("allyKillKarma", 5.0D, 0.0D, 1000.0D);
+        KARMA_CAP = BUILDER
+                .comment("Hard cap of the raw karma value")
+                .defineInRange("karmaCap", 200.0D, 1.0D, 100000.0D);
+        KARMA_TIER_NEUTRAL_THRESHOLD = BUILDER
+                .comment("Karma at which the Neutral (slightly flawed) tier begins")
+                .defineInRange("tierNeutralThreshold", 20.0D, 0.0D, 100000.0D);
+        KARMA_TIER_STAINED_THRESHOLD = BUILDER
+                .comment("Karma at which the Stained tier begins; also the blood-mark threshold for soul sense")
+                .defineInRange("tierStainedThreshold", 80.0D, 0.0D, 100000.0D);
+        KARMA_TIER_DRENCHED_THRESHOLD = BUILDER
+                .comment("Karma at which the Drenched tier begins")
+                .defineInRange("tierDrenchedThreshold", 140.0D, 0.0D, 100000.0D);
+        KARMA_DAO_HEART_PURE = defineDaoHeartCoefficient("daoHeartPure", 1.05D);
+        KARMA_DAO_HEART_NEUTRAL = defineDaoHeartCoefficient("daoHeartNeutral", 1.00D);
+        KARMA_DAO_HEART_STAINED = defineDaoHeartCoefficient("daoHeartStained", 0.92D);
+        KARMA_DAO_HEART_DRENCHED = defineDaoHeartCoefficient("daoHeartDrenched", 0.80D);
+        BUILDER.pop();
+
+        BUILDER.push("aura");
+        AURA_RESERVE_CAP_UNITS = BUILDER
+                .comment(
+                        "Spiritual reserve cap of one aura cell, in full-speed meditation ticks",
+                        "Default 3600 = one player meditating at full speed for 3 cultivation days"
+                )
+                .defineInRange("reserveCapUnits", 3600.0D, 1.0D, 10000000.0D);
+        AURA_REGEN_RATIO_PER_DAY = BUILDER
+                .comment("Fraction of the reserve cap regenerated per cultivation day")
+                .defineInRange("regenRatioPerDay", 0.05D, 0.0D, 1.0D);
+        AURA_FULL_SPEED_RESERVE_RATIO = BUILDER
+                .comment("Reserve ratio above which absorption stays at full speed; below it decays linearly to zero")
+                .defineInRange("fullSpeedReserveRatio", 0.30D, 0.0D, 1.0D);
+        AURA_EXHAUSTED_RESERVE_UNITS = BUILDER
+                .comment("Reserve units below which the cell counts as exhausted (absorption drops to zero)")
+                .defineInRange("exhaustedReserveUnits", 1.0D, 0.0D, 100000.0D);
+        AURA_HARVEST_RESERVE_REFUND_UNITS = BUILDER
+                .comment("Reserve units refunded to the cell when a spiritual plant is harvested")
+                .defineInRange("harvestReserveRefund", 5.0D, 0.0D, 100000.0D);
+        AURA_OVERHARVEST_DAILY_THRESHOLD = BUILDER
+                .comment("Harvests per cell per cultivation day beyond which the overharvest penalty triggers")
+                .defineInRange("overharvestDailyThreshold", 16, 1, 100000);
+        AURA_OVERHARVEST_PENALTY_TIERS = BUILDER
+                .comment("Aura quality tiers lost while the overharvest penalty is active")
+                .defineInRange("overharvestPenaltyTiers", 1, 1, 3);
+        AURA_OVERHARVEST_PENALTY_DAYS = BUILDER
+                .comment("Cultivation days the overharvest penalty lasts")
+                .defineInRange("overharvestPenaltyDays", 3, 1, 10000);
+        AURA_QUALITY_CACHE_TTL_TICKS = BUILDER
+                .comment("Ticks a derived aura quality stays cached before re-derivation")
+                .defineInRange("qualityCacheTtlTicks", 1200, 20, 72000);
+        AURA_POPULATION_SCAN_RADIUS = BUILDER
+                .comment("Radius in blocks of the POI (bed) scan used to derive population pressure")
+                .defineInRange("populationScanRadius", 40, 8, 256);
+        AURA_POPULATION_LIGHT_HOMES = BUILDER
+                .comment("Bed count at which the aura quality drops one tier")
+                .defineInRange("populationLightHomes", 5, 1, 10000);
+        AURA_POPULATION_HEAVY_HOMES = BUILDER
+                .comment("Bed count at which the aura quality drops two tiers")
+                .defineInRange("populationHeavyHomes", 15, 1, 10000);
+        AURA_HIGHLAND_MIN_SURFACE_Y = BUILDER
+                .comment("Surface height at or above which the cell counts as highland (+1 quality tier)")
+                .defineInRange("highlandMinSurfaceY", 130, -64, 320);
+        BUILDER.pop();
+
+        BUILDER.push("alchemyM4");
+        ALCHEMY_FURNACE_DURABILITY_LOSS_PER_REFINE = BUILDER
+                .comment("Furnace durability consumed by each completed or failed refining session")
+                .defineInRange("durabilityLossPerRefine", 1, 0, 1000);
+        ALCHEMY_HERB_AGE_POTENCY_CAP = BUILDER
+                .comment("Maximum potency bonus granted by herb age (0.10 = +10% at one century and beyond)")
+                .defineInRange("herbAgePotencyCap", 0.10D, 0.0D, 10.0D);
+        ALCHEMY_FIRE_SOURCE_SPIRITUAL_STABILITY = defineFireSourceStability(
+                "fireSourceSpiritualStability", 1.10D, "spiritual fire (soul flame blocks below the furnace)"
+        );
+        ALCHEMY_FIRE_SOURCE_EARTH_STABILITY = defineFireSourceStability(
+                "fireSourceEarthStability", 0.95D, "earth fire (lava adjacent below the furnace)"
+        );
+        ALCHEMY_FIRE_SOURCE_SAMADHI_STABILITY = defineFireSourceStability(
+                "fireSourceSamadhiStability", 1.20D, "samadhi true fire (owner at Spirit Transformation or above)"
+        );
+        ALCHEMY_FIRE_SOURCE_EARTH_HEAT_BONUS = defineFireSourceHeatBonus("fireSourceEarthHeatBonus", 10);
+        ALCHEMY_FIRE_SOURCE_SAMADHI_HEAT_BONUS = defineFireSourceHeatBonus("fireSourceSamadhiHeatBonus", 20);
+        BUILDER.pop();
+
         BUILDER.push("threeThousandRealms");
         THREE_THOUSAND_REALMS_MAXIMUM_REALM_COUNT = BUILDER
                 .comment("Maximum number of dynamically created realms. This hard-caps at 10")
@@ -537,6 +850,275 @@ public final class CommonConfig {
                 .comment("Model id from the selected provider. This is intentionally configurable as models change")
                 .define("model", "");
         BUILDER.pop();
+
+        BUILDER.push("risk");
+        RISK_BREAKTHROUGH_FAILURE_BASE_BUDGET = BUILDER
+                .comment("Base risk budget settled when a breakthrough attempt fails")
+                .defineInRange("breakthroughFailureBaseBudget", 30, 0, 1000);
+        RISK_TRIBULATION_FAILURE_BASE_BUDGET = BUILDER
+                .comment("Base risk budget settled when a tribulation fails")
+                .defineInRange("tribulationFailureBaseBudget", 60, 0, 1000);
+        RISK_DEATH_BASE_BUDGET = BUILDER
+                .comment("Base risk budget settled on death")
+                .defineInRange("deathBaseBudget", 50, 0, 1000);
+        RISK_QI_DEVIATION_BASE_BUDGET = BUILDER
+                .comment("Base risk budget settled when qi deviation strikes")
+                .defineInRange("qiDeviationBaseBudget", 40, 0, 1000);
+        RISK_REALM_BUDGET_STEP = BUILDER
+                .comment("Budget multiplier gained per major realm above Qi Refining")
+                .defineInRange("realmBudgetStep", 0.15D, 0.0D, 10.0D);
+        RISK_CORE_LOSS_RATIO_PER_BUDGET = BUILDER
+                .comment("Spiritual energy loss ratio applied per point of risk budget")
+                .defineInRange("coreLossRatioPerBudget", 0.008D, 0.0D, 1.0D);
+        RISK_MAX_CORE_LOSS_RATIO = BUILDER
+                .comment("Upper bound of the spiritual energy loss ratio")
+                .defineInRange("maxCoreLossRatio", 0.8D, 0.0D, 1.0D);
+        RISK_LONG_TERM_SCAR_BUDGET_THRESHOLD = BUILDER
+                .comment("Minimum budget required before a long-term scar is inflicted")
+                .defineInRange("longTermScarBudgetThreshold", 40, 0, 1000);
+        RISK_SHORT_TERM_SCAR_BUDGET_THRESHOLD = BUILDER
+                .comment("Minimum budget required before a short-term restriction is inflicted")
+                .defineInRange("shortTermScarBudgetThreshold", 15, 0, 1000);
+        RISK_SEVERITY_BUDGET_STEP = BUILDER
+                .comment("Extra budget required for each additional scar severity level")
+                .defineInRange("severityBudgetStep", 20, 1, 1000);
+        RISK_SHORT_TERM_DURATION_TICKS_PER_BUDGET = BUILDER
+                .comment("Short-term restriction duration in ticks per point of risk budget")
+                .defineInRange("shortTermDurationTicksPerBudget", 600L, 1L, 72000L);
+        BUILDER.pop();
+
+        BUILDER.push("breakthrough");
+        BREAKTHROUGH_BASE_RATE_FOUNDATION = defineBreakthroughBaseRate("baseRateFoundation", 0.80D);
+        BREAKTHROUGH_BASE_RATE_GOLDEN_CORE = defineBreakthroughBaseRate("baseRateGoldenCore", 0.55D);
+        BREAKTHROUGH_BASE_RATE_NASCENT_SOUL = defineBreakthroughBaseRate("baseRateNascentSoul", 0.35D);
+        BREAKTHROUGH_BASE_RATE_SPIRIT_TRANSFORMATION = defineBreakthroughBaseRate(
+                "baseRateSpiritTransformation", 0.20D
+        );
+        BREAKTHROUGH_BASE_RATE_DAO_INTEGRATION = defineBreakthroughBaseRate("baseRateDaoIntegration", 0.12D);
+        BREAKTHROUGH_BASE_RATE_VOID_REFINEMENT = defineBreakthroughBaseRate("baseRateVoidRefinement", 0.08D);
+        BREAKTHROUGH_BASE_RATE_MAHAYANA = defineBreakthroughBaseRate("baseRateMahayana", 0.05D);
+        BREAKTHROUGH_BASE_RATE_IMMORTAL = defineBreakthroughBaseRate("baseRateImmortal", 0.03D);
+        BREAKTHROUGH_CHANCE_FLOOR = BUILDER
+                .comment("Lower clamp of the final major-breakthrough success chance")
+                .defineInRange("chanceFloor", 0.05D, 0.0D, 1.0D);
+        BREAKTHROUGH_CHANCE_CEILING = BUILDER
+                .comment("Upper clamp of the final major-breakthrough success chance")
+                .defineInRange("chanceCeiling", 0.95D, 0.0D, 1.0D);
+        BREAKTHROUGH_PITY_STEP = BUILDER
+                .comment("Success chance compensation gained per failed attempt at the same realm")
+                .defineInRange("pityStep", 0.03D, 0.0D, 1.0D);
+        BREAKTHROUGH_PITY_CAP = BUILDER
+                .comment("Upper bound of the accumulated failure compensation")
+                .defineInRange("pityCap", 0.15D, 0.0D, 1.0D);
+        BREAKTHROUGH_RITUAL_SECONDS = BUILDER
+                .comment("Duration of the spirit-channeling ritual before the breakthrough roll")
+                .defineInRange("ritualSeconds", 30, 5, 600);
+        BREAKTHROUGH_FAIL_DISSIPATION_LOW = BUILDER
+                .comment("Spiritual energy dissipated on a failed roll toward Foundation or Golden Core")
+                .defineInRange("failDissipationLow", 0.40D, 0.0D, 1.0D);
+        BREAKTHROUGH_FAIL_DISSIPATION_MID = BUILDER
+                .comment("Spiritual energy dissipated on a failed roll toward Nascent Soul or Spirit Transformation")
+                .defineInRange("failDissipationMid", 0.55D, 0.0D, 1.0D);
+        BREAKTHROUGH_FAIL_DISSIPATION_HIGH = BUILDER
+                .comment("Spiritual energy dissipated on a failed roll toward Dao Integration and above")
+                .defineInRange("failDissipationHigh", 0.60D, 0.0D, 1.0D);
+        BREAKTHROUGH_INTERRUPT_DISSIPATION = BUILDER
+                .comment("Spiritual energy dissipated when the ritual is interrupted (light penalty, no roll)")
+                .defineInRange("interruptDissipation", 0.15D, 0.0D, 1.0D);
+        BREAKTHROUGH_BOTTLENECK_DAYS = BUILDER
+                .comment("Days of bottleneck after a failed breakthrough roll before another attempt is allowed")
+                .defineInRange("bottleneckDays", 3, 0, 1000);
+        BREAKTHROUGH_INTERRUPT_ON_ENTITY_DAMAGE_ONLY = BUILDER
+                .comment("Whether only entity-sourced damage interrupts the ritual (environment/DoT ignored)")
+                .define("interruptOnEntityDamageOnly", true);
+        BREAKTHROUGH_INSIGHT_CHOICE_EXPIRE_TICKS = BUILDER
+                .comment("Ticks before pending insight candidates expire after a successful breakthrough")
+                .defineInRange("insightChoiceExpireTicks", 24000L, 20L, 20L * 60L * 60L * 24L * 7L);
+        BREAKTHROUGH_QUALITY_COEF_TURBID = defineBreakthroughQualityCoefficient("qualityCoefTurbid", 0.70D);
+        BREAKTHROUGH_QUALITY_COEF_NEUTRAL = defineBreakthroughQualityCoefficient("qualityCoefNeutral", 1.00D);
+        BREAKTHROUGH_QUALITY_COEF_CLEAR = defineBreakthroughQualityCoefficient("qualityCoefClear", 1.15D);
+        BREAKTHROUGH_QUALITY_COEF_PRISTINE = defineBreakthroughQualityCoefficient("qualityCoefPristine", 1.30D);
+        BUILDER.pop();
+
+        BUILDER.push("soulInjury");
+        SOUL_INJURY_THRESHOLD_DAZED = BUILDER
+                .comment("Soul injury value at which the Dazed tier begins")
+                .defineInRange("thresholdDazed", 20.0D, 0.0D, 100.0D);
+        SOUL_INJURY_THRESHOLD_SHAKEN = BUILDER
+                .comment("Soul injury value at which the Shaken tier begins; keep above thresholdDazed")
+                .defineInRange("thresholdShaken", 50.0D, 0.0D, 100.0D);
+        SOUL_INJURY_THRESHOLD_PERIL = BUILDER
+                .comment("Soul injury value at which the Peril tier begins; keep above thresholdShaken")
+                .defineInRange("thresholdPeril", 80.0D, 0.0D, 100.0D);
+        SOUL_INJURY_SOURCE_PIERCE = defineSoulInjurySource(
+                "sourcePierce", 15.0D, "Soul injury dealt to a player hit by Soul Pierce"
+        );
+        SOUL_INJURY_SOURCE_SHOCK = defineSoulInjurySource(
+                "sourceShock", 8.0D, "Soul injury dealt to each player hit by Soul Shock"
+        );
+        SOUL_INJURY_SOURCE_BACKLASH = defineSoulInjurySource(
+                "sourceBacklash", 20.0D, "Soul injury from a resisted soul-spell backlash"
+        );
+        SOUL_INJURY_SOURCE_WEAK_CAST = defineSoulInjurySource(
+                "sourceWeakCast", 10.0D, "Soul injury from forcing a soul spell with a weak soul"
+        );
+        SOUL_INJURY_SOURCE_SENSE_RECOIL = defineSoulInjurySource(
+                "sourceSenseRecoil", 10.0D, "Soul injury from soul-sense recoil against a mightier soul"
+        );
+        SOUL_INJURY_SOURCE_MIND_DEMON_HIT = defineSoulInjurySource(
+                "sourceMindDemonHit", 3.0D, "Soul injury per mind-demon hit during the trial"
+        );
+        SOUL_INJURY_NATURAL_HEAL_PER_DAY = BUILDER
+                .comment("Soul injury healed naturally per cultivation day")
+                .defineInRange("naturalHealPerDay", 2.0D, 0.0D, 100.0D);
+        SOUL_INJURY_SEVEN_STAR_HEAL_MULTIPLIER = BUILDER
+                .comment("Natural heal multiplier for players with all seven soul stars illuminated")
+                .defineInRange("sevenStarHealMultiplier", 2.0D, 0.0D, MAXIMUM_MULTIPLIER);
+        SOUL_INJURY_PERIL_LIFESPAN_YEARS_PER_DAY = BUILDER
+                .comment("Lifespan lost per cultivation day while at the Peril tier")
+                .defineInRange("perilLifespanYearsPerDay", 1, 0, 1000);
+        SOUL_INJURY_SENSE_RANGE_MULT_DAZED = BUILDER
+                .comment("Soul-sense range multiplier at the Dazed tier")
+                .defineInRange("senseRangeMultDazed", 0.7D, 0.0D, 1.0D);
+        SOUL_INJURY_SENSE_RANGE_MULT_SHAKEN = BUILDER
+                .comment("Soul-sense range multiplier at the Shaken tier and above")
+                .defineInRange("senseRangeMultShaken", 0.5D, 0.0D, 1.0D);
+        SOUL_INJURY_COMPREHENSION_PENALTY = BUILDER
+                .comment("Comprehension score penalty applied from the Dazed tier onward")
+                .defineInRange("comprehensionPenalty", 10.0D, 0.0D, 100.0D);
+        SOUL_INJURY_SEVEN_STAR_REQUIRES_OPPORTUNITY = BUILDER
+                .comment("Whether illuminating the seventh soul star requires a soul-dao opportunity item")
+                .define("sevenStarRequiresOpportunity", true);
+        BUILDER.pop();
+
+        BUILDER.push("mindDemon");
+        MIND_DEMON_ENABLED = BUILDER
+                .comment("Whether the mirror mind-demon trial replaces the legacy phantom trial")
+                .define("enabled", true);
+        MIND_DEMON_REVEAL_SECONDS = defineMindDemonSeconds(
+                "revealSeconds", 12, "Duration of the Reveal phase"
+        );
+        MIND_DEMON_SPAR_SECONDS = defineMindDemonSeconds(
+                "sparSeconds", 45, "Maximum duration of the Spar phase"
+        );
+        MIND_DEMON_REFLECT_SECONDS = defineMindDemonSeconds(
+                "reflectSeconds", 60, "Maximum duration of the Reflect phase"
+        );
+        MIND_DEMON_RESOLVE_CHOICE_SECONDS = defineMindDemonSeconds(
+                "resolveChoiceSeconds", 20, "Window for choosing a resolve; defaults to Hold on timeout"
+        );
+        MIND_DEMON_SEVER_TIME_LIMIT_SECONDS = defineMindDemonSeconds(
+                "severTimeLimitSeconds", 60, "Time limit to slay the demon after choosing Sever"
+        );
+        MIND_DEMON_HOLD_TIME_LIMIT_SECONDS = defineMindDemonSeconds(
+                "holdTimeLimitSeconds", 90, "Time to survive the frenzied demon after choosing Hold"
+        );
+        MIND_DEMON_BODY_ECHO_RATIO = BUILDER
+                .comment("Fraction of damage dealt to the mortal body echoed to the player inside the mind realm")
+                .defineInRange("bodyEchoRatio", 0.6D, 0.0D, 1.0D);
+        MIND_DEMON_KARMA_SCALE_BASE = BUILDER
+                .comment("Base stat scale of the mind demon relative to its owner")
+                .defineInRange("karmaScaleBase", 0.60D, 0.0D, 2.0D);
+        MIND_DEMON_KARMA_SCALE_PER_KILL = BUILDER
+                .comment("Additional stat scale per recorded kill in the behavior ledger")
+                .defineInRange("karmaScalePerKill", 0.004D, 0.0D, 1.0D);
+        MIND_DEMON_KARMA_SCALE_CAP = BUILDER
+                .comment("Upper bound of the mind-demon stat scale")
+                .defineInRange("karmaScaleCap", 1.2D, 0.0D, 2.0D);
+        MIND_DEMON_POCKET_STRIDE = BUILDER
+                .comment(
+                        "Grid stride between mind-realm arenas in blocks.",
+                        "Avoid changing on an existing world while any trial session is saved"
+                )
+                .defineInRange("pocketStride", 256, 64, 4096);
+        MIND_DEMON_PVE_OFFLINE_PAUSE = BUILDER
+                .comment(
+                        "Whether trial timers pause while the owner is offline.",
+                        "The current trial loop always pauses; this key is reserved for a future PVP preset"
+                )
+                .define("pveOfflinePause", true);
+        MIND_DEMON_SOUL_INJURY_CAP_PER_TRIAL = BUILDER
+                .comment("Maximum accumulated soul injury the demon may inflict in a single trial")
+                .defineInRange("soulInjuryCapPerTrial", 30.0D, 0.0D, 100.0D);
+        BUILDER.pop();
+
+        BUILDER.push("seal");
+        SEAL_ANCHORS_PER_SOUL_STAR = BUILDER
+                .comment("Soul-sense anchors granted per illuminated soul star")
+                .defineInRange("anchorsPerSoulStar", 2, 1, 10);
+        SEAL_CARVE_ENERGY_PER_GRADE = BUILDER
+                .comment("Spiritual energy cost of carving one seal layer, per seal grade")
+                .defineInRange("carveEnergyPerGrade", 30.0D, 0.0D, 10000.0D);
+        SEAL_CARVE_TEMPERING_COST_PER_GRADE = BUILDER
+                .comment("Soul tempering progress consumed by carving, per seal grade")
+                .defineInRange("carveTemperingCostPerGrade", 5.0D, 0.0D, 1000.0D);
+        SEAL_CARVE_RITUAL_TICKS = BUILDER
+                .comment("Duration of the carve ritual in ticks (sneak and hold still)")
+                .defineInRange("carveRitualTicks", 600, 20, 24000);
+        SEAL_REVOKE_TICKS = BUILDER
+                .comment("Duration of revoking an own seal layer in ticks")
+                .defineInRange("revokeTicks", 100, 20, 24000);
+        SEAL_LOCK_GRID_FAIL_SOUL_INJURY = BUILDER
+                .comment("Base soul injury inflicted when a lock-grid attempt fails")
+                .defineInRange("lockGridFailSoulInjury", 5.0D, 0.0D, 100.0D);
+        SEAL_LOCK_GRID_DISTURB_LOCK_DAYS = BUILDER
+                .comment("Calendar days the finesse path stays locked after three disturbances")
+                .defineInRange("lockGridDisturbLockDays", 1, 0, 30);
+        SEAL_LOCK_GRID_ENERGY_PER_SECOND_PER_GRADE = BUILDER
+                .comment("Spiritual energy drained per second per seal grade while the lock grid is open")
+                .defineInRange("lockGridEnergyPerSecondPerGrade", 1.9D, 0.0D, 100.0D);
+        SEAL_FORCE_BREAK_CRUSH_MULTIPLIER = BUILDER
+                .comment("Force break shatters every layer instantly when break power >= strength x this")
+                .defineInRange("forceBreakCrushMultiplier", 4.0D, 1.0D, 100.0D);
+        SEAL_FORCE_BREAK_BASE_SECONDS = BUILDER
+                .comment("Base grinding seconds of a non-crushing force break (doubled per strength tier)")
+                .defineInRange("forceBreakBaseSeconds", 60, 5, 3600);
+        SEAL_FORCE_BREAK_ENERGY_PER_SECOND = BUILDER
+                .comment("Spiritual energy drained per second while force breaking")
+                .defineInRange("forceBreakEnergyPerSecond", 6.0D, 0.0D, 1000.0D);
+        SEAL_DEATH_PACT_DAYS = BUILDER
+                .comment("Calendar days the death pact lasts after the owner dies")
+                .defineInRange("deathPactDays", 3, 0, 30);
+        SEAL_DEATH_PACT_STRENGTH_MULTIPLIER = BUILDER
+                .comment("Seal strength multiplier while the death pact is active")
+                .defineInRange("deathPactStrengthMultiplier", 1.5D, 1.0D, 10.0D);
+        SEAL_DECAY_DAYS = BUILDER
+                .comment("Calendar days before the seals of a permanently dead owner crumble (stored, judged later)")
+                .defineInRange("decayDays", 7, 1, 90);
+        SEAL_DEATH_PACT_ALERT_INTERVAL_TICKS = BUILDER
+                .comment("Interval in ticks of the owner-facing direction pulse while the death pact is active")
+                .defineInRange("deathPactAlertIntervalTicks", 600, 100, 24000);
+        BUILDER.pop();
+
+        BUILDER.push("death");
+        DEATH_CHOOSE_TIMEOUT_SECONDS = BUILDER
+                .comment("Seconds a dying player may ponder the death-route choice before the default applies")
+                .defineInRange("chooseTimeoutSeconds", 30, 5, 600);
+        DEATH_RESPAWN_QI_LAYER_LOSS = BUILDER
+                .comment("Minor layers lost by Qi Refining players on a normal respawn")
+                .defineInRange("respawnQiLayerLoss", 1, 0, 8);
+        DEATH_RESPAWN_PROGRESS_LOSS_RATIO = BUILDER
+                .comment("Fraction of accumulated spiritual energy lost by Foundation+ players on a normal respawn")
+                .defineInRange("respawnProgressLossRatio", 0.3D, 0.0D, 1.0D);
+        DEATH_RESPAWN_SOUL_INJURY = BUILDER
+                .comment("Soul injury inflicted by a normal respawn")
+                .defineInRange("respawnSoulInjury", 15.0D, 0.0D, 100.0D);
+        DEATH_SOUL_RETURN_MINUTES_PER_STAR = BUILDER
+                .comment("Soul-return time limit in real minutes per illuminated soul star")
+                .defineInRange("soulReturnMinutesPerStar", 2, 1, 30);
+        DEATH_SOUL_RETURN_SUCCESS_SOUL_INJURY = BUILDER
+                .comment("Soul injury cost of a successful soul return")
+                .defineInRange("soulReturnSuccessSoulInjury", 10.0D, 0.0D, 100.0D);
+        DEATH_SOUL_RETURN_TIMEOUT_EXTRA_SOUL_INJURY = BUILDER
+                .comment("Extra soul injury stacked on the normal respawn penalty when a soul return times out (PVE preset)")
+                .defineInRange("soulReturnTimeoutExtraSoulInjury", 25.0D, 0.0D, 100.0D);
+        DEATH_BURN_NASCENT_LIFESPAN_LOSS_RATIO = BUILDER
+                .comment("Fraction of the maximum lifespan burned by the nascent-soul revival")
+                .defineInRange("burnNascentLifespanLossRatio", 0.2D, 0.0D, 1.0D);
+        DEATH_PVE_MODE = BUILDER
+                .comment("PVE preset: soul-return timeout falls back to a heavier normal respawn instead of permanent death")
+                .define("pveMode", true);
+        BUILDER.pop();
         SPEC = BUILDER.build();
     }
 
@@ -561,6 +1143,69 @@ public final class CommonConfig {
         return BUILDER
                 .comment("Alchemy score weight; the five weights should sum to one or defaults are used")
                 .defineInRange(name, defaultValue, 0.0D, 1.0D);
+    }
+
+    private static ForgeConfigSpec.DoubleValue defineBreakthroughBaseRate(String name, double defaultValue) {
+        return BUILDER
+                .comment("Base success rate of the major breakthrough roll toward this realm")
+                .defineInRange(name, defaultValue, 0.0D, 1.0D);
+    }
+
+    private static ForgeConfigSpec.DoubleValue defineBreakthroughQualityCoefficient(
+            String name,
+            double defaultValue
+    ) {
+        return BUILDER
+                .comment("Qi-quality coefficient of the breakthrough chance formula (consumed once qi ecology lands)")
+                .defineInRange(name, defaultValue, 0.0D, 10.0D);
+    }
+
+    private static ForgeConfigSpec.DoubleValue defineSoulInjurySource(
+            String name,
+            double defaultValue,
+            String comment
+    ) {
+        return BUILDER.comment(comment).defineInRange(name, defaultValue, 0.0D, 100.0D);
+    }
+
+    private static ForgeConfigSpec.IntValue defineMindDemonSeconds(
+            String name,
+            int defaultValue,
+            String comment
+    ) {
+        return BUILDER.comment(comment).defineInRange(name, defaultValue, 1, 3600);
+    }
+
+    private static ForgeConfigSpec.DoubleValue defineFailureLifespanScale(
+            String name,
+            double defaultValue,
+            String reasonDescription
+    ) {
+        return BUILDER
+                .comment("Lifespan-loss scale applied when the tribulation fails by " + reasonDescription)
+                .defineInRange(name, defaultValue, 0.0D, 10.0D);
+    }
+
+    private static ForgeConfigSpec.DoubleValue defineDaoHeartCoefficient(String name, double defaultValue) {
+        return BUILDER
+                .comment("Dao-heart coefficient of this karma tier in the breakthrough chance formula")
+                .defineInRange(name, defaultValue, 0.0D, 10.0D);
+    }
+
+    private static ForgeConfigSpec.DoubleValue defineFireSourceStability(
+            String name,
+            double defaultValue,
+            String sourceDescription
+    ) {
+        return BUILDER
+                .comment("Stability multiplier granted by " + sourceDescription)
+                .defineInRange(name, defaultValue, 0.0D, 10.0D);
+    }
+
+    private static ForgeConfigSpec.IntValue defineFireSourceHeatBonus(String name, int defaultValue) {
+        return BUILDER
+                .comment("Extra heat ceiling granted by this fire source")
+                .defineInRange(name, defaultValue, 0, 1000);
     }
 
     private static ForgeConfigSpec.IntValue defineLifespanYears(

@@ -2,6 +2,7 @@ package net.seraphina.ninecun_lingtai.common.player;
 
 import com.mojang.authlib.GameProfile;
 import net.seraphina.ninecun_lingtai.ModMain;
+import net.seraphina.ninecun_lingtai.common.behavior.PlayerBehaviorLedgerData;
 import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
@@ -13,6 +14,18 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * 夺舍会话管理。{@link PossessionSavedData} 是权威数据源（跨重启存续）；
+ * 本类的静态 map 仅是在线运行期缓存，二者在会话开始/结束时同步写入。
+ *
+ * <p>生命周期语义：
+ * <ul>
+ *   <li>夺舍者主动登出 = 解除夺舍，目标归位（沿用旧语义）；</li>
+ *   <li>目标主动登出 = 会话存续，目标重登仍为旁观（沿用旧语义）；</li>
+ *   <li>干净关服 = 挂起，重启后夺舍者登录即恢复会话；</li>
+ *   <li>重启后目标先登录而夺舍者缺席 = 安全解除，目标当场归位。</li>
+ * </ul>
+ */
 public final class PlayerPossessionManager {
     private static final String TARGET_STATE_KEY = ModMain.MOD_ID + ":possessed_target";
     private static final String POSSESSOR_UUID_KEY = "possessor";
@@ -63,6 +76,16 @@ public final class PlayerPossessionManager {
         );
         POSSESSION_SESSIONS.put(possessorUuid, session);
         POSSESSED_TARGETS.put(targetUuid, possessorUuid);
+        PossessionSavedData.get(possessor.server).putRecord(new PossessionSavedData.PossessionRecord(
+                possessorUuid,
+                targetUuid,
+                targetProfile.getId() != null ? targetProfile.getId() : targetUuid,
+                targetProfile.getName() != null ? targetProfile.getName() : "",
+                targetGameType
+        ));
+        // 行为账本采样（心魔即己 §5.2）：夺舍成功各记一笔。
+        PlayerBehaviorLedgerData.recordPossess(possessor);
+        PlayerBehaviorLedgerData.recordPossessedBy(target);
 
         refreshPlayerState(possessor);
         ModNetwork.sendCultivationInfo(possessor);
@@ -105,12 +128,90 @@ public final class PlayerPossessionManager {
     }
 
     public static void onPlayerLoggedIn(ServerPlayer player) {
-        PossessionSession activeSession = findSessionByTarget(player.getUUID());
-        if (activeSession != null) {
-            player.setGameMode(GameType.SPECTATOR);
+        PossessionSavedData savedData = PossessionSavedData.get(player.server);
+
+        // 场景 1：登录者是被夺舍的目标。夺舍者在场（会话已在内存中，含重启后已恢复
+        // 的挂起会话）则维持旁观；夺舍者缺席（重启后尚未归来）则安全解除、当场归位，
+        // 绝不让目标无限期卡在旁观模式等一个可能永远不回来的夺舍者。
+        PossessionSavedData.PossessionRecord targetRecord = savedData.findRecordByTarget(player.getUUID());
+        if (targetRecord != null) {
+            if (POSSESSION_SESSIONS.containsKey(targetRecord.possessorUuid())) {
+                POSSESSED_TARGETS.put(player.getUUID(), targetRecord.possessorUuid());
+                player.setGameMode(GameType.SPECTATOR);
+            } else {
+                savedData.removeRecord(targetRecord.possessorUuid());
+                restoreTargetGameMode(player, targetRecord.targetGameType());
+                ModMain.LOGGER.info(
+                        "Dissolved suspended possession of target {} because possessor {} is absent after restart",
+                        player.getGameProfile().getName(),
+                        targetRecord.possessorUuid()
+                );
+            }
             return;
         }
+
+        // 场景 2：登录者是夺舍者且有挂起会话，恢复进内存并广播。目标是否在线不影响
+        // 恢复（与运行期"目标可离线"的语义一致）。
+        PossessionSavedData.PossessionRecord possessorRecord = savedData.getRecord(player.getUUID());
+        if (possessorRecord != null && !POSSESSION_SESSIONS.containsKey(player.getUUID())) {
+            resumeSuspendedSession(player, possessorRecord);
+            return;
+        }
+
+        // 场景 3：兜底——孤儿旁观标记（会话已不存在），恢复原游戏模式。
         restoreMarkedTarget(player);
+    }
+
+    private static void resumeSuspendedSession(
+            ServerPlayer possessor,
+            PossessionSavedData.PossessionRecord record
+    ) {
+        // name 允许为空串但不能为 null：writeGameProfile → writeUtf(name) 遇 null 会 NPE。
+        GameProfile targetProfile = new GameProfile(
+                record.targetProfileId(),
+                record.targetProfileName()
+        );
+        POSSESSION_SESSIONS.put(possessor.getUUID(), new PossessionSession(
+                record.targetUuid(),
+                targetProfile,
+                record.targetGameType()
+        ));
+        POSSESSED_TARGETS.put(record.targetUuid(), possessor.getUUID());
+        ServerPlayer target = possessor.server.getPlayerList().getPlayer(record.targetUuid());
+        if (target != null && !target.isSpectator()) {
+            target.setGameMode(GameType.SPECTATOR);
+        }
+        broadcastState(possessor.server, createSyncData(possessor));
+        ModMain.LOGGER.info(
+                "Resumed suspended possession session of {} (target={})",
+                possessor.getGameProfile().getName(),
+                record.targetUuid()
+        );
+    }
+
+    /**
+     * 登出统一入口：关服断连 = 挂起（会话留在 SavedData，重启恢复）；
+     * 主动登出 = 解除夺舍并让目标归位（沿用旧语义）。
+     */
+    public static void onPlayerLoggedOut(ServerPlayer player) {
+        if (player.hasDisconnected() && !player.server.isRunning()) {
+            suspend(player);
+            return;
+        }
+        cleanup(player);
+    }
+
+    private static void suspend(ServerPlayer player) {
+        PossessionSession session = POSSESSION_SESSIONS.remove(player.getUUID());
+        if (session == null) {
+            return;
+        }
+        POSSESSED_TARGETS.remove(session.targetUuid(), player.getUUID());
+        PossessionSavedData.get(player.server).setDirty();
+        ModMain.LOGGER.info(
+                "Suspended possession session of {} for server shutdown; it will resume after restart",
+                player.getGameProfile().getName()
+        );
     }
 
     public static void onPlayerClone(ServerPlayer original, ServerPlayer clone) {
@@ -127,6 +228,7 @@ public final class PlayerPossessionManager {
     }
 
     public static void cleanup(ServerPlayer possessor) {
+        PossessionSavedData.get(possessor.server).removeRecord(possessor.getUUID());
         PossessionSession session = POSSESSION_SESSIONS.remove(possessor.getUUID());
         if (session == null) {
             syncState(possessor);
@@ -138,13 +240,11 @@ public final class PlayerPossessionManager {
         broadcastState(possessor.server, PossessionSyncData.inactive(possessor.getUUID()));
     }
 
+    /**
+     * 关服后清空运行期缓存（单人模式下静态 map 会跨"退出世界再进入"存活，必须清）。
+     * 只清内存不动 {@link PossessionSavedData}：挂起的会话要留待重启恢复。
+     */
     public static void clear(MinecraftServer server) {
-        Map<UUID, PossessionSession> sessions = new HashMap<>(POSSESSION_SESSIONS);
-        for (Map.Entry<UUID, PossessionSession> entry : sessions.entrySet()) {
-            POSSESSION_SESSIONS.remove(entry.getKey());
-            POSSESSED_TARGETS.remove(entry.getValue().targetUuid(), entry.getKey());
-            restoreTarget(server, entry.getValue());
-        }
         POSSESSION_SESSIONS.clear();
         POSSESSED_TARGETS.clear();
     }
@@ -196,13 +296,6 @@ public final class PlayerPossessionManager {
         return hasPossessionMarker(player)
                 ? player.getPersistentData().getCompound(TARGET_STATE_KEY)
                 : null;
-    }
-
-    private static PossessionSession findSessionByTarget(UUID targetUuid) {
-        return POSSESSION_SESSIONS.values().stream()
-                .filter(session -> session.targetUuid().equals(targetUuid))
-                .findFirst()
-                .orElse(null);
     }
 
     private static PossessionSyncData createSyncData(ServerPlayer possessor) {

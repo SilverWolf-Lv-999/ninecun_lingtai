@@ -1,0 +1,43 @@
+{
+  "name": "摄魂音",
+  "description": "神魂震荡化音波及四野的七品魂法，魂弱者闻之神智皆失。",
+  "content": "上古有魔修抚琴杀人于百步，所奏非声，乃魂音也。此术不假琴瑟：命宫星光尽数鼓荡，神识化作一圈无形音波，以我为心荡开四野。此音不入耳而入魂，魂强者闻之心神一晃，魂弱者当场神智昏聩，目不能视，手足不能自主，如泥塑木偶任人宰割。群敌环伺之际，一音荡开，强弱立判。然音波无差别荡开，同道中人亦在波及之列，用时须先约定神识守御之法。且魂音之内若有神魂强于我者，音波反卷，自家魂宫先乱，故群战之中亦须先度诸敌深浅。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "spell": {
+    "id": "ninecun_lingtai:soul_shock",
+    "category": "combat",
+    "grade": 7,
+    "base_cost": 25.0,
+    "cost_elements": []
+  },
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "nascent_soul",
+      "layer": 1
+    },
+    "minimum_soul_strength": 4,
+    "required_techniques": ["ninecun_lingtai:soul_pierce_spell"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 80,
+    "key_concepts": [
+      "所奏非声乃魂音也",
+      "神识化音波以我为心荡开",
+      "不入耳而入魂",
+      "魂弱者神智昏聩任人宰割",
+      "音内有强魂音波反卷"
+    ],
+    "grading_criteria": [
+      "说明魂音入魂不入耳的本质",
+      "理解鼓荡命宫、化识为音的行功方式",
+      "明白按魂之强弱分判杀伤的机理",
+      "知晓无差别波及与强魂反卷的双重代价"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 80
+      }
+    ]
+  }
+}

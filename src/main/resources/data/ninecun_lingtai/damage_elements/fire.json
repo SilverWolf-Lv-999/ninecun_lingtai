@@ -2,7 +2,8 @@
   "damage_types": [
     "minecraft:in_fire",
     "minecraft:on_fire",
-    "minecraft:hot_floor"
+    "minecraft:hot_floor",
+    "ninecun_lingtai:spell_fire"
   ],
   "element": "fire",
   "strength": 1.0

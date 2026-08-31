@@ -29,6 +29,9 @@ import net.seraphina.ninecun_lingtai.client.screen.AlchemyFurnaceScreen;
 import net.seraphina.ninecun_lingtai.client.screen.StorageRingScreen;
 import net.seraphina.ninecun_lingtai.client.render.DefenseBarShader;
 import net.seraphina.ninecun_lingtai.client.render.DefenseSpellGuardianRenderer;
+import net.seraphina.ninecun_lingtai.client.render.MindDemonRenderer;
+import net.seraphina.ninecun_lingtai.client.render.MortalBodyRenderer;
+import net.seraphina.ninecun_lingtai.client.screen.MindTrialOverlay;
 import net.seraphina.ninecun_lingtai.client.render.ElementFlowShader;
 import net.seraphina.ninecun_lingtai.client.render.NotificationScrollShader;
 import net.seraphina.ninecun_lingtai.client.render.SoulConstellationShader;
@@ -154,6 +157,8 @@ public final class ClientModEventHandler {
         event.register(ModKeyMappings.CAST_SPELL);
         event.register(ModKeyMappings.PUSHING_MOUNTAINS);
         event.register(ModKeyMappings.STORAGE_RING_IMMERSION);
+        event.register(ModKeyMappings.SOUL_SENSE);
+        event.register(ModKeyMappings.SOUL_SENSE_FILTER);
     }
 
     @SubscribeEvent
@@ -217,6 +222,15 @@ public final class ClientModEventHandler {
                 ModEntityTypes.SWORD_QI_ENTITY.get(),
                 SwordQiEntityRenderer::new
         );
+        event.registerEntityRenderer(ModEntityTypes.MIND_DEMON.get(), MindDemonRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.MORTAL_BODY.get(), MortalBodyRenderer::new);
+    }
+
+    @SubscribeEvent
+    public static void onRegisterGuiOverlays(
+            net.minecraftforge.client.event.RegisterGuiOverlaysEvent event
+    ) {
+        event.registerAboveAll("mind_trial", MindTrialOverlay.INSTANCE);
     }
 
     @SuppressWarnings("unchecked")

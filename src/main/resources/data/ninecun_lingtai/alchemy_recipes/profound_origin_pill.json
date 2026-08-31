@@ -1,0 +1,76 @@
+{
+  "name": "玄元丹",
+  "description": "四阶一品回元丹方，恶魂泪三滴为引，回灵护体，元气如渊。",
+  "content": "较之回元丹，此方以三滴恶魂泪为君，药力何止倍之。武火起炉直逼药性，紫颂果须趁武火末段投下，果开八瓣，锁灵不散；后半程转中火收浆，收得越稳，护体元罡越厚。丹成之日炉中隐有渊鸣。",
+  "grade": {
+    "tier": 4,
+    "rank": 1
+  },
+  "allowed_realms": [
+    "nascent_soul",
+    "spirit_transformation"
+  ],
+  "minimum_refining_realm": "nascent_soul",
+  "ingredients": {
+    "primary": {
+      "item": "minecraft:ghast_tear",
+      "count": 3
+    },
+    "secondary": [
+      {
+        "item": "minecraft:chorus_fruit",
+        "count": 4
+      },
+      {
+        "item": "minecraft:blaze_powder",
+        "count": 4
+      }
+    ],
+    "auxiliary": [
+      {
+        "item": "minecraft:glowstone_dust",
+        "count": 8
+      },
+      {
+        "item": "minecraft:honeycomb",
+        "count": 4
+      }
+    ]
+  },
+  "output_item": "ninecun_lingtai:profound_origin_pill",
+  "output_count": 1,
+  "brewing_duration": 1600,
+  "element_profile": {
+    "primary_element": "water"
+  },
+  "heat_stages": [
+    {
+      "band": "fierce",
+      "portion": 0.4
+    },
+    {
+      "band": "medium",
+      "portion": 0.6
+    }
+  ],
+  "feed_plan": [
+    {
+      "slot": "secondary_1",
+      "stage": 1,
+      "window_start": 0.6,
+      "ideal": 0.8,
+      "window_end": 0.95
+    }
+  ],
+  "pill_toxin": 15,
+  "effects": [
+    {
+      "type": "restore_spirit",
+      "amount": 700
+    },
+    {
+      "type": "defense_repair",
+      "fraction": 0.5
+    }
+  ]
+}

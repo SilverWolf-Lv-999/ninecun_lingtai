@@ -14,6 +14,8 @@ import net.seraphina.ninecun_lingtai.common.ascension.AscensionQuestion;
 import net.seraphina.ninecun_lingtai.utility.AiConfigUtility;
 import net.seraphina.ninecun_lingtai.utility.AiResponseUtility;
 import net.seraphina.ninecun_lingtai.utility.AscensionPromptUtility;
+import net.seraphina.ninecun_lingtai.utility.SoulInjuryUtility;
+import net.minecraft.server.level.ServerPlayer;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.http.HttpClient;
@@ -28,6 +30,21 @@ public final class AscensionComprehensionService {
     private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(15L))
             .build();
+
+    /**
+     * 带魂伤扣分的评估入口：在服务端主线程取样扣分值，assessment 返回后调整评分
+     * （设计文档 R6：不动 prompt，扣分后仍按原判定阈值）。
+     */
+    public static CompletableFuture<TechniqueAssessment> evaluate(
+            AscensionQuestion question,
+            String profileContext,
+            String answer,
+            ServerPlayer player
+    ) {
+        double penalty = SoulInjuryUtility.getComprehensionPenalty(player);
+        return evaluate(question, profileContext, answer)
+                .thenApply(assessment -> SoulInjuryUtility.applyComprehensionPenalty(assessment, penalty));
+    }
 
     public static CompletableFuture<TechniqueAssessment> evaluate(
             AscensionQuestion question,

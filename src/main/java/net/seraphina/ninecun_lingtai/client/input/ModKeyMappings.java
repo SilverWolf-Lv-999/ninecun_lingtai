@@ -56,4 +56,20 @@ public final class ModKeyMappings {
             GLFW.GLFW_KEY_O,
             "key.categories." + ModMain.MOD_ID
     );
+
+    public static final KeyMapping SOUL_SENSE = new KeyMapping(
+            "key." + ModMain.MOD_ID + ".soul_sense",
+            KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_G,
+            "key.categories." + ModMain.MOD_ID
+    );
+
+    public static final KeyMapping SOUL_SENSE_FILTER = new KeyMapping(
+            "key." + ModMain.MOD_ID + ".soul_sense_filter",
+            KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_H,
+            "key.categories." + ModMain.MOD_ID
+    );
 }

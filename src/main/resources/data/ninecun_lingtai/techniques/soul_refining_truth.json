@@ -1,0 +1,44 @@
+{
+  "name": "炼神真解",
+  "description": "以神炼神、直指命宫七星的上乘炼魂真法。",
+  "content": "凝魂诀养魂如添薪，炼神真解炼魂如锻铁。行此功者，先以神识自照，见命宫星图全貌，而后择最暗一星，以己之神为锤，以星之光为砧，一击一凝，一凝一固。锤炼之际，神魂剧痛如针刺，须咬定灵台一点不动，痛极而光生，光生而星明。此法凶险，魂弱者强行之，星未亮而魂先裂。故须命宫已有三星常明，元婴稳固，方可入手。得其真意者，七星可期，神识纵横千里，御魂类法术如臂使指。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "nascent_soul",
+      "layer": 1
+    },
+    "minimum_soul_strength": 3,
+    "required_techniques": ["ninecun_lingtai:soul_condensing_technique"]
+  },
+  "effects": [
+    {
+      "type": "ninecun_lingtai:soul_tempering",
+      "parameters": {
+        "progress_per_minute": 3.0
+      }
+    }
+  ],
+  "comprehension": {
+    "minimum_learning_score": 75,
+    "key_concepts": [
+      "以己之神为锤以星之光为砧",
+      "择最暗一星一击一凝",
+      "痛极而光生光生而星明",
+      "魂弱强行星未亮而魂先裂",
+      "三星常明元婴稳固方可入手"
+    ],
+    "grading_criteria": [
+      "说明炼神与养魂之别：锻铁与添薪",
+      "理解择暗星锤炼、以痛证光的行功次第",
+      "明白灵台不动是熬过魂痛的关键",
+      "知晓魂弱强修魂裂的凶险与三星门槛"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 75
+      }
+    ]
+  }
+}

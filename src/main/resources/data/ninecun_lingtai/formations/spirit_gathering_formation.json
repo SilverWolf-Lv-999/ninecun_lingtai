@@ -1,0 +1,16 @@
+{
+  "name": "聚灵阵",
+  "grade": 1,
+  "type": "spirit_gathering",
+  "energy_mode": "stored",
+  "flag_layout": [
+    { "angle": 0, "distance": 6, "material_tag": "ninecun_lingtai:flags/any" },
+    { "angle": 72, "distance": 6, "material_tag": "ninecun_lingtai:flags/any" },
+    { "angle": 144, "distance": 6, "material_tag": "ninecun_lingtai:flags/any" },
+    { "angle": 216, "distance": 6, "material_tag": "ninecun_lingtai:flags/any" },
+    { "angle": 288, "distance": 6, "material_tag": "ninecun_lingtai:flags/any" }
+  ],
+  "radius": 9,
+  "effects": { "gather_rate": 1.0 },
+  "requirements": { "minimum_cultivation": "qi_refining:3" }
+}

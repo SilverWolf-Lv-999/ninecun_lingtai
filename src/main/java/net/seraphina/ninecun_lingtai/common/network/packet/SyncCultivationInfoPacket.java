@@ -6,6 +6,7 @@ import net.seraphina.ninecun_lingtai.api.cultivation.CultivationRealm;
 import net.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
 import net.seraphina.ninecun_lingtai.api.element.ElementType;
 import net.seraphina.ninecun_lingtai.client.player.ClientCultivationInfoManager;
+import net.seraphina.ninecun_lingtai.common.aura.AuraQuality;
 import net.seraphina.ninecun_lingtai.common.lifespan.LifespanSnapshot;
 import net.seraphina.ninecun_lingtai.common.player.PlayerCultivationInfo;
 import net.minecraft.network.FriendlyByteBuf;
@@ -42,6 +43,9 @@ public record SyncCultivationInfoPacket(PlayerCultivationInfo cultivationInfo) {
         buffer.writeVarLong(cultivationInfo.lifespan().ageTicks());
         buffer.writeVarInt(cultivationInfo.lifespan().maximumLifespanYears());
         buffer.writeBoolean(cultivationInfo.lifespan().immortal());
+        buffer.writeVarInt(cultivationInfo.auraQuality()
+                .map(quality -> quality.ordinal() + 1)
+                .orElse(0));
     }
 
     public static SyncCultivationInfoPacket decode(FriendlyByteBuf buffer) {
@@ -75,12 +79,19 @@ public record SyncCultivationInfoPacket(PlayerCultivationInfo cultivationInfo) {
                 buffer.readVarInt(),
                 buffer.readBoolean()
         );
+        int auraQualityCode = buffer.readVarInt();
+        AuraQuality[] auraQualities = AuraQuality.values();
+        Optional<AuraQuality> auraQuality =
+                auraQualityCode >= 1 && auraQualityCode <= auraQualities.length
+                        ? Optional.of(auraQualities[auraQualityCode - 1])
+                        : Optional.empty();
         return new SyncCultivationInfoPacket(new PlayerCultivationInfo(
                 spiritualRoot,
                 soulStrength,
                 cultivationStage,
                 spiritualEnergy,
-                lifespan
+                lifespan,
+                auraQuality
         ));
     }
 

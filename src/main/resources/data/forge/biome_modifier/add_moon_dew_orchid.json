@@ -1,0 +1,6 @@
+{
+  "type": "forge:add_features",
+  "biomes": "minecraft:cherry_grove",
+  "features": "ninecun_lingtai:moon_dew_orchid",
+  "step": "vegetal_decoration"
+}

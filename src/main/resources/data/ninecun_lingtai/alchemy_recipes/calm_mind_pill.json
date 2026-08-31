@@ -62,6 +62,9 @@
     {
       "type": "proficiency_gain",
       "technique_proficiency": 15
+    },
+    {
+      "type": "resolve_qi_deviation"
     }
   ]
 }

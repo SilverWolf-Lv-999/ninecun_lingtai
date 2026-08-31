@@ -22,6 +22,7 @@ import net.seraphina.ninecun_lingtai.client.player.ClientShrinkEarthManager;
 import net.seraphina.ninecun_lingtai.client.player.ClientPushingMountainsManager;
 import net.seraphina.ninecun_lingtai.client.tribulation.ClientTribulationManager;
 import net.seraphina.ninecun_lingtai.client.player.ClientSoulRoamingManager;
+import net.seraphina.ninecun_lingtai.client.player.ClientSoulSenseManager;
 import net.seraphina.ninecun_lingtai.client.player.ClientSpellManager;
 import net.seraphina.ninecun_lingtai.client.player.ClientSwordFlightManager;
 import net.seraphina.ninecun_lingtai.client.player.ClientTechniqueManager;
@@ -44,6 +45,10 @@ import net.seraphina.ninecun_lingtai.common.entity.ability.PushingMountainsEntit
 import net.seraphina.ninecun_lingtai.client.tooltip.BookTooltipComponent;
 import net.seraphina.ninecun_lingtai.client.tooltip.FiveElementWheelTooltipComponent;
 import net.seraphina.ninecun_lingtai.client.utility.ItemTooltipUtility;
+import net.seraphina.ninecun_lingtai.client.utility.SoulSenseRenderUtility;
+import net.seraphina.ninecun_lingtai.client.player.ClientSoulInjuryData;
+import net.seraphina.ninecun_lingtai.client.screen.BreakthroughRitualHud;
+import net.seraphina.ninecun_lingtai.client.screen.SoulConstellationOverlay;
 import net.seraphina.ninecun_lingtai.client.utility.SpiritualEnergyHudRenderUtility;
 import net.seraphina.ninecun_lingtai.client.utility.SpiritualEnergyRenderUtility;
 import net.seraphina.ninecun_lingtai.utility.BookItemUtility;
@@ -119,6 +124,7 @@ public final class ClientForgeEventHandler {
             ClientBodyShieldManager.tick();
             ClientDefenseSpellManager.tick();
             ClientSoulRoamingManager.tick();
+            ClientSoulSenseManager.tick();
             ClientNotificationManager.tick();
             ClientTribulationManager.tick();
             ClientPushingMountainsManager.tick();
@@ -227,6 +233,7 @@ public final class ClientForgeEventHandler {
     @SubscribeEvent
     public static void onRenderLevelStage(RenderLevelStageEvent event) {
         SpiritualEnergyRenderUtility.render(event);
+        SoulSenseRenderUtility.render(event);
         BodyShieldRenderUtility.render(event);
         TribulationCloudRenderUtility.renderWorld(event);
         PushingMountainsRenderUtility.render(event);
@@ -257,6 +264,12 @@ public final class ClientForgeEventHandler {
         ClientSoulRoamingManager.renderBodyArrow(event);
         TribulationCloudRenderUtility.render(event);
         NotificationRenderUtility.render(event);
+        SoulConstellationOverlay.render(event);
+        BreakthroughRitualHud.render(
+                event.getGuiGraphics(),
+                event.getWindow().getGuiScaledWidth(),
+                event.getWindow().getGuiScaledHeight()
+        );
     }
 
     @SubscribeEvent
@@ -301,6 +314,8 @@ public final class ClientForgeEventHandler {
         ClientCultivationFeedbackManager.reset();
         ClientPlayerValueControlManager.reset();
         ClientSoulRoamingManager.reset();
+        ClientSoulSenseManager.reset();
+        ClientSoulInjuryData.reset();
         ClientPossessionManager.reset();
         ClientNotificationManager.reset();
         ClientTribulationManager.reset();

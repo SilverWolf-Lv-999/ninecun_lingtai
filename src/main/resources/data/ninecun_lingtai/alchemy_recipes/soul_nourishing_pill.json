@@ -1,0 +1,72 @@
+{
+  "name": "养魂丹",
+  "description": "三阶三品养魂丹方，滋养神魂、助长命宫星辉。",
+  "content": "魂药之炼，首忌烈火。阴魂泪至寒至阴，须以文火先融，紫晶研粉徐徐拌入，回响之屑最后方下——此物承深渊魂音，火烈则音散，音散则丹成死物。全程炉温不得过中火之半，宁慢毋急。丹成之时，丹面隐有星纹流转者为上品，服之如闻钟磬，神魂俱清。此丹滋补魂魄，然药力阴沉，服之过频，反凝魂成滞，慎之。",
+  "grade": {
+    "tier": 3,
+    "rank": 3
+  },
+  "allowed_realms": [
+    "golden_core",
+    "nascent_soul",
+    "spirit_transformation"
+  ],
+  "minimum_refining_realm": "golden_core",
+  "ingredients": {
+    "primary": {
+      "item": "minecraft:ghast_tear",
+      "count": 2
+    },
+    "secondary": [
+      {
+        "item": "minecraft:amethyst_shard",
+        "count": 4
+      },
+      {
+        "item": "minecraft:echo_shard",
+        "count": 1
+      }
+    ],
+    "auxiliary": [
+      {
+        "item": "minecraft:glow_berries",
+        "count": 4
+      },
+      {
+        "item": "minecraft:phantom_membrane",
+        "count": 2
+      }
+    ]
+  },
+  "output_item": "ninecun_lingtai:soul_nourishing_pill",
+  "output_count": 1,
+  "brewing_duration": 1200,
+  "element_profile": {
+    "primary_element": "water"
+  },
+  "heat_stages": [
+    {
+      "band": "gentle",
+      "portion": 0.45
+    },
+    {
+      "band": "medium",
+      "portion": 0.2
+    },
+    {
+      "band": "gentle",
+      "portion": 0.35
+    }
+  ],
+  "pill_toxin": 22,
+  "effects": [
+    {
+      "type": "soul_tempering",
+      "amount": 25
+    },
+    {
+      "type": "soul_injury_heal",
+      "amount": 20
+    }
+  ]
+}

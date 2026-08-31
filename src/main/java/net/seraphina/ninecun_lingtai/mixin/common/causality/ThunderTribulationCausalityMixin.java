@@ -34,7 +34,9 @@ public abstract class ThunderTribulationCausalityMixin {
         return transferTarget;
     }
 
-    @Inject(method = "tick", at = @At("HEAD"), remap = false)
+    // tick() 继承自原版 Entity，正式环境会被重混淆为 SRG 名（m_8119_），
+    // 必须让注解处理器生成 refmap 映射，不能 remap=false（否则正式包启动崩溃）。
+    @Inject(method = "tick", at = @At("HEAD"))
     private void ninecunLingtai$moveRedirectedTribulation(CallbackInfo callbackInfo) {
         if (this.thisIsRedirectedTribulationTargetId == null
                 || !((Object) this instanceof ThunderTribulationEntity lightning)

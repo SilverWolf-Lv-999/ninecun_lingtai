@@ -1,0 +1,42 @@
+{
+  "name": "寒冰锥",
+  "description": "凝水成冰、破空袭敌兼可迟滞敌手的三品法术。",
+  "content": "水性至柔，遇寒则刚。此术之要，在一个寒字：引水行灵力于掌上，先凝为露，再夺其温，露结为冰，冰聚成锥。凝锥之时，须存心如古井，心愈静，锥愈坚。掷锥伤敌尚在其次，妙在寒气入体，敌之气血为之一滞，手足迟缓，破绽自生。乘隙进击，一锥可抵三招。惟切记寒气伤己亦伤敌，凝锥之掌须以灵力护住经脉，否则未伤敌先僵己手。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "spell": {
+    "id": "ninecun_lingtai:ice_spike",
+    "category": "combat",
+    "grade": 3,
+    "base_cost": 5.0
+  },
+  "compatible_elements": ["water"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 3
+    },
+    "required_elements": ["water"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 65,
+    "key_concepts": [
+      "水性至柔遇寒则刚",
+      "先凝为露再夺其温",
+      "心愈静锥愈坚",
+      "寒气入体气血为滞",
+      "凝锥之掌须护经脉"
+    ],
+    "grading_criteria": [
+      "说明凝水夺温、化露成冰的行功次第",
+      "理解心静锥坚的心法要求",
+      "明白寒气迟滞敌手方是此术真意",
+      "知晓寒气反伤己手的防护法门"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 65
+      }
+    ]
+  }
+}

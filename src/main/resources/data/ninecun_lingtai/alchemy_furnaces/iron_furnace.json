@@ -1,0 +1,9 @@
+{
+  "block": "ninecun_lingtai:alchemy_furnace",
+  "heat_cap": 600,
+  "heat_decay_rate": 1.0,
+  "tolerance_bonus": 0.0,
+  "element": null,
+  "max_recipe_tier": 3,
+  "max_durability": 1000
+}

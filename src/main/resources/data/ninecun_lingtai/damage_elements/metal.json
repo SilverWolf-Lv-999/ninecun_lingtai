@@ -1,7 +1,8 @@
 {
   "damage_types": [
     "minecraft:falling_anvil",
-    "minecraft:generic"
+    "minecraft:generic",
+    "ninecun_lingtai:spell_metal"
   ],
   "element": "metal",
   "strength": 1.75

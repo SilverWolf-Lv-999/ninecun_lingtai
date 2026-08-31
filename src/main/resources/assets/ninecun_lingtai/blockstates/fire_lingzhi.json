@@ -1,19 +1,20 @@
 {
-  "variants": {
-    "facing=south": {
-      "model": "ninecun_lingtai:block/fire_lingzhi",
-      "y": 180
+  "multipart": [
+    {
+      "when": { "facing": "north" },
+      "apply": { "model": "ninecun_lingtai:block/fire_lingzhi" }
     },
-    "facing=west": {
-      "model": "ninecun_lingtai:block/fire_lingzhi",
-      "y": 270
+    {
+      "when": { "facing": "south" },
+      "apply": { "model": "ninecun_lingtai:block/fire_lingzhi", "y": 180 }
     },
-    "facing=north": {
-      "model": "ninecun_lingtai:block/fire_lingzhi"
+    {
+      "when": { "facing": "west" },
+      "apply": { "model": "ninecun_lingtai:block/fire_lingzhi", "y": 270 }
     },
-    "facing=east": {
-      "model": "ninecun_lingtai:block/fire_lingzhi",
-      "y": 90
+    {
+      "when": { "facing": "east" },
+      "apply": { "model": "ninecun_lingtai:block/fire_lingzhi", "y": 90 }
     }
-  }
+  ]
 }

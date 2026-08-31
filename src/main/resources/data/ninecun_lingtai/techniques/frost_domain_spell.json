@@ -1,0 +1,42 @@
+{
+  "name": "冰封领域",
+  "description": "寒气外放冻结方圆之地的六品水法，困杀群敌之术。",
+  "content": "水法之极，不在一锥一箭，而在化周天为寒狱。此术行功，玄水灵力自丹田外放，不凝形，不聚锥，只化作至寒之气均匀铺开，以我为心，方圆数丈，天地骤寒。入此领域者，气血凝滞，手足如坠冰窟，行动迟缓如陷泥沼，任其修为通天，亦要打个折扣。领域之内，我如鱼得水，敌似困兽。此术妙在以静制动，不求速杀，耗也耗死敌手。惟撑持领域须灵力源源不断，一旦灵力见底，寒气顷刻消散，反受其乱。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "spell": {
+    "id": "ninecun_lingtai:frost_domain",
+    "category": "combat",
+    "grade": 6,
+    "base_cost": 18.0
+  },
+  "compatible_elements": ["water"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "golden_core",
+      "layer": 1
+    },
+    "required_elements": ["water"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 75,
+    "key_concepts": [
+      "化周天为寒狱",
+      "至寒之气以我为心铺开",
+      "入域者气血凝滞行动迟缓",
+      "以静制动耗死敌手",
+      "灵力见底寒气顷刻消散"
+    ],
+    "grading_criteria": [
+      "说明领域之术与凝形之术的分别",
+      "理解寒气外放、以我为心的行功方式",
+      "明白迟滞群敌、以静制动的用途",
+      "知晓灵力续航是领域存亡的命脉"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 75
+      }
+    ]
+  }
+}

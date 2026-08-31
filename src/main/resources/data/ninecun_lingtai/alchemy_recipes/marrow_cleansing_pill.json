@@ -1,0 +1,83 @@
+{
+  "name": "洗髓丹",
+  "description": "四阶一品涤脏丹方，地髓参入药，洗髓伐毛，涤荡丹毒。",
+  "content": "地髓参得土行厚德，先以中火烘出参香，再转武火逼出髓浆——武火一段火候极短，稍纵即衰。紫晶粉须在武火正盛时投下，晶粉炸开裹住浊毒，随药力排出体外。丹成微苦，涤荡经年积毒最是对症。",
+  "grade": {
+    "tier": 4,
+    "rank": 1
+  },
+  "allowed_realms": [
+    "nascent_soul",
+    "spirit_transformation"
+  ],
+  "minimum_refining_realm": "nascent_soul",
+  "ingredients": {
+    "primary": {
+      "item": "ninecun_lingtai:earth_marrow_ginseng",
+      "count": 2
+    },
+    "secondary": [
+      {
+        "item": "minecraft:amethyst_shard",
+        "count": 4
+      },
+      {
+        "item": "minecraft:nether_wart",
+        "count": 8
+      }
+    ],
+    "auxiliary": [
+      {
+        "item": "minecraft:bone_meal",
+        "count": 8
+      },
+      {
+        "item": "minecraft:honeycomb",
+        "count": 4
+      }
+    ]
+  },
+  "output_item": "ninecun_lingtai:marrow_cleansing_pill",
+  "output_count": 1,
+  "brewing_duration": 1600,
+  "element_profile": {
+    "primary_element": "earth"
+  },
+  "heat_stages": [
+    {
+      "band": "medium",
+      "portion": 0.4
+    },
+    {
+      "band": "fierce",
+      "portion": 0.2
+    },
+    {
+      "band": "medium",
+      "portion": 0.4
+    }
+  ],
+  "feed_plan": [
+    {
+      "slot": "secondary_1",
+      "stage": 2,
+      "window_start": 0.1,
+      "ideal": 0.5,
+      "window_end": 0.9
+    }
+  ],
+  "pill_toxin": 8,
+  "effects": [
+    {
+      "type": "toxin_cleanse",
+      "amount": 120
+    },
+    {
+      "type": "heal",
+      "max_health_fraction": 0.15,
+      "flat_healing": 4.0,
+      "regeneration_duration": 120,
+      "regeneration_amplifier": 0
+    }
+  ]
+}

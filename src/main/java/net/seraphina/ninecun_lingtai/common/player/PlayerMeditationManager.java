@@ -7,14 +7,21 @@ import net.seraphina.ninecun_lingtai.api.element.ElementType;
 import net.seraphina.ninecun_lingtai.api.element.FiveElementValues;
 import net.seraphina.ninecun_lingtai.api.technique.TechniqueDefinition;
 import net.seraphina.ninecun_lingtai.api.technique.TechniqueMasteryStage;
+import net.seraphina.ninecun_lingtai.common.aura.SpiritualAuraManager;
+import net.seraphina.ninecun_lingtai.common.behavior.PlayerBehaviorLedgerData;
+import net.seraphina.ninecun_lingtai.common.breakthrough.BreakthroughRitualManager;
 import net.seraphina.ninecun_lingtai.common.config.CommonConfig;
 import net.seraphina.ninecun_lingtai.common.data.ElementEnvironmentManager;
+import net.seraphina.ninecun_lingtai.common.formation.FormationApi;
 import net.seraphina.ninecun_lingtai.common.data.TechniqueManager;
+import net.seraphina.ninecun_lingtai.common.inner_demon.MindTrialManager;
+import net.seraphina.ninecun_lingtai.common.insight.InsightEffectUtility;
 import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import net.seraphina.ninecun_lingtai.common.ascension.AscensionManager;
 import net.seraphina.ninecun_lingtai.common.tribulation.TribulationManager;
 import net.seraphina.ninecun_lingtai.utility.CultivationDefenseUtility;
 import net.seraphina.ninecun_lingtai.utility.CultivationUtility;
+import net.seraphina.ninecun_lingtai.utility.SoulTemperingUtility;
 import net.seraphina.ninecun_lingtai.utility.SpiritualEnergyUtility;
 import net.seraphina.ninecun_lingtai.utility.SpiritualStoneUtility;
 import net.seraphina.ninecun_lingtai.utility.TechniqueUtility;
@@ -37,6 +44,10 @@ import java.util.UUID;
 public final class PlayerMeditationManager {
     private static final int ABSORPTION_INTERVAL_TICKS = 20;
     private static final int PROFICIENCY_INTERVAL_TICKS = 1200;
+    /** 药执心障化解：连续打坐 30 分钟且期间不服丹（心魔即己接线清单第 10 条）。 */
+    private static final int PILL_BOND_RESOLVE_TICKS = 20 * 60 * 30;
+    /** 药执化解达标后的复查间隔（防每 tick 反复读账本 NBT）。 */
+    private static final int PILL_BOND_RESOLVE_CHECK_INTERVAL_TICKS = 100;
     private static final Map<UUID, MeditationSession> MEDITATING_PLAYERS = new HashMap<>();
 
     public static boolean startMeditating(ServerPlayer player) {
@@ -101,6 +112,11 @@ public final class PlayerMeditationManager {
         return startSpecialMeditating(player);
     }
 
+    /** 引灵仪式盘坐：同天劫盘坐，只维持姿态不吸灵不练功（破境概率化 §5.1）。 */
+    public static boolean startRitualMeditating(ServerPlayer player) {
+        return startSpecialMeditating(player);
+    }
+
     private static boolean startSpecialMeditating(ServerPlayer player) {
         MeditationSession existingSession = MEDITATING_PLAYERS.get(player.getUUID());
         if (existingSession != null) {
@@ -123,7 +139,10 @@ public final class PlayerMeditationManager {
     }
 
     public static void stopMeditating(ServerPlayer player) {
-        if (TribulationManager.isInTribulation(player) || AscensionManager.isInAscension(player)) {
+        if (TribulationManager.isInTribulation(player)
+                || AscensionManager.isInAscension(player)
+                || BreakthroughRitualManager.isInRitual(player)) {
+            // 仪式/渡劫中的姿态由各自 manager 接管，退出走 finishXxxMeditating 或主动取消包。
             syncStateToTrackingAndSelf(player, true);
             return;
         }
@@ -135,6 +154,11 @@ public final class PlayerMeditationManager {
     }
 
     public static void finishAscensionMeditating(ServerPlayer player) {
+        stopMeditatingInternal(player);
+    }
+
+    /** 仪式结束（成/败/中断/取消）后的姿态清理，防姿态锁残留（R4）。 */
+    public static void finishRitualMeditating(ServerPlayer player) {
         stopMeditatingInternal(player);
     }
 
@@ -182,13 +206,20 @@ public final class PlayerMeditationManager {
                 AscensionManager.fail(player);
                 return;
             }
+            if (BreakthroughRitualManager.isInRitual(player)) {
+                BreakthroughRitualManager.interrupt(player, "meditation_broken");
+                return;
+            }
             stopMeditating(player);
             return;
         }
         player.stopUsingItem();
         stopMovement(player);
         lockRotation(player);
-        if (TribulationManager.isInTribulation(player) || AscensionManager.isInAscension(player)) {
+        tickPillFreeMeditation(player, session);
+        if (TribulationManager.isInTribulation(player)
+                || AscensionManager.isInAscension(player)
+                || BreakthroughRitualManager.isInRitual(player)) {
             if (player.tickCount % ABSORPTION_INTERVAL_TICKS == 0) {
                 syncStateToTrackingAndSelf(player, true);
             }
@@ -222,6 +253,34 @@ public final class PlayerMeditationManager {
             }
             repairDefenseResource(player);
             syncStateToTrackingAndSelf(player, true);
+        }
+    }
+
+    /**
+     * 药执心障化解计时：本次打坐连续满 30 分钟且期间未服丹即化解。
+     * 服丹（{@link #onPillConsumed}）与退出打坐都会清零计时。
+     */
+    private static void tickPillFreeMeditation(ServerPlayer player, MeditationSession session) {
+        int pillFreeTicks = session.incrementPillFreeTicks();
+        if (pillFreeTicks < PILL_BOND_RESOLVE_TICKS
+                || pillFreeTicks % PILL_BOND_RESOLVE_CHECK_INTERVAL_TICKS != 0) {
+            return;
+        }
+        if (PlayerBehaviorLedgerData.hasActiveMindScar(
+                player,
+                PlayerBehaviorLedgerData.MindScarIds.PILL_BOND)) {
+            MindTrialManager.resolveMindScar(
+                    player,
+                    PlayerBehaviorLedgerData.MindScarIds.PILL_BOND
+            );
+        }
+    }
+
+    /** 服丹埋点（PillItem.consumePill 调用）：打坐中服丹则药执化解计时归零。 */
+    public static void onPillConsumed(ServerPlayer player) {
+        MeditationSession session = MEDITATING_PLAYERS.get(player.getUUID());
+        if (session != null) {
+            session.resetPillFreeTicks();
         }
     }
 
@@ -335,10 +394,39 @@ public final class PlayerMeditationManager {
         if (absorptionRates.isEmpty()) {
             return;
         }
+        // 灵气生态：吸天地灵气从灵域账本扣账（吸灵石不走此路），存量不足按比例缩水，
+        // 耗尽归零。扣账与提示合一（drainMeditationTick 每 20 tick 恰被调一次）。
+        SpiritualAuraManager.MeditationDrainResult auraDrain = SpiritualAuraManager.drainMeditationTick(
+                player.serverLevel(),
+                player.blockPosition()
+        );
+        if (auraDrain.absorptionFactor() <= 0.0D) {
+            player.displayClientMessage(
+                    Component.translatableWithFallback(
+                            "message.ninecun_lingtai.aura_exhausted",
+                            "此地灵气已竭，须易地另寻清灵之所"
+                    ),
+                    true
+            );
+            return;
+        }
+        if (auraDrain.absorptionFactor() < 1.0D) {
+            player.displayClientMessage(
+                    Component.translatableWithFallback(
+                            "message.ninecun_lingtai.aura_reserve_low",
+                            "此地灵气渐衰，吸纳愈发迟滞"
+                    ),
+                    true
+            );
+        }
         double baseAbsorption = CommonConfig.MEDITATION_BASE_ABSORPTION_PER_SECOND.get()
                 * breathingMultiplier
                 * getRealmAbsorptionMultiplier(player)
-                * PlayerPillToxinData.getAbsorptionMultiplier(player);
+                * PlayerPillToxinData.getAbsorptionMultiplier(player)
+                * getInsightAbsorptionMultiplier(player)
+                * auraDrain.absorptionFactor()
+                // 阵法：聚灵阵域内打坐乘区（域外恒 1.0）。
+                * FormationApi.getMeditationMultiplier(player.serverLevel(), player.blockPosition());
         Map<ElementType, Double> absorbableEnergy = calculateAbsorbableEnergy(
                 player,
                 absorptionRates,
@@ -378,7 +466,8 @@ public final class PlayerMeditationManager {
                 * breathingMultiplier
                 * getRealmAbsorptionMultiplier(player)
                 * SpiritualStoneUtility.getAbsorptionMultiplier(spiritualStone)
-                * PlayerPillToxinData.getAbsorptionMultiplier(player);
+                * PlayerPillToxinData.getAbsorptionMultiplier(player)
+                * getInsightAbsorptionMultiplier(player);
         Map<ElementType, Double> absorbableEnergy = calculateAbsorbableEnergy(
                 player,
                 absorptionRates,
@@ -405,6 +494,14 @@ public final class PlayerMeditationManager {
             );
         }
         tryAdvanceLayer(player);
+    }
+
+    /** 悟道印记"灵息绵长"等打坐吸收加成的单点乘区（R9：经 InsightEffectUtility 集中读取）。 */
+    private static double getInsightAbsorptionMultiplier(ServerPlayer player) {
+        return 1.0D + InsightEffectUtility.query(
+                player,
+                InsightEffectUtility.EFFECT_MEDITATION_ABSORPTION_BONUS
+        );
     }
 
     private static Map<ElementType, Double> calculateAbsorbableEnergy(
@@ -513,6 +610,23 @@ public final class PlayerMeditationManager {
                 ),
                 true
         );
+        grantSoulTempering(player, techniqueId);
+    }
+
+    private static void grantSoulTempering(ServerPlayer player, ResourceLocation techniqueId) {
+        Optional<TechniqueDefinition> technique = TechniqueManager.INSTANCE.getTechnique(techniqueId);
+        if (technique.isEmpty()) {
+            return;
+        }
+        double temperingPerMinute = SoulTemperingUtility.getTemperingPerMinute(technique.get());
+        if (temperingPerMinute <= 0.0D) {
+            return;
+        }
+        double masteryEfficiency = PlayerTechniqueData.getTechnique(player, techniqueId)
+                .flatMap(progress -> TechniqueMasteryStage.fromMastery(progress.mastery()))
+                .orElse(TechniqueMasteryStage.ENTRY)
+                .getEfficiency();
+        SoulTemperingUtility.addProgress(player, temperingPerMinute * masteryEfficiency);
     }
 
     private static String getTechniqueName(ResourceLocation techniqueId) {
@@ -551,6 +665,7 @@ public final class PlayerMeditationManager {
         if (!meditating
                 || TribulationManager.isInTribulation(player)
                 || AscensionManager.isInAscension(player)
+                || BreakthroughRitualManager.isInRitual(player)
                 || !isCultivatingRealm(player)
                 || isAbsorbingFromHeldSpiritualStone(player)) {
             return MeditationSyncData.EMPTY;
@@ -602,6 +717,8 @@ public final class PlayerMeditationManager {
         private boolean cultivatingRealm;
         private int techniqueTicks;
         private long gainedProficiency;
+        /** 本次打坐连续未服丹的 tick 数（药执心障化解计时）。 */
+        private int pillFreeTicks;
 
         private MeditationSession(
                 MeditationRotation rotation,
@@ -645,6 +762,15 @@ public final class PlayerMeditationManager {
 
         private void resetTechniqueTicks() {
             this.techniqueTicks = 0;
+        }
+
+        private int incrementPillFreeTicks() {
+            this.pillFreeTicks++;
+            return this.pillFreeTicks;
+        }
+
+        private void resetPillFreeTicks() {
+            this.pillFreeTicks = 0;
         }
 
         private long gainedProficiency() {

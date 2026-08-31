@@ -6,7 +6,8 @@
     "minecraft:fly_into_wall",
     "minecraft:stalagmite",
     "minecraft:falling_block",
-    "minecraft:falling_stalactite"
+    "minecraft:falling_stalactite",
+    "ninecun_lingtai:spell_earth"
   ],
   "element": "earth",
   "strength": 1.0

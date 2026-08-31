@@ -1,7 +1,8 @@
 {
   "damage_types": [
     "minecraft:drown",
-    "minecraft:dry_out"
+    "minecraft:dry_out",
+    "ninecun_lingtai:spell_water"
   ],
   "element": "water",
   "strength": 1.0

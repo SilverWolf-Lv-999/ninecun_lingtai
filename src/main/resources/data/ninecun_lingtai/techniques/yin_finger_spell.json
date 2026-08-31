@@ -1,0 +1,42 @@
+{
+  "name": "阴煞指",
+  "description": "以阴气蚀敌生机，伤后绵绵不绝的四品法术。",
+  "content": "阴阳之道，阳主生发，阴主收杀。此指法专取至阴一脉：行功之时，收敛周身阳气，引阴行灵力汇于中指，指色转青，隐有黑气缭绕，隔空一点，阴煞之气透体而入，直蚀生机。中者初觉不过微寒，顷刻之间寒气自伤处蔓延，气血日衰，绵绵不绝，寻常丹药难解。此术阴损，伤敌于无形，正道中人多不屑用之，习者自度。且阴气聚指之时最忌心浮，心浮则阴气反卷，蚀己经脉。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "spell": {
+    "id": "ninecun_lingtai:yin_finger",
+    "category": "combat",
+    "grade": 4,
+    "base_cost": 7.0
+  },
+  "compatible_elements": ["yin_yang"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "foundation_establishment",
+      "layer": 1
+    },
+    "required_elements": ["yin_yang"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 70,
+    "key_concepts": [
+      "阳主生发阴主收杀",
+      "收敛阳气引阴汇指",
+      "阴煞透体直蚀生机",
+      "寒气蔓延气血日衰",
+      "心浮则阴气反卷蚀己"
+    ],
+    "grading_criteria": [
+      "说明专取至阴、收敛阳气的行功前提",
+      "理解阴气蚀体、伤后绵延的伤敌之理",
+      "明白此术阴损、用之自度的品性之辨",
+      "知晓心浮反卷、蚀己经脉的凶险"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 70
+      }
+    ]
+  }
+}

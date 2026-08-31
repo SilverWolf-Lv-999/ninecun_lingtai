@@ -7,9 +7,15 @@ import net.seraphina.ninecun_lingtai.common.spell.GreatCausalitySpell;
 import net.seraphina.ninecun_lingtai.common.spell.ShrinkEarthSpell;
 import net.seraphina.ninecun_lingtai.common.spell.SwiftWindSpell;
 import net.seraphina.ninecun_lingtai.common.spell.SwordFlightSpell;
+import net.seraphina.ninecun_lingtai.common.spell.attack.AttackSpellKind;
+import net.seraphina.ninecun_lingtai.common.spell.attack.BoltAttackSpell;
+import net.seraphina.ninecun_lingtai.common.spell.attack.BurstAttackSpell;
+import net.seraphina.ninecun_lingtai.common.spell.attack.StrikeAttackSpell;
 import net.seraphina.ninecun_lingtai.common.spell.defense.BodyDefenseSpell;
 import net.seraphina.ninecun_lingtai.common.spell.defense.DefenseSpellKind;
 import net.seraphina.ninecun_lingtai.common.spell.defense.GuardianDefenseSpell;
+import net.seraphina.ninecun_lingtai.common.spell.soul.SoulPierceSpell;
+import net.seraphina.ninecun_lingtai.common.spell.soul.SoulShockSpell;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -91,6 +97,26 @@ public final class ModSpells {
             DefenseSpellKind.FOUR_PHASE_GUARDIAN
     );
 
+    public static final RegistryObject<Spell> METAL_BLADE = registerAttack(AttackSpellKind.METAL_BLADE);
+    public static final RegistryObject<Spell> WOOD_BIND = registerAttack(AttackSpellKind.WOOD_BIND);
+    public static final RegistryObject<Spell> ICE_SPIKE = registerAttack(AttackSpellKind.ICE_SPIKE);
+    public static final RegistryObject<Spell> YIN_FINGER = registerAttack(AttackSpellKind.YIN_FINGER);
+    public static final RegistryObject<Spell> EARTH_SPIKE = registerAttack(AttackSpellKind.EARTH_SPIKE);
+    public static final RegistryObject<Spell> PALM_THUNDER = registerAttack(AttackSpellKind.PALM_THUNDER);
+    public static final RegistryObject<Spell> THUNDER_FALL = registerAttack(AttackSpellKind.THUNDER_FALL);
+    public static final RegistryObject<Spell> FLAME_SEA = registerAttack(AttackSpellKind.FLAME_SEA);
+    public static final RegistryObject<Spell> FROST_DOMAIN = registerAttack(AttackSpellKind.FROST_DOMAIN);
+    public static final RegistryObject<Spell> CHAOS_REND = registerAttack(AttackSpellKind.CHAOS_REND);
+
+    public static final RegistryObject<Spell> SOUL_PIERCE = SPELLS.register(
+            "soul_pierce",
+            SoulPierceSpell::new
+    );
+    public static final RegistryObject<Spell> SOUL_SHOCK = SPELLS.register(
+            "soul_shock",
+            SoulShockSpell::new
+    );
+
     public static void register(IEventBus modEventBus) {
         SPELLS.register(modEventBus);
     }
@@ -101,5 +127,13 @@ public final class ModSpells {
 
     private static RegistryObject<Spell> registerGuardian(DefenseSpellKind kind) {
         return SPELLS.register(kind.getSerializedName(), () -> new GuardianDefenseSpell(kind));
+    }
+
+    private static RegistryObject<Spell> registerAttack(AttackSpellKind kind) {
+        return SPELLS.register(kind.getSerializedName(), () -> switch (kind.getShape()) {
+            case BOLT -> new BoltAttackSpell(kind);
+            case STRIKE -> new StrikeAttackSpell(kind);
+            case BURST -> new BurstAttackSpell(kind);
+        });
     }
 }

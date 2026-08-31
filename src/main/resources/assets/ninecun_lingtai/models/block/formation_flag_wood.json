@@ -1,0 +1,7 @@
+{
+  "parent": "ninecun_lingtai:block/formation_flag_base",
+  "textures": {
+    "pole": "minecraft:block/stripped_spruce_log",
+    "banner": "minecraft:block/green_wool"
+  }
+}

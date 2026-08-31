@@ -1,6 +1,8 @@
 package net.seraphina.ninecun_lingtai.common.registry;
 
 import net.seraphina.ninecun_lingtai.ModMain;
+import net.seraphina.ninecun_lingtai.common.entity.MindDemonEntity;
+import net.seraphina.ninecun_lingtai.common.entity.MortalBodyEntity;
 import net.seraphina.ninecun_lingtai.common.entity.SoulEntity;
 import net.seraphina.ninecun_lingtai.common.entity.ability.PushingMountainsCollisionEntity;
 import net.seraphina.ninecun_lingtai.common.entity.ability.PushingMountainsEntity;
@@ -92,6 +94,26 @@ public final class ModEntityTypes {
                     .clientTrackingRange(96)
                     .updateInterval(3)
                     .build("test_cloud_entity")
+    );
+
+    public static final RegistryObject<EntityType<MindDemonEntity>> MIND_DEMON = ENTITY_TYPES.register(
+            "mind_demon",
+            () -> EntityType.Builder
+                    .of(MindDemonEntity::new, MobCategory.MISC)
+                    .sized(0.6F, 1.8F)
+                    .clientTrackingRange(64)
+                    .updateInterval(1)
+                    .build("mind_demon")
+    );
+
+    public static final RegistryObject<EntityType<MortalBodyEntity>> MORTAL_BODY = ENTITY_TYPES.register(
+            "mortal_body",
+            () -> EntityType.Builder
+                    .of(MortalBodyEntity::new, MobCategory.MISC)
+                    .sized(0.6F, 1.5F)
+                    .clientTrackingRange(64)
+                    .updateInterval(2)
+                    .build("mortal_body")
     );
 
     public static void register(IEventBus modEventBus) {

@@ -1,0 +1,10 @@
+{
+  "phase": "reveal",
+  "conditions": {
+    "min_soul_pill_uses": 5
+  },
+  "lines": [
+    "message.ninecun_lingtai.demon_line.pill_bond_1",
+    "message.ninecun_lingtai.demon_line.pill_bond_2"
+  ]
+}

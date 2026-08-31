@@ -7,6 +7,7 @@ import net.seraphina.ninecun_lingtai.common.player.PlayerSoulRoamingManager;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.item.ItemTossEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
@@ -120,6 +121,7 @@ public final class PlayerSoulRoamingEventHandler {
     @SubscribeEvent
     public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
+            PlayerSoulRoamingManager.onPlayerLoggedIn(player);
             PlayerPossessionManager.onPlayerLoggedIn(player);
             PlayerSoulRoamingManager.syncState(player);
             PlayerPossessionManager.syncState(player);
@@ -135,11 +137,22 @@ public final class PlayerSoulRoamingEventHandler {
         }
     }
 
+    /** 登出走 onPlayerLoggedOut 而非 cleanup：关服断连要挂起会话而不是解除。 */
     @SubscribeEvent
     public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
-            PlayerSoulRoamingManager.cleanup(player);
-            PlayerPossessionManager.cleanup(player);
+            PlayerSoulRoamingManager.onPlayerLoggedOut(player);
+            PlayerPossessionManager.onPlayerLoggedOut(player);
+        }
+    }
+
+    /** 区块从盘上载回魂体时交由管理器裁决：重绑挂起会话或清除孤魂。 */
+    @SubscribeEvent
+    public static void onEntityJoinLevel(EntityJoinLevelEvent event) {
+        if (!event.getLevel().isClientSide()
+                && event.loadedFromDisk()
+                && event.getEntity() instanceof SoulEntity soul) {
+            PlayerSoulRoamingManager.onSoulLoaded(soul);
         }
     }
 

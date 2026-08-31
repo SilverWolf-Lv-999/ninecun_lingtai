@@ -1,0 +1,42 @@
+{
+  "name": "掌心雷",
+  "description": "金木相激、引天雷落于指掌之间的四品雷法。",
+  "content": "雷者，天地阳气激荡而生。凡修欲驭雷，须借五行相激：金气肃杀为砧，木气生发为薪，二气于掌心相搏相磨，摩荡生电，蓄而不发，是为掌心蓄雷。发雷之时，掌心向敌，心念一动，霹雳自掌中跃出，直落敌顶，声震四野。雷法刚猛，为诸法术之冠，然二气相激之际掌心剧痛如灼，蓄雷愈久痛愈烈，故出手须果决，迟疑半分，雷反噬掌。习此法者，金木二根缺一不可。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "spell": {
+    "id": "ninecun_lingtai:palm_thunder",
+    "category": "combat",
+    "grade": 4,
+    "base_cost": 8.0
+  },
+  "compatible_elements": ["metal", "wood"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "foundation_establishment",
+      "layer": 1
+    },
+    "required_elements": ["metal", "wood"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 70,
+    "key_concepts": [
+      "雷者阳气激荡而生",
+      "金气为砧木气为薪",
+      "二气相搏摩荡生电",
+      "出手须果决迟疑雷反噬掌",
+      "金木二根缺一不可"
+    ],
+    "grading_criteria": [
+      "说明借金木相激生雷的成雷之理",
+      "理解掌心蓄雷、心念发雷的行功次第",
+      "明白蓄久愈痛、果决出手的火候",
+      "知晓迟疑反噬与双根门槛"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 70
+      }
+    ]
+  }
+}

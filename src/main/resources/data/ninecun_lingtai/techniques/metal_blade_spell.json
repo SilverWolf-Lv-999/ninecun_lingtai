@@ -1,0 +1,42 @@
+{
+  "name": "庚金刃",
+  "description": "凝金气为无形飞刃，隔空斩敌的三品法术。",
+  "content": "庚金主杀伐，其气至锐。行功之时，引金行灵力聚于指尖，以意锻之，如百炼成钢，凝成一线寒芒。出手之际，屈指一弹，刃随目走，目之所注，刃之所至。此术胜在迅捷无形，敌未闻风声，刃已加身。然金气贵凝不贵散，指尖之力若有一丝涣散，飞刃便钝如朽木。故习此术者，先练目力，再练指劲，目定而后刃发，百步之内可断金石。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "spell": {
+    "id": "ninecun_lingtai:metal_blade",
+    "category": "combat",
+    "grade": 3,
+    "base_cost": 5.0
+  },
+  "compatible_elements": ["metal"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 3
+    },
+    "required_elements": ["metal"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 65,
+    "key_concepts": [
+      "庚金主杀伐其气至锐",
+      "引金行灵力聚于指尖以意锻之",
+      "目之所注刃之所至",
+      "金气贵凝不贵散",
+      "先练目力再练指劲"
+    ],
+    "grading_criteria": [
+      "说明金气锐利、以凝聚为要的特性",
+      "理解聚气指尖、以意锻刃的行功方式",
+      "明白目定刃发、以目导刃的出手法门",
+      "知晓气散刃钝的失手缘由"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 65
+      }
+    ]
+  }
+}

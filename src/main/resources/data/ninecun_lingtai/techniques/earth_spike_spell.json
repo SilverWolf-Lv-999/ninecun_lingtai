@@ -1,0 +1,42 @@
+{
+  "name": "崩地刺",
+  "description": "催动地气自敌足下暴起石刺的三品法术。",
+  "content": "大地厚重，藏锋于内。此术借地为兵：行功之时，一足踏实，土行灵力沿足心贯入地脉，循地而行，直抵敌之立足处，猛然上催，地面崩裂，石刺暴起，敌自足底受创，防不胜防。此术之妙在于避开敌之耳目，灵力行于地下，无声无形，起刺之前敌绝难察觉。惟敌若腾空离地，此术便无所施其技，故常与困缚之术相辅而行。踏地一足务须站稳，足浮则力散，地刺软如泥塑。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "spell": {
+    "id": "ninecun_lingtai:earth_spike",
+    "category": "combat",
+    "grade": 3,
+    "base_cost": 5.5
+  },
+  "compatible_elements": ["earth"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 3
+    },
+    "required_elements": ["earth"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 65,
+    "key_concepts": [
+      "借地为兵藏锋于内",
+      "灵力沿足心贯入地脉",
+      "循地而行无声无形",
+      "敌若腾空此术无所施技",
+      "足浮则力散"
+    ],
+    "grading_criteria": [
+      "说明灵力入地、循脉催刺的行功路线",
+      "理解地下行气、出其不意的杀着所在",
+      "明白腾空之敌不受此术所制",
+      "知晓踏地须稳、足浮力散的关窍"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 65
+      }
+    ]
+  }
+}

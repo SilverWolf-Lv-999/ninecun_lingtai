@@ -4,7 +4,8 @@
     "minecraft:starve",
     "minecraft:sweet_berry_bush",
     "minecraft:sting",
-    "minecraft:thorns"
+    "minecraft:thorns",
+    "ninecun_lingtai:spell_wood"
   ],
   "element": "wood",
   "strength": 1.0

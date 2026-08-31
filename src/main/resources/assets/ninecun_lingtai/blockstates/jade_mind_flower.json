@@ -1,0 +1,20 @@
+{
+  "multipart": [
+    {
+      "when": { "facing": "north" },
+      "apply": { "model": "ninecun_lingtai:block/jade_mind_flower" }
+    },
+    {
+      "when": { "facing": "south" },
+      "apply": { "model": "ninecun_lingtai:block/jade_mind_flower", "y": 180 }
+    },
+    {
+      "when": { "facing": "west" },
+      "apply": { "model": "ninecun_lingtai:block/jade_mind_flower", "y": 270 }
+    },
+    {
+      "when": { "facing": "east" },
+      "apply": { "model": "ninecun_lingtai:block/jade_mind_flower", "y": 90 }
+    }
+  ]
+}

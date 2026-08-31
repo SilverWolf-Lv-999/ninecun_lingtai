@@ -1,0 +1,9 @@
+{
+  "block": "ninecun_lingtai:dark_crystal_alchemy_furnace",
+  "heat_cap": 800,
+  "heat_decay_rate": 0.7,
+  "tolerance_bonus": 0.06,
+  "element": "earth",
+  "max_recipe_tier": 7,
+  "max_durability": 3000
+}

@@ -1,0 +1,11 @@
+{
+  "phase": "reveal",
+  "conditions": {
+    "min_kills_total": 20
+  },
+  "lines": [
+    "message.ninecun_lingtai.demon_line.butcher_1",
+    "message.ninecun_lingtai.demon_line.butcher_2",
+    "message.ninecun_lingtai.demon_line.butcher_3"
+  ]
+}

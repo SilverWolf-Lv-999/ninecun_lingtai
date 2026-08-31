@@ -18,7 +18,14 @@ public final class ModBlockEntityTypes {
             BLOCK_ENTITY_TYPES.register(
                     "alchemy_furnace",
                     () -> BlockEntityType.Builder
-                            .of(AlchemyFurnaceBlockEntity::new, ModBlocks.ALCHEMY_FURNACE.get())
+                            .of(
+                                    AlchemyFurnaceBlockEntity::new,
+                                    ModBlocks.ALCHEMY_FURNACE.get(),
+                                    ModBlocks.RED_COPPER_ALCHEMY_FURNACE.get(),
+                                    ModBlocks.COLD_JADE_ALCHEMY_FURNACE.get(),
+                                    ModBlocks.DARK_CRYSTAL_ALCHEMY_FURNACE.get(),
+                                    ModBlocks.NINE_DRAGON_ALCHEMY_FURNACE.get()
+                            )
                             .build(null)
             );
 

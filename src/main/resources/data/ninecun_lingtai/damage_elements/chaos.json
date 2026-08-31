@@ -2,7 +2,8 @@
   "damage_types": [
     "minecraft:fell_out_of_world",
     "minecraft:outside_border",
-    "minecraft:generic_kill"
+    "minecraft:generic_kill",
+    "ninecun_lingtai:spell_chaos"
   ],
   "element": "chaos",
   "strength": 3.0

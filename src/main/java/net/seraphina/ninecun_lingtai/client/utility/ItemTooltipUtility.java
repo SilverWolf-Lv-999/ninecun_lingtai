@@ -122,7 +122,11 @@ public final class ItemTooltipUtility {
         if (item == ModItems.DEEPSLATE_SPIRITUAL_STONE_ORE.get()) {
             return Optional.of(ItemFontTheme.of(ItemFontStyle.DEEPSLATE_SPIRITUAL_STONE_ORE));
         }
-        if (item == ModItems.ALCHEMY_FURNACE.get()) {
+        if (item == ModItems.ALCHEMY_FURNACE.get()
+                || item == ModItems.RED_COPPER_ALCHEMY_FURNACE.get()
+                || item == ModItems.COLD_JADE_ALCHEMY_FURNACE.get()
+                || item == ModItems.DARK_CRYSTAL_ALCHEMY_FURNACE.get()
+                || item == ModItems.NINE_DRAGON_ALCHEMY_FURNACE.get()) {
             return Optional.of(ItemFontTheme.of(ItemFontStyle.ALCHEMY_FURNACE));
         }
         if (item == ModItems.FIRE_LINGZHI.get()) {

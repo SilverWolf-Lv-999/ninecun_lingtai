@@ -1,0 +1,9 @@
+{
+  "block": "ninecun_lingtai:red_copper_alchemy_furnace",
+  "heat_cap": 700,
+  "heat_decay_rate": 0.9,
+  "tolerance_bonus": 0.02,
+  "element": "fire",
+  "max_recipe_tier": 4,
+  "max_durability": 1500
+}

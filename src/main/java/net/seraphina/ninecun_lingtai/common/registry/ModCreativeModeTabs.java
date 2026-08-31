@@ -29,7 +29,14 @@ public final class ModCreativeModeTabs {
                         output.accept(ModItems.SPIRITUAL_STONE_ORE.get());
                         output.accept(ModItems.DEEPSLATE_SPIRITUAL_STONE_ORE.get());
                         output.accept(ModItems.ALCHEMY_FURNACE.get());
+                        output.accept(ModItems.RED_COPPER_ALCHEMY_FURNACE.get());
+                        output.accept(ModItems.COLD_JADE_ALCHEMY_FURNACE.get());
+                        output.accept(ModItems.DARK_CRYSTAL_ALCHEMY_FURNACE.get());
+                        output.accept(ModItems.NINE_DRAGON_ALCHEMY_FURNACE.get());
                         output.accept(ModItems.FIRE_LINGZHI.get());
+                        output.accept(ModItems.MOON_DEW_ORCHID.get());
+                        output.accept(ModItems.EARTH_MARROW_GINSENG.get());
+                        output.accept(ModItems.JADE_MIND_FLOWER.get());
                         ModItems.getPillItems().forEach(
                                 pill -> output.acceptAll(AlchemyPillUtility.getCreativeItemStacks(pill))
                         );

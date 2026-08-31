@@ -99,6 +99,14 @@ public final class AscensionManager {
         return StartResult.QUESTION_GENERATING;
     }
 
+    /**
+     * 由引灵仪式掷骰成功后调用（元婴9 → 化神）。仪式只在 isAscensionRequired 成立的
+     * 巅峰玩家上路由至此，故直接复用 request 全流程（含出题、能量校验与消费）。
+     */
+    public static StartResult startForRitual(ServerPlayer player) {
+        return request(player);
+    }
+
     private static void finishQuestionGeneration(
             MinecraftServer server,
             UUID playerId,
@@ -268,7 +276,7 @@ public final class AscensionManager {
         MinecraftServer server = player.server;
         UUID playerId = player.getUUID();
         int evaluatedQuestionIndex = session.questionIndex();
-        AscensionComprehensionService.evaluate(question, profileContext, answer)
+        AscensionComprehensionService.evaluate(question, profileContext, answer, player)
                 .whenComplete((assessment, error) -> server.execute(() -> finishEvaluation(
                         server,
                         playerId,

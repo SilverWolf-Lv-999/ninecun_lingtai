@@ -1,0 +1,43 @@
+{
+  "name": "九霄神雷",
+  "description": "沟通九霄雷云、召天雷轰落敌阵的七品雷法。",
+  "content": "掌心雷者，掌中之雷；九霄神雷者，天上之雷。元婴既成，神与天通，方能以自身金木二气为引，上感九霄，召真雷降世。行功之时，双掌托天，金木灵力化作两道气柱直贯云霄，云中雷霆感气而聚，随施术者一念轰然而落，正雷居中，散雷环护，方圆数丈皆成雷池。天雷之威，非人力可挡，中者形神俱震。然引雷者亦立于雷池边缘，气引偏差半分，天雷不辨敌我。故此法未修至纯熟，切勿在近身混战中施为。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "spell": {
+    "id": "ninecun_lingtai:thunder_fall",
+    "category": "combat",
+    "grade": 7,
+    "base_cost": 30.0
+  },
+  "compatible_elements": ["metal", "wood"],
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "nascent_soul",
+      "layer": 1
+    },
+    "required_elements": ["metal", "wood"],
+    "required_techniques": ["ninecun_lingtai:palm_thunder_spell"]
+  },
+  "comprehension": {
+    "minimum_learning_score": 80,
+    "key_concepts": [
+      "掌中之雷与天上之雷之别",
+      "元婴神与天通方能引雷",
+      "金木气柱上感九霄",
+      "正雷居中散雷环护",
+      "气引偏差天雷不辨敌我"
+    ],
+    "grading_criteria": [
+      "说明此法召天雷而非蓄掌雷的本质",
+      "理解元婴通天、以气引雷的行功门槛",
+      "明白雷落成池、震慑方圆的威势",
+      "知晓引雷自危、近战慎用的分寸"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 80
+      }
+    ]
+  }
+}

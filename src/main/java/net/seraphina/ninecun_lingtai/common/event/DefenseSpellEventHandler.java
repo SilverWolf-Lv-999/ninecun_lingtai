@@ -35,6 +35,9 @@ public final class DefenseSpellEventHandler {
 
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onLivingAttack(LivingAttackEvent event) {
+        if (event.getSource().is(ModDamageTypes.SOUL_PIERCE)) {
+            return;
+        }
         if (!(event.getEntity() instanceof ServerPlayer owner)
                 || !(event.getSource().getEntity() instanceof LivingEntity attacker)
                 || event.getSource().getDirectEntity() != attacker

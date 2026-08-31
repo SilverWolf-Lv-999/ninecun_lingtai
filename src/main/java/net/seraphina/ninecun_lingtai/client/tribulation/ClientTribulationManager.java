@@ -84,6 +84,7 @@ public final class ClientTribulationManager {
                     1.0F
             );
             case STRIKING -> 1.0F;
+            case INNER_DEMON -> 0.96F;
             case AFTERMATH -> 0.92F;
             case DISSIPATING -> Mth.clamp(
                     remainingTicks / (float) DISSIPATION_TICKS,

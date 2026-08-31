@@ -5,8 +5,10 @@ import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.seraphina.ninecun_lingtai.common.breakthrough.BreakthroughChanceCalculator;
 import net.seraphina.ninecun_lingtai.common.config.ClientConfig;
 import net.seraphina.ninecun_lingtai.common.config.CommonConfig;
+import net.seraphina.ninecun_lingtai.common.karma.KarmaUtility;
 import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import net.seraphina.ninecun_lingtai.common.registry.*;
 import net.seraphina.ninecun_lingtai.utility.jvm.HookUtility;
@@ -36,6 +38,8 @@ public final class ModMain {
         ModBlockEntityTypes.register(modEventBus);
         ModMenuTypes.register(modEventBus);
         ModItems.register(modEventBus);
+        ModFormationContent.register(modEventBus);
+        ModTombContent.register(modEventBus);
         ModEntityTypes.register(modEventBus);
         ModSpells.register(modEventBus);
         ModSounds.register(modEventBus);
@@ -44,6 +48,8 @@ public final class ModMain {
         context.registerConfig(ModConfig.Type.CLIENT, ClientConfig.SPEC);
         MinecraftForge.EVENT_BUS.register(this);
         ModNetwork.register();
+        // 道心杀孽：把破境公式的道心系数从常数 1.0 换成杀孽四档曲线（主控接线点）。
+        BreakthroughChanceCalculator.setDaoHeartProvider(KarmaUtility::getDaoHeartCoefficient);
         if (Boolean.getBoolean(DISABLE_RUNTIME_HOOKS_PROPERTY)) {
             return;
         }

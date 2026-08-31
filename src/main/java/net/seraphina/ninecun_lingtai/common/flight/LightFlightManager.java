@@ -2,6 +2,7 @@ package net.seraphina.ninecun_lingtai.common.flight;
 
 import net.seraphina.ninecun_lingtai.api.aptitude.SpiritualRootApi;
 import net.seraphina.ninecun_lingtai.api.cultivation.CultivationApi;
+import net.seraphina.ninecun_lingtai.common.behavior.PlayerBehaviorLedgerData;
 import net.seraphina.ninecun_lingtai.common.config.CommonConfig;
 import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import net.seraphina.ninecun_lingtai.common.player.PlayerLightFlightData;
@@ -188,7 +189,9 @@ public final class LightFlightManager {
             PlayerLightFlightData.clearBoost(player);
         }
         if (!player.isCreative() && player.tickCount % ENERGY_CONSUMPTION_INTERVAL_TICKS == 0) {
-            double energyCost = CommonConfig.LIGHT_FLIGHT_ENERGY_COST_PER_SECOND.get();
+            // 遁逃之执心障：位移法术耗灵 ×1.3（经行为账本单点查询门面）。
+            double energyCost = CommonConfig.LIGHT_FLIGHT_ENERGY_COST_PER_SECOND.get()
+                    * PlayerBehaviorLedgerData.getMobilityCostMultiplier(player);
             if (energyCost > 0.0D) {
                 if (PlayerSpiritualEnergyData.consumeEnergyAny(player, energyCost) == null) {
                     stop(player);

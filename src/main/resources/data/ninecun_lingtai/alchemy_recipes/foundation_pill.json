@@ -63,6 +63,11 @@
       "type": "breakthrough_energy_discount",
       "discount": 0.1,
       "duration_ticks": 72000
+    },
+    {
+      "type": "breakthrough_success_bonus",
+      "bonus": 0.1,
+      "duration_ticks": 72000
     }
   ]
 }

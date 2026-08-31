@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "#ninecun_lingtai:flags/metal",
+    "#ninecun_lingtai:flags/wood",
+    "#ninecun_lingtai:flags/water",
+    "#ninecun_lingtai:flags/fire",
+    "#ninecun_lingtai:flags/earth"
+  ]
+}

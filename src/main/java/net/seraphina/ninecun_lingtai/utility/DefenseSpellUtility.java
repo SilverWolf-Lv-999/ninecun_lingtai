@@ -140,6 +140,9 @@ public final class DefenseSpellUtility {
     }
 
     public static boolean canBodyShieldBlock(DefenseSpellKind kind, DamageSource source) {
+        if (source.is(ModDamageTypes.SOUL_PIERCE)) {
+            return false;
+        }
         if (source.is(ModDamageTypes.REALM_EXECUTION)) {
             return true;
         }

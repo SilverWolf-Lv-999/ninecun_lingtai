@@ -1,7 +1,9 @@
 package net.seraphina.ninecun_lingtai.common.entity.tribulation;
 
 import net.seraphina.ninecun_lingtai.common.registry.ModDamageTypes;
+import net.seraphina.ninecun_lingtai.common.behavior.PlayerBehaviorLedgerData;
 import net.seraphina.ninecun_lingtai.common.config.CommonConfig;
+import net.seraphina.ninecun_lingtai.common.entity.MortalBodyEntity;
 import net.seraphina.ninecun_lingtai.common.entity.spell.DefenseSpellGuardianEntity;
 import net.seraphina.ninecun_lingtai.utility.DefenseSpellUtility;
 import net.seraphina.ninecun_lingtai.utility.TribulationUtility;
@@ -35,6 +37,7 @@ public final class ThunderTribulationEntity extends LightningBolt {
     private static final String DAMAGE_KEY = "Damage";
     private static final String INTENSITY_KEY = "Intensity";
     private static final String REMAINING_TICKS_KEY = "RemainingTicks";
+    private static final String HAS_STRUCK_KEY = "HasStruck";
 
     private static final EntityDataAccessor<Optional<UUID>> OWNER_UUID = SynchedEntityData.defineId(
             ThunderTribulationEntity.class,
@@ -56,6 +59,12 @@ public final class ThunderTribulationEntity extends LightningBolt {
             ThunderTribulationEntity.class,
             EntityDataSerializers.INT
     );
+
+    /**
+     * One bolt settles damage exactly once, on its landing frame. The remaining lifetime only
+     * keeps the visual alive; without this guard overlapping bolts pulsed damage every tick.
+     */
+    private boolean hasStruck;
 
     public ThunderTribulationEntity(EntityType<? extends ThunderTribulationEntity> entityType, Level level) {
         super(entityType, level);
@@ -122,7 +131,8 @@ public final class ThunderTribulationEntity extends LightningBolt {
             return;
         }
         this.entityData.set(REMAINING_TICKS, remainingTicks);
-        if (this.level() instanceof ServerLevel serverLevel) {
+        if (!this.hasStruck && this.level() instanceof ServerLevel serverLevel) {
+            this.hasStruck = true;
             this.damageNearbyLivingEntities(serverLevel);
         }
     }
@@ -146,6 +156,7 @@ public final class ThunderTribulationEntity extends LightningBolt {
         this.entityData.set(DAMAGE, Math.max(0.0F, compoundTag.getFloat(DAMAGE_KEY)));
         this.entityData.set(INTENSITY, Math.max(0.8F, compoundTag.getFloat(INTENSITY_KEY)));
         this.entityData.set(REMAINING_TICKS, Math.max(1, compoundTag.getInt(REMAINING_TICKS_KEY)));
+        this.hasStruck = compoundTag.getBoolean(HAS_STRUCK_KEY);
         this.setNoGravity(true);
         this.noPhysics = true;
     }
@@ -157,6 +168,7 @@ public final class ThunderTribulationEntity extends LightningBolt {
         compoundTag.putFloat(DAMAGE_KEY, this.getDamage());
         compoundTag.putFloat(INTENSITY_KEY, this.getIntensity());
         compoundTag.putInt(REMAINING_TICKS_KEY, this.getRemainingTicks());
+        compoundTag.putBoolean(HAS_STRUCK_KEY, this.hasStruck);
     }
 
     @Override
@@ -174,23 +186,29 @@ public final class ThunderTribulationEntity extends LightningBolt {
                 this,
                 this
         );
-        float pulseDamage = this.getDamage();
+        float strikeDamage = this.getDamage();
         ServerPlayer owner = this.getOwnerUuid()
                 .map(serverLevel::getPlayerByUUID)
                 .filter(ServerPlayer.class::isInstance)
                 .map(ServerPlayer.class::cast)
                 .orElse(null);
         if (owner != null && owner.isAlive()) {
-            hurtLivingEntity(owner, damageSource, pulseDamage);
+            // 畏雷心障：劫雷伤害 ×1.25（心魔即己 §8，化解后恢复）。
+            float ownerDamage = PlayerBehaviorLedgerData.hasActiveMindScar(
+                    owner,
+                    PlayerBehaviorLedgerData.MindScarIds.THUNDER_FEAR
+            ) ? strikeDamage * 1.25F : strikeDamage;
+            hurtLivingEntity(owner, damageSource, ownerDamage);
         }
         for (LivingEntity livingEntity : serverLevel.getEntitiesOfClass(
                 LivingEntity.class,
                 damageBox,
                 livingEntity -> livingEntity.isAlive()
                         && !(livingEntity instanceof DefenseSpellGuardianEntity)
+                        && !(livingEntity instanceof MortalBodyEntity)
                         && livingEntity != owner
         )) {
-            hurtLivingEntity(livingEntity, damageSource, pulseDamage);
+            hurtLivingEntity(livingEntity, damageSource, strikeDamage);
         }
     }
 

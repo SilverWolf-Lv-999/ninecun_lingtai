@@ -1,0 +1,6 @@
+{
+  "type": "forge:add_features",
+  "biomes": "minecraft:dark_forest",
+  "features": "ninecun_lingtai:earth_marrow_ginseng",
+  "step": "vegetal_decoration"
+}

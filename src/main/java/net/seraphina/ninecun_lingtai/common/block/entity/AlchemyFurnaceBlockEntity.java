@@ -7,16 +7,24 @@ import net.seraphina.ninecun_lingtai.api.alchemy.AlchemyGrade;
 import net.seraphina.ninecun_lingtai.api.alchemy.AlchemyIngredient;
 import net.seraphina.ninecun_lingtai.api.alchemy.AlchemyIngredientSlot;
 import net.seraphina.ninecun_lingtai.api.alchemy.AlchemyRecipeDefinition;
+import net.seraphina.ninecun_lingtai.api.alchemy.FireSource;
+import net.seraphina.ninecun_lingtai.api.alchemy.FurnaceTier;
 import net.seraphina.ninecun_lingtai.api.alchemy.HeatBand;
 import net.seraphina.ninecun_lingtai.api.alchemy.HeatControlMode;
 import net.seraphina.ninecun_lingtai.api.alchemy.HeatStage;
+import net.seraphina.ninecun_lingtai.api.alchemy.HerbDefinition;
 import net.seraphina.ninecun_lingtai.api.aptitude.SoulStrength;
 import net.seraphina.ninecun_lingtai.api.aptitude.SpiritualRoot;
+import net.seraphina.ninecun_lingtai.api.cultivation.CultivationRealm;
 import net.seraphina.ninecun_lingtai.api.element.ElementRelation;
 import net.seraphina.ninecun_lingtai.api.element.ElementType;
 import net.seraphina.ninecun_lingtai.common.config.CommonConfig;
+import net.seraphina.ninecun_lingtai.common.data.AlchemyFurnaceDefinitionManager;
+import net.seraphina.ninecun_lingtai.common.data.AlchemyHerbManager;
 import net.seraphina.ninecun_lingtai.common.data.AlchemyRecipeManager;
 import net.seraphina.ninecun_lingtai.common.data.ElementEnvironmentManager;
+import net.seraphina.ninecun_lingtai.utility.HerbAgeUtility;
+import net.seraphina.ninecun_lingtai.common.insight.InsightEffectUtility;
 import net.seraphina.ninecun_lingtai.common.item.PillItem;
 import net.seraphina.ninecun_lingtai.common.menu.AlchemyFurnaceMenu;
 import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
@@ -54,7 +62,9 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -83,7 +93,6 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
     public static final int PLANNED_FEED_MASK_DATA_INDEX = 10;
     public static final int DATA_COUNT = 11;
 
-    private static final int MAXIMUM_HEAT = 600;
     private static final int CLIENT_SYNCHRONIZATION_INTERVAL = 20;
     private static final int ENVIRONMENT_CACHE_INTERVAL = 20;
     private static final double MAINTAIN_RANGE_SQR = 64.0D;
@@ -104,6 +113,13 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
     private static final String SCENT_PLAN_KEY = "ScentPlan";
     private static final String SCENT_SENT_KEY = "ScentSent";
     private static final String REFINER_KEY = "Refiner";
+    private static final String DURABILITY_KEY = "Durability";
+    private static final String FIRE_SOURCE_KEY = "FireSource";
+
+    /** 灵药药性与丹方主元素相生/相同的环境分加成（炼丹 M4-c）。 */
+    private static final double HERB_AFFINITY_BONUS = 0.03D;
+    /** 灵药药性与丹方主元素相克的环境分扣减。 */
+    private static final double HERB_AFFINITY_PENALTY = 0.05D;
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private final NonNullList<ItemStack> items = NonNullList.withSize(
@@ -131,13 +147,14 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
     private boolean scentSent;
     @Nullable
     private UUID refinerId;
-    private int openFeedMask;
-    private int fedFeedMask;
-    private int missedFeedMask;
-    private int lateFeedMask;
-    private int plannedFeedMask;
-    private double feedScoreTotal;
-    private int feedScoreCount;
+    /** 分段投药窗口（机械拆分产物，行为与拆分前逐位一致）。 */
+    private final AlchemyFeedWindowTracker feedWindow = new AlchemyFeedWindowTracker();
+    /** 本炉次火源（开炉时判定一次，M4-b）。 */
+    private FireSource fireSource = FireSource.MUNDANE;
+    /** 炉耐久（-1 = 未初始化，首次读取按阶别上限补），随炉次损耗。 */
+    private int durability = -1;
+    /** 保温率的小数降温余数（凡铁 1.0 时行为与旧版逐 tick −1 完全一致）。 */
+    private double heatDecayRemainder;
 
     @Nullable
     private UUID heatControllerPlayerId;
@@ -172,7 +189,13 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
 
         boolean heatControlled = furnace.tickHeatControl();
         if (!heatControlled && furnace.heat > 0) {
-            furnace.heat--;
+            // 保温率降温：凡铁 1.0 = 旧版逐 tick −1；高阶炉 <1.0 按余数累积慢降。
+            furnace.heatDecayRemainder += furnace.getFurnaceTier().heatDecayRate();
+            int wholeDecay = (int) furnace.heatDecayRemainder;
+            if (wholeDecay > 0) {
+                furnace.heatDecayRemainder -= wholeDecay;
+                furnace.heat = Math.max(0, furnace.heat - wholeDecay);
+            }
         }
 
         if (furnace.refining) {
@@ -239,6 +262,16 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
             );
             return false;
         }
+        if (!meetsFurnaceTier(recipe)) {
+            player.displayClientMessage(
+                    Component.translatableWithFallback(
+                            "message.ninecun_lingtai.alchemy_furnace_tier_too_low",
+                            "此炉阶别不足，炼不得这等丹方"
+                    ),
+                    true
+            );
+            return false;
+        }
         if (!canSelectWithCurrentContents(recipe)) {
             player.displayClientMessage(
                     Component.translatable("message.ninecun_lingtai.alchemy_selection_conflicts"),
@@ -247,10 +280,142 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
             return false;
         }
         this.selectedRecipeId = recipeId;
-        this.plannedFeedMask = AlchemyProcessUtility.getRequiredFeedMask(recipe.feedPlan());
-        resetFeedState();
+        this.feedWindow.setPlannedMask(AlchemyProcessUtility.getRequiredFeedMask(recipe.feedPlan()));
+        this.feedWindow.reset();
         this.setChangedAndSynchronize();
         return true;
+    }
+
+    // ==================== 炉阶与火源（炼丹 M4-a/b） ====================
+
+    /** 当前炉方块的阶别定义（数据驱动，未定义回落凡铁兜底）。 */
+    public FurnaceTier getFurnaceTier() {
+        return AlchemyFurnaceDefinitionManager.INSTANCE.getTierForBlock(getBlockState().getBlock());
+    }
+
+    /** 炉温上限 = 阶别上限 + 火源加成（地火/三昧真火抬升上限）。 */
+    private int getMaxHeat() {
+        int fireSourceBonus = switch (this.fireSource) {
+            case EARTH -> CommonConfig.ALCHEMY_FIRE_SOURCE_EARTH_HEAT_BONUS.get();
+            case SAMADHI -> CommonConfig.ALCHEMY_FIRE_SOURCE_SAMADHI_HEAT_BONUS.get();
+            case MUNDANE, SPIRITUAL -> 0;
+        };
+        return getFurnaceTier().heatCap() + fireSourceBonus;
+    }
+
+    /** 当前耐久（-1 未初始化时按阶别上限补）。 */
+    public int getDurability() {
+        if (this.durability < 0) {
+            this.durability = getFurnaceTier().maxDurability();
+        }
+        return this.durability;
+    }
+
+    /** 丹方阶别不得超过炉可炼上限。 */
+    private boolean meetsFurnaceTier(AlchemyRecipeDefinition recipe) {
+        return recipe.grade().tier() <= getFurnaceTier().maxRecipeTier();
+    }
+
+    /**
+     * 火源判定（开炉时一次，优先级：三昧真火 ＞ 灵火 ＞ 地火 ＞ 凡火）：
+     * 三昧真火看炉主境界 ≥ 化神；灵火看炉腹正下方灵魂火系方块；
+     * 地火看炉下两格与四邻是否有岩浆。
+     */
+    private FireSource detectFireSource(ServerPlayer player) {
+        boolean samadhiCapable = PlayerCultivationData.getStage(player)
+                .map(stage -> stage.realm().ordinal() >= CultivationRealm.SPIRIT_TRANSFORMATION.ordinal())
+                .orElse(false);
+        if (samadhiCapable) {
+            return FireSource.SAMADHI;
+        }
+        if (this.level == null) {
+            return FireSource.MUNDANE;
+        }
+        BlockPos below = this.worldPosition.below();
+        BlockState belowState = this.level.getBlockState(below);
+        if (belowState.is(Blocks.SOUL_FIRE)
+                || belowState.is(Blocks.SOUL_CAMPFIRE)
+                || belowState.is(Blocks.SOUL_TORCH)
+                || belowState.is(Blocks.SOUL_LANTERN)) {
+            return FireSource.SPIRITUAL;
+        }
+        List<BlockPos> lavaProbePositions = List.of(
+                below,
+                below.below(),
+                below.north(),
+                below.south(),
+                below.east(),
+                below.west()
+        );
+        for (BlockPos probePosition : lavaProbePositions) {
+            if (this.level.getFluidState(probePosition).is(FluidTags.LAVA)) {
+                return FireSource.EARTH;
+            }
+        }
+        return FireSource.MUNDANE;
+    }
+
+    /** 火源稳定度乘区（进火候评分，凡火 1.0 基线）。 */
+    private double getFireSourceStabilityMultiplier() {
+        return switch (this.fireSource) {
+            case MUNDANE -> 1.0D;
+            case SPIRITUAL -> CommonConfig.ALCHEMY_FIRE_SOURCE_SPIRITUAL_STABILITY.get();
+            case EARTH -> CommonConfig.ALCHEMY_FIRE_SOURCE_EARTH_STABILITY.get();
+            case SAMADHI -> CommonConfig.ALCHEMY_FIRE_SOURCE_SAMADHI_STABILITY.get();
+        };
+    }
+
+    /** 炉容差（炉性与丹方主元素相克时清零，扩展设计 2.1）。 */
+    private double getEffectiveToleranceBonus(AlchemyRecipeDefinition recipe) {
+        FurnaceTier tier = getFurnaceTier();
+        ElementType furnaceElement = tier.element();
+        ElementType primaryElement = recipe.getPrimaryElement().orElse(null);
+        if (furnaceElement == null || primaryElement == null || furnaceElement == ElementType.CHAOS) {
+            return tier.toleranceBonus();
+        }
+        ElementRelation relation = furnaceElement.getRelationTo(primaryElement);
+        if (relation == ElementRelation.OVERCOMES || relation == ElementRelation.OVERCOME_BY) {
+            return 0.0D;
+        }
+        return tier.toleranceBonus();
+    }
+
+    /** 炉性与丹方主元素相生/相同（完美产量判定翻倍用）。 */
+    private boolean hasFurnaceElementSynergy(AlchemyRecipeDefinition recipe) {
+        FurnaceTier tier = getFurnaceTier();
+        ElementType furnaceElement = tier.element();
+        ElementType primaryElement = recipe.getPrimaryElement().orElse(null);
+        if (furnaceElement == null || primaryElement == null || furnaceElement == ElementType.CHAOS) {
+            return false;
+        }
+        ElementRelation relation = furnaceElement.getRelationTo(primaryElement);
+        return relation == ElementRelation.SAME || relation == ElementRelation.GENERATES;
+    }
+
+    /**
+     * 灵药药性与药龄进环境分（炼丹 M4-c）：主药与丹方主元素相生/相同 +0.03、
+     * 相克 −0.05；再乘主药药龄药效乘区（{@link HerbAgeUtility}，封顶走配置）。
+     */
+    private double adjustEnvironmentScoreForHerbs(AlchemyRecipeDefinition recipe, double environmentScore) {
+        ItemStack mainIngredient = getItem(AlchemyFurnaceMenu.MAIN_INGREDIENT_SLOT);
+        if (mainIngredient.isEmpty() || this.level == null || this.level.getServer() == null) {
+            return environmentScore;
+        }
+        double adjustedScore = environmentScore;
+        ElementType primaryElement = recipe.getPrimaryElement().orElse(null);
+        Optional<HerbDefinition> herb = AlchemyHerbManager.INSTANCE.getDefinitionForItem(
+                BuiltInRegistries.ITEM.getKey(mainIngredient.getItem())
+        );
+        if (herb.isPresent() && herb.get().element() != null && primaryElement != null) {
+            ElementRelation relation = herb.get().element().getRelationTo(primaryElement);
+            if (relation == ElementRelation.SAME || relation == ElementRelation.GENERATES) {
+                adjustedScore += HERB_AFFINITY_BONUS;
+            } else if (relation == ElementRelation.OVERCOMES || relation == ElementRelation.OVERCOME_BY) {
+                adjustedScore -= HERB_AFFINITY_PENALTY;
+            }
+        }
+        adjustedScore *= HerbAgeUtility.getPotencyMultiplier(mainIngredient, this.level.getServer());
+        return Math.max(0.0D, adjustedScore);
     }
 
     @Nullable
@@ -260,7 +425,7 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
 
     public void ignite(ServerPlayer player, InteractionHand interactionHand) {
         ItemStack ignitionTool = player.getItemInHand(interactionHand);
-        this.heat = MAXIMUM_HEAT;
+        this.heat = getMaxHeat();
         ignitionTool.hurtAndBreak(1, player, ignored -> player.broadcastBreakEvent(interactionHand));
         this.setChangedAndSynchronize();
     }
@@ -332,7 +497,7 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
         }
         switch (this.heatControlMode) {
             case STOKE -> this.heat = Math.min(
-                    MAXIMUM_HEAT,
+                    getMaxHeat(),
                     this.heat + Math.max(1, CommonConfig.ALCHEMY_STOKE_HEAT_PER_TICK.get())
             );
             case VENT -> this.heat = Math.max(
@@ -406,6 +571,16 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
             );
             return;
         }
+        if (getDurability() <= 0) {
+            player.displayClientMessage(
+                    Component.translatableWithFallback(
+                            "message.ninecun_lingtai.alchemy_furnace_worn",
+                            "此炉炉体已朽，须得养炉修复方可再用"
+                    ),
+                    true
+            );
+            return;
+        }
         AlchemyRecipeDefinition recipe = this.selectedRecipeId == null
                 ? getMatchingRecipe().orElse(null)
                 : AlchemyRecipeManager.INSTANCE.getRecipe(this.selectedRecipeId).orElse(null);
@@ -439,6 +614,16 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
             );
             return;
         }
+        if (!meetsFurnaceTier(recipe)) {
+            player.displayClientMessage(
+                    Component.translatableWithFallback(
+                            "message.ninecun_lingtai.alchemy_furnace_tier_too_low",
+                            "此炉阶别不足，炼不得这等丹方"
+                    ),
+                    true
+            );
+            return;
+        }
         if (!canAcceptOutput(recipe)) {
             player.displayClientMessage(
                     Component.translatable("message.ninecun_lingtai.alchemy_output_blocked"),
@@ -463,14 +648,18 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
             }
         }
 
+        this.fireSource = detectFireSource(player);
         this.environmentMultiplier = primaryElement == null ? 1.0D : multiplier;
         this.effectiveDuration = AlchemyResultCalculator.getEffectiveDuration(
                 recipe.brewingDuration(),
                 this.environmentMultiplier
         );
-        this.environmentScore = AlchemyResultCalculator.calculateEnvironmentScore(
-                multiplier,
-                primaryElement != null
+        this.environmentScore = adjustEnvironmentScoreForHerbs(
+                recipe,
+                AlchemyResultCalculator.calculateEnvironmentScore(
+                        multiplier,
+                        primaryElement != null
+                )
         );
         Optional<SpiritualRoot> spiritualRoot = PlayerAptitudeData.getSpiritualRoot(player);
         this.rootScore = AlchemyResultCalculator.calculateRootScore(spiritualRoot, primaryElement);
@@ -482,11 +671,11 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
         this.refinerId = player.getUUID();
         this.hitTicks = 0;
         this.selectedRecipeId = recipe.id();
-        this.plannedFeedMask = AlchemyProcessUtility.getRequiredFeedMask(recipe.feedPlan());
+        this.feedWindow.setPlannedMask(AlchemyProcessUtility.getRequiredFeedMask(recipe.feedPlan()));
         this.refining = true;
         this.activeRecipeId = recipe.id();
         this.refiningTicks = 0;
-        resetFeedState();
+        this.feedWindow.reset();
         updateFeedWindowState();
         this.setChangedAndSynchronize();
     }
@@ -543,22 +732,10 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
                 ? null
                 : AlchemyRecipeManager.INSTANCE.getRecipe(this.activeRecipeId).orElse(null);
         if (!this.refining || recipe == null || recipe.feedPlan().isEmpty()) {
-            this.openFeedMask = 0;
+            this.feedWindow.setOpenMask(0);
             return;
         }
-        this.plannedFeedMask = AlchemyProcessUtility.getRequiredFeedMask(recipe.feedPlan());
-        AlchemyProcessUtility.StageProgress stageProgress = AlchemyProcessUtility.locateStage(
-                recipe.heatStages(),
-                this.refiningTicks / (double) Math.max(1, this.effectiveDuration)
-        );
-        AlchemyProcessUtility.FeedWindowState windowState =
-                AlchemyProcessUtility.getFeedWindowState(
-                        recipe.feedPlan(),
-                        this.fedFeedMask,
-                        stageProgress
-                );
-        this.missedFeedMask |= windowState.missedMask();
-        this.openFeedMask = windowState.openMask() & ~this.missedFeedMask;
+        this.feedWindow.updateWindowState(recipe, this.refiningTicks, this.effectiveDuration);
     }
 
     private void captureDelayedFeed(int slot, ItemStack itemStack) {
@@ -570,9 +747,7 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
             return;
         }
         int slotMask = 1 << slot;
-        if ((this.openFeedMask & slotMask) == 0
-                || (this.fedFeedMask & slotMask) != 0
-                || (this.missedFeedMask & slotMask) != 0) {
+        if (!this.feedWindow.canFeed(slotMask)) {
             return;
         }
         AlchemyRecipeDefinition recipe = this.activeRecipeId == null
@@ -594,32 +769,7 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
         if (accuracy <= 0.0D) {
             return;
         }
-        this.feedScoreTotal += accuracy;
-        this.feedScoreCount++;
-        this.fedFeedMask |= slotMask;
-        this.openFeedMask &= ~slotMask;
-        if (stageProgress.progressWithinStage() > step.windowEnd()) {
-            this.lateFeedMask |= slotMask;
-        }
-    }
-
-    private double getFeedScore(AlchemyRecipeDefinition recipe) {
-        if (recipe.feedPlan().isEmpty()) {
-            return 1.0D;
-        }
-        if (hasMissingFeed(recipe)) {
-            return 0.0D;
-        }
-        return Math.max(
-                0.0D,
-                Math.min(1.0D, this.feedScoreTotal / Math.max(1, recipe.feedPlan().size()))
-        );
-    }
-
-    private boolean hasMissingFeed(AlchemyRecipeDefinition recipe) {
-        int requiredMask = AlchemyProcessUtility.getRequiredFeedMask(recipe.feedPlan());
-        return (this.fedFeedMask & requiredMask) != requiredMask
-                || (this.missedFeedMask & requiredMask) != 0;
+        this.feedWindow.recordFeed(slotMask, accuracy, step, stageProgress);
     }
 
     private void tickScent() {
@@ -664,6 +814,12 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
             burnIngredients();
             return;
         }
+        // 炉耐久随炉次损耗（不论成败），耗尽后须养炉修复。
+        // TODO(炼丹 M5 养炉)：投喂灵材/灵石修复耐久的养炉玩法。
+        this.durability = Math.max(
+                0,
+                getDurability() - Math.max(0, CommonConfig.ALCHEMY_FURNACE_DURABILITY_LOSS_PER_REFINE.get())
+        );
         double duration = this.effectiveDuration > 0 ? this.effectiveDuration : recipe.brewingDuration();
         double harvestTiming = this.refiningTicks / duration;
 
@@ -679,7 +835,7 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
             failCharred(recipe, player);
             return;
         }
-        if (hasMissingFeed(recipe) || !matchesRecipe(recipe)) {
+        if (this.feedWindow.hasMissingFeed(recipe) || !matchesRecipe(recipe)) {
             failMissingFeed(recipe, player);
             return;
         }
@@ -691,12 +847,31 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
                 this.rootQuality,
                 hasHeatCurve
         );
+        // 悟道印记"丹火纯青"：火候评分小幅宽容乘区（经 InsightEffectUtility 单点读取，
+        // 上限 1.0，不改变满分口径——最小可行接线，评分权重链不动）。
+        double insightFireBonus = InsightEffectUtility.query(
+                player,
+                InsightEffectUtility.EFFECT_ALCHEMY_QUALITY_BONUS
+        );
+        if (hasHeatCurve && insightFireBonus > 0.0D) {
+            fireScore = Math.min(1.0D, fireScore * (1.0D + insightFireBonus));
+        }
+        // 炼丹 M4：炉容差（炉性相克清零）与火源稳定度乘区同样只作用于火候分，
+        // 上限 1.0——凡铁炉+凡火时两者均为 1.0/0.0，行为与旧版逐位一致。
+        double furnaceTolerance = getEffectiveToleranceBonus(recipe);
+        double fireSourceStability = getFireSourceStabilityMultiplier();
+        if (hasHeatCurve) {
+            fireScore = Math.min(
+                    1.0D,
+                    fireScore * (1.0D + furnaceTolerance) * fireSourceStability
+            );
+        }
         double rawFireScore = AlchemyResultCalculator.getRawFireScore(
                 this.hitTicks,
                 this.refiningTicks,
                 hasHeatCurve
         );
-        double feedScore = getFeedScore(recipe);
+        double feedScore = this.feedWindow.getFeedScore(recipe);
         double operationScore = AlchemyProcessUtility.combineOperationScore(
                 fireScore,
                 feedScore,
@@ -726,17 +901,28 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
 
         int rankOffset = AlchemyResultCalculator.getRankOffset(score.totalScore(), rawOperationScore)
                 - AlchemyResultCalculator.getOverfireRankPenalty(harvestTiming);
-        if (this.lateFeedMask != 0) {
+        if (this.feedWindow.getLateMask() != 0) {
             rankOffset = Math.min(0, rankOffset);
         }
         int resultRank = Math.max(1, Math.min(9, recipe.grade().rank() + rankOffset));
         AlchemyGrade resultGrade = new AlchemyGrade(recipe.grade().tier(), resultRank);
-        int outputCount = recipe.outputCount()
-                + (this.lateFeedMask == 0 && AlchemyResultCalculator.rollBonusYield(
+        // 炉性与丹方主元素相生：额外产量判定掷两次取或（扩展设计 2.1）。
+        boolean bonusYield = false;
+        if (this.feedWindow.getLateMask() == 0) {
+            bonusYield = AlchemyResultCalculator.rollBonusYield(
+                    score.totalScore(),
+                    rawOperationScore,
+                    player.getRandom()
+            );
+            if (!bonusYield && hasFurnaceElementSynergy(recipe)) {
+                bonusYield = AlchemyResultCalculator.rollBonusYield(
                         score.totalScore(),
                         rawOperationScore,
                         player.getRandom()
-                ) ? 1 : 0);
+                );
+            }
+        }
+        int outputCount = recipe.outputCount() + (bonusYield ? 1 : 0);
 
         consumeIngredients(recipe);
         insertOrDropOutput(createPillOutputStack(recipe, resultGrade, outputCount));
@@ -922,16 +1108,7 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
         this.scentSent = false;
         this.refinerId = null;
         releaseHeatControl();
-        resetFeedState();
-    }
-
-    private void resetFeedState() {
-        this.openFeedMask = 0;
-        this.fedFeedMask = 0;
-        this.missedFeedMask = 0;
-        this.lateFeedMask = 0;
-        this.feedScoreTotal = 0.0D;
-        this.feedScoreCount = 0;
+        this.feedWindow.reset();
     }
 
     private void burnIngredients() {
@@ -1172,9 +1349,7 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
                 return selectedRecipe.getFeedStep(ingredientSlot).isEmpty();
             }
             int slotMask = 1 << slot;
-            return (this.openFeedMask & slotMask) != 0
-                    && (this.fedFeedMask & slotMask) == 0
-                    && (this.missedFeedMask & slotMask) == 0;
+            return this.feedWindow.canFeed(slotMask);
         }
         if (this.refining) {
             return false;
@@ -1204,16 +1379,16 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
     public int get(int index) {
         return switch (index) {
             case HEAT_DATA_INDEX -> this.heat;
-            case MAXIMUM_HEAT_DATA_INDEX -> MAXIMUM_HEAT;
+            case MAXIMUM_HEAT_DATA_INDEX -> getMaxHeat();
             case REFINING_DATA_INDEX -> this.refining ? 1 : 0;
             case ENVIRONMENT_MULTIPLIER_X100_DATA_INDEX -> this.cachedEnvironmentMultiplierX100;
             case PRIMARY_ELEMENT_DATA_INDEX -> this.cachedPrimaryElementOrdinal;
-            case OPEN_FEED_MASK_DATA_INDEX -> this.openFeedMask;
-            case MISSED_FEED_MASK_DATA_INDEX -> this.missedFeedMask;
-            case FED_FEED_MASK_DATA_INDEX -> this.fedFeedMask;
-            case LATE_FEED_MASK_DATA_INDEX -> this.lateFeedMask;
+            case OPEN_FEED_MASK_DATA_INDEX -> this.feedWindow.getOpenMask();
+            case MISSED_FEED_MASK_DATA_INDEX -> this.feedWindow.getMissedMask();
+            case FED_FEED_MASK_DATA_INDEX -> this.feedWindow.getFedMask();
+            case LATE_FEED_MASK_DATA_INDEX -> this.feedWindow.getLateMask();
             case HEAT_CONTROL_MODE_DATA_INDEX -> this.heatControlMode.ordinal();
-            case PLANNED_FEED_MASK_DATA_INDEX -> this.plannedFeedMask;
+            case PLANNED_FEED_MASK_DATA_INDEX -> this.feedWindow.getPlannedMask();
             default -> 0;
         };
     }
@@ -1225,15 +1400,15 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
             case REFINING_DATA_INDEX -> this.refining = value != 0;
             case ENVIRONMENT_MULTIPLIER_X100_DATA_INDEX -> this.cachedEnvironmentMultiplierX100 = value;
             case PRIMARY_ELEMENT_DATA_INDEX -> this.cachedPrimaryElementOrdinal = value;
-            case OPEN_FEED_MASK_DATA_INDEX -> this.openFeedMask = value;
-            case MISSED_FEED_MASK_DATA_INDEX -> this.missedFeedMask = value;
-            case FED_FEED_MASK_DATA_INDEX -> this.fedFeedMask = value;
-            case LATE_FEED_MASK_DATA_INDEX -> this.lateFeedMask = value;
+            case OPEN_FEED_MASK_DATA_INDEX -> this.feedWindow.setOpenMask(value);
+            case MISSED_FEED_MASK_DATA_INDEX -> this.feedWindow.setMissedMask(value);
+            case FED_FEED_MASK_DATA_INDEX -> this.feedWindow.setFedMask(value);
+            case LATE_FEED_MASK_DATA_INDEX -> this.feedWindow.setLateMask(value);
             case HEAT_CONTROL_MODE_DATA_INDEX -> this.heatControlMode =
                     value >= 0 && value < HeatControlMode.values().length
                             ? HeatControlMode.values()[value]
                             : HeatControlMode.NONE;
-            case PLANNED_FEED_MASK_DATA_INDEX -> this.plannedFeedMask = value;
+            case PLANNED_FEED_MASK_DATA_INDEX -> this.feedWindow.setPlannedMask(value);
             default -> {
             }
         }
@@ -1264,17 +1439,19 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
         if (this.refinerId != null) {
             tag.putUUID(REFINER_KEY, this.refinerId);
         }
+        tag.putInt(DURABILITY_KEY, getDurability());
+        tag.putInt(FIRE_SOURCE_KEY, this.fireSource.ordinal());
         AlchemyFurnaceSessionState.save(
                 tag,
                 new AlchemyFurnaceSessionState.PersistedState(
                         this.selectedRecipeId,
                         this.activeRecipeId,
-                        this.fedFeedMask,
-                        this.missedFeedMask,
-                        this.lateFeedMask,
-                        this.feedScoreTotal,
-                        this.feedScoreCount,
-                        this.plannedFeedMask
+                        this.feedWindow.getFedMask(),
+                        this.feedWindow.getMissedMask(),
+                        this.feedWindow.getLateMask(),
+                        this.feedWindow.getScoreTotal(),
+                        this.feedWindow.getScoreCount(),
+                        this.feedWindow.getPlannedMask()
                 )
         );
     }
@@ -1295,7 +1472,7 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
                         ? tag.getInt(REFINING_TICKS_KEY)
                         : tag.getInt(LEGACY_BREW_PROGRESS_KEY)
         );
-        this.heat = Math.max(0, Math.min(MAXIMUM_HEAT, tag.getInt(HEAT_KEY)));
+        this.heat = Math.max(0, tag.getInt(HEAT_KEY));
         this.hitTicks = Math.max(0, tag.getInt(HIT_TICKS_KEY));
         this.effectiveDuration = Math.max(0, tag.getInt(EFFECTIVE_DURATION_KEY));
         this.environmentMultiplier = tag.contains(ENVIRONMENT_MULTIPLIER_KEY)
@@ -1311,13 +1488,17 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
         this.scentPlanTicks = tag.contains(SCENT_PLAN_KEY) ? tag.getInt(SCENT_PLAN_KEY) : -1;
         this.scentSent = tag.getBoolean(SCENT_SENT_KEY);
         this.refinerId = tag.hasUUID(REFINER_KEY) ? tag.getUUID(REFINER_KEY) : null;
-        this.fedFeedMask = sessionState.fedFeedMask();
-        this.missedFeedMask = sessionState.missedFeedMask();
-        this.lateFeedMask = sessionState.lateFeedMask();
-        this.feedScoreTotal = sessionState.feedScoreTotal();
-        this.feedScoreCount = sessionState.feedScoreCount();
-        this.plannedFeedMask = sessionState.plannedFeedMask();
-        this.openFeedMask = 0;
+        this.durability = tag.contains(DURABILITY_KEY) ? Math.max(0, tag.getInt(DURABILITY_KEY)) : -1;
+        this.fireSource = FireSource.fromOrdinal(tag.getInt(FIRE_SOURCE_KEY));
+        this.feedWindow.setFedMask(sessionState.fedFeedMask());
+        this.feedWindow.setMissedMask(sessionState.missedFeedMask());
+        this.feedWindow.setLateMask(sessionState.lateFeedMask());
+        this.feedWindow.restoreScores(
+                sessionState.feedScoreTotal(),
+                sessionState.feedScoreCount()
+        );
+        this.feedWindow.setPlannedMask(sessionState.plannedFeedMask());
+        this.feedWindow.setOpenMask(0);
         releaseHeatControl();
     }
 
@@ -1335,7 +1516,7 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
         }
         tag.putInt(
                 AlchemyFurnaceSessionState.PLANNED_FEED_MASK_KEY,
-                this.plannedFeedMask
+                this.feedWindow.getPlannedMask()
         );
         return tag;
     }

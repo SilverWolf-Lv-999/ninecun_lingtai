@@ -106,7 +106,7 @@ public record LearnTechniquePacket(ResourceLocation techniqueId, String understa
 
         MinecraftServer server = player.server;
         UUID playerId = player.getUUID();
-        TechniqueApi.evaluateUnderstanding(technique.get(), packet.understanding)
+        TechniqueApi.evaluateUnderstanding(technique.get(), packet.understanding, player)
                 .whenComplete((assessment, error) -> server.execute(() -> {
                     PENDING_EVALUATIONS.remove(playerId);
                     if (player.hasDisconnected()) {

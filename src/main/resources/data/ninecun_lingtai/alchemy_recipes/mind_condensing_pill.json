@@ -1,0 +1,80 @@
+{
+  "name": "凝魄丹",
+  "description": "四阶二品养魂丹方，凝神玉兰为君，凝神聚魄，兼疗魂伤。",
+  "content": "凝神玉兰采自老林云杉，木性清正。全程以文火养其清气，中段短暂转中火催出兰心一点翠，末影珠须在此时投入——珠碎神凝，早了药性未开，迟了清气已散。丹成通体温润，服之神魂澄澈，旧伤渐愈。",
+  "grade": {
+    "tier": 4,
+    "rank": 2
+  },
+  "allowed_realms": [
+    "nascent_soul",
+    "spirit_transformation"
+  ],
+  "minimum_refining_realm": "nascent_soul",
+  "ingredients": {
+    "primary": {
+      "item": "ninecun_lingtai:jade_mind_flower",
+      "count": 2
+    },
+    "secondary": [
+      {
+        "item": "minecraft:ender_pearl",
+        "count": 2
+      },
+      {
+        "item": "minecraft:glow_lichen",
+        "count": 8
+      }
+    ],
+    "auxiliary": [
+      {
+        "item": "minecraft:lapis_lazuli",
+        "count": 8
+      },
+      {
+        "item": "minecraft:amethyst_shard",
+        "count": 2
+      }
+    ]
+  },
+  "output_item": "ninecun_lingtai:mind_condensing_pill",
+  "output_count": 1,
+  "brewing_duration": 1800,
+  "element_profile": {
+    "primary_element": "wood"
+  },
+  "heat_stages": [
+    {
+      "band": "gentle",
+      "portion": 0.45
+    },
+    {
+      "band": "medium",
+      "portion": 0.25
+    },
+    {
+      "band": "gentle",
+      "portion": 0.3
+    }
+  ],
+  "feed_plan": [
+    {
+      "slot": "secondary_1",
+      "stage": 2,
+      "window_start": 0.2,
+      "ideal": 0.5,
+      "window_end": 0.75
+    }
+  ],
+  "pill_toxin": 18,
+  "effects": [
+    {
+      "type": "soul_tempering",
+      "amount": 40
+    },
+    {
+      "type": "soul_injury_heal",
+      "amount": 30
+    }
+  ]
+}

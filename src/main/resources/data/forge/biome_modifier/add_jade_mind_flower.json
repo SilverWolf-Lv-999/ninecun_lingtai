@@ -1,0 +1,6 @@
+{
+  "type": "forge:add_features",
+  "biomes": "minecraft:old_growth_spruce_taiga",
+  "features": "ninecun_lingtai:jade_mind_flower",
+  "step": "vegetal_decoration"
+}

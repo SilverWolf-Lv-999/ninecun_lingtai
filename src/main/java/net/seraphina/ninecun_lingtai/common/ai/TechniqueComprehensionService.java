@@ -8,7 +8,9 @@ import net.seraphina.ninecun_lingtai.api.ai.AiProvider;
 import net.seraphina.ninecun_lingtai.api.technique.TechniqueAssessment;
 import net.seraphina.ninecun_lingtai.api.technique.TechniqueDefinition;
 import net.seraphina.ninecun_lingtai.utility.AiConfigUtility;
+import net.seraphina.ninecun_lingtai.utility.SoulInjuryUtility;
 import net.seraphina.ninecun_lingtai.utility.TechniquePromptUtility;
+import net.minecraft.server.level.ServerPlayer;
 
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -23,6 +25,20 @@ public final class TechniqueComprehensionService {
     private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(15L))
             .build();
+
+    /**
+     * 带魂伤扣分的评估入口：在服务端主线程取样扣分值，assessment 返回后调整评分
+     * （设计文档 R6：不动 prompt，扣分后仍按原 minimum_learning_score 判定）。
+     */
+    public static CompletableFuture<TechniqueAssessment> evaluate(
+            TechniqueDefinition technique,
+            String playerUnderstanding,
+            ServerPlayer player
+    ) {
+        double penalty = SoulInjuryUtility.getComprehensionPenalty(player);
+        return evaluate(technique, playerUnderstanding)
+                .thenApply(assessment -> SoulInjuryUtility.applyComprehensionPenalty(assessment, penalty));
+    }
 
     public static CompletableFuture<TechniqueAssessment> evaluate(
             TechniqueDefinition technique,

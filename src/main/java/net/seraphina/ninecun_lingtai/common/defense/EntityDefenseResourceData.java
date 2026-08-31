@@ -4,11 +4,13 @@ import net.seraphina.ninecun_lingtai.ModMain;
 import net.seraphina.ninecun_lingtai.api.aptitude.SpiritualRoot;
 import net.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
 import net.seraphina.ninecun_lingtai.common.creature.CreatureCultivationData;
+import net.seraphina.ninecun_lingtai.common.insight.InsightEffectUtility;
 import net.seraphina.ninecun_lingtai.common.player.DefenseResourceSnapshot;
 import net.seraphina.ninecun_lingtai.utility.CultivationDefenseUtility;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 
 import java.util.Optional;
 
@@ -22,7 +24,7 @@ public final class EntityDefenseResourceData {
         int elementMask = CreatureCultivationData.getSpiritualRoot(entity)
                 .map(SpiritualRoot::getElementMask)
                 .orElse(0);
-        int maximum = CultivationDefenseUtility.getMaximumDefenseResource(stage);
+        int maximum = getMaximum(entity);
         if (maximum <= 0) {
             clear(entity);
             return DefenseResourceSnapshot.empty(elementMask);
@@ -125,8 +127,24 @@ public final class EntityDefenseResourceData {
         entity.getPersistentData().remove(DEFENSE_RESOURCE_KEY);
     }
 
+    /**
+     * 护体上限：境界基准 ×（1 + 悟道印记"稳如磐石"加成）。印记只属于玩家，
+     * 生物走境界基准；乘区经 {@link InsightEffectUtility} 单点读取（R9）。
+     */
     private static int getMaximum(LivingEntity entity) {
-        return CultivationDefenseUtility.getMaximumDefenseResource(CreatureCultivationData.getStage(entity));
+        int base = CultivationDefenseUtility.getMaximumDefenseResource(
+                CreatureCultivationData.getStage(entity)
+        );
+        if (base <= 0 || !(entity instanceof Player player)) {
+            return base;
+        }
+        double insightBonus = InsightEffectUtility.query(
+                player,
+                InsightEffectUtility.EFFECT_DEFENSE_CAPACITY_BONUS
+        );
+        return insightBonus <= 0.0D
+                ? base
+                : (int) Math.round(base * (1.0D + insightBonus));
     }
 
     private static int getOrInitializeCurrent(LivingEntity entity, int maximum) {

@@ -1,0 +1,10 @@
+{
+  "phase": "reveal",
+  "conditions": {
+    "min_mobility_ratio": 0.3
+  },
+  "lines": [
+    "message.ninecun_lingtai.demon_line.flight_grip_1",
+    "message.ninecun_lingtai.demon_line.flight_grip_2"
+  ]
+}

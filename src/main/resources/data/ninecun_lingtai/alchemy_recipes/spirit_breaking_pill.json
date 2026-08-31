@@ -1,0 +1,84 @@
+{
+  "name": "破神丹",
+  "description": "五阶三品突破丹方，雷火淬神、玄晶破障，叩问化神之门的一线天机。",
+  "content": "灵石十六枚为主，雷击残木为佐，钻石与下界之星碎屑另置。武火开炉即淬其神，中程收中火稳住丹势，末段复起武火携雷势破关。雷暴之夜山巅炼制，事半功倍。服后三日之内冲击化神，把握可增一成半——同类只吃一颗。",
+  "grade": {
+    "tier": 5,
+    "rank": 3
+  },
+  "allowed_realms": [
+    "nascent_soul",
+    "spirit_transformation"
+  ],
+  "minimum_refining_realm": "spirit_transformation",
+  "ingredients": {
+    "primary": {
+      "item": "ninecun_lingtai:spiritual_stone",
+      "count": 16
+    },
+    "secondary": [
+      {
+        "item": "minecraft:diamond",
+        "count": 2
+      },
+      {
+        "item": "minecraft:lightning_rod",
+        "count": 2
+      }
+    ],
+    "auxiliary": [
+      {
+        "item": "minecraft:amethyst_shard",
+        "count": 8
+      },
+      {
+        "item": "minecraft:quartz",
+        "count": 12
+      }
+    ]
+  },
+  "output_item": "ninecun_lingtai:spirit_breaking_pill",
+  "output_count": 1,
+  "brewing_duration": 3000,
+  "element_profile": {
+    "primary_element": "thunder"
+  },
+  "heat_stages": [
+    {
+      "band": "fierce",
+      "portion": 0.3
+    },
+    {
+      "band": "medium",
+      "portion": 0.4
+    },
+    {
+      "band": "fierce",
+      "portion": 0.3
+    }
+  ],
+  "feed_plan": [
+    {
+      "slot": "auxiliary_1",
+      "stage": 2,
+      "window_start": 0.2,
+      "ideal": 0.45,
+      "window_end": 0.7
+    },
+    {
+      "slot": "auxiliary_2",
+      "stage": 3,
+      "window_start": 0.2,
+      "ideal": 0.55,
+      "window_end": 0.8
+    }
+  ],
+  "pill_toxin": 45,
+  "effects": [
+    {
+      "type": "breakthrough_success_bonus",
+      "bonus": 0.15,
+      "duration_ticks": 72000
+    }
+  ]
+}

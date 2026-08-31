@@ -1,0 +1,10 @@
+{
+  "phase": "reveal",
+  "conditions": {
+    "min_possess_count": 1
+  },
+  "lines": [
+    "message.ninecun_lingtai.demon_line.possession_1",
+    "message.ninecun_lingtai.demon_line.possession_2"
+  ]
+}

@@ -7,6 +7,7 @@ import net.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
 import net.seraphina.ninecun_lingtai.api.spell.SpellCastContext;
 import net.seraphina.ninecun_lingtai.api.technique.TechniqueDefinition;
 import net.seraphina.ninecun_lingtai.api.technique.TechniqueMasteryStage;
+import net.seraphina.ninecun_lingtai.common.behavior.PlayerBehaviorLedgerData;
 import net.seraphina.ninecun_lingtai.common.config.CommonConfig;
 import net.seraphina.ninecun_lingtai.common.data.TechniqueManager;
 import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
@@ -176,7 +177,9 @@ public final class ShrinkEarthManager {
         if (player.isCreative() || player.tickCount % ENERGY_CONSUMPTION_INTERVAL_TICKS != 0) {
             return true;
         }
-        double energyCost = CommonConfig.SHRINK_EARTH_ENERGY_COST_PER_SECOND.get();
+        // 遁逃之执心障：位移法术耗灵 ×1.3（经行为账本单点查询门面）。
+        double energyCost = CommonConfig.SHRINK_EARTH_ENERGY_COST_PER_SECOND.get()
+                * PlayerBehaviorLedgerData.getMobilityCostMultiplier(player);
         if (energyCost <= 0.0D) {
             return true;
         }

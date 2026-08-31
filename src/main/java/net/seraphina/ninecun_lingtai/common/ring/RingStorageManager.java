@@ -55,6 +55,10 @@ public final class RingStorageManager {
     private static final ThreadLocal<Boolean> REDIRECTING_STORAGE_DROP = ThreadLocal.withInitial(() -> false);
 
     public static void open(ServerPlayer player, ItemStack ringStack) {
+        // 认主禁：非主人打不开戒指囊（阵禁系统日志风险 4——戒指开囊入口必须单独拦）
+        if (net.seraphina.ninecun_lingtai.common.seal.SealManager.blocksUse(player, ringStack)) {
+            return;
+        }
         UUID ringId = RingStorageUtility.getOrCreateRingId(ringStack);
         StorageRingSession activeSession = ACTIVE_SESSIONS.get(player.getUUID());
         if (activeSession != null) {
@@ -301,6 +305,30 @@ public final class RingStorageManager {
             saveCameraState(server, session);
         }
         ACTIVE_SESSIONS.clear();
+    }
+
+    /**
+     * 自毁禁触发：清空该戒指的储物空间内容（保留地板与屏障，戒指本体不毁）。
+     *
+     * @return true = 该物品是已初始化的储物戒指且已清空；false = 不是戒指/没有空间
+     */
+    public static boolean annihilateRingContents(MinecraftServer server, ItemStack ringStack) {
+        UUID ringId = RingStorageUtility.getRingId(ringStack).orElse(null);
+        if (ringId == null) {
+            return false;
+        }
+        RingStorageSavedData savedData = RingStorageSavedData.get(server);
+        if (!savedData.isInitialized(ringId)) {
+            return false;
+        }
+        ServerLevel storageLevel = server.getLevel(RingStorageUtility.STORAGE_DIMENSION);
+        if (storageLevel == null) {
+            return false;
+        }
+        StoragePocket pocket = RingStorageUtility.getPocket(savedData.getOrCreatePocketIndex(ringId));
+        ensurePocketChunkTickets(storageLevel, pocket);
+        clearPocketInterior(storageLevel, pocket);
+        return true;
     }
 
     public static boolean redirectStorageItemDrop(ServerLevel storageLevel, Entity entity) {
