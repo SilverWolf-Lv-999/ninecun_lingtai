@@ -1,4 +1,4 @@
-package net.seraphina.ninecun_lingtai.test;
+package net.seraphina.ninecun_lingtai.modtest;
 
 import net.seraphina.ninecun_lingtai.utility.jvm.SeraLegitHook;
 
