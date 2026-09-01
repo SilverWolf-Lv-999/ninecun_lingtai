@@ -47,6 +47,12 @@ public final class ModCreativeModeTabs {
                         output.acceptAll(TechniqueCreativeTabCache.getItemStacks());
                         output.acceptAll(AlchemyRecipeCreativeTabCache.getItemStacks());
                         output.acceptAll(BookCreativeTabCache.getItemStacks());
+                        output.accept(ModFormationContent.FORMATION_DISC_ITEM.get());
+                        output.accept(ModFormationContent.FORMATION_FLAG_METAL_ITEM.get());
+                        output.accept(ModFormationContent.FORMATION_FLAG_WATER_ITEM.get());
+                        output.accept(ModFormationContent.FORMATION_FLAG_WOOD_ITEM.get());
+                        output.accept(ModFormationContent.FORMATION_FLAG_FIRE_ITEM.get());
+                        output.accept(ModFormationContent.FORMATION_FLAG_EARTH_ITEM.get());
                     })
                     .build()
     );

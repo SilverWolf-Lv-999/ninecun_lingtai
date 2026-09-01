@@ -38,6 +38,18 @@
         "ninecun_lingtai:grass_restoration_pill"
       ]
     },
+    "formation": {
+      "title": "阵法",
+      "icon": "ninecun_lingtai:formation_disc",
+      "items": [
+        "ninecun_lingtai:formation_disc",
+        "ninecun_lingtai:formation_flag_metal",
+        "ninecun_lingtai:formation_flag_water",
+        "ninecun_lingtai:formation_flag_wood",
+        "ninecun_lingtai:formation_flag_fire",
+        "ninecun_lingtai:formation_flag_earth"
+      ]
+    },
     "debug": {
       "title": "调试",
       "icon": "ninecun_lingtai:dao_scroll",

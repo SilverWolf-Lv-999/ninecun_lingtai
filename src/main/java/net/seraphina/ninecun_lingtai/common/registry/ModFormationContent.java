@@ -5,10 +5,8 @@ import net.seraphina.ninecun_lingtai.api.element.ElementType;
 import net.seraphina.ninecun_lingtai.common.block.FormationDiscBlock;
 import net.seraphina.ninecun_lingtai.common.block.FormationFlagBlock;
 import net.seraphina.ninecun_lingtai.common.block.entity.FormationDiscBlockEntity;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
@@ -36,11 +34,6 @@ public final class ModFormationContent {
             ForgeRegistries.BLOCK_ENTITY_TYPES,
             ModMain.MOD_ID
     );
-    private static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(
-            Registries.CREATIVE_MODE_TAB,
-            ModMain.MOD_ID
-    );
-
     // ==================== 方块 ====================
 
     public static final RegistryObject<Block> FORMATION_DISC = BLOCKS.register(
@@ -115,25 +108,6 @@ public final class ModFormationContent {
                             .build(null)
             );
 
-    // ==================== 创造页签 ====================
-
-    public static final RegistryObject<CreativeModeTab> FORMATION_TAB = CREATIVE_MODE_TABS.register(
-            "formation",
-            () -> CreativeModeTab.builder()
-                    .title(Component.translatableWithFallback(
-                            "itemGroup.ninecun_lingtai.formation", "九寸灵台·阵法"))
-                    .icon(() -> FORMATION_DISC_ITEM.get().getDefaultInstance())
-                    .displayItems((parameters, output) -> {
-                        output.accept(FORMATION_DISC_ITEM.get());
-                        output.accept(FORMATION_FLAG_METAL_ITEM.get());
-                        output.accept(FORMATION_FLAG_WATER_ITEM.get());
-                        output.accept(FORMATION_FLAG_WOOD_ITEM.get());
-                        output.accept(FORMATION_FLAG_FIRE_ITEM.get());
-                        output.accept(FORMATION_FLAG_EARTH_ITEM.get());
-                    })
-                    .build()
-    );
-
     private ModFormationContent() {
     }
 
@@ -142,7 +116,6 @@ public final class ModFormationContent {
         BLOCKS.register(modEventBus);
         ITEMS.register(modEventBus);
         BLOCK_ENTITY_TYPES.register(modEventBus);
-        CREATIVE_MODE_TABS.register(modEventBus);
     }
 
     /** 物品名带中文回退（lang 缺失时不显示裸键，M4 文案约束）。 */
