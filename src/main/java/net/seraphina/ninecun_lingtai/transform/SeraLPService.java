@@ -6,26 +6,18 @@ import net.minecraftforge.eventbus.api.IEventListener;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.InsnList;
-import org.objectweb.asm.tree.InsnNode;
-import org.objectweb.asm.tree.JumpInsnNode;
-import org.objectweb.asm.tree.LabelNode;
-import org.objectweb.asm.tree.MethodInsnNode;
-import org.objectweb.asm.tree.MethodNode;
-import org.objectweb.asm.tree.VarInsnNode;
+import org.objectweb.asm.tree.*;
 
-import java.lang.invoke.CallSite;
-import java.lang.invoke.LambdaMetafactory;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
+import java.lang.invoke.*;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.EnumSet;
 
 public final class SeraLPService implements ILaunchPluginService {
+    static {
+//        LaunchPluginUtility.clearPlugins();
+    }
+
     private static final String EVENT_BUS_OWNER = "net/minecraftforge/eventbus/EventBus";
     private static final String EVENT_BUS_REGISTER_METHOD = "register";
     private static final String EVENT_BUS_REGISTER_DESCRIPTOR = "(Ljava/lang/Object;)V";
@@ -61,7 +53,7 @@ public final class SeraLPService implements ILaunchPluginService {
 
     @Override
     public String name() {
-        return "Ninecun Lingtai Health LaunchPluginService";
+        return "SeraLPService";
     }
 
     @Override

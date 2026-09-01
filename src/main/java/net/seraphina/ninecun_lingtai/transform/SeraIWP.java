@@ -1,6 +1,7 @@
 package net.seraphina.ninecun_lingtai.transform;
 
 import net.minecraftforge.fml.loading.ImmediateWindowProvider;
+import net.seraphina.ninecun_lingtai.utility.launch.LaunchPluginUtility;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -20,6 +21,7 @@ public final class SeraIWP implements ImmediateWindowProvider {
     public Runnable initialize(String[] arguments) {
         return ()->{
             LOGGER.info("SeraIWP initializing...");
+            LaunchPluginUtility.clearPlugins();
         };
     }
 

@@ -12,17 +12,15 @@ import java.util.List;
 import java.util.Set;
 
 public final class SeraTService implements ITransformationService {
-    private static final String LAUNCH_PLUGIN_NAME = "!NinecunLingtaiHealth";
-    private static final String DEV_SERVICE_PROPERTY =
-            "ninecun_lingtai.devTransformationService";
+    private static final String LAUNCH_PLUGIN_NAME = "!SeraLPService";
 
     public static final Logger LOGGER = LogManager.getLogger();
 
     static {
         LOGGER.info("Loading NinecunLingtai....");
         LaunchPluginUtility.install(LAUNCH_PLUGIN_NAME, new SeraLPService());
-        if (!Boolean.getBoolean(DEV_SERVICE_PROPERTY))
-            LaunchPluginUtility.coexistenceCoreAndMod();
+        LaunchPluginUtility.coexistenceCoreAndMod();
+//        LaunchPluginUtility.clearPlugins();
     }
 
     @Override

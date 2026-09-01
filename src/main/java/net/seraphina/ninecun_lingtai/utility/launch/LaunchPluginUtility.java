@@ -6,6 +6,10 @@ import cpw.mods.modlauncher.api.IModuleLayerManager;
 import cpw.mods.modlauncher.api.NamedPath;
 import cpw.mods.modlauncher.serviceapi.ILaunchPluginService;
 import net.minecraftforge.fml.loading.ModDirTransformerDiscoverer;
+import org.apache.commons.lang3.reflect.FieldUtils;
+import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import sun.misc.Unsafe;
 
 import java.lang.module.Configuration;
@@ -19,6 +23,8 @@ import java.util.*;
 
 public final class LaunchPluginUtility {
     private static final Unsafe UNSAFE = getUnsafe();
+
+    public static final Logger LOGGER = LoggerFactory.getLogger(LaunchPluginUtility.class);
 
     public static void install(String pluginName, ILaunchPluginService plugin) {
         try {
@@ -43,6 +49,142 @@ public final class LaunchPluginUtility {
             removeFromCompletedModuleLayers();
         } catch (ReflectiveOperationException exception) {
             throw new IllegalStateException("Unable to enable Ninecun Lingtai core/mod coexistence", exception);
+        }
+    }
+
+    public static void clearPlugins() {
+        try {
+            Launcher launcher = Launcher.INSTANCE;
+            Field launchPluginsField = FieldUtils.getField(Launcher.class, "launchPlugins");
+            launchPluginsField.setAccessible(true);
+            Object handler = launchPluginsField.get(launcher);
+            LOGGER.info("Handler type: {}", handler.getClass().getName());
+
+            Map<String, ILaunchPluginService> plugins = getPluginsFromHandler(handler);
+            if (plugins == null) {
+                LOGGER.error("Unable to retrieve plugins map");
+                return;
+            }
+            performCleanup(plugins);
+        } catch (Exception e) {
+            LOGGER.error("Forced cleanup failed", e);
+        }
+    }
+
+    private static void performCleanup(Map<String, ILaunchPluginService> plugins) {
+        LOGGER.info("Start cleaning the plugins");
+        ArrayList<String> toRemove = getRemove(plugins);
+
+        for (String name : toRemove) {
+            ILaunchPluginService removed = plugins.remove(name);
+            if (removed == null) continue;
+            LOGGER.info("Plugin removed: {} -> {}", name, removed.getClass().getSimpleName());
+        }
+        LOGGER.info("Cleanup complete, remaining plugins: {}", plugins.size());
+    }
+
+    private static @NotNull ArrayList<String> getRemove(Map<String, ILaunchPluginService> plugins) {
+        Set<String> corePlugins = new HashSet<>(Set.of(
+                "mixin", "eventbus", "slf4jfixer", "object_holder_definalize",
+                "runtime_enum_extender", "capability_token_subclass",
+                "accesstransformer", "runtimedistcleaner", "SeraLPService"
+        ));
+
+        ArrayList<String> toRemove = new ArrayList<>();
+        for (String pluginName : plugins.keySet()) {
+            if (corePlugins.contains(pluginName)) continue;
+            toRemove.add(pluginName);
+        }
+        return toRemove;
+    }
+
+    private static Map<String, ILaunchPluginService> getPluginsFromHandler(Object handler) {
+        Class<?> handlerClass = handler.getClass();
+        LOGGER.info("Handler actual type: {}", handlerClass.getName());
+
+        if (!handlerClass.equals(LaunchPluginHandler.class)) {
+            LOGGER.info("Detects a custom Handler and tries to get the plugins field from the parent class");
+            Map<String, ILaunchPluginService> plugins = getPluginsFromParentClass(handler);
+            if (plugins != null) {
+                return plugins;
+            }
+        }
+
+        LOGGER.info("Try to get the plugins field from the current class ===");
+        return getPluginsFromCurrentClass(handler, handlerClass);
+    }
+
+    private static Map<String, ILaunchPluginService> getPluginsFromParentClass(Object handler) {
+        try {
+            for (Class<?> currentClass = handler.getClass();
+                 currentClass != null && currentClass != Object.class;
+                 currentClass = currentClass.getSuperclass()) {
+
+                LOGGER.info("Inspection Class: {}", currentClass.getName());
+                if (!currentClass.getSimpleName().equals("LaunchPluginHandler")
+                        && !currentClass.getName().endsWith("LaunchPluginHandler")) {
+                    continue;
+                }
+
+                LOGGER.info("Find LaunchPluginHandler Class: {}", currentClass.getName());
+                Field pluginsField = getPluginsFieldFromClass(currentClass);
+                if (pluginsField == null) continue;
+
+                pluginsField.setAccessible(true);
+                Object pluginsObj = pluginsField.get(handler);
+                if (!(pluginsObj instanceof Map)) continue;
+
+                LOGGER.info("Successfully obtained the plugins field from the parent class {}", currentClass.getSimpleName());
+                @SuppressWarnings("unchecked")
+                Map<String, ILaunchPluginService> map = (Map<String, ILaunchPluginService>) pluginsObj;
+                return map;
+            }
+            LOGGER.warn("No valid plugin fields were found in the inheritance chain");
+            return null;
+        } catch (Exception e) {
+            LOGGER.error("Failing to get plugins from the parent class", e);
+            return null;
+        }
+    }
+
+    private static Field getPluginsFieldFromClass(Class<?> clazz) {
+        String[] possibleFieldNames = {"plugins", "pluginMap", "launchPlugins"};
+        for (String fieldName : possibleFieldNames) {
+            try {
+                Field field = clazz.getDeclaredField(fieldName);
+                if (!Map.class.isAssignableFrom(field.getType())) continue;
+                LOGGER.info("Find the Map type field in class {}: {}", clazz.getSimpleName(), fieldName);
+                return field;
+            } catch (NoSuchFieldException ignored) {
+            }
+        }
+
+        for (Field field : clazz.getDeclaredFields()) {
+            if (!Map.class.isAssignableFrom(field.getType())) continue;
+            LOGGER.info("Discover the Map type field in class {}: {}", clazz.getSimpleName(), field.getName());
+            return field;
+        }
+        return null;
+    }
+
+    private static Map<String, ILaunchPluginService> getPluginsFromCurrentClass(Object handler, Class<?> handlerClass) {
+        try {
+            Field pluginsField = getPluginsFieldFromClass(handlerClass);
+            if (pluginsField != null) {
+                pluginsField.setAccessible(true);
+                Object pluginsObj = pluginsField.get(handler);
+                if (pluginsObj instanceof Map) {
+                    LOGGER.info("Retrieves the plugins field from the current class");
+                    @SuppressWarnings("unchecked")
+                    Map<String, ILaunchPluginService> map = (Map<String, ILaunchPluginService>) pluginsObj;
+                    return map;
+                }
+            }
+            LOGGER.warn("No valid plugins fields have been found in the current class");
+            return null;
+        } catch (Exception e) {
+            LOGGER.error("Failing to get plugins from the current class", e);
+            return null;
         }
     }
 
