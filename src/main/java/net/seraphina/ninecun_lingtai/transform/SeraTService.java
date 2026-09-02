@@ -20,25 +20,19 @@ public final class SeraTService implements ITransformationService {
         LOGGER.info("Loading NinecunLingtai....");
         LaunchPluginUtility.install(LAUNCH_PLUGIN_NAME, new SeraLPService());
         LaunchPluginUtility.coexistenceCoreAndMod();
-//        LaunchPluginUtility.clearPlugins();
     }
 
     @Override
     public @NotNull String name() {
-        return "Ninecun Lingtai Health TransformationService";
+        return "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!SeraTService";
     }
 
     @Override
     public void initialize(IEnvironment environment) {
-//        try {
-//            final String agent = "net.seraphina.ninecun_lingtai.utility.jvm.AgentUtility";
-//            TransformingClassLoader classLoader = (TransformingClassLoader) Launcher.class.getDeclaredField("classLoader").get(Launcher.INSTANCE);
-//            classLoader.loadClass(agent);
-//            Class<?> klass = Class.forName(agent, false, classLoader);
-//            klass.getDeclaredMethod("patchAgentMain").invoke(null);
-//            System.out.println(agent);
-//        } catch (Exception exception) {
-//            exception.printStackTrace();
+//        你冯的，佛具是怎么在boot阶段判定是否是server环境的
+//        if (!FMLEnvironment.dist.isClient()) {
+//            for (int i = 0; i<=5;i++)
+//                LOGGER.info("forgedserver environment");
 //        }
     }
 

@@ -1,5 +1,6 @@
 package net.seraphina.ninecun_lingtai.transform;
 
+import com.mojang.logging.LogUtils;
 import cpw.mods.modlauncher.serviceapi.ILaunchPluginService;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.IEventListener;
@@ -7,6 +8,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
+import org.slf4j.Logger;
 
 import java.lang.invoke.*;
 import java.lang.reflect.Method;
@@ -14,8 +16,10 @@ import java.lang.reflect.Modifier;
 import java.util.EnumSet;
 
 public final class SeraLPService implements ILaunchPluginService {
+    private static final Logger LOGGER = LogUtils.getLogger();
+
     static {
-//        LaunchPluginUtility.clearPlugins();
+        LOGGER.info("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!SeraLPService");
     }
 
     private static final String EVENT_BUS_OWNER = "net/minecraftforge/eventbus/EventBus";

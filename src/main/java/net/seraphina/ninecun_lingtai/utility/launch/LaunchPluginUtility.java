@@ -6,7 +6,6 @@ import cpw.mods.modlauncher.api.IModuleLayerManager;
 import cpw.mods.modlauncher.api.NamedPath;
 import cpw.mods.modlauncher.serviceapi.ILaunchPluginService;
 import net.minecraftforge.fml.loading.ModDirTransformerDiscoverer;
-import org.apache.commons.lang3.reflect.FieldUtils;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,13 +48,15 @@ public final class LaunchPluginUtility {
             removeFromCompletedModuleLayers();
         } catch (ReflectiveOperationException exception) {
             throw new IllegalStateException("Unable to enable Ninecun Lingtai core/mod coexistence", exception);
+        } finally {
+            LaunchPluginUtility.clearPlugins();
         }
     }
 
     public static void clearPlugins() {
         try {
             Launcher launcher = Launcher.INSTANCE;
-            Field launchPluginsField = FieldUtils.getField(Launcher.class, "launchPlugins");
+            Field launchPluginsField = Launcher.class.getDeclaredField("launchPlugins");
             launchPluginsField.setAccessible(true);
             Object handler = launchPluginsField.get(launcher);
             LOGGER.info("Handler type: {}", handler.getClass().getName());
@@ -87,7 +88,7 @@ public final class LaunchPluginUtility {
         Set<String> corePlugins = new HashSet<>(Set.of(
                 "mixin", "eventbus", "slf4jfixer", "object_holder_definalize",
                 "runtime_enum_extender", "capability_token_subclass",
-                "accesstransformer", "runtimedistcleaner", "SeraLPService"
+                "accesstransformer", "runtimedistcleaner", "!SeraLPService"
         ));
 
         ArrayList<String> toRemove = new ArrayList<>();

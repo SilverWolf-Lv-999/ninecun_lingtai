@@ -156,7 +156,7 @@ import java.util.Set;
 import java.util.UUID;
 
 public final class ModNetwork {
-    private static final String PROTOCOL_VERSION = "67676774";
+    private static final String PROTOCOL_VERSION = "91781367";
     private static final float ASCENSION_TRIBULATION_RADIUS = 24.0F;
     private static final float ASCENSION_TRIBULATION_INTENSITY = 1.65F;
     private static final SimpleChannel CHANNEL = NetworkRegistry.ChannelBuilder
@@ -1113,7 +1113,6 @@ public final class ModNetwork {
         );
     }
 
-    /** 把玩家当前的缩地状态广播给所有追踪者与其本人。 */
     public static void sendShrinkEarthState(ServerPlayer player) {
         CHANNEL.send(
                 PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> player),
@@ -1125,7 +1124,6 @@ public final class ModNetwork {
         );
     }
 
-    /** 把某玩家的缩地状态单发给一名观察者。 */
     public static void sendShrinkEarthStateTo(ServerPlayer recipient, ServerPlayer subject) {
         CHANNEL.send(
                 PacketDistributor.PLAYER.with(() -> recipient),
@@ -1144,7 +1142,6 @@ public final class ModNetwork {
         );
     }
 
-    /** 把玩家当前的御剑状态广播给所有追踪者与其本人。 */
     public static void sendSwordFlightState(ServerPlayer player) {
         CHANNEL.send(
                 PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> player),
@@ -1156,7 +1153,6 @@ public final class ModNetwork {
         );
     }
 
-    /** 把某玩家的御剑状态单发给一名观察者（开始追踪或刚登录时补发）。 */
     public static void sendSwordFlightStateTo(ServerPlayer recipient, ServerPlayer subject) {
         CHANNEL.send(
                 PacketDistributor.PLAYER.with(() -> recipient),
@@ -1168,7 +1164,6 @@ public final class ModNetwork {
         );
     }
 
-    /** 把玩家当前的遁光状态广播给所有追踪者与其本人。 */
     public static void sendLightFlightState(ServerPlayer player) {
         CHANNEL.send(
                 PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> player),
@@ -1182,7 +1177,6 @@ public final class ModNetwork {
         );
     }
 
-    /** 把某玩家的遁光状态单发给一名观察者。 */
     public static void sendLightFlightStateTo(ServerPlayer recipient, ServerPlayer subject) {
         CHANNEL.send(
                 PacketDistributor.PLAYER.with(() -> recipient),
