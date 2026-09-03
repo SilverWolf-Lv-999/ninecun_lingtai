@@ -9,8 +9,11 @@ import net.seraphina.ninecun_lingtai.mixin.api.MixinEnabled;
 import net.seraphina.ninecun_lingtai.mixin.api.Type;
 import net.seraphina.ninecun_lingtai.utility.JDKUtility;
 import net.seraphina.ninecun_lingtai.utility.jvm.AgentUtility;
+import net.seraphina.ninecun_lingtai.utility.system.SysUtility;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 import org.spongepowered.asm.service.MixinService;
@@ -30,23 +33,24 @@ public final class IMixinPlugin implements IMixinConfigPlugin {
 
     private LoadingModList loadingModList;
 
+    public static final Logger LOGGER = LoggerFactory.getLogger(IMixinPlugin.class);
+
     static {
-        if (JDKUtility.isJDK17()) {
-            AgentUtility.patchAgentMain();
-        } else {
-            JDKUtility.warnIfUnsupportedJDK();
-        }
-        if (Static.isClient() && Static.isOptifineLoaded() && !SwingUtility.isHeadless()) {
+        AgentUtility.patchAgentMain();
+        if (Static.isClient() && Static.isOptifineLoaded() && !SwingUtility.isHeadless() && !SysUtility.isAndroid()) {
             SwingUtilities.invokeLater(() -> {
                 JWindow window = SwingUtility.createWindow();
                 window.setVisible(true);
             });
         }
-        if (!JDKUtility.isJDK17() && Static.isClient() && !SwingUtility.isHeadless()) {
+        if (!JDKUtility.isJDK17() && Static.isClient() && !SwingUtility.isHeadless() && !SysUtility.isAndroid()) {
             SwingUtilities.invokeLater(() -> {
                 JWindow window = SwingUtility.createJdkWarningWindow();
                 window.setVisible(true);
             });
+        }
+        if (SysUtility.isAndroid()) {
+            LOGGER.info("Why are you running my code on the completely wrong platform?");
         }
     }
 
