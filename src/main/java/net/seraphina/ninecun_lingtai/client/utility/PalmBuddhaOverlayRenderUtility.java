@@ -21,12 +21,6 @@ import org.joml.Matrix4f;
 
 /** Renders the first Palm Buddha member page with one shader-backed surface. */
 public final class PalmBuddhaOverlayRenderUtility {
-    private static final float MAXIMUM_PANEL_WIDTH = 560.0F;
-    private static final float MAXIMUM_PANEL_HEIGHT = 360.0F;
-    private static final float PANEL_MARGIN = 12.0F;
-    private static final float HEADER_HEIGHT = 58.0F;
-    private static final float FOOTER_HEIGHT = 42.0F;
-    private static final float ROW_HEIGHT = 22.0F;
     private static final int INK_COLOR = 0xE51B1712;
     private static final int MUTED_INK_COLOR = 0xC86A5543;
     private static final int SEAL_COLOR = 0xE5A62B22;
@@ -42,23 +36,19 @@ public final class PalmBuddhaOverlayRenderUtility {
         if (minecraft.options.hideGui) {
             return;
         }
-        int screenWidth = minecraft.getWindow().getGuiScaledWidth();
-        int screenHeight = minecraft.getWindow().getGuiScaledHeight();
-        float panelWidth = Math.min(MAXIMUM_PANEL_WIDTH, Math.max(220.0F, screenWidth - PANEL_MARGIN * 2.0F));
-        float panelHeight = Math.min(MAXIMUM_PANEL_HEIGHT, Math.max(240.0F, screenHeight - PANEL_MARGIN * 2.0F));
-        float left = (screenWidth - panelWidth) * 0.5F;
-        float top = (screenHeight - panelHeight) * 0.5F;
+        PalmBuddhaOverlayGeometryUtility.PanelBounds panelBounds =
+                PalmBuddhaOverlayGeometryUtility.calculatePanelBounds(
+                        minecraft.getWindow().getGuiScaledWidth(),
+                        minecraft.getWindow().getGuiScaledHeight()
+                );
 
-        drawShaderPanel(guiGraphics, left, top, panelWidth, panelHeight, partialTicks);
-        drawMemberText(guiGraphics, minecraft.font, left, top, panelWidth, panelHeight);
+        drawShaderPanel(guiGraphics, panelBounds, partialTicks);
+        drawMemberText(guiGraphics, minecraft.font, panelBounds);
     }
 
     private static void drawShaderPanel(
             GuiGraphics guiGraphics,
-            float left,
-            float top,
-            float panelWidth,
-            float panelHeight,
+            PalmBuddhaOverlayGeometryUtility.PanelBounds panelBounds,
             float partialTicks
     ) {
         ShaderInstance shaderInstance = PalmBuddhaOverlayShader.getPalmBuddhaOverlayShader();
@@ -71,22 +61,36 @@ public final class PalmBuddhaOverlayRenderUtility {
         RenderSystem.defaultBlendFunc();
         RenderSystem.disableCull();
         RenderSystem.setShader(() -> shaderInstance);
-        shaderInstance.safeGetUniform("PanelSize").set(panelWidth, panelHeight);
+        shaderInstance.safeGetUniform("PanelSize").set(panelBounds.width(), panelBounds.height());
         shaderInstance.safeGetUniform("Time").set(
                 (Minecraft.getInstance().level == null ? 0.0F : Minecraft.getInstance().level.getGameTime())
                         + partialTicks
         );
-        shaderInstance.safeGetUniform("SelectedRow").set(-1.0F);
+        shaderInstance.safeGetUniform("SelectedRow").set(ClientPalmBuddhaOverlayManager.getSelectedRow());
         shaderInstance.safeGetUniform("PageIndex").set((float) page.pageIndex());
         shaderInstance.safeGetUniform("PageCount").set((float) page.pageCount());
 
         Matrix4f matrix = guiGraphics.pose().last().pose();
         BufferBuilder bufferBuilder = Tesselator.getInstance().getBuilder();
         bufferBuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR_TEX);
-        vertex(bufferBuilder, matrix, left, top, 0.0F, 0.0F);
-        vertex(bufferBuilder, matrix, left, top + panelHeight, 0.0F, 1.0F);
-        vertex(bufferBuilder, matrix, left + panelWidth, top + panelHeight, 1.0F, 1.0F);
-        vertex(bufferBuilder, matrix, left + panelWidth, top, 1.0F, 0.0F);
+        vertex(bufferBuilder, matrix, panelBounds.left(), panelBounds.top(), 0.0F, 0.0F);
+        vertex(
+                bufferBuilder,
+                matrix,
+                panelBounds.left(),
+                panelBounds.bottom(),
+                0.0F,
+                1.0F
+        );
+        vertex(
+                bufferBuilder,
+                matrix,
+                panelBounds.right(),
+                panelBounds.bottom(),
+                1.0F,
+                1.0F
+        );
+        vertex(bufferBuilder, matrix, panelBounds.right(), panelBounds.top(), 1.0F, 0.0F);
         BufferUploader.drawWithShader(bufferBuilder.end());
         RenderSystem.enableCull();
         RenderSystem.disableBlend();
@@ -95,12 +99,13 @@ public final class PalmBuddhaOverlayRenderUtility {
     private static void drawMemberText(
             GuiGraphics guiGraphics,
             Font font,
-            float left,
-            float top,
-            float panelWidth,
-            float panelHeight
+            PalmBuddhaOverlayGeometryUtility.PanelBounds panelBounds
     ) {
         PalmBuddhaMemberPageSnapshot page = ClientPalmBuddhaMemberManager.getCurrentPage();
+        float left = panelBounds.left();
+        float top = panelBounds.top();
+        float panelWidth = panelBounds.width();
+        float panelHeight = panelBounds.height();
         int textLeft = Mth.floor(left + 28.0F);
         int titleY = Mth.floor(top + 22.0F);
         guiGraphics.drawString(font, Component.literal("掌中佛国"), textLeft, titleY, INK_COLOR, false);
@@ -126,8 +131,8 @@ public final class PalmBuddhaOverlayRenderUtility {
                 false
         );
 
-        int rowsTop = Mth.floor(top + HEADER_HEIGHT);
-        int rowsBottom = Mth.floor(top + panelHeight - FOOTER_HEIGHT);
+        int rowsTop = Mth.floor(panelBounds.rowsTop());
+        int rowsBottom = Mth.floor(panelBounds.rowsBottom());
         guiGraphics.enableScissor(
                 Mth.floor(left + 20.0F),
                 rowsTop,
@@ -136,7 +141,7 @@ public final class PalmBuddhaOverlayRenderUtility {
         );
         for (int index = 0; index < page.members().size(); index++) {
             PalmBuddhaMemberSnapshot member = page.members().get(index);
-            int rowY = Mth.floor(rowsTop + index * ROW_HEIGHT + 6.0F);
+            int rowY = Mth.floor(PalmBuddhaOverlayGeometryUtility.rowTextTop(panelBounds, index));
             int statusColor = member.online() && member.inExpectedRealm() ? 0xE5637650 : MUTED_INK_COLOR;
             String status = !member.online() ? "离线" : member.inExpectedRealm() ? "在国" : "归位中";
             String realm = member.cultivationRealmName();
@@ -188,4 +193,3 @@ public final class PalmBuddhaOverlayRenderUtility {
                 .endVertex();
     }
 }
-

@@ -1,6 +1,7 @@
 package net.seraphina.ninecun_lingtai.mixin.client;
 
 import net.minecraft.client.MouseHandler;
+import net.seraphina.ninecun_lingtai.client.player.ClientPalmBuddhaOverlayManager;
 import net.seraphina.ninecun_lingtai.client.player.ClientPalmBuddhaTransitionManager;
 import net.seraphina.ninecun_lingtai.client.player.ClientPressureManager;
 import net.seraphina.ninecun_lingtai.client.player.ClientSoulRoamingManager;
@@ -24,8 +25,21 @@ public abstract class MouseHandlerMixin {
             int modifiers,
             CallbackInfo callbackInfo
     ) {
-        // Let releases reach MouseHandler so a button held before the transfer
-        // cannot leave its internal activeButton state stuck forever.
+        if (ClientPalmBuddhaOverlayManager.isActive()) {
+            if (action == GLFW.GLFW_PRESS && button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+                MouseHandler mouseHandler = (MouseHandler) (Object) this;
+                ClientPalmBuddhaOverlayManager.selectMemberAtWindowCoordinates(
+                        mouseHandler.xpos(),
+                        mouseHandler.ypos()
+                );
+            }
+            if (action != GLFW.GLFW_RELEASE) {
+                callbackInfo.cancel();
+            }
+            return;
+        }
+        // Let releases reach MouseHandler during a transfer so a button held
+        // before the transfer cannot leave its internal activeButton stuck forever.
         if (ClientPalmBuddhaTransitionManager.isActive()
                 && action != GLFW.GLFW_RELEASE) {
             callbackInfo.cancel();
@@ -39,7 +53,8 @@ public abstract class MouseHandlerMixin {
             double yOffset,
             CallbackInfo callbackInfo
     ) {
-        if (ClientPalmBuddhaTransitionManager.isActive()) {
+        if (ClientPalmBuddhaTransitionManager.isActive()
+                || ClientPalmBuddhaOverlayManager.isActive()) {
             callbackInfo.cancel();
         }
     }
@@ -52,7 +67,8 @@ public abstract class MouseHandlerMixin {
             )
     )
     private void ninecunLingtai$rotateMeditationCamera(LocalPlayer player, double yRotDelta, double xRotDelta) {
-        if (ClientPalmBuddhaTransitionManager.isActive()) {
+        if (ClientPalmBuddhaTransitionManager.isActive()
+                || ClientPalmBuddhaOverlayManager.isActive()) {
             return;
         }
         if (ClientPressureManager.rotateCamera(player, yRotDelta, xRotDelta)) {

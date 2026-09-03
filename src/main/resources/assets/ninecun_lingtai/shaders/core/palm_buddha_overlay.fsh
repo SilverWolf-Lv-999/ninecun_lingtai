@@ -56,8 +56,8 @@ void main() {
     vec3 borderColor = mix(vec3(0.27, 0.20, 0.14), ink, 0.35 + 0.12 * sin(Time * 0.35));
     vec3 color = mix(paper, borderColor, border * 0.78);
 
-    float contentTop = 70.0;
-    float contentBottom = PanelSize.y - 54.0;
+    float contentTop = 58.0;
+    float contentBottom = PanelSize.y - 42.0;
     float rowHeight = max(1.0, (contentBottom - contentTop) / 12.0);
     float row = floor((pixel.y - contentTop) / rowHeight);
     float rowInside = fract((pixel.y - contentTop) / rowHeight);

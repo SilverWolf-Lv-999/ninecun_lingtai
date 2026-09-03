@@ -28,8 +28,6 @@ public final class IMixinPlugin implements IMixinConfigPlugin {
             org.objectweb.asm.Type.getDescriptor(MixinDisabled.class);
     private static final String MIXIN_ENABLED_DESCRIPTOR =
             org.objectweb.asm.Type.getDescriptor(MixinEnabled.class);
-    private static final String DEFAULT_DISABLED_MOD_ID = "ninecun_lingtai";
-    private static final String DEFAULT_ENABLED_MOD_ID = "minecraft";
 
     private LoadingModList loadingModList;
 
@@ -81,12 +79,12 @@ public final class IMixinPlugin implements IMixinConfigPlugin {
 
         AnnotationNode disabledAnnotation = this.findAnnotation(
                 classNode,
-                MIXIN_DISABLED_DESCRIPTOR
+                "Lnet/seraphina/ninecun_lingtai/mixin/api/MixinDisabled;"
         );
         if (disabledAnnotation != null) {
             MixinCondition condition = this.readCondition(
                     disabledAnnotation,
-                    DEFAULT_DISABLED_MOD_ID
+                    "minecraft"
             );
             if (this.isEnvironmentMatched(condition)) {
                 return false;
@@ -95,12 +93,12 @@ public final class IMixinPlugin implements IMixinConfigPlugin {
 
         AnnotationNode enabledAnnotation = this.findAnnotation(
                 classNode,
-                MIXIN_ENABLED_DESCRIPTOR
+                "Lnet/seraphina/ninecun_lingtai/mixin/api/MixinEnabled;"
         );
         if (enabledAnnotation != null) {
             MixinCondition condition = this.readCondition(
                     enabledAnnotation,
-                    DEFAULT_ENABLED_MOD_ID
+                    "minecraft"
             );
             return this.isEnvironmentMatched(condition);
         }
