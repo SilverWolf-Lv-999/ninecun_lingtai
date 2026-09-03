@@ -22,7 +22,7 @@ public final class CoreMain {
     private static JarFile bootstrapGuardJar;
 
     public static void agentmain(String arguments, Instrumentation instrumentation) {
-        LOGGER.info("Hello world!");
+        LOGGER.info("agentmain");
         Class<?> agentTargetClass = findAgentTargetClass(instrumentation);
         if (agentTargetClass == null) {
             return;
