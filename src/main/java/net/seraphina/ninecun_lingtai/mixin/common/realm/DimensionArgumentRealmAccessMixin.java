@@ -32,7 +32,7 @@ public abstract class DimensionArgumentRealmAccessMixin {
             MinecraftServer server,
             ResourceKey<Level> levelKey
     ) {
-        if (ThreeThousandRealmManager.get(server).isThreeThousandRealm(levelKey)) {
+        if (ThreeThousandRealmManager.get(server).isManagedRealm(levelKey)) {
             return null;
         }
         return server.getLevel(levelKey);
@@ -60,7 +60,7 @@ public abstract class DimensionArgumentRealmAccessMixin {
                 ThreeThousandRealmManager.get(commandSourceStack.getServer());
         Set<ResourceKey<Level>> filteredLevels = new LinkedHashSet<>();
         for (ResourceKey<Level> levelKey : levels) {
-            if (!realmManager.isThreeThousandRealm(levelKey)) {
+            if (!realmManager.isManagedRealm(levelKey)) {
                 filteredLevels.add(levelKey);
             }
         }

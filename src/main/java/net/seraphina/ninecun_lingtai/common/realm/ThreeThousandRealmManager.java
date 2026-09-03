@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -52,6 +53,13 @@ public final class ThreeThousandRealmManager {
     private final ThreeThousandRealmState thisState;
     private final PlayerThreeThousandRealmReturnState thisPlayerReturnState;
     private final ThreeThousandRealmDataPackGenerator thisDataPackGenerator;
+    /**
+     * Definitions owned by other dynamic-realm features.  They share the existing
+     * registry/datapack/lazy-loader bridge without becoming part of the
+     * three-thousand-realm catalogue.
+     */
+    private final Map<ResourceLocation, RealmDefinition> thisExternalRealmDefinitions =
+            new LinkedHashMap<>();
     private final Map<ResourceKey<Level>, Long> thisEmptyRealmTicks = new HashMap<>();
 
     private ThreeThousandRealmManager(MinecraftServer server) {
@@ -143,28 +151,53 @@ public final class ThreeThousandRealmManager {
         Objects.requireNonNull(realmId, "realmId");
         RealmDefinition realmDefinition = this.thisState.getRealm(realmId)
                 .orElseThrow(() -> new IllegalArgumentException("Unknown three-thousand realm: " + realmId));
-        ResourceKey<Level> levelKey = ResourceKey.create(Registries.DIMENSION, realmDefinition.getId());
-        Map<ResourceKey<Level>, ServerLevel> worlds = this.thisServer.forgeGetWorldMap();
-        ServerLevel loadedRealm = worlds.get(levelKey);
-        if (loadedRealm != null) {
-            return loadedRealm;
+        return this.loadManagedRealm(realmDefinition, "three-thousand");
+    }
+
+    /**
+     * Registers a definition owned by another feature on the existing dynamic
+     * dimension bridge.  The definition is deliberately not added to the
+     * three-thousand-realm catalogue.
+     */
+    public synchronized void registerManagedRealmDefinition(RealmDefinition realmDefinition) {
+        Objects.requireNonNull(realmDefinition, "realmDefinition");
+        ResourceLocation realmId = realmDefinition.getId();
+        Optional<RealmDefinition> threeThousandRealm = this.thisState.getRealm(realmId);
+        if (threeThousandRealm.isPresent()
+                && (threeThousandRealm.get().getSeed() != realmDefinition.getSeed()
+                || !threeThousandRealm.get().getDisplayName().equals(realmDefinition.getDisplayName()))) {
+            throw new IllegalArgumentException("Dynamic realm id is already owned by another definition: " + realmId);
         }
 
-        this.registerRealmDefinition(realmDefinition);
-        if (!(this.thisServer instanceof ThreeThousandRealmServerAccess serverAccess)) {
-            throw new IllegalStateException("Three-thousand-realm lazy loading bridge is unavailable");
+        RealmDefinition existingDefinition = this.thisExternalRealmDefinitions.putIfAbsent(
+                realmId,
+                realmDefinition
+        );
+        if (existingDefinition != null
+                && (existingDefinition.getSeed() != realmDefinition.getSeed()
+                || !existingDefinition.getDisplayName().equals(realmDefinition.getDisplayName()))) {
+            throw new IllegalArgumentException("Dynamic realm id is already registered: " + realmId);
         }
-        ServerLevel createdRealm = serverAccess.ninecunLingtai$loadRegisteredRealm(
-                levelKey,
-                realmDefinition.getSeed()
-        );
-        ModMain.LOGGER.info(
-                "Loaded three-thousand realm {} ({}) with seed {}",
-                realmDefinition.getDisplayName(),
-                realmDefinition.getId(),
-                realmDefinition.getSeed()
-        );
-        return createdRealm;
+        this.registerRealmDefinition(realmDefinition);
+    }
+
+    /**
+     * Registers and lazily loads an externally-owned dynamic realm.
+     */
+    public synchronized ServerLevel getOrLoadManagedRealm(RealmDefinition realmDefinition) {
+        this.registerManagedRealmDefinition(realmDefinition);
+        return this.loadManagedRealm(realmDefinition, "managed");
+    }
+
+    /**
+     * Loads a previously registered dynamic realm by id.
+     */
+    public synchronized ServerLevel getOrLoadManagedRealm(ResourceLocation realmId) {
+        Objects.requireNonNull(realmId, "realmId");
+        RealmDefinition realmDefinition = this.thisState.getRealm(realmId)
+                .or(() -> Optional.ofNullable(this.thisExternalRealmDefinitions.get(realmId)))
+                .orElseThrow(() -> new IllegalArgumentException("Unknown managed realm: " + realmId));
+        return this.loadManagedRealm(realmDefinition, "managed");
     }
 
     public synchronized boolean isThreeThousandRealm(ResourceKey<Level> levelKey) {
@@ -174,6 +207,45 @@ public final class ThreeThousandRealmManager {
     public synchronized Optional<RealmDefinition> getRealmDefinition(ResourceKey<Level> levelKey) {
         Objects.requireNonNull(levelKey, "levelKey");
         return this.thisState.getRealm(levelKey.location());
+    }
+
+    public synchronized boolean isManagedRealm(ResourceKey<Level> levelKey) {
+        return this.getManagedRealmDefinition(levelKey).isPresent();
+    }
+
+    public synchronized Optional<RealmDefinition> getManagedRealmDefinition(ResourceKey<Level> levelKey) {
+        Objects.requireNonNull(levelKey, "levelKey");
+        Optional<RealmDefinition> threeThousandRealm = this.thisState.getRealm(levelKey.location());
+        if (threeThousandRealm.isPresent()) {
+            return threeThousandRealm;
+        }
+        return Optional.ofNullable(this.thisExternalRealmDefinitions.get(levelKey.location()));
+    }
+
+    private ServerLevel loadManagedRealm(RealmDefinition realmDefinition, String realmKind) {
+        ResourceKey<Level> levelKey = ResourceKey.create(Registries.DIMENSION, realmDefinition.getId());
+        Map<ResourceKey<Level>, ServerLevel> worlds = this.thisServer.forgeGetWorldMap();
+        ServerLevel loadedRealm = worlds.get(levelKey);
+        if (loadedRealm != null) {
+            return loadedRealm;
+        }
+
+        this.registerRealmDefinition(realmDefinition);
+        if (!(this.thisServer instanceof ThreeThousandRealmServerAccess serverAccess)) {
+            throw new IllegalStateException("Dynamic realm lazy loading bridge is unavailable");
+        }
+        ServerLevel createdRealm = serverAccess.ninecunLingtai$loadRegisteredRealm(
+                levelKey,
+                realmDefinition.getSeed()
+        );
+        ModMain.LOGGER.info(
+                "Loaded {} realm {} ({}) with seed {}",
+                realmKind,
+                realmDefinition.getDisplayName(),
+                realmDefinition.getId(),
+                realmDefinition.getSeed()
+        );
+        return createdRealm;
     }
 
     public synchronized boolean placePlayerInRandomRealm(ServerPlayer player, Random random) {
@@ -356,7 +428,12 @@ public final class ThreeThousandRealmManager {
     private void tick() {
         int unloadDelayTicks = CommonConfig.THREE_THOUSAND_REALMS_UNLOAD_DELAY_TICKS.get();
         Map<ResourceKey<Level>, ServerLevel> worlds = this.thisServer.forgeGetWorldMap();
+        Map<ResourceLocation, RealmDefinition> managedDefinitions = new LinkedHashMap<>();
         for (RealmDefinition realmDefinition : this.thisState.getRealms()) {
+            managedDefinitions.put(realmDefinition.getId(), realmDefinition);
+        }
+        managedDefinitions.putAll(this.thisExternalRealmDefinitions);
+        for (RealmDefinition realmDefinition : managedDefinitions.values()) {
             ResourceKey<Level> levelKey = ResourceKey.create(Registries.DIMENSION, realmDefinition.getId());
             ServerLevel realmLevel = worlds.get(levelKey);
             if (realmLevel == null) {
@@ -526,6 +603,7 @@ public final class ThreeThousandRealmManager {
         for (RealmDefinition realmDefinition : this.thisState.getRealms()) {
             realmIds.add(realmDefinition.getId());
         }
+        realmIds.addAll(this.thisExternalRealmDefinitions.keySet());
         realmIds.addAll(this.thisDataPackGenerator.getPersistedRealmDefinitionIds());
         return Collections.unmodifiableSet(realmIds);
     }

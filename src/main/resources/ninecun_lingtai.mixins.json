@@ -27,6 +27,7 @@
     "common.realm.MinecraftServerRealmSaveMixin",
     "common.realm.PlayerListRealmLoadMixin",
     "common.realm.ServerLevelRealmSeedMixin",
+    "common.spell.MinecraftServerPalmBuddhaRealmMixin",
     "common.realm.ServerPlayerRealmReturnMixin",
     "common.ring.AbstractContainerMenuMixin",
     "common.ring.AbstractFurnaceBlockEntityMixin",

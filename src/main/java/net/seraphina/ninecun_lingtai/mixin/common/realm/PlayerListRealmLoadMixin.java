@@ -26,8 +26,8 @@ public abstract class PlayerListRealmLoadMixin {
             ResourceKey<Level> levelKey
     ) {
         ThreeThousandRealmManager realmManager = ThreeThousandRealmManager.get(server);
-        if (realmManager.isThreeThousandRealm(levelKey)) {
-            return realmManager.getOrLoadRealm(levelKey.location());
+        if (realmManager.isManagedRealm(levelKey)) {
+            return realmManager.getOrLoadManagedRealm(levelKey.location());
         }
         return server.getLevel(levelKey);
     }
