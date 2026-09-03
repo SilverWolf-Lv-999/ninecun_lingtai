@@ -3,6 +3,7 @@ package net.seraphina.ninecun_lingtai.mixin;
 import net.minecraftforge.fml.loading.FMLLoader;
 import net.minecraftforge.fml.loading.LoadingModList;
 import net.seraphina.ninecun_lingtai.mixin.api.MixinDisabled;
+import net.seraphina.ninecun_lingtai.mixin.api.MixinEnabled;
 import net.seraphina.ninecun_lingtai.mixin.api.Type;
 import net.seraphina.ninecun_lingtai.utility.jvm.AgentUtility;
 import org.objectweb.asm.tree.AnnotationNode;
@@ -17,7 +18,12 @@ import java.util.Set;
 public final class IMixinPlugin implements IMixinConfigPlugin {
     private static final String MIXIN_DISABLED_DESCRIPTOR =
             org.objectweb.asm.Type.getDescriptor(MixinDisabled.class);
-    private static final String DEFAULT_MOD_ID = "ninecun_lingtai";
+    private static final String MIXIN_ENABLED_DESCRIPTOR =
+            org.objectweb.asm.Type.getDescriptor(MixinEnabled.class);
+    private static final String DEFAULT_DISABLED_MOD_ID = "ninecun_lingtai";
+    private static final String DEFAULT_ENABLED_MOD_ID = "minecraft";
+
+    private LoadingModList loadingModList;
 
     static {
         AgentUtility.patchAgentMain();
@@ -25,6 +31,7 @@ public final class IMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public void onLoad(String mixinPackage) {
+        this.loadingModList = FMLLoader.getLoadingModList();
     }
 
     @Override
@@ -43,17 +50,37 @@ public final class IMixinPlugin implements IMixinConfigPlugin {
             return false;
         }
 
-        AnnotationNode annotationNode = this.findMixinDisabledAnnotation(classNode);
-        if (annotationNode == null) {
-            return true;
+        if (classNode == null) {
+            return false;
         }
 
-        MixinDisabledData disabledData = this.readMixinDisabledData(annotationNode);
-        return switch (disabledData.type()) {
-            case MOD_LOAD -> !this.isModLoaded(disabledData.modId());
-            case UN_MOD_LOAD -> this.isModLoaded(disabledData.modId());
-            case FOREVER -> false;
-        };
+        AnnotationNode disabledAnnotation = this.findAnnotation(
+                classNode,
+                MIXIN_DISABLED_DESCRIPTOR
+        );
+        if (disabledAnnotation != null) {
+            MixinCondition condition = this.readCondition(
+                    disabledAnnotation,
+                    DEFAULT_DISABLED_MOD_ID
+            );
+            if (this.isEnvironmentMatched(condition)) {
+                return false;
+            }
+        }
+
+        AnnotationNode enabledAnnotation = this.findAnnotation(
+                classNode,
+                MIXIN_ENABLED_DESCRIPTOR
+        );
+        if (enabledAnnotation != null) {
+            MixinCondition condition = this.readCondition(
+                    enabledAnnotation,
+                    DEFAULT_ENABLED_MOD_ID
+            );
+            return this.isEnvironmentMatched(condition);
+        }
+
+        return true;
     }
 
     @Override
@@ -62,7 +89,7 @@ public final class IMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public List<String> getMixins() {
-        return List.of();
+        return null;
     }
 
     @Override
@@ -72,6 +99,7 @@ public final class IMixinPlugin implements IMixinConfigPlugin {
             String mixinClassName,
             IMixinInfo mixinInfo
     ) {
+
     }
 
     @Override
@@ -83,30 +111,42 @@ public final class IMixinPlugin implements IMixinConfigPlugin {
     ) {
     }
 
-    private AnnotationNode findMixinDisabledAnnotation(ClassNode classNode) {
-        if (classNode.invisibleAnnotations == null) {
+    private AnnotationNode findAnnotation(ClassNode classNode, String descriptor) {
+        AnnotationNode annotationNode = this.findAnnotation(classNode.invisibleAnnotations, descriptor);
+        if (annotationNode != null) {
+            return annotationNode;
+        }
+        return this.findAnnotation(classNode.visibleAnnotations, descriptor);
+    }
+
+    private AnnotationNode findAnnotation(List<AnnotationNode> annotations, String descriptor) {
+        if (annotations == null) {
             return null;
         }
 
-        for (AnnotationNode annotationNode : classNode.invisibleAnnotations) {
-            if (MIXIN_DISABLED_DESCRIPTOR.equals(annotationNode.desc)) {
+        for (AnnotationNode annotationNode : annotations) {
+            if (descriptor.equals(annotationNode.desc)) {
                 return annotationNode;
             }
         }
         return null;
     }
 
-    private MixinDisabledData readMixinDisabledData(AnnotationNode annotationNode) {
+    private MixinCondition readCondition(AnnotationNode annotationNode, String defaultModId) {
         Type type = Type.FOREVER;
-        String modId = DEFAULT_MOD_ID;
+        String modId = defaultModId;
 
         if (annotationNode.values == null) {
-            return new MixinDisabledData(type, modId);
+            return new MixinCondition(type, modId);
         }
 
-        for (int index = 0; index < annotationNode.values.size(); index += 2) {
-            String name = (String) annotationNode.values.get(index);
+        for (int index = 0; index + 1 < annotationNode.values.size(); index += 2) {
+            Object nameValue = annotationNode.values.get(index);
             Object value = annotationNode.values.get(index + 1);
+            if (!(nameValue instanceof String name)) {
+                continue;
+            }
+
             if ("type".equals(name)) {
                 type = this.readType(value);
             } else if ("modId".equals(name) && value instanceof String annotationModId
@@ -114,7 +154,7 @@ public final class IMixinPlugin implements IMixinConfigPlugin {
                 modId = annotationModId;
             }
         }
-        return new MixinDisabledData(type, modId);
+        return new MixinCondition(type, modId);
     }
 
     private Type readType(Object value) {
@@ -128,11 +168,23 @@ public final class IMixinPlugin implements IMixinConfigPlugin {
         return Type.FOREVER;
     }
 
-    private boolean isModLoaded(String modId) {
-        LoadingModList loadingModList = FMLLoader.getLoadingModList();
-        return loadingModList != null && loadingModList.getModFileById(modId) != null;
+    private boolean isEnvironmentMatched(MixinCondition condition) {
+        return switch (condition.type()) {
+            case MOD_LOAD -> this.isModLoaded(condition.modId());
+            case UN_MOD_LOAD -> !this.isModLoaded(condition.modId());
+            case FOREVER -> true;
+        };
     }
 
-    private record MixinDisabledData(Type type, String modId) {
+    private boolean isModLoaded(String modId) {
+        LoadingModList currentLoadingModList = this.loadingModList;
+        if (currentLoadingModList == null) {
+            currentLoadingModList = FMLLoader.getLoadingModList();
+        }
+        return currentLoadingModList != null
+                && currentLoadingModList.getModFileById(modId) != null;
+    }
+
+    private record MixinCondition(Type type, String modId) {
     }
 }

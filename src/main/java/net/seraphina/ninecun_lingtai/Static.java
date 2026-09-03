@@ -8,11 +8,14 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Static {
     static final String TIME_DATA;
 
     public static final Set<String> loadMods;
+
+    static final AtomicBoolean isOptifineLoaded;
 
     static {
         TIME_DATA = LocalDate.now().format(DateTimeFormatter.ofPattern("MM-dd"));
@@ -20,6 +23,17 @@ public class Static {
         FMLLoader.getLoadingModList().getMods().forEach((modInfo) -> {
             loadMods.add(modInfo.getModId());
         });
+        isOptifineLoaded = new AtomicBoolean(false);
+        try {
+            Class.forName("optifine.OptiFineTransformationService");
+            isOptifineLoaded.set(true);
+        } catch (Exception exception) {
+            isOptifineLoaded.set(false);
+        }
+    }
+
+    public static boolean isOptifineLoaded() {
+        return isOptifineLoaded.get();
     }
 
     public static boolean isApfDay() {
