@@ -26,8 +26,6 @@ import org.apache.logging.log4j.Logger;
 public final class ModMain {
     public static final String MOD_ID = "ninecun_lingtai";
     public static final Logger LOGGER = LogManager.getLogger();
-    private static final String DISABLE_RUNTIME_HOOKS_PROPERTY =
-            "ninecun_lingtai.disableRuntimeHooks";
 
     public ModMain(FMLJavaModLoadingContext context) {
         LOGGER.info("init mod main......");
@@ -50,9 +48,6 @@ public final class ModMain {
         ModNetwork.register();
         // 道心杀孽：把破境公式的道心系数从常数 1.0 换成杀孽四档曲线（主控接线点）。
         BreakthroughChanceCalculator.setDaoHeartProvider(KarmaUtility::getDaoHeartCoefficient);
-        if (Boolean.getBoolean(DISABLE_RUNTIME_HOOKS_PROPERTY)) {
-            return;
-        }
         if (Static.isDev() && Static.isApfDay()) {
             if (Static.isClient()) {
                 HookUtility.clientHooks();

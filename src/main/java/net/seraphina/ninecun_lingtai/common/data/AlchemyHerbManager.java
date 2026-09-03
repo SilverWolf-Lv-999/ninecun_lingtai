@@ -63,7 +63,7 @@ public final class AlchemyHerbManager extends SimpleJsonResourceReloadListener {
     ) {
         try {
             JsonObject json = GsonHelper.convertToJsonObject(jsonElement, "herb definition");
-            ResourceLocation itemId = new ResourceLocation(GsonHelper.getAsString(json, "item"));
+            ResourceLocation itemId = ResourceLocation.parse(GsonHelper.getAsString(json, "item"));
             ElementType element = null;
             if (json.has("element") && !json.get("element").isJsonNull()) {
                 element = ElementType.valueOf(

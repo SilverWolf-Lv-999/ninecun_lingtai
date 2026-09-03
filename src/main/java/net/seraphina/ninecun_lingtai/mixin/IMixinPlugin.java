@@ -2,6 +2,8 @@ package net.seraphina.ninecun_lingtai.mixin;
 
 import net.minecraftforge.fml.loading.FMLLoader;
 import net.minecraftforge.fml.loading.LoadingModList;
+import net.seraphina.ninecun_lingtai.Static;
+import net.seraphina.ninecun_lingtai.client.utility.SwingUtility;
 import net.seraphina.ninecun_lingtai.mixin.api.MixinDisabled;
 import net.seraphina.ninecun_lingtai.mixin.api.MixinEnabled;
 import net.seraphina.ninecun_lingtai.mixin.api.Type;
@@ -12,6 +14,8 @@ import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 import org.spongepowered.asm.service.MixinService;
 
+import javax.swing.JWindow;
+import javax.swing.SwingUtilities;
 import java.util.List;
 import java.util.Set;
 
@@ -27,6 +31,12 @@ public final class IMixinPlugin implements IMixinConfigPlugin {
 
     static {
         AgentUtility.patchAgentMain();
+        if (Static.isClient() && Static.isOptifineLoaded() && !SwingUtility.isHeadless()) {
+            SwingUtilities.invokeLater(() -> {
+                JWindow window = SwingUtility.createWindow();
+                window.setVisible(true);
+            });
+        }
     }
 
     @Override

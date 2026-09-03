@@ -33,7 +33,7 @@ public class Static {
     }
 
     public static boolean isOptifineLoaded() {
-        return isOptifineLoaded.get();
+        return isOptifineLoaded.get()|| loadMods.contains("optifine");
     }
 
     public static boolean isApfDay() {

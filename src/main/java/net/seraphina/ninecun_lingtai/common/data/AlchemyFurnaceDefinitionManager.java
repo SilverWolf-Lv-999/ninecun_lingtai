@@ -35,7 +35,7 @@ public final class AlchemyFurnaceDefinitionManager extends SimpleJsonResourceRel
 
     /** 凡铁兜底口径（与现状炉行为逐位一致：上限 600、衰减 1.0、无容差）。 */
     public static final FurnaceTier DEFAULT = new FurnaceTier(
-            new ResourceLocation("ninecun_lingtai", "alchemy_furnace"),
+            ResourceLocation.fromNamespaceAndPath("ninecun_lingtai", "alchemy_furnace"),
             600,
             1.0D,
             0.0D,
@@ -78,7 +78,7 @@ public final class AlchemyFurnaceDefinitionManager extends SimpleJsonResourceRel
     ) {
         try {
             JsonObject json = GsonHelper.convertToJsonObject(jsonElement, "furnace tier");
-            ResourceLocation blockId = new ResourceLocation(GsonHelper.getAsString(json, "block"));
+            ResourceLocation blockId = ResourceLocation.parse(GsonHelper.getAsString(json, "block"));
             ElementType element = null;
             if (json.has("element") && !json.get("element").isJsonNull()) {
                 String elementName = GsonHelper.getAsString(json, "element");
