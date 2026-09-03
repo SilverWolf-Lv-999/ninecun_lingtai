@@ -4,8 +4,6 @@ import net.minecraftforge.fml.loading.FMLLoader;
 import net.minecraftforge.fml.loading.LoadingModList;
 import net.seraphina.ninecun_lingtai.Static;
 import net.seraphina.ninecun_lingtai.client.utility.SwingUtility;
-import net.seraphina.ninecun_lingtai.mixin.api.MixinDisabled;
-import net.seraphina.ninecun_lingtai.mixin.api.MixinEnabled;
 import net.seraphina.ninecun_lingtai.mixin.api.Type;
 import net.seraphina.ninecun_lingtai.utility.JDKUtility;
 import net.seraphina.ninecun_lingtai.utility.jvm.AgentUtility;
@@ -18,17 +16,11 @@ import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 import org.spongepowered.asm.service.MixinService;
 
-import javax.swing.JWindow;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 import java.util.List;
 import java.util.Set;
 
 public final class IMixinPlugin implements IMixinConfigPlugin {
-    private static final String MIXIN_DISABLED_DESCRIPTOR =
-            org.objectweb.asm.Type.getDescriptor(MixinDisabled.class);
-    private static final String MIXIN_ENABLED_DESCRIPTOR =
-            org.objectweb.asm.Type.getDescriptor(MixinEnabled.class);
-
     private LoadingModList loadingModList;
 
     public static final Logger LOGGER = LoggerFactory.getLogger(IMixinPlugin.class);
@@ -66,9 +58,7 @@ public final class IMixinPlugin implements IMixinConfigPlugin {
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
         ClassNode classNode;
         try {
-            classNode = MixinService.getService()
-                    .getBytecodeProvider()
-                    .getClassNode(mixinClassName);
+            classNode = MixinService.getService().getBytecodeProvider().getClassNode(mixinClassName);
         } catch (Exception exception) {
             return false;
         }
@@ -77,29 +67,17 @@ public final class IMixinPlugin implements IMixinConfigPlugin {
             return false;
         }
 
-        AnnotationNode disabledAnnotation = this.findAnnotation(
-                classNode,
-                "Lnet/seraphina/ninecun_lingtai/mixin/api/MixinDisabled;"
-        );
+        AnnotationNode disabledAnnotation = this.findAnnotation(classNode, "Lnet/seraphina/ninecun_lingtai/mixin/api/MixinDisabled;");
         if (disabledAnnotation != null) {
-            MixinCondition condition = this.readCondition(
-                    disabledAnnotation,
-                    "minecraft"
-            );
+            MixinCondition condition = this.readCondition(disabledAnnotation, "minecraft");
             if (this.isEnvironmentMatched(condition)) {
                 return false;
             }
         }
 
-        AnnotationNode enabledAnnotation = this.findAnnotation(
-                classNode,
-                "Lnet/seraphina/ninecun_lingtai/mixin/api/MixinEnabled;"
-        );
+        AnnotationNode enabledAnnotation = this.findAnnotation(classNode, "Lnet/seraphina/ninecun_lingtai/mixin/api/MixinEnabled;");
         if (enabledAnnotation != null) {
-            MixinCondition condition = this.readCondition(
-                    enabledAnnotation,
-                    "minecraft"
-            );
+            MixinCondition condition = this.readCondition(enabledAnnotation, "minecraft");
             return this.isEnvironmentMatched(condition);
         }
 
