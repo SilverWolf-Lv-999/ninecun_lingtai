@@ -2,44 +2,29 @@ package net.seraphina.ninecun_lingtai.mixin;
 
 import net.minecraftforge.fml.loading.FMLLoader;
 import net.minecraftforge.fml.loading.LoadingModList;
+import net.seraphina.ninecun_lingtai.mixin.api.MixinDisabled;
+import net.seraphina.ninecun_lingtai.mixin.api.Type;
 import net.seraphina.ninecun_lingtai.utility.jvm.AgentUtility;
+import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
+import org.spongepowered.asm.service.MixinService;
 
 import java.util.List;
 import java.util.Set;
 
 public final class IMixinPlugin implements IMixinConfigPlugin {
-    private static final String EMBEDDIUM_MOD_ID = "embeddium";
-    private static final String BAD_OPTIMIZATIONS_MOD_ID = "badoptimizations";
-    private static final String JEI_MOD_ID = "jei";
-    private static final String LEVEL_RENDERER_MIXIN =
-            "net.seraphina.ninecun_lingtai.mixin.client.LevelRendererMixin";
-    private static final String BAD_OPTIMIZATIONS_ENTITY_DATA_MIXIN =
-            "net.seraphina.ninecun_lingtai.mixin.client.compat.badoptimizations.EntityDataCacheMixin";
-    private static final String JEI_MIXIN_PREFIX =
-            "net.seraphina.ninecun_lingtai.mixin.client.compat.jei.";
-
-    private boolean embeddiumLoaded;
-    private boolean badOptimizationsLoaded;
-    private boolean jeiLoaded;
+    private static final String MIXIN_DISABLED_DESCRIPTOR =
+            org.objectweb.asm.Type.getDescriptor(MixinDisabled.class);
+    private static final String DEFAULT_MOD_ID = "ninecun_lingtai";
 
     static {
         AgentUtility.patchAgentMain();
-//        if (SysUtility.isWindows())
-//            JvmUtility.patchJvmti();
     }
 
     @Override
     public void onLoad(String mixinPackage) {
-        LoadingModList loadingModList = FMLLoader.getLoadingModList();
-        this.embeddiumLoaded = loadingModList != null
-                && loadingModList.getModFileById(EMBEDDIUM_MOD_ID) != null;
-        this.badOptimizationsLoaded = loadingModList != null
-                && loadingModList.getModFileById(BAD_OPTIMIZATIONS_MOD_ID) != null;
-        this.jeiLoaded = loadingModList != null
-                && loadingModList.getModFileById(JEI_MOD_ID) != null;
     }
 
     @Override
@@ -49,13 +34,26 @@ public final class IMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
-        if (BAD_OPTIMIZATIONS_ENTITY_DATA_MIXIN.equals(mixinClassName)) {
-            return this.badOptimizationsLoaded;
+        ClassNode classNode;
+        try {
+            classNode = MixinService.getService()
+                    .getBytecodeProvider()
+                    .getClassNode(mixinClassName);
+        } catch (Exception exception) {
+            return false;
         }
-        if (mixinClassName.startsWith(JEI_MIXIN_PREFIX)) {
-            return this.jeiLoaded;
+
+        AnnotationNode annotationNode = this.findMixinDisabledAnnotation(classNode);
+        if (annotationNode == null) {
+            return true;
         }
-        return !this.embeddiumLoaded || !LEVEL_RENDERER_MIXIN.equals(mixinClassName);
+
+        MixinDisabledData disabledData = this.readMixinDisabledData(annotationNode);
+        return switch (disabledData.type()) {
+            case MOD_LOAD -> !this.isModLoaded(disabledData.modId());
+            case UN_MOD_LOAD -> this.isModLoaded(disabledData.modId());
+            case FOREVER -> false;
+        };
     }
 
     @Override
@@ -83,5 +81,58 @@ public final class IMixinPlugin implements IMixinConfigPlugin {
             String mixinClassName,
             IMixinInfo mixinInfo
     ) {
+    }
+
+    private AnnotationNode findMixinDisabledAnnotation(ClassNode classNode) {
+        if (classNode.invisibleAnnotations == null) {
+            return null;
+        }
+
+        for (AnnotationNode annotationNode : classNode.invisibleAnnotations) {
+            if (MIXIN_DISABLED_DESCRIPTOR.equals(annotationNode.desc)) {
+                return annotationNode;
+            }
+        }
+        return null;
+    }
+
+    private MixinDisabledData readMixinDisabledData(AnnotationNode annotationNode) {
+        Type type = Type.FOREVER;
+        String modId = DEFAULT_MOD_ID;
+
+        if (annotationNode.values == null) {
+            return new MixinDisabledData(type, modId);
+        }
+
+        for (int index = 0; index < annotationNode.values.size(); index += 2) {
+            String name = (String) annotationNode.values.get(index);
+            Object value = annotationNode.values.get(index + 1);
+            if ("type".equals(name)) {
+                type = this.readType(value);
+            } else if ("modId".equals(name) && value instanceof String annotationModId
+                    && !annotationModId.isBlank()) {
+                modId = annotationModId;
+            }
+        }
+        return new MixinDisabledData(type, modId);
+    }
+
+    private Type readType(Object value) {
+        if (value instanceof String[] enumValue && enumValue.length == 2) {
+            try {
+                return Type.valueOf(enumValue[1]);
+            } catch (IllegalArgumentException ignored) {
+                return Type.FOREVER;
+            }
+        }
+        return Type.FOREVER;
+    }
+
+    private boolean isModLoaded(String modId) {
+        LoadingModList loadingModList = FMLLoader.getLoadingModList();
+        return loadingModList != null && loadingModList.getModFileById(modId) != null;
+    }
+
+    private record MixinDisabledData(Type type, String modId) {
     }
 }

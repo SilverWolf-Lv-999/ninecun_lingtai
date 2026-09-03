@@ -1,9 +1,11 @@
 package net.seraphina.ninecun_lingtai.mixin.client.compat.jei;
 
-import net.seraphina.ninecun_lingtai.client.screen.AlchemyFurnaceScreen;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.seraphina.ninecun_lingtai.client.screen.AlchemyFurnaceScreen;
+import net.seraphina.ninecun_lingtai.mixin.api.MixinEnabled;
+import net.seraphina.ninecun_lingtai.mixin.api.Type;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;
@@ -12,6 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Pseudo
 @Mixin(targets = "mezz.jei.gui.events.GuiEventHandler", remap = false)
+@MixinEnabled(type = Type.MOD_LOAD, modId = "jei")
 public abstract class GuiEventHandlerMixin {
     @Inject(method = "onDrawBackgroundPost", at = @At("HEAD"), cancellable = true, remap = false)
     private void ninecunLingtai$hideBackgroundOverlay(

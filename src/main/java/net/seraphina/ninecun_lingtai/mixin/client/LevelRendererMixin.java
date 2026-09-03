@@ -10,6 +10,8 @@ import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.world.phys.Vec3;
+import net.seraphina.ninecun_lingtai.mixin.api.Type;
+import net.seraphina.ninecun_lingtai.mixin.api.MixinDisabled;
 import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -21,6 +23,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.Optional;
 
 @Mixin(LevelRenderer.class)
+@MixinDisabled(type = Type.MOD_LOAD, modId = "embeddium")
 public abstract class LevelRendererMixin {
     @Unique
     private static final double NINECUN_LINGTAI_SECTION_SIZE = 16.0D;

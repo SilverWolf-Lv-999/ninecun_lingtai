@@ -13,6 +13,7 @@ public final class SeraIWP implements ImmediateWindowProvider {
     public static final Logger LOGGER = LogManager.getLogger();
 
     static {
+        LOGGER.info("我超喂，佛具你怎么这么cs啊，服务端不加载这个服务，搞得我不自信了");
     }
 
     @Override

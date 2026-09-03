@@ -1,8 +1,10 @@
 package net.seraphina.ninecun_lingtai.mixin.client.compat.jei;
 
-import net.seraphina.ninecun_lingtai.client.screen.AlchemyFurnaceScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.seraphina.ninecun_lingtai.client.screen.AlchemyFurnaceScreen;
+import net.seraphina.ninecun_lingtai.mixin.api.MixinEnabled;
+import net.seraphina.ninecun_lingtai.mixin.api.Type;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;
@@ -12,6 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Pseudo
 @Mixin(targets = "mezz.jei.gui.overlay.bookmarks.BookmarkOverlay", remap = false)
+@MixinEnabled(type = Type.MOD_LOAD, modId = "jei")
 public abstract class BookmarkOverlayMixin {
     @Inject(method = "drawScreen", at = @At("HEAD"), cancellable = true, remap = false)
     private void ninecunLingtai$hideOnAlchemyFurnace(
