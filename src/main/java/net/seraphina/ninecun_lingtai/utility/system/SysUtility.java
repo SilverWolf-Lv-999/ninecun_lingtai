@@ -9,8 +9,11 @@ public final class SysUtility {
 
     private static final String JAVA_VM_NAME = "java.vm.name";
 
-    static boolean is(String system) {
-        return System.getProperty(OS_NAME, "")
+    private static boolean is(String system) {
+        if (system == null || system.isBlank()) {
+            return false;
+        }
+        return getProperty(OS_NAME)
                 .toLowerCase(Locale.ROOT)
                 .contains(system.toLowerCase(Locale.ROOT));
     }
@@ -28,11 +31,19 @@ public final class SysUtility {
     }
 
     public static boolean isAndroid() {
-        return System.getProperty(JAVA_RUNTIME_NAME, "")
+        return getProperty(JAVA_RUNTIME_NAME)
                 .toLowerCase(Locale.ROOT)
                 .contains("android")
-                || System.getProperty(JAVA_VM_NAME, "")
+                || getProperty(JAVA_VM_NAME)
                 .toLowerCase(Locale.ROOT)
                 .contains("dalvik");
+    }
+
+    private static String getProperty(String key) {
+        try {
+            return System.getProperty(key, "");
+        } catch (SecurityException ignored) {
+            return "";
+        }
     }
 }

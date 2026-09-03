@@ -51,4 +51,14 @@ public class Static {
     public static void println(String message) {
         System.out.println(message);
     }
+
+//    @OnlyIn(Dist.CLIENT)
+//    public static boolean isCN() {
+//        Minecraft mc = Minecraft.getInstance();
+//        if (mc.languageManager == null) {
+//            return false;
+//        }
+//        LanguageInfo info = Minecraft.getInstance().languageManager.getLanguage("zh_cn");
+//        return info != null && info.name().trim().equals("zh_cn");
+//    }
 }

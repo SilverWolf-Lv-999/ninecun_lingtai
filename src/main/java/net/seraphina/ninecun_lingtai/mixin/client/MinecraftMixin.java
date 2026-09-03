@@ -41,4 +41,11 @@ public abstract class MinecraftMixin {
             ci.cancel();
         }
     }
+
+//    @Inject(method = "createTitle", at = @At("RETURN"), cancellable = true)
+//    private void createTitle(CallbackInfoReturnable<String> cir) {
+//        String append = Static.isCN() ? "九寸灵台 " : "Ninecun Lingtai ";
+//        String neo = append + cir.getReturnValue();
+//        cir.setReturnValue(neo);
+//    }
 }

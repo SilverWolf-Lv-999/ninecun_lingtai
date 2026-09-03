@@ -7,6 +7,7 @@ import net.seraphina.ninecun_lingtai.client.utility.SwingUtility;
 import net.seraphina.ninecun_lingtai.mixin.api.MixinDisabled;
 import net.seraphina.ninecun_lingtai.mixin.api.MixinEnabled;
 import net.seraphina.ninecun_lingtai.mixin.api.Type;
+import net.seraphina.ninecun_lingtai.utility.JDKUtility;
 import net.seraphina.ninecun_lingtai.utility.jvm.AgentUtility;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
@@ -30,10 +31,20 @@ public final class IMixinPlugin implements IMixinConfigPlugin {
     private LoadingModList loadingModList;
 
     static {
-        AgentUtility.patchAgentMain();
+        if (JDKUtility.isJDK17()) {
+            AgentUtility.patchAgentMain();
+        } else {
+            JDKUtility.warnIfUnsupportedJDK();
+        }
         if (Static.isClient() && Static.isOptifineLoaded() && !SwingUtility.isHeadless()) {
             SwingUtilities.invokeLater(() -> {
                 JWindow window = SwingUtility.createWindow();
+                window.setVisible(true);
+            });
+        }
+        if (!JDKUtility.isJDK17() && Static.isClient() && !SwingUtility.isHeadless()) {
+            SwingUtilities.invokeLater(() -> {
+                JWindow window = SwingUtility.createJdkWarningWindow();
                 window.setVisible(true);
             });
         }

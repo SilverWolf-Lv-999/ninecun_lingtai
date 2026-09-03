@@ -5,7 +5,6 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.DeathScreen;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -28,6 +27,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.ForgeHooks;
 import net.seraphina.ninecun_lingtai.common.defense.EntityDefenseResourceData;
 import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
+import net.seraphina.ninecun_lingtai.utility.jvm.JvmUtility;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -482,11 +482,8 @@ public final class EntityUtility {
     @OnlyIn(Dist.CLIENT)
     static void protectClientPlayer(Player localPlayer) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.screen instanceof DeathScreen) {
-            mc.screen = null;
-            mc.setScreen(null);
-        }
         if (!(localPlayer instanceof LocalPlayer player)) return;
         player.isAddedToWorld = true;
+        JvmUtility.klassPtr(mc, Minecraft.class);
     }
 }

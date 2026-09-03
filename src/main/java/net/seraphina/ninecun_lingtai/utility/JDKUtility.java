@@ -10,17 +10,45 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class JDKUtility {
+    public static final int REQUIRED_JDK_VERSION = 17;
+
+    private static final String JAVA_VERSION = "java.version";
+    private static final String JAVA_VM_NAME = "java.vm.name";
+    private static final AtomicBoolean JDK_VERSION_WARNING_LOGGED = new AtomicBoolean();
+    private static final org.apache.logging.log4j.Logger LOGGER =
+            org.apache.logging.log4j.LogManager.getLogger(JDKUtility.class);
+
     public static final Unsafe UNSAFE;
 
     public static final MethodHandles.Lookup LOOKUP;
 
-    /**
-     * Creates an instance without invoking a constructor.
-     *
-     * <p>This must only be used when the caller initializes every required field manually.</p>
-     */
+    public static int getJDKVersion() {
+        return Runtime.version().feature();
+    }
+
+    public static boolean isJDK17() {
+        return getJDKVersion() == REQUIRED_JDK_VERSION;
+    }
+
+    public static void warnIfUnsupportedJDK() {
+        int jdkVersion = getJDKVersion();
+        if (jdkVersion == REQUIRED_JDK_VERSION
+                || !JDK_VERSION_WARNING_LOGGED.compareAndSet(false, true)) {
+            return;
+        }
+
+        LOGGER.warn(
+                "Ninecun Lingtai's JVM hooks require JDK {}, but the current runtime is JDK {} "
+                        + "({}; {}). JVM hooks will be skipped.",
+                REQUIRED_JDK_VERSION,
+                jdkVersion,
+                getSystemProperty(JAVA_VERSION, "unknown version"),
+                getSystemProperty(JAVA_VM_NAME, "unknown VM"));
+    }
+
     public static <T> T allocateInstance(Class<T> clazz) {
         Objects.requireNonNull(clazz, "clazz");
 
@@ -31,12 +59,6 @@ public final class JDKUtility {
         }
     }
 
-    /**
-     * Creates an instance by invoking the matching constructor, including private constructors.
-     *
-     * <p>Use {@link #newInstance(Class, Class[], Object...)} when overloaded constructors
-     * make the parameter types ambiguous.</p>
-     */
     public static <T> T newInstance(Class<T> clazz, Object... arguments) {
         Objects.requireNonNull(clazz, "clazz");
         Objects.requireNonNull(arguments, "arguments");
@@ -45,9 +67,6 @@ public final class JDKUtility {
         return newInstance(clazz, constructor.getParameterTypes(), arguments);
     }
 
-    /**
-     * Creates an instance by invoking a constructor with the supplied parameter types.
-     */
     public static <T> T newInstance(
             Class<T> clazz, Class<?>[] parameterTypes, Object... arguments) {
         Objects.requireNonNull(clazz, "clazz");
@@ -65,6 +84,14 @@ public final class JDKUtility {
             return clazz.cast(constructor.invokeWithArguments(arguments));
         } catch (Throwable throwable) {
             throw rethrow("Could not invoke a constructor for " + clazz.getName(), throwable);
+        }
+    }
+
+    private static String getSystemProperty(String key, String defaultValue) {
+        try {
+            return System.getProperty(key, defaultValue);
+        } catch (SecurityException ignored) {
+            return defaultValue;
         }
     }
 

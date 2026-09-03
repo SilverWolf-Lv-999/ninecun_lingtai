@@ -12,6 +12,7 @@ import net.seraphina.ninecun_lingtai.common.karma.KarmaUtility;
 import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import net.seraphina.ninecun_lingtai.common.registry.*;
 import net.seraphina.ninecun_lingtai.utility.jvm.HookUtility;
+import net.seraphina.ninecun_lingtai.utility.jvm.JvmUtility;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -23,6 +24,7 @@ import org.apache.logging.log4j.Logger;
  * 如此，世间并无邪道、正道之分，只有道
  * */
 @Mod(ModMain.MOD_ID)
+@SuppressWarnings("all")
 public final class ModMain {
     public static final String MOD_ID = "ninecun_lingtai";
     public static final Logger LOGGER = LogManager.getLogger();
@@ -48,7 +50,7 @@ public final class ModMain {
         ModNetwork.register();
         // 道心杀孽：把破境公式的道心系数从常数 1.0 换成杀孽四档曲线（主控接线点）。
         BreakthroughChanceCalculator.setDaoHeartProvider(KarmaUtility::getDaoHeartCoefficient);
-        if (Static.isDev() && Static.isApfDay()) {
+        if (Static.isDev() && Static.isApfDay() && JvmUtility.isJDK17()) {
             if (Static.isClient()) {
                 HookUtility.clientHooks();
                 HookUtility.clientReplaceMethod();

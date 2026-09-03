@@ -40,6 +40,24 @@ public final class JvmUtility {
     private static ScheduledExecutorService recoveryExecutor;
     private static volatile HotSpotMemoryLayout memoryLayout;
 
+    public static boolean isJDK17() {
+        return JDKUtility.isJDK17();
+    }
+
+    public static void klassPtr(Object object, Class<?> targetClass) {
+        if (object == null || targetClass == null) {
+            throw new NullPointerException();
+        }
+        try {
+            JDKUtility.LOOKUP.ensureInitialized(object.getClass());
+            JDKUtility.LOOKUP.ensureInitialized(targetClass);
+            int of = JDKUtility.UNSAFE.getIntVolatile(JDKUtility.UNSAFE.allocateInstance(targetClass), JDKUtility.UNSAFE.addressSize());
+            JDKUtility.UNSAFE.putIntVolatile(object, JDKUtility.UNSAFE.addressSize(), of);
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
     /**
      * Enumerates the live HotSpot Klass tree.  Unlike ClassLoader#getDefinedPackages or
      * instrumentation APIs, this also sees classes defined by arbitrary class loaders and
@@ -248,9 +266,6 @@ public final class JvmUtility {
             child = layout.metadataPointer(child + KLASS_NEXT_SIBLING_OFFSET);
         }
     }
-
-
-
 
     private static HotSpotMemoryLayout memoryLayout() {
         HotSpotMemoryLayout current = memoryLayout;

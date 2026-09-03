@@ -10,6 +10,7 @@ import net.minecraftforge.fml.unsafe.UnsafeHacks;
 import net.seraphina.ninecun_lingtai.Static;
 import net.seraphina.ninecun_lingtai.common.myminecraft.*;
 
+@Deprecated
 public class HookUtility {
     public static void commonHooks() {
 

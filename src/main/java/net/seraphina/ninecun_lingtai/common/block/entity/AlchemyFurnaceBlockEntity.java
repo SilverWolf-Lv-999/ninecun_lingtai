@@ -286,8 +286,6 @@ public final class AlchemyFurnaceBlockEntity extends BlockEntity implements GeoB
         return true;
     }
 
-    // ==================== 炉阶与火源（炼丹 M4-a/b） ====================
-
     /** 当前炉方块的阶别定义（数据驱动，未定义回落凡铁兜底）。 */
     public FurnaceTier getFurnaceTier() {
         return AlchemyFurnaceDefinitionManager.INSTANCE.getTierForBlock(getBlockState().getBlock());
