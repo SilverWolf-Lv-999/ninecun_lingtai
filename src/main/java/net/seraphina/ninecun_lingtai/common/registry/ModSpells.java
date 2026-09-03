@@ -1,5 +1,13 @@
 package net.seraphina.ninecun_lingtai.common.registry;
 
+import net.minecraft.core.Registry;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.IForgeRegistry;
+import net.minecraftforge.registries.RegistryBuilder;
+import net.minecraftforge.registries.RegistryObject;
 import net.seraphina.ninecun_lingtai.ModMain;
 import net.seraphina.ninecun_lingtai.api.spell.Spell;
 import net.seraphina.ninecun_lingtai.common.spell.FireballSpell;
@@ -14,16 +22,9 @@ import net.seraphina.ninecun_lingtai.common.spell.attack.StrikeAttackSpell;
 import net.seraphina.ninecun_lingtai.common.spell.defense.BodyDefenseSpell;
 import net.seraphina.ninecun_lingtai.common.spell.defense.DefenseSpellKind;
 import net.seraphina.ninecun_lingtai.common.spell.defense.GuardianDefenseSpell;
+import net.seraphina.ninecun_lingtai.common.spell.palm_buddha.PalmBuddhaSpell;
 import net.seraphina.ninecun_lingtai.common.spell.soul.SoulPierceSpell;
 import net.seraphina.ninecun_lingtai.common.spell.soul.SoulShockSpell;
-import net.minecraft.core.Registry;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.IForgeRegistry;
-import net.minecraftforge.registries.RegistryBuilder;
-import net.minecraftforge.registries.RegistryObject;
 
 import java.util.function.Supplier;
 
@@ -64,6 +65,11 @@ public final class ModSpells {
     public static final RegistryObject<Spell> GREAT_CAUSALITY = SPELLS.register(
             "great_causality",
             GreatCausalitySpell::new
+    );
+
+    public static final RegistryObject<Spell> PALM_BUDDHA = SPELLS.register(
+            "palm_buddha",
+            PalmBuddhaSpell::new
     );
 
     public static final RegistryObject<Spell> METAL_BODY_SHIELD = registerBodyShield(

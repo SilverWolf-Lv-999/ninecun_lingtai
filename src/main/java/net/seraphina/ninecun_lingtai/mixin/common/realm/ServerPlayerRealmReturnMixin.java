@@ -6,6 +6,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.util.ITeleporter;
 import net.seraphina.ninecun_lingtai.common.realm.ThreeThousandRealmManager;
+import net.seraphina.ninecun_lingtai.common.spell.palm_buddha.PalmBuddhaRealmManager;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -26,6 +27,12 @@ public abstract class ServerPlayerRealmReturnMixin {
             CallbackInfoReturnable<Entity> callbackInfo
     ) {
         ServerPlayer player = (ServerPlayer) (Object) this;
+        PalmBuddhaRealmManager palmBuddhaRealmManager = PalmBuddhaRealmManager.get(player.server);
+        if (!palmBuddhaRealmManager.canMemberTravelTo(player, destinationLevel.dimension())) {
+            callbackInfo.setReturnValue(player);
+            return;
+        }
+
         ThreeThousandRealmManager realmManager = ThreeThousandRealmManager.get(player.server);
         if (realmManager.isThreeThousandRealm(player.serverLevel().dimension())
                 && !realmManager.isThreeThousandRealm(destinationLevel.dimension())) {

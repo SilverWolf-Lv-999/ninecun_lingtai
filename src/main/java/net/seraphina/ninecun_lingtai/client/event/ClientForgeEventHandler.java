@@ -47,6 +47,7 @@ import net.seraphina.ninecun_lingtai.client.tooltip.FiveElementWheelTooltipCompo
 import net.seraphina.ninecun_lingtai.client.utility.ItemTooltipUtility;
 import net.seraphina.ninecun_lingtai.client.utility.SoulSenseRenderUtility;
 import net.seraphina.ninecun_lingtai.client.player.ClientSoulInjuryData;
+import net.seraphina.ninecun_lingtai.client.player.ClientPalmBuddhaOverlayManager;
 import net.seraphina.ninecun_lingtai.client.screen.BreakthroughRitualHud;
 import net.seraphina.ninecun_lingtai.client.screen.SoulConstellationOverlay;
 import net.seraphina.ninecun_lingtai.client.utility.SpiritualEnergyHudRenderUtility;
@@ -297,6 +298,7 @@ public final class ClientForgeEventHandler {
     @SubscribeEvent
     public static void onLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
         ClientAptitudeScreenManager.reset();
+        ClientPalmBuddhaOverlayManager.reset();
         BreakthroughAnimationManager.reset();
         ClientAscensionQuestionScreenManager.reset();
         ClientBookManager.reset();

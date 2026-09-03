@@ -272,7 +272,7 @@ public final class ThreeThousandRealmManager {
 
         return player.changeDimension(
                 realmLevel,
-                createRealmTeleporter(spawnPosition, player.getYRot(), player.getXRot())
+                createManagedRealmTeleporter(spawnPosition, player.getYRot(), player.getXRot())
         ) != null;
     }
 
@@ -324,7 +324,7 @@ public final class ThreeThousandRealmManager {
 
         return player.changeDimension(
                 realmLevel,
-                createRealmTeleporter(spawnPosition, player.getYRot(), player.getXRot())
+                createManagedRealmTeleporter(spawnPosition, player.getYRot(), player.getXRot())
         ) != null;
     }
 
@@ -378,7 +378,7 @@ public final class ThreeThousandRealmManager {
         ServerLevel realmLevel = this.getOrLoadRealm(returnPosition.getRealmId());
         Entity returnedPlayer = player.changeDimension(
                 realmLevel,
-                createRealmTeleporter(
+                createManagedRealmTeleporter(
                         new Vec3(
                                 returnPosition.getX(),
                                 returnPosition.getY(),
@@ -490,7 +490,7 @@ public final class ThreeThousandRealmManager {
         }
     }
 
-    private static ITeleporter createRealmTeleporter(Vec3 destination, float yRot, float xRot) {
+    public static ITeleporter createManagedRealmTeleporter(Vec3 destination, float yRot, float xRot) {
         return new ITeleporter() {
             @Override
             public PortalInfo getPortalInfo(

@@ -1,0 +1,43 @@
+{
+  "name": "掌中佛国",
+  "description": "以掌中一方天地收摄目标的八品大法术。施法者可窥见佛国，而被摄之人只觉天地换色，不能望见外界。",
+  "content": "掌中一握，方寸自成佛国。行功之时，先以神识锁定眼前之人，再将自身灵台投影为佛国之门；门不显于外，只在目标脚下生出一线白光。白光漫过四周，声息渐远，待尘世之相褪尽，目标已落入施法者独有的掌中天地。佛国并非幻境，而是可真实行走、可被施法的独立界域。施法者可见其中诸相，被摄之人却只能将佛国视作寻常天地，无法从内部窥见掌外。境界相差过大者，神魂自带的道韵会拒绝佛国收摄：练气修士最多影响筑基目标，其余境界只能对同境界或低于自身境界之人施展。此法初成只容一人，后续还需以神通扩展选择与掌中诸相。",
+  "cultivation_path": "ninecun_lingtai:spiritual_cultivation",
+  "spell": {
+    "id": "ninecun_lingtai:palm_buddha",
+    "category": "utility",
+    "grade": 8,
+    "base_cost": 32.0,
+    "cost_elements": []
+  },
+  "requirements": {
+    "minimum_cultivation": {
+      "realm": "qi_refining",
+      "layer": 1
+    }
+  },
+  "comprehension": {
+    "minimum_learning_score": 88,
+    "perfect_score_mastery": "ninecun_lingtai:minor_mastery",
+    "key_concepts": [
+      "以神识锁定目标并开掌中之门",
+      "佛国是真实独立界域而非幻境",
+      "施法者可窥见佛国而被摄者不可见掌外",
+      "练气最多影响筑基，其余只能影响同境界或更低境界",
+      "初成佛国先以单选一人为根基"
+    ],
+    "grading_criteria": [
+      "说明白光换景是维度迁移的表现而非客户端假页面",
+      "理解每个施法者拥有独立佛国维度",
+      "能准确解释施法者与被摄者的视野边界",
+      "能正确应用练气越一境、其余不越境的限制",
+      "明白当前神通只完成准心单选，范围多选与佛国 UI 尚待后续参悟"
+    ],
+    "mastery_levels": [
+      {
+        "id": "ninecun_lingtai:entry",
+        "minimum_score": 88
+      }
+    ]
+  }
+}

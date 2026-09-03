@@ -3,6 +3,7 @@ package net.seraphina.ninecun_lingtai.mixin.client;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraftforge.client.gui.overlay.ForgeGui;
 import net.seraphina.ninecun_lingtai.client.animation.BreakthroughAnimationManager;
+import net.seraphina.ninecun_lingtai.client.utility.PalmBuddhaOverlayRenderUtility;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -17,5 +18,6 @@ public abstract class ForgeGuiMixin {
             CallbackInfo callbackInfo
     ) {
         BreakthroughAnimationManager.render(guiGraphics, partialTicks);
+        PalmBuddhaOverlayRenderUtility.render(guiGraphics, partialTicks);
     }
 }

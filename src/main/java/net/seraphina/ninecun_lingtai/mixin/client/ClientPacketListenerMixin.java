@@ -1,9 +1,14 @@
 package net.seraphina.ninecun_lingtai.mixin.client;
 
+import net.seraphina.ninecun_lingtai.client.player.ClientPalmBuddhaMemberManager;
+import net.seraphina.ninecun_lingtai.client.player.ClientPalmBuddhaOverlayManager;
+import net.seraphina.ninecun_lingtai.client.player.ClientPalmBuddhaTransitionManager;
 import net.seraphina.ninecun_lingtai.client.player.ClientShrinkEarthManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundPlayerPositionPacket;
+import net.minecraft.network.protocol.game.ClientboundRespawnPacket;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
@@ -18,6 +23,25 @@ public abstract class ClientPacketListenerMixin {
     private Vec3 ninecunLingtai$shrinkEarthPreviousPosition;
     @Unique
     private boolean ninecunLingtai$shrinkEarthCapturePosition;
+
+    @Inject(method = "onDisconnect", at = @At("HEAD"))
+    private void ninecunLingtai$resetPalmBuddhaMembers(Component reason, CallbackInfo callbackInfo) {
+        ClientPalmBuddhaOverlayManager.reset();
+        ClientPalmBuddhaMemberManager.reset();
+        ClientPalmBuddhaTransitionManager.reset();
+    }
+
+    @Inject(method = "handleRespawn", at = @At("HEAD"))
+    private void ninecunLingtai$beginPalmBuddhaTransition(
+            ClientboundRespawnPacket packet,
+            CallbackInfo callbackInfo
+    ) {
+        Minecraft minecraft = Minecraft.getInstance();
+        ClientPalmBuddhaTransitionManager.begin(
+                minecraft.level == null ? null : minecraft.level.dimension().location(),
+                packet.getDimension().location()
+        );
+    }
 
     @Inject(method = "handleMovePlayer", at = @At("HEAD"))
     private void ninecunLingtai$captureShrinkEarthPreviousPosition(

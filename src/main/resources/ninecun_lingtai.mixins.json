@@ -52,8 +52,11 @@
     "client.LightTextureMixin",
     "client.LivingEntityRendererMixin",
     "client.MinecraftMixin",
+    "client.KeyboardInputMixin",
+    "client.KeyboardHandlerMixin",
     "client.MerchantScreenImmortalTradeMixin",
     "client.MouseHandlerMixin",
+    "client.SoundEngineMixin",
     "client.compat.InventoryTabsClientMixin",
     "client.compat.badoptimizations.EntityDataCacheMixin",
     "client.compat.jei.BookmarkOverlayMixin",
@@ -71,3 +74,6 @@
   },
   "plugin": "net.seraphina.ninecun_lingtai.mixin.IMixinPlugin"
 }
+
+
+

@@ -41,6 +41,7 @@ import net.seraphina.ninecun_lingtai.common.network.packet.OpenAscensionQuestion
 import net.seraphina.ninecun_lingtai.common.network.packet.OpenBookReadingScreenPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.OpenDaoScrollScreenPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.OpenThreeThousandRealmScreenPacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.OpenPalmBuddhaOverlayPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.OpenTechniqueImprintScreenPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.OpenTechniqueScreenPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.PushingMountainsClearSelectionPacket;
@@ -49,6 +50,9 @@ import net.seraphina.ninecun_lingtai.common.network.packet.PushingMountainsResto
 import net.seraphina.ninecun_lingtai.common.network.packet.PushingMountainsSelectPointPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.PushingMountainsThrowPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.RequestCultivationInfoPacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.ReleasePalmBuddhaMemberPacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.RequestPalmBuddhaMembersPacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.SyncPalmBuddhaMembersPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.RequestPlayerValueControlSettingsPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.RequestAlchemyRecipeLibraryPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.RequestBookPagePacket;
@@ -148,6 +152,8 @@ import net.minecraftforge.network.simple.SimpleChannel;
 import net.seraphina.ninecun_lingtai.common.tribulation.TribulationSession;
 import net.seraphina.ninecun_lingtai.common.tribulation.TribulationPhase;
 import net.seraphina.ninecun_lingtai.common.realm.ThreeThousandRealmCatalogSnapshot;
+import net.seraphina.ninecun_lingtai.common.spell.palm_buddha.PalmBuddhaMemberPageSnapshot;
+import net.seraphina.ninecun_lingtai.common.spell.palm_buddha.PalmBuddhaRealmManager;
 
 import java.util.List;
 import java.util.Map;
@@ -156,7 +162,7 @@ import java.util.Set;
 import java.util.UUID;
 
 public final class ModNetwork {
-    private static final String PROTOCOL_VERSION = "91781367";
+    private static final String PROTOCOL_VERSION = "91781368";
     private static final float ASCENSION_TRIBULATION_RADIUS = 24.0F;
     private static final float ASCENSION_TRIBULATION_INTENSITY = 1.65F;
     private static final SimpleChannel CHANNEL = NetworkRegistry.ChannelBuilder
@@ -519,6 +525,42 @@ public final class ModNetwork {
                 .encoder(CastSpellPacket::encode)
                 .decoder(CastSpellPacket::decode)
                 .consumerMainThread(CastSpellPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        ReleasePalmBuddhaMemberPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(ReleasePalmBuddhaMemberPacket::encode)
+                .decoder(ReleasePalmBuddhaMemberPacket::decode)
+                .consumerMainThread(ReleasePalmBuddhaMemberPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        OpenPalmBuddhaOverlayPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(OpenPalmBuddhaOverlayPacket::encode)
+                .decoder(OpenPalmBuddhaOverlayPacket::decode)
+                .consumerMainThread(OpenPalmBuddhaOverlayPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        RequestPalmBuddhaMembersPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(RequestPalmBuddhaMembersPacket::encode)
+                .decoder(RequestPalmBuddhaMembersPacket::decode)
+                .consumerMainThread(RequestPalmBuddhaMembersPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        SyncPalmBuddhaMembersPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(SyncPalmBuddhaMembersPacket::encode)
+                .decoder(SyncPalmBuddhaMembersPacket::decode)
+                .consumerMainThread(SyncPalmBuddhaMembersPacket::handle)
                 .add();
         CHANNEL.messageBuilder(
                         SyncSwordFlightPacket.class,
@@ -1664,6 +1706,22 @@ public final class ModNetwork {
                         PlayerImprintedTechniqueData.getTechniques(player),
                         learnedTechniques
                 )
+        );
+    }
+
+    public static void openPalmBuddhaOverlay(ServerPlayer player) {
+        CHANNEL.send(
+                PacketDistributor.PLAYER.with(() -> player),
+                OpenPalmBuddhaOverlayPacket.INSTANCE
+        );
+    }
+
+    public static void sendPalmBuddhaMembers(ServerPlayer player, int pageIndex) {
+        PalmBuddhaMemberPageSnapshot snapshot = PalmBuddhaRealmManager.get(player.server)
+                .getMemberPage(player, pageIndex);
+        CHANNEL.send(
+                PacketDistributor.PLAYER.with(() -> player),
+                new SyncPalmBuddhaMembersPacket(snapshot)
         );
     }
 

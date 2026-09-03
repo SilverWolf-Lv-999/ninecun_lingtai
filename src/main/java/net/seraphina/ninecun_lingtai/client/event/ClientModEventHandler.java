@@ -34,6 +34,7 @@ import net.seraphina.ninecun_lingtai.client.render.MortalBodyRenderer;
 import net.seraphina.ninecun_lingtai.client.screen.MindTrialOverlay;
 import net.seraphina.ninecun_lingtai.client.render.ElementFlowShader;
 import net.seraphina.ninecun_lingtai.client.render.NotificationScrollShader;
+import net.seraphina.ninecun_lingtai.client.render.PalmBuddhaOverlayShader;
 import net.seraphina.ninecun_lingtai.client.render.SoulConstellationShader;
 import net.seraphina.ninecun_lingtai.client.render.SoulRenderer;
 import net.seraphina.ninecun_lingtai.client.render.SpiritualEnergyShader;
@@ -116,6 +117,10 @@ public final class ClientModEventHandler {
     private static final ResourceLocation NOTIFICATION_SCROLL_SHADER = ResourceLocation.fromNamespaceAndPath(
             ModMain.MOD_ID,
             "notification_scroll"
+    );
+    private static final ResourceLocation PALM_BUDDHA_OVERLAY_SHADER = ResourceLocation.fromNamespaceAndPath(
+            ModMain.MOD_ID,
+            "palm_buddha_overlay"
     );
     private static final ResourceLocation TRIBULATION_CLOUD_SHADER = ResourceLocation.fromNamespaceAndPath(
             ModMain.MOD_ID,
@@ -337,6 +342,14 @@ public final class ClientModEventHandler {
                         DefaultVertexFormat.POSITION_COLOR_TEX
                 ),
                 NotificationScrollShader::setNotificationScrollShader
+        );
+        event.registerShader(
+                new ShaderInstance(
+                        event.getResourceProvider(),
+                        PALM_BUDDHA_OVERLAY_SHADER,
+                        DefaultVertexFormat.POSITION_COLOR_TEX
+                ),
+                PalmBuddhaOverlayShader::setPalmBuddhaOverlayShader
         );
         event.registerShader(
                 new ShaderInstance(

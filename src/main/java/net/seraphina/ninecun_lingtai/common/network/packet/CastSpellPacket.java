@@ -5,6 +5,8 @@ import net.seraphina.ninecun_lingtai.common.inner_demon.MindTrialManager;
 import net.seraphina.ninecun_lingtai.common.player.PlayerSelectedSpellData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerSoulRoamingManager;
 import net.seraphina.ninecun_lingtai.common.spell.SpellCastManager;
+import net.seraphina.ninecun_lingtai.common.registry.ModSpells;
+import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -55,6 +57,9 @@ public record CastSpellPacket(UUID targetPlayerId) {
             PlayerBehaviorLedgerData.recordSpellCast(player, selectedSpellId);
             // REFLECT 阶段"换招"检测 + 位移法术使用标记（§7）。
             MindTrialManager.onOwnerSpellCast(player, selectedSpellId);
+            if (ModSpells.PALM_BUDDHA.getId().equals(selectedSpellId)) {
+                ModNetwork.openPalmBuddhaOverlay(player);
+            }
         }
     }
 }

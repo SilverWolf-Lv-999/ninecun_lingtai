@@ -1,0 +1,31 @@
+{
+  "targets": [
+    "swap"
+  ],
+  "passes": [
+    {
+      "name": "ninecun_lingtai:palm_buddha_transition",
+      "intarget": "minecraft:main",
+      "outtarget": "swap",
+      "uniforms": [
+        {
+          "name": "TransitionProgress",
+          "values": [0.0]
+        },
+        {
+          "name": "TransitionTime",
+          "values": [0.0]
+        },
+        {
+          "name": "InkStrength",
+          "values": [0.92]
+        }
+      ]
+    },
+    {
+      "name": "blit",
+      "intarget": "swap",
+      "outtarget": "minecraft:main"
+    }
+  ]
+}
