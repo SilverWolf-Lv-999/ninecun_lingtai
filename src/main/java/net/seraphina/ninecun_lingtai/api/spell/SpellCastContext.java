@@ -16,7 +16,7 @@ import java.util.UUID;
  * @param powerEfficiency     熟练度发挥率与灵根资质相乘后的威力比例
  * @param cultivationStrength 修为强度（境界序号 × 9 + 层数，练气一层为 1）
  * @param interactionTriggered 是否由客户端交互请求触发
- * @param targetPlayerId       本次施法锁定的玩家目标，可为空
+ * @param targetEntityId       本次施法锁定的生物目标，可为空
  */
 public record SpellCastContext(
         TechniqueDefinition technique,
@@ -25,7 +25,7 @@ public record SpellCastContext(
         double powerEfficiency,
         int cultivationStrength,
         boolean interactionTriggered,
-        UUID targetPlayerId
+        UUID targetEntityId
 ) {
     public SpellCastContext(
             TechniqueDefinition technique,

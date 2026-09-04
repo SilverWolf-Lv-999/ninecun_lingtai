@@ -2,9 +2,11 @@ package net.seraphina.ninecun_lingtai.common.spell.palm_buddha;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
 import net.seraphina.ninecun_lingtai.api.cultivation.CultivationApi;
 import net.seraphina.ninecun_lingtai.api.cultivation.CultivationRealm;
 import net.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
+import net.seraphina.ninecun_lingtai.common.creature.CreatureCultivationData;
 
 import java.util.Optional;
 
@@ -14,8 +16,12 @@ public final class PalmBuddhaCultivationUtility {
     }
 
     public static boolean canAffect(ServerPlayer caster, ServerPlayer target) {
+        return canAffect(caster, (LivingEntity) target);
+    }
+
+    public static boolean canAffect(ServerPlayer caster, LivingEntity target) {
         Optional<CultivationStage> casterStage = CultivationApi.getStage(caster);
-        Optional<CultivationStage> targetStage = CultivationApi.getStage(target);
+        Optional<CultivationStage> targetStage = CreatureCultivationData.getStage(target);
         if (casterStage.isEmpty()) {
             return false;
         }
@@ -30,8 +36,12 @@ public final class PalmBuddhaCultivationUtility {
     }
 
     public static String getRestrictionMessage(ServerPlayer caster, ServerPlayer target) {
+        return getRestrictionMessage(caster, (LivingEntity) target);
+    }
+
+    public static String getRestrictionMessage(ServerPlayer caster, LivingEntity target) {
         Optional<CultivationStage> casterStage = CultivationApi.getStage(caster);
-        Optional<CultivationStage> targetStage = CultivationApi.getStage(target);
+        Optional<CultivationStage> targetStage = CreatureCultivationData.getStage(target);
         if (casterStage.isEmpty()) {
             return "凡人之躯，无法张开佛国";
         }

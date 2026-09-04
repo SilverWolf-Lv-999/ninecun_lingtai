@@ -70,6 +70,15 @@ public final class PalmBuddhaOverlayRenderUtility {
         shaderInstance.safeGetUniform("ReleaseReady").set(
                 ClientPalmBuddhaOverlayManager.isSelectedMemberReleasable() ? 1.0F : 0.0F
         );
+        shaderInstance.safeGetUniform("ReleasePending").set(
+                ClientPalmBuddhaOverlayManager.isReleasePending() ? 1.0F : 0.0F
+        );
+        shaderInstance.safeGetUniform("FeedbackProgress").set(
+                ClientPalmBuddhaOverlayManager.getReleaseFeedbackProgress(partialTicks)
+        );
+        shaderInstance.safeGetUniform("FeedbackType").set(
+                ClientPalmBuddhaOverlayManager.getReleaseFeedbackType()
+        );
         shaderInstance.safeGetUniform("PageIndex").set((float) page.pageIndex());
         shaderInstance.safeGetUniform("PageCount").set((float) page.pageCount());
 
@@ -163,7 +172,9 @@ public final class PalmBuddhaOverlayRenderUtility {
         guiGraphics.disableScissor();
 
         int footerY = Mth.floor(top + panelHeight - 28.0F);
-        String footer = "← / → 翻页    左键选人    右键放出    Esc 收卷";
+        String footer = ClientPalmBuddhaOverlayManager.isReleasePending()
+                ? "放生中 · 等待真实维度回执"
+                : "← / → 翻页    左键选人    右键放出    Esc 收卷";
         guiGraphics.drawString(
                 font,
                 Component.literal(footer),
@@ -172,6 +183,21 @@ public final class PalmBuddhaOverlayRenderUtility {
                 MUTED_INK_COLOR,
                 false
         );
+        ClientPalmBuddhaOverlayManager.getReleaseFeedbackMessage().ifPresent(message -> {
+            String feedbackText = message.getString();
+            int feedbackWidth = font.width(feedbackText);
+            int feedbackColor = ClientPalmBuddhaOverlayManager.getReleaseFeedbackType() > 0.0F
+                    ? 0xE5637650
+                    : SEAL_COLOR;
+            guiGraphics.drawString(
+                    font,
+                    message,
+                    Mth.floor(left + (panelWidth - feedbackWidth) * 0.5F),
+                    footerY - 17,
+                    feedbackColor,
+                    false
+            );
+        });
         guiGraphics.drawString(
                 font,
                 Component.literal("掌印"),

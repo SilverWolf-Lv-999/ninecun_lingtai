@@ -1,6 +1,8 @@
 package net.seraphina.ninecun_lingtai.utility;
 
 import net.minecraftforge.fml.unsafe.UnsafeHacks;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import sun.misc.Unsafe;
 
 import java.lang.invoke.MethodHandle;
@@ -18,8 +20,7 @@ public final class JDKUtility {
     private static final String JAVA_VERSION = "java.version";
     private static final String JAVA_VM_NAME = "java.vm.name";
     private static final AtomicBoolean JDK_VERSION_WARNING_LOGGED = new AtomicBoolean();
-    private static final org.apache.logging.log4j.Logger LOGGER =
-            org.apache.logging.log4j.LogManager.getLogger(JDKUtility.class);
+    private static final Logger LOGGER = LogManager.getLogger(JDKUtility.class);
 
     public static final Unsafe UNSAFE;
 

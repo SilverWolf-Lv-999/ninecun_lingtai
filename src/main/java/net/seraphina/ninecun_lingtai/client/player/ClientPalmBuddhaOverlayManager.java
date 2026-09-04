@@ -5,8 +5,11 @@ import net.seraphina.ninecun_lingtai.client.utility.PalmBuddhaOverlayGeometryUti
 import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import net.seraphina.ninecun_lingtai.common.network.packet.ReleasePalmBuddhaMemberPacket;
 import net.seraphina.ninecun_lingtai.common.spell.palm_buddha.PalmBuddhaMemberSnapshot;
+import net.seraphina.ninecun_lingtai.common.spell.palm_buddha.PalmBuddhaReleaseResult;
 
+import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Controls the non-Screen Palm Buddha member overlay.
@@ -16,8 +19,12 @@ import java.util.Optional;
  * buttons.</p>
  */
 public final class ClientPalmBuddhaOverlayManager {
+    private static final int RELEASE_RESULT_TIMEOUT_TICKS = 80;
+
     private static boolean thisActive;
     private static int thisSelectedRow = -1;
+    private static UUID thisPendingReleaseMemberId;
+    private static int thisPendingReleaseTicks;
 
     private ClientPalmBuddhaOverlayManager() {
     }
@@ -28,6 +35,9 @@ public final class ClientPalmBuddhaOverlayManager {
         }
         thisActive = true;
         thisSelectedRow = -1;
+        thisPendingReleaseMemberId = null;
+        thisPendingReleaseTicks = 0;
+        ClientPalmBuddhaReleaseFeedbackManager.reset();
         ClientPalmBuddhaMemberManager.reset();
         ClientPalmBuddhaMemberManager.requestFirstPage();
     }
@@ -35,6 +45,9 @@ public final class ClientPalmBuddhaOverlayManager {
     public static void close() {
         thisActive = false;
         thisSelectedRow = -1;
+        thisPendingReleaseMemberId = null;
+        thisPendingReleaseTicks = 0;
+        ClientPalmBuddhaReleaseFeedbackManager.reset();
     }
 
     public static boolean isActive() {
@@ -42,7 +55,7 @@ public final class ClientPalmBuddhaOverlayManager {
     }
 
     public static void nextPage() {
-        if (!isActive()) {
+        if (!isActive() || isInteractionLocked()) {
             return;
         }
         int pageCount = ClientPalmBuddhaMemberManager.getCurrentPage().pageCount();
@@ -54,7 +67,7 @@ public final class ClientPalmBuddhaOverlayManager {
     }
 
     public static void previousPage() {
-        if (!isActive()) {
+        if (!isActive() || isInteractionLocked()) {
             return;
         }
         int currentPage = ClientPalmBuddhaMemberManager.getCurrentPage().pageIndex();
@@ -96,7 +109,7 @@ public final class ClientPalmBuddhaOverlayManager {
      * This is only a client-side visual guard; the server remains authoritative.
      */
     public static boolean isSelectedMemberReleasable() {
-        return getSelectedMember()
+        return !isInteractionLocked() && getSelectedMember()
                 .map(member -> member.online() && member.inExpectedRealm())
                 .orElse(false);
     }
@@ -106,7 +119,7 @@ public final class ClientPalmBuddhaOverlayManager {
      * client-authored state is included in the release request.
      */
     public static boolean releaseSelectedMemberAt(double mouseX, double mouseY) {
-        if (!isActive() || thisSelectedRow < 0) {
+        if (!isActive() || isInteractionLocked() || thisSelectedRow < 0) {
             return false;
         }
         Minecraft minecraft = Minecraft.getInstance();
@@ -129,10 +142,77 @@ public final class ClientPalmBuddhaOverlayManager {
             return false;
         }
         ModNetwork.sendToServer(new ReleasePalmBuddhaMemberPacket(member.memberId()));
-        int currentPage = ClientPalmBuddhaMemberManager.getCurrentPage().pageIndex();
-        thisSelectedRow = -1;
-        ClientPalmBuddhaMemberManager.requestPage(currentPage);
+        thisPendingReleaseMemberId = member.memberId();
+        thisPendingReleaseTicks = RELEASE_RESULT_TIMEOUT_TICKS;
         return true;
+    }
+
+    /**
+     * 接收服务端的放生结果。刷新请求只在结果抵达后发出，避免客户端先显示过期摘要。
+     */
+    public static void acceptReleaseResult(
+            UUID memberId,
+            boolean successful,
+            PalmBuddhaReleaseResult.FailureReason failureReason
+    ) {
+        if (!isActive()
+                || thisPendingReleaseMemberId == null
+                || !Objects.equals(thisPendingReleaseMemberId, memberId)) {
+            return;
+        }
+        thisPendingReleaseMemberId = null;
+        thisPendingReleaseTicks = 0;
+        thisSelectedRow = -1;
+        ClientPalmBuddhaReleaseFeedbackManager.accept(memberId, successful, failureReason);
+    }
+
+    /** Advances the short feedback animation and refreshes the page after it ends. */
+    public static void tick() {
+        if (!isActive()) {
+            return;
+        }
+        if (isReleasePending()) {
+            thisPendingReleaseTicks--;
+            if (thisPendingReleaseTicks <= 0) {
+                acceptReleaseResult(
+                        thisPendingReleaseMemberId,
+                        false,
+                        PalmBuddhaReleaseResult.FailureReason.REQUEST_TIMEOUT
+                );
+            }
+        }
+        boolean feedbackWasActive = ClientPalmBuddhaReleaseFeedbackManager.isActive();
+        ClientPalmBuddhaReleaseFeedbackManager.tick();
+        if (feedbackWasActive && !ClientPalmBuddhaReleaseFeedbackManager.isActive()) {
+            ClientPalmBuddhaMemberManager.requestPage(
+                    ClientPalmBuddhaMemberManager.getCurrentPage().pageIndex()
+            );
+        }
+    }
+
+    public static boolean isReleasePending() {
+        return isActive() && thisPendingReleaseMemberId != null;
+    }
+
+    private static boolean isInteractionLocked() {
+        return isReleasePending() || ClientPalmBuddhaReleaseFeedbackManager.isActive();
+    }
+
+    public static float getReleaseFeedbackType() {
+        if (!ClientPalmBuddhaReleaseFeedbackManager.isActive()) {
+            return 0.0F;
+        }
+        return ClientPalmBuddhaReleaseFeedbackManager.isSuccessful() ? 1.0F : -1.0F;
+    }
+
+    public static float getReleaseFeedbackProgress(float partialTicks) {
+        return ClientPalmBuddhaReleaseFeedbackManager.getProgress(partialTicks);
+    }
+
+    public static Optional<net.minecraft.network.chat.Component> getReleaseFeedbackMessage() {
+        return ClientPalmBuddhaReleaseFeedbackManager.isActive()
+                ? Optional.of(ClientPalmBuddhaReleaseFeedbackManager.getMessage())
+                : Optional.empty();
     }
 
     /** Converts physical window coordinates before applying the selected-row release gesture. */
@@ -148,7 +228,7 @@ public final class ClientPalmBuddhaOverlayManager {
 
     /** Selects one visible member row; -1 means that the click hit no row. */
     public static void selectMemberAt(double mouseX, double mouseY) {
-        if (!isActive()) {
+        if (!isActive() || isInteractionLocked()) {
             return;
         }
         Minecraft minecraft = Minecraft.getInstance();
@@ -190,6 +270,9 @@ public final class ClientPalmBuddhaOverlayManager {
     public static void reset() {
         thisActive = false;
         thisSelectedRow = -1;
+        thisPendingReleaseMemberId = null;
+        thisPendingReleaseTicks = 0;
+        ClientPalmBuddhaReleaseFeedbackManager.reset();
         ClientPalmBuddhaMemberManager.reset();
     }
 }

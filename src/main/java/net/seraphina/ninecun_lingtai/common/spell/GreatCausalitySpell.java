@@ -12,7 +12,7 @@ import net.seraphina.ninecun_lingtai.common.causality.GreatCausalityQueryService
 public final class GreatCausalitySpell extends Spell {
     @Override
     public boolean cast(ServerPlayer player, SpellCastContext context) {
-        GreatCausalityQueryService.query(player, context.targetPlayerId());
+        GreatCausalityQueryService.query(player, context.targetEntityId());
         return true;
     }
 }

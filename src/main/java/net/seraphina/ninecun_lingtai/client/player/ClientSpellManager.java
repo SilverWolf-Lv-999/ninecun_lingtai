@@ -9,6 +9,7 @@ import net.seraphina.ninecun_lingtai.common.network.packet.SelectSpellPacket;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 
 import javax.annotation.Nullable;
@@ -40,8 +41,9 @@ public final class ClientSpellManager {
                     && (ClientTribulationManager.isLocalPlayerInTribulation()
                     || !ClientMeditationManager.isLocalPlayerMeditating())
                     && !ClientSoulRoamingManager.isLocalPlayerSoulRoaming()) {
-                Player target = minecraft.crosshairPickEntity instanceof Player targetPlayer
-                        ? targetPlayer
+                LivingEntity target = minecraft.crosshairPickEntity instanceof LivingEntity livingEntity
+                        && !(livingEntity instanceof Player)
+                        ? livingEntity
                         : null;
                 ModNetwork.sendToServer(new CastSpellPacket(
                         target == null ? null : target.getUUID()

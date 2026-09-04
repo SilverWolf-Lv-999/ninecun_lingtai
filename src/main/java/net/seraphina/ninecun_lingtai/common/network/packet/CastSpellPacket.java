@@ -16,7 +16,7 @@ import net.minecraftforge.network.NetworkEvent;
 import java.util.UUID;
 import java.util.function.Supplier;
 
-public record CastSpellPacket(UUID targetPlayerId) {
+public record CastSpellPacket(UUID targetEntityId) {
     public static final CastSpellPacket INSTANCE = new CastSpellPacket();
 
     public CastSpellPacket() {
@@ -24,9 +24,9 @@ public record CastSpellPacket(UUID targetPlayerId) {
     }
 
     public static void encode(CastSpellPacket packet, FriendlyByteBuf buffer) {
-        buffer.writeBoolean(packet.targetPlayerId() != null);
-        if (packet.targetPlayerId() != null) {
-            buffer.writeUUID(packet.targetPlayerId());
+        buffer.writeBoolean(packet.targetEntityId() != null);
+        if (packet.targetEntityId() != null) {
+            buffer.writeUUID(packet.targetEntityId());
         }
     }
 
@@ -50,12 +50,10 @@ public record CastSpellPacket(UUID targetPlayerId) {
             );
             return;
         }
-        boolean castSucceeded = SpellCastManager.castSelectedSpell(player, packet.targetPlayerId());
-        // 心魔即己 §5.1 施法采样：按"成功施放"计（接线清单第 11 条精确采样），
-        // 冷却/灵力不足等失败请求不再进滑动窗口。
+        boolean castSucceeded = SpellCastManager.castSelectedSpell(player, packet.targetEntityId());
+
         if (castSucceeded && selectedSpellId != null) {
             PlayerBehaviorLedgerData.recordSpellCast(player, selectedSpellId);
-            // REFLECT 阶段"换招"检测 + 位移法术使用标记（§7）。
             MindTrialManager.onOwnerSpellCast(player, selectedSpellId);
             if (ModSpells.PALM_BUDDHA.getId().equals(selectedSpellId)) {
                 ModNetwork.openPalmBuddhaOverlay(player);

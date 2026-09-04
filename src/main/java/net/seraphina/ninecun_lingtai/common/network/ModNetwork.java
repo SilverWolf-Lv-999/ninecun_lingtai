@@ -53,6 +53,7 @@ import net.seraphina.ninecun_lingtai.common.network.packet.RequestCultivationInf
 import net.seraphina.ninecun_lingtai.common.network.packet.ReleasePalmBuddhaMemberPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.RequestPalmBuddhaMembersPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.SyncPalmBuddhaMembersPacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.SyncPalmBuddhaReleaseResultPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.RequestPlayerValueControlSettingsPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.RequestAlchemyRecipeLibraryPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.RequestBookPagePacket;
@@ -154,6 +155,7 @@ import net.seraphina.ninecun_lingtai.common.tribulation.TribulationPhase;
 import net.seraphina.ninecun_lingtai.common.realm.ThreeThousandRealmCatalogSnapshot;
 import net.seraphina.ninecun_lingtai.common.spell.palm_buddha.PalmBuddhaMemberPageSnapshot;
 import net.seraphina.ninecun_lingtai.common.spell.palm_buddha.PalmBuddhaRealmManager;
+import net.seraphina.ninecun_lingtai.common.spell.palm_buddha.PalmBuddhaReleaseResult;
 
 import java.util.List;
 import java.util.Map;
@@ -561,6 +563,15 @@ public final class ModNetwork {
                 .encoder(SyncPalmBuddhaMembersPacket::encode)
                 .decoder(SyncPalmBuddhaMembersPacket::decode)
                 .consumerMainThread(SyncPalmBuddhaMembersPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        SyncPalmBuddhaReleaseResultPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(SyncPalmBuddhaReleaseResultPacket::encode)
+                .decoder(SyncPalmBuddhaReleaseResultPacket::decode)
+                .consumerMainThread(SyncPalmBuddhaReleaseResultPacket::handle)
                 .add();
         CHANNEL.messageBuilder(
                         SyncSwordFlightPacket.class,
@@ -1722,6 +1733,17 @@ public final class ModNetwork {
         CHANNEL.send(
                 PacketDistributor.PLAYER.with(() -> player),
                 new SyncPalmBuddhaMembersPacket(snapshot)
+        );
+    }
+
+    public static void sendPalmBuddhaReleaseResult(
+            ServerPlayer player,
+            PalmBuddhaReleaseResult result,
+            UUID memberId
+    ) {
+        CHANNEL.send(
+                PacketDistributor.PLAYER.with(() -> player),
+                SyncPalmBuddhaReleaseResultPacket.fromResult(memberId, result)
         );
     }
 

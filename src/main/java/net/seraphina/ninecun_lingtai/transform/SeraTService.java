@@ -38,7 +38,7 @@ public final class SeraTService implements ITransformationService {
 
     @Override
     public void onLoad(IEnvironment environment, Set<String> otherServices) {
-
+        LOGGER.info("other services: {}", otherServices);
     }
 
     @Override

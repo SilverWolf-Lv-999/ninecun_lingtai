@@ -52,6 +52,7 @@ public abstract class MinecraftMixin {
     @Inject(method = "tick", at = @At("TAIL"))
     private void ninecunLingtai$tickPalmBuddhaTransition(CallbackInfo callbackInfo) {
         ClientPalmBuddhaTransitionManager.tick();
+        ClientPalmBuddhaOverlayManager.tick();
     }
 
     @Inject(method = "handleKeybinds", at = @At("HEAD"), cancellable = true)

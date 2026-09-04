@@ -22,9 +22,6 @@ public final class JsonFileUtility {
             .setPrettyPrinting()
             .create();
 
-    private JsonFileUtility() {
-    }
-
     public static JsonElement read(Path filePath) throws IOException {
         Objects.requireNonNull(filePath, "filePath");
         try (Reader reader = Files.newBufferedReader(filePath, StandardCharsets.UTF_8)) {

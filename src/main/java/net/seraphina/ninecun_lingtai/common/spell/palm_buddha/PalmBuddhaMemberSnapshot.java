@@ -4,6 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
 import net.seraphina.ninecun_lingtai.api.cultivation.CultivationRealm;
 import net.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
 import net.seraphina.ninecun_lingtai.common.player.PlayerCultivationData;
@@ -25,7 +26,8 @@ public record PalmBuddhaMemberSnapshot(
         Optional<ResourceLocation> currentDimension,
         boolean inExpectedRealm,
         Optional<BlockPos> currentPosition,
-        Optional<CultivationStage> cultivationStage
+        Optional<CultivationStage> cultivationStage,
+        PalmBuddhaMemberKind kind
 ) {
     public static final int MAXIMUM_DISPLAY_NAME_LENGTH = 64;
 
@@ -41,12 +43,34 @@ public record PalmBuddhaMemberSnapshot(
         currentDimension = currentDimension == null ? Optional.empty() : currentDimension;
         currentPosition = currentPosition == null ? Optional.empty() : currentPosition;
         cultivationStage = cultivationStage == null ? Optional.empty() : cultivationStage;
+        kind = Objects.requireNonNull(kind, "kind");
         if (!online && (currentDimension.isPresent() || currentPosition.isPresent() || inExpectedRealm)) {
             throw new IllegalArgumentException("Offline palm-buddha members cannot expose live state");
         }
         if (currentPosition.isPresent() && currentDimension.isEmpty()) {
             throw new IllegalArgumentException("A current position requires a current dimension");
         }
+    }
+
+    public PalmBuddhaMemberSnapshot(
+            UUID memberId,
+            String displayName,
+            boolean online,
+            Optional<ResourceLocation> currentDimension,
+            boolean inExpectedRealm,
+            Optional<BlockPos> currentPosition,
+            Optional<CultivationStage> cultivationStage
+    ) {
+        this(
+                memberId,
+                displayName,
+                online,
+                currentDimension,
+                inExpectedRealm,
+                currentPosition,
+                cultivationStage,
+                PalmBuddhaMemberKind.PLAYER
+        );
     }
 
     public static PalmBuddhaMemberSnapshot from(
@@ -77,8 +101,9 @@ public record PalmBuddhaMemberSnapshot(
                     false,
                     Optional.empty(),
                     false,
+                Optional.empty(),
                     Optional.empty(),
-                    Optional.empty()
+                    PalmBuddhaMemberKind.PLAYER
             );
         }
 
@@ -89,7 +114,52 @@ public record PalmBuddhaMemberSnapshot(
                 Optional.of(player.serverLevel().dimension().location()),
                 realmManager.isMemberInExpectedRealm(player),
                 Optional.of(BlockPos.containing(player.position())),
-                PlayerCultivationData.getStage(player)
+                PlayerCultivationData.getStage(player),
+                PalmBuddhaMemberKind.PLAYER
+        );
+    }
+
+    public static PalmBuddhaMemberSnapshot fromEntity(
+            MinecraftServer server,
+            PalmBuddhaRealmManager realmManager,
+            PalmBuddhaEntityState.EntityEntry entityEntry
+    ) {
+        Objects.requireNonNull(server, "server");
+        Objects.requireNonNull(realmManager, "realmManager");
+        Objects.requireNonNull(entityEntry, "entityEntry");
+
+        UUID memberId = entityEntry.memberId();
+        Entity entity = realmManager.getLoadedMemberEntity(memberId).orElse(null);
+        String displayName = entity == null
+                ? entityEntry.entityRecord().entityType().toString()
+                : entity.getName().getString();
+        if (displayName.isBlank()) {
+            displayName = entityEntry.entityRecord().entityType().toString();
+        }
+        if (entity == null) {
+            return new PalmBuddhaMemberSnapshot(
+                    memberId,
+                    displayName,
+                    false,
+                    Optional.empty(),
+                    false,
+                    Optional.empty(),
+                    Optional.empty(),
+                    PalmBuddhaMemberKind.CREATURE
+            );
+        }
+
+        return new PalmBuddhaMemberSnapshot(
+                memberId,
+                displayName,
+                entity.isAlive(),
+                Optional.of(entity.level().dimension().location()),
+                realmManager.isEntityMemberInExpectedRealm(entity),
+                Optional.of(BlockPos.containing(entity.position())),
+                entity instanceof net.minecraft.world.entity.LivingEntity livingEntity
+                        ? net.seraphina.ninecun_lingtai.common.creature.CreatureCultivationData.getStage(livingEntity)
+                        : Optional.empty(),
+                PalmBuddhaMemberKind.CREATURE
         );
     }
 

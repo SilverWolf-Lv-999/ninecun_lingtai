@@ -3,7 +3,9 @@ package net.seraphina.ninecun_lingtai.common.network.packet;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
+import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import net.seraphina.ninecun_lingtai.common.spell.palm_buddha.PalmBuddhaRealmManager;
+import net.seraphina.ninecun_lingtai.common.spell.palm_buddha.PalmBuddhaReleaseResult;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -39,7 +41,9 @@ public record ReleasePalmBuddhaMemberPacket(UUID memberId) {
         context.enqueueWork(() -> {
             ServerPlayer owner = context.getSender();
             if (owner != null) {
-                PalmBuddhaRealmManager.get(owner.server).releasePlayer(owner, packet.memberId());
+                PalmBuddhaReleaseResult result = PalmBuddhaRealmManager.get(owner.server)
+                        .releasePlayerWithResult(owner, packet.memberId());
+                ModNetwork.sendPalmBuddhaReleaseResult(owner, result, packet.memberId());
             }
         });
         context.setPacketHandled(true);

@@ -7,6 +7,9 @@ uniform vec2 PanelSize;
 uniform float Time;
 uniform float SelectedRow;
 uniform float ReleaseReady;
+uniform float ReleasePending;
+uniform float FeedbackProgress;
+uniform float FeedbackType;
 uniform float PageIndex;
 uniform float PageCount;
 
@@ -79,12 +82,35 @@ void main() {
     );
     color = mix(color, vec3(0.50, 0.12, 0.08), releaseEdge * 0.62);
 
+    float pendingEdge = selectedMask * ReleasePending * (
+            lineBand(rowInside, 0.08, 0.010, 0.026)
+            + lineBand(rowInside, 0.92, 0.010, 0.026)
+    );
+    color = mix(color, vec3(0.20, 0.19, 0.16), pendingEdge * (0.36 + 0.18 * sin(Time * 1.4)));
+
     vec2 sealPoint = centered - vec2(-PanelSize.x * 0.34, -PanelSize.y * 0.34);
     float sealRadius = min(PanelSize.x, PanelSize.y) * 0.105;
     float sealDistance = abs(length(sealPoint) - sealRadius);
     float sealRing = 1.0 - smoothstep(1.0, 2.6, sealDistance);
     float sealWave = 0.5 + 0.5 * sin(Time * 0.8 + length(sealPoint) * 0.12);
     color = mix(color, vec3(0.42, 0.10, 0.08), sealRing * (0.35 + 0.20 * sealWave));
+
+    // The server result is rendered as a short-lived ink seal rather than a
+    // button, toast, or replacement screen. Positive type is successful release;
+    // negative type is a restrained vermilion failure mark.
+    float feedbackFade = smoothstep(0.0, 0.22, FeedbackProgress);
+    float feedbackRadius = sealRadius + (1.0 - FeedbackProgress) * 9.0;
+    float feedbackDistance = abs(length(sealPoint) - feedbackRadius);
+    float feedbackRing = 1.0 - smoothstep(0.7, 2.8, feedbackDistance);
+    float feedbackInk = noise(sealPoint * 0.035 + vec2(Time * 0.02, -Time * 0.015));
+    vec3 feedbackColor = FeedbackType > 0.5
+            ? vec3(0.30, 0.38, 0.19)
+            : vec3(0.56, 0.12, 0.075);
+    color = mix(
+            color,
+            feedbackColor,
+            feedbackRing * feedbackFade * (0.28 + 0.24 * feedbackInk)
+    );
 
     float brushNoise = noise(pixel * 0.015 + vec2(PageIndex * 0.4, PageCount * 0.17));
     float brushStroke = smoothstep(0.70, 0.94, brushNoise) * 0.08;

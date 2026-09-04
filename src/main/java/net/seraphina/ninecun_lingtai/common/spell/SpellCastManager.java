@@ -69,7 +69,7 @@ public final class SpellCastManager {
      * @return 是否真正施放成功（灵力消费且 spell.cast 生效）——行为账本按成功采样
      *         （心魔即己接线清单第 11 条），失败请求不计入施法滑窗。
      */
-    public static boolean castSelectedSpell(ServerPlayer player, UUID targetPlayerId) {
+    public static boolean castSelectedSpell(ServerPlayer player, UUID targetEntityId) {
         Optional<ResourceLocation> selectedTechniqueId = PlayerSelectedSpellData.getSelectedSpell(player);
         if (selectedTechniqueId.isEmpty()) {
             sendActionBar(player, "尚未择定任何法术");
@@ -82,7 +82,7 @@ public final class SpellCastManager {
             sendActionBar(player, "所择法术已失传，请重新择法");
             return false;
         }
-        return castTechnique(player, techniqueOptional.get(), false, targetPlayerId);
+        return castTechnique(player, techniqueOptional.get(), false, targetEntityId);
     }
 
     public static void castTechnique(ServerPlayer player, TechniqueDefinition technique) {
@@ -105,7 +105,7 @@ public final class SpellCastManager {
             ServerPlayer player,
             TechniqueDefinition technique,
             boolean interactionTriggered,
-            UUID targetPlayerId
+            UUID targetEntityId
     ) {
         // 走火入魔发作期灵力逆行，一切法术禁施（M4 走火入魔切片，化解见 QiDeviationManager）。
         if (ScarManager.hasScar(player, ScarType.QI_DEVIATION)) {
@@ -190,7 +190,7 @@ public final class SpellCastManager {
                 powerEfficiency,
                 cultivationStrength,
                 interactionTriggered,
-                targetPlayerId
+                targetEntityId
         );
         if (!spell.cast(player, context)) {
             if (anyElementConsumption != null) {

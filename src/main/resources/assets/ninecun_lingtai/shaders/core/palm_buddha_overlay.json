@@ -50,6 +50,24 @@
       "values": [0.0]
     },
     {
+      "name": "ReleasePending",
+      "type": "float",
+      "count": 1,
+      "values": [0.0]
+    },
+    {
+      "name": "FeedbackProgress",
+      "type": "float",
+      "count": 1,
+      "values": [0.0]
+    },
+    {
+      "name": "FeedbackType",
+      "type": "float",
+      "count": 1,
+      "values": [0.0]
+    },
+    {
       "name": "PageIndex",
       "type": "float",
       "count": 1,

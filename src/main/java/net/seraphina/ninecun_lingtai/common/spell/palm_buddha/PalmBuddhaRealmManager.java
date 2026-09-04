@@ -359,12 +359,21 @@ public final class PalmBuddhaRealmManager {
      * 将被收入佛国的玩家送回其进入前的维度与位置。
      */
     public synchronized boolean releasePlayer(ServerPlayer target) {
+        return this.releasePlayerWithResult(target).successful();
+    }
+
+    /**
+     * 将被收入佛国的玩家送回其进入前的维度与位置，并返回可供施法者显示的轻量结果。
+     */
+    public synchronized PalmBuddhaReleaseResult releasePlayerWithResult(ServerPlayer target) {
         Objects.requireNonNull(target, "target");
         PalmBuddhaMemberState.MemberRecord memberRecord = this.thisMemberState
                 .get(target.getUUID())
                 .orElse(null);
         if (memberRecord == null) {
-            return false;
+            return PalmBuddhaReleaseResult.failure(
+                    PalmBuddhaReleaseResult.FailureReason.MEMBER_NOT_OWNED
+            );
         }
 
         ResourceKey<Level> destinationKey = ResourceKey.create(
@@ -392,7 +401,9 @@ public final class PalmBuddhaRealmManager {
                         target.getGameProfile().getName(),
                         exception
                 );
-                return false;
+                return PalmBuddhaReleaseResult.failure(
+                        PalmBuddhaReleaseResult.FailureReason.RECOVERY_DESTINATION_UNAVAILABLE
+                );
             }
         }
 
@@ -400,7 +411,9 @@ public final class PalmBuddhaRealmManager {
         // preventing a successful move followed by a persistence failure from
         // leaving the member outside while the server still considers them trapped.
         if (!this.thisMemberState.remove(target.getUUID())) {
-            return false;
+            return PalmBuddhaReleaseResult.failure(
+                    PalmBuddhaReleaseResult.FailureReason.STATE_UPDATE_FAILED
+            );
         }
 
         Entity movedEntity = null;
@@ -423,7 +436,7 @@ public final class PalmBuddhaRealmManager {
             this.thisAuthorizedReleasePlayerIds.remove(target.getUUID());
         }
         if (movedEntity != null) {
-            return true;
+            return PalmBuddhaReleaseResult.success();
         }
 
         if (!this.thisMemberState.put(target.getUUID(), memberRecord)) {
@@ -432,7 +445,9 @@ public final class PalmBuddhaRealmManager {
                     target.getGameProfile().getName()
             );
         }
-        return false;
+        return PalmBuddhaReleaseResult.failure(
+                PalmBuddhaReleaseResult.FailureReason.TRANSFER_FAILED
+        );
     }
 
     private Entity movePlayer(
@@ -566,17 +581,36 @@ public final class PalmBuddhaRealmManager {
     }
 
     public synchronized boolean releasePlayer(ServerPlayer owner, UUID memberId) {
+        return this.releasePlayerWithResult(owner, memberId).successful();
+    }
+
+    /**
+     * 只允许施法者释放自己佛国中的在线成员；所有权与成员所在维度均由服务端复核。
+     */
+    public synchronized PalmBuddhaReleaseResult releasePlayerWithResult(
+            ServerPlayer owner,
+            UUID memberId
+    ) {
         Objects.requireNonNull(owner, "owner");
         Objects.requireNonNull(memberId, "memberId");
         PalmBuddhaMemberState.MemberRecord memberRecord = this.thisMemberState.get(memberId).orElse(null);
         if (memberRecord == null || !memberRecord.ownerId().equals(owner.getUUID())) {
-            return false;
+            return PalmBuddhaReleaseResult.failure(
+                    PalmBuddhaReleaseResult.FailureReason.MEMBER_NOT_OWNED
+            );
         }
         ServerPlayer target = this.thisServer.getPlayerList().getPlayer(memberId);
-        if (target == null || !this.isMemberInExpectedRealm(target)) {
-            return false;
+        if (target == null) {
+            return PalmBuddhaReleaseResult.failure(
+                    PalmBuddhaReleaseResult.FailureReason.MEMBER_OFFLINE
+            );
         }
-        return this.releasePlayer(target);
+        if (!this.isMemberInExpectedRealm(target)) {
+            return PalmBuddhaReleaseResult.failure(
+                    PalmBuddhaReleaseResult.FailureReason.MEMBER_NOT_IN_EXPECTED_REALM
+            );
+        }
+        return this.releasePlayerWithResult(target);
     }
 
     private synchronized void registerPersistedRealmDefinitions() {
