@@ -13,6 +13,7 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.util.ClassInstanceMultiMap;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
@@ -22,6 +23,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.entity.*;
 import net.minecraft.world.level.gameevent.GameEvent;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.ForgeHooks;
@@ -181,10 +183,25 @@ public final class EntityUtility {
         targetLiving.stopSleeping();
         targetLiving.stopRiding();
         targetLiving.stopUsingItem();
+        targetLiving.die(killer.damageSources().generic());
+        if (killer instanceof Player player)
+            targetLiving.lastHurtByPlayer = player;
+        else if (killer instanceof LivingEntity livingKiller)
+            targetLiving.lastHurtByMob = livingKiller;
+        targetLiving.deltaMovement = Vec3.ZERO;
         if (killer instanceof ServerPlayer serverPlayer)
             targetLiving.stopSeenByPlayer(serverPlayer);
+        SoundEvent[] soundEvents = {targetLiving.getDeathSound(), targetLiving.getHurtSound(damageSource)};
+        if (soundEvents[0] != null)
+            targetLiving.playSound(soundEvents[0]);
+        for (int i = 1; i < 5; i++) {
+            if (soundEvents[1] != null)
+                targetLiving.playSound(Objects.requireNonNull(soundEvents[1]));
+        }
+        targetLiving.dropExperience();
     }
 
+    @SuppressWarnings("all")
     public static void forceActuallyHurt(
             LivingEntity target,
             DamageSource damageSource,
