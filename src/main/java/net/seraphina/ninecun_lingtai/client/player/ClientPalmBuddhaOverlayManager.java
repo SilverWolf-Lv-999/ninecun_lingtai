@@ -2,6 +2,11 @@ package net.seraphina.ninecun_lingtai.client.player;
 
 import net.minecraft.client.Minecraft;
 import net.seraphina.ninecun_lingtai.client.utility.PalmBuddhaOverlayGeometryUtility;
+import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
+import net.seraphina.ninecun_lingtai.common.network.packet.ReleasePalmBuddhaMemberPacket;
+import net.seraphina.ninecun_lingtai.common.spell.palm_buddha.PalmBuddhaMemberSnapshot;
+
+import java.util.Optional;
 
 /**
  * Controls the non-Screen Palm Buddha member overlay.
@@ -86,6 +91,61 @@ public final class ClientPalmBuddhaOverlayManager {
         return isActive() ? thisSelectedRow : -1;
     }
 
+    /**
+     * Returns whether the selected member can receive the single release gesture.
+     * This is only a client-side visual guard; the server remains authoritative.
+     */
+    public static boolean isSelectedMemberReleasable() {
+        return getSelectedMember()
+                .map(member -> member.online() && member.inExpectedRealm())
+                .orElse(false);
+    }
+
+    /**
+     * Sends only the selected member UUID.  No position, dimension, or other
+     * client-authored state is included in the release request.
+     */
+    public static boolean releaseSelectedMemberAt(double mouseX, double mouseY) {
+        if (!isActive() || thisSelectedRow < 0) {
+            return false;
+        }
+        Minecraft minecraft = Minecraft.getInstance();
+        PalmBuddhaOverlayGeometryUtility.PanelBounds panelBounds =
+                PalmBuddhaOverlayGeometryUtility.calculatePanelBounds(
+                        minecraft.getWindow().getGuiScaledWidth(),
+                        minecraft.getWindow().getGuiScaledHeight()
+                );
+        int clickedRow = PalmBuddhaOverlayGeometryUtility.findMemberRow(
+                panelBounds,
+                mouseX,
+                mouseY,
+                ClientPalmBuddhaMemberManager.getCurrentPage().members().size()
+        );
+        if (clickedRow != thisSelectedRow) {
+            return false;
+        }
+        PalmBuddhaMemberSnapshot member = getSelectedMember().orElse(null);
+        if (member == null || !member.online() || !member.inExpectedRealm()) {
+            return false;
+        }
+        ModNetwork.sendToServer(new ReleasePalmBuddhaMemberPacket(member.memberId()));
+        int currentPage = ClientPalmBuddhaMemberManager.getCurrentPage().pageIndex();
+        thisSelectedRow = -1;
+        ClientPalmBuddhaMemberManager.requestPage(currentPage);
+        return true;
+    }
+
+    /** Converts physical window coordinates before applying the selected-row release gesture. */
+    public static void releaseSelectedMemberAtWindowCoordinates(double windowX, double windowY) {
+        if (!isActive()) {
+            return;
+        }
+        Minecraft minecraft = Minecraft.getInstance();
+        double guiX = windowX * minecraft.getWindow().getGuiScaledWidth() / minecraft.getWindow().getWidth();
+        double guiY = windowY * minecraft.getWindow().getGuiScaledHeight() / minecraft.getWindow().getHeight();
+        releaseSelectedMemberAt(guiX, guiY);
+    }
+
     /** Selects one visible member row; -1 means that the click hit no row. */
     public static void selectMemberAt(double mouseX, double mouseY) {
         if (!isActive()) {
@@ -114,6 +174,17 @@ public final class ClientPalmBuddhaOverlayManager {
         double guiX = windowX * minecraft.getWindow().getGuiScaledWidth() / minecraft.getWindow().getWidth();
         double guiY = windowY * minecraft.getWindow().getGuiScaledHeight() / minecraft.getWindow().getHeight();
         selectMemberAt(guiX, guiY);
+    }
+
+    private static Optional<PalmBuddhaMemberSnapshot> getSelectedMember() {
+        if (!isActive() || thisSelectedRow < 0) {
+            return Optional.empty();
+        }
+        var members = ClientPalmBuddhaMemberManager.getCurrentPage().members();
+        if (thisSelectedRow >= members.size()) {
+            return Optional.empty();
+        }
+        return Optional.of(members.get(thisSelectedRow));
     }
 
     public static void reset() {

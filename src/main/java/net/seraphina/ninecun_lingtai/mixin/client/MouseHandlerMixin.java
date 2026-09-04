@@ -32,6 +32,12 @@ public abstract class MouseHandlerMixin {
                         mouseHandler.xpos(),
                         mouseHandler.ypos()
                 );
+            } else if (action == GLFW.GLFW_PRESS && button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
+                MouseHandler mouseHandler = (MouseHandler) (Object) this;
+                ClientPalmBuddhaOverlayManager.releaseSelectedMemberAtWindowCoordinates(
+                        mouseHandler.xpos(),
+                        mouseHandler.ypos()
+                );
             }
             if (action != GLFW.GLFW_RELEASE) {
                 callbackInfo.cancel();

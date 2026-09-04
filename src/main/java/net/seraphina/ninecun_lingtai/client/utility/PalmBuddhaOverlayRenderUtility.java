@@ -67,6 +67,9 @@ public final class PalmBuddhaOverlayRenderUtility {
                         + partialTicks
         );
         shaderInstance.safeGetUniform("SelectedRow").set(ClientPalmBuddhaOverlayManager.getSelectedRow());
+        shaderInstance.safeGetUniform("ReleaseReady").set(
+                ClientPalmBuddhaOverlayManager.isSelectedMemberReleasable() ? 1.0F : 0.0F
+        );
         shaderInstance.safeGetUniform("PageIndex").set((float) page.pageIndex());
         shaderInstance.safeGetUniform("PageCount").set((float) page.pageCount());
 
@@ -160,7 +163,7 @@ public final class PalmBuddhaOverlayRenderUtility {
         guiGraphics.disableScissor();
 
         int footerY = Mth.floor(top + panelHeight - 28.0F);
-        String footer = "← / → 翻页    Esc 收卷";
+        String footer = "← / → 翻页    左键选人    右键放出    Esc 收卷";
         guiGraphics.drawString(
                 font,
                 Component.literal(footer),

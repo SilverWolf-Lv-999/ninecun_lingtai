@@ -573,7 +573,10 @@ public final class PalmBuddhaRealmManager {
             return false;
         }
         ServerPlayer target = this.thisServer.getPlayerList().getPlayer(memberId);
-        return target != null && this.releasePlayer(target);
+        if (target == null || !this.isMemberInExpectedRealm(target)) {
+            return false;
+        }
+        return this.releasePlayer(target);
     }
 
     private synchronized void registerPersistedRealmDefinitions() {

@@ -6,6 +6,7 @@ in vec2 overlayUv;
 uniform vec2 PanelSize;
 uniform float Time;
 uniform float SelectedRow;
+uniform float ReleaseReady;
 uniform float PageIndex;
 uniform float PageCount;
 
@@ -69,6 +70,14 @@ void main() {
             * (1.0 - step(row, SelectedRow - 0.001));
     float selectedInk = selectedMask * (1.0 - smoothstep(0.08, 0.92, rowInside));
     color = mix(color, vec3(0.72, 0.57, 0.36), selectedInk * 0.20);
+
+    // A restrained vermilion brush mark indicates that the selected row can
+    // accept the single right-click release gesture. It remains shader-only.
+    float releaseEdge = selectedMask * ReleaseReady * (
+            lineBand(rowInside, 0.08, 0.012, 0.022)
+            + lineBand(rowInside, 0.92, 0.012, 0.022)
+    );
+    color = mix(color, vec3(0.50, 0.12, 0.08), releaseEdge * 0.62);
 
     vec2 sealPoint = centered - vec2(-PanelSize.x * 0.34, -PanelSize.y * 0.34);
     float sealRadius = min(PanelSize.x, PanelSize.y) * 0.105;
