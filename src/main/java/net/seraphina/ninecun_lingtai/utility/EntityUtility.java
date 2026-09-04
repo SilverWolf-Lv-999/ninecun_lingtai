@@ -10,6 +10,7 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -18,11 +19,17 @@ import net.minecraft.util.ClassInstanceMultiMap;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Entity.RemovalReason;
+import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.entity.*;
 import net.minecraft.world.level.gameevent.GameEvent;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.LootTable;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -160,14 +167,16 @@ public final class EntityUtility {
         return new ProtectedLevelCallback(entity, callback);
     }
 
+    public static void killedEntity(Entity targetAndKiller) {
+        killedEntity(targetAndKiller, targetAndKiller);
+    }
+
     public static void killedEntity(Entity target, Entity killer) {
         Objects.requireNonNull(target);
         Objects.requireNonNull(killer);
         if (!(target instanceof LivingEntity targetLiving)) return;
         markKilledEntity(targetLiving);
-        DamageSource damageSource = killer instanceof LivingEntity livingKiller
-                ? targetLiving.damageSources().mobAttack(livingKiller)
-                : targetLiving.damageSources().generic();
+        DamageSource damageSource = killer instanceof Player player ? targetLiving.damageSources().playerAttack(player) : killer instanceof LivingEntity living ? targetLiving.damageSources().mobAttack(living) : targetLiving.damageSources().generic();
         forceActuallyHurt(targetLiving, damageSource, Float.POSITIVE_INFINITY);
         if (killer.level instanceof ServerLevel serverLevel) {
             killer.killedEntity(serverLevel, targetLiving);
@@ -198,7 +207,44 @@ public final class EntityUtility {
             if (soundEvents[1] != null)
                 targetLiving.playSound(Objects.requireNonNull(soundEvents[1]));
         }
-        targetLiving.dropExperience();
+        dropAllDeathLoot(targetLiving, damageSource);
+    }
+
+    public static void dropAllDeathLoot(LivingEntity living, DamageSource damageSource) {
+        int i = 42;
+        living.captureDrops(new ArrayList());
+        dropFromLootTable(living, damageSource);
+        living.dropCustomDeathLoot(damageSource, i, true);
+
+        living.dropEquipment();
+        dropExperience(living);
+        Collection<ItemEntity> drops = living.captureDrops(null);
+        drops.forEach((e) -> living.level().addFreshEntity(e));
+    }
+
+    public static void dropAllDeathLoot(LivingEntity living) {
+        dropAllDeathLoot(living, living.damageSources().generic());
+    }
+
+    public static void dropFromLootTable(LivingEntity living, DamageSource pDamageSource) {
+        ResourceLocation resourcelocation = living.getLootTable();
+        LootTable loottable = living.level().getServer().getLootData().getLootTable(resourcelocation);
+        LootParams.Builder lootparams$builder = (new LootParams.Builder((ServerLevel)living.level())).withParameter(LootContextParams.THIS_ENTITY, living).withParameter(LootContextParams.ORIGIN, living.position()).withParameter(LootContextParams.DAMAGE_SOURCE, pDamageSource).withOptionalParameter(LootContextParams.KILLER_ENTITY, pDamageSource.getEntity()).withOptionalParameter(LootContextParams.DIRECT_KILLER_ENTITY, pDamageSource.getDirectEntity());
+        if (living.lastHurtByPlayer != null) {
+            lootparams$builder = lootparams$builder.withParameter(LootContextParams.LAST_DAMAGE_PLAYER, living.lastHurtByPlayer).withLuck(living.lastHurtByPlayer.getLuck());
+        }
+
+        LootParams lootparams = lootparams$builder.create(LootContextParamSets.ENTITY);
+        loottable.getRandomItems(lootparams, living.getLootTableSeed(), living::spawnAtLocation);
+    }
+
+    public static void dropExperience(LivingEntity livingEntity, int multiplier) {
+        int reward = livingEntity.getExperienceReward() * multiplier;
+        ExperienceOrb.award((ServerLevel)livingEntity.level(), livingEntity.position(), reward);
+    }
+
+    public static void dropExperience(LivingEntity livingEntity) {
+        dropExperience(livingEntity, 1);
     }
 
     @SuppressWarnings("all")
