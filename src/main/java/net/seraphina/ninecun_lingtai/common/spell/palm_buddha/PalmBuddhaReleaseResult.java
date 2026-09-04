@@ -2,12 +2,6 @@ package net.seraphina.ninecun_lingtai.common.spell.palm_buddha;
 
 import java.util.Objects;
 
-/**
- * 服务端放生一名佛国成员后的轻量结果。
- *
- * <p>成功时原因必须为 {@link FailureReason#NONE}；失败时原因用于客户端显示
- * 一条短暂的水墨反馈，不携带位置、维度或实体数据。</p>
- */
 public record PalmBuddhaReleaseResult(boolean successful, FailureReason failureReason) {
     public PalmBuddhaReleaseResult {
         Objects.requireNonNull(failureReason, "failureReason");

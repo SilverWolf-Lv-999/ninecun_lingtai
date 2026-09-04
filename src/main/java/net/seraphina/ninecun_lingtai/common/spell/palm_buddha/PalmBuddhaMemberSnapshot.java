@@ -44,8 +44,10 @@ public record PalmBuddhaMemberSnapshot(
         currentPosition = currentPosition == null ? Optional.empty() : currentPosition;
         cultivationStage = cultivationStage == null ? Optional.empty() : cultivationStage;
         kind = Objects.requireNonNull(kind, "kind");
-        if (!online && (currentDimension.isPresent() || currentPosition.isPresent() || inExpectedRealm)) {
-            throw new IllegalArgumentException("Offline palm-buddha members cannot expose live state");
+        if (!online
+                && kind == PalmBuddhaMemberKind.PLAYER
+                && (currentDimension.isPresent() || currentPosition.isPresent() || inExpectedRealm)) {
+            throw new IllegalArgumentException("Offline palm-buddha players cannot expose live state");
         }
         if (currentPosition.isPresent() && currentDimension.isEmpty()) {
             throw new IllegalArgumentException("A current position requires a current dimension");
@@ -136,29 +138,31 @@ public record PalmBuddhaMemberSnapshot(
         if (displayName.isBlank()) {
             displayName = entityEntry.entityRecord().entityType().toString();
         }
-        if (entity == null) {
-            return new PalmBuddhaMemberSnapshot(
-                    memberId,
-                    displayName,
-                    false,
-                    Optional.empty(),
-                    false,
-                    Optional.empty(),
-                    Optional.empty(),
-                    PalmBuddhaMemberKind.CREATURE
-            );
-        }
-
+        ResourceLocation expectedRealm = realmManager.getMemberRealmId(memberId).orElse(null);
+        // Entity members retain their last known real position even while their
+        // chunk is unloaded; this keeps the member book useful without loading a
+        // second camera or fabricating a client entity.
+        ResourceLocation currentDimension = entity == null
+                ? expectedRealm
+                : entity.level().dimension().location();
+        BlockPos currentPosition = entity == null
+                ? BlockPos.containing(
+                        entityEntry.entityRecord().currentX(),
+                        entityEntry.entityRecord().currentY(),
+                        entityEntry.entityRecord().currentZ()
+                )
+                : BlockPos.containing(entity.position());
+        Optional<CultivationStage> cultivationStage = entity instanceof net.minecraft.world.entity.LivingEntity livingEntity
+                ? net.seraphina.ninecun_lingtai.common.creature.CreatureCultivationData.getStage(livingEntity)
+                : Optional.empty();
         return new PalmBuddhaMemberSnapshot(
                 memberId,
                 displayName,
-                entity.isAlive(),
-                Optional.of(entity.level().dimension().location()),
-                realmManager.isEntityMemberInExpectedRealm(entity),
-                Optional.of(BlockPos.containing(entity.position())),
-                entity instanceof net.minecraft.world.entity.LivingEntity livingEntity
-                        ? net.seraphina.ninecun_lingtai.common.creature.CreatureCultivationData.getStage(livingEntity)
-                        : Optional.empty(),
+                entity != null && entity.isAlive(),
+                Optional.ofNullable(currentDimension),
+                entity != null && realmManager.isEntityMemberInExpectedRealm(entity),
+                Optional.of(currentPosition),
+                cultivationStage,
                 PalmBuddhaMemberKind.CREATURE
         );
     }

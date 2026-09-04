@@ -20,12 +20,6 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
 
-/**
- * 持久化每个施法者的独立佛国定义。
- *
- * <p>佛国维度本身仍由现有动态维度桥接按需注册和加载；此状态只负责
- * “施法者 UUID → 唯一 RealmDefinition”的业务映射。</p>
- */
 public final class PalmBuddhaRealmState {
     private static final int FORMAT_VERSION = 1;
     private static final String FORMAT_VERSION_KEY = "formatVersion";

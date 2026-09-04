@@ -23,6 +23,7 @@
     "common.health.LivingEntityMixin",
     "common.realm.BaseFireBlockRealmPortalMixin",
     "common.realm.DimensionArgumentRealmAccessMixin",
+    "common.realm.EntityRealmReturnMixin",
     "common.realm.MinecraftServerRealmLoaderMixin",
     "common.realm.MinecraftServerRealmSaveMixin",
     "common.realm.PlayerListRealmLoadMixin",

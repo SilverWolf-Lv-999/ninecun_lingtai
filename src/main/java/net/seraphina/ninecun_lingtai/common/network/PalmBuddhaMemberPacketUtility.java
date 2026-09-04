@@ -5,6 +5,9 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.seraphina.ninecun_lingtai.api.cultivation.CultivationRealm;
 import net.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
+import net.seraphina.ninecun_lingtai.common.spell.palm_buddha.PalmBuddhaCandidateSet;
+import net.seraphina.ninecun_lingtai.common.spell.palm_buddha.PalmBuddhaCandidateSnapshot;
+import net.seraphina.ninecun_lingtai.common.spell.palm_buddha.PalmBuddhaMemberKind;
 import net.seraphina.ninecun_lingtai.common.spell.palm_buddha.PalmBuddhaMemberPageSnapshot;
 import net.seraphina.ninecun_lingtai.common.spell.palm_buddha.PalmBuddhaMemberPacketLimits;
 import net.seraphina.ninecun_lingtai.common.spell.palm_buddha.PalmBuddhaMemberSnapshot;
@@ -32,6 +35,7 @@ public final class PalmBuddhaMemberPacketUtility {
         buffer.writeVarInt(members.size());
         for (PalmBuddhaMemberSnapshot member : members) {
             buffer.writeUUID(member.memberId());
+            buffer.writeVarInt(member.kind().wireId());
             buffer.writeUtf(member.displayName(), MAXIMUM_DISPLAY_NAME_LENGTH);
             buffer.writeBoolean(member.online());
             buffer.writeBoolean(member.currentDimension().isPresent());
@@ -51,6 +55,56 @@ public final class PalmBuddhaMemberPacketUtility {
         }
     }
 
+    public static void writeCandidates(FriendlyByteBuf buffer, PalmBuddhaCandidateSet candidateSet) {
+        List<PalmBuddhaCandidateSnapshot> candidates = candidateSet.candidates();
+        if (candidates.size() > PalmBuddhaMemberPacketLimits.MAXIMUM_CANDIDATE_COUNT) {
+            throw new IllegalArgumentException("Too many palm-buddha candidates in packet");
+        }
+        buffer.writeVarInt(candidates.size());
+        for (PalmBuddhaCandidateSnapshot candidate : candidates) {
+            buffer.writeUUID(candidate.memberId());
+            buffer.writeVarInt(candidate.kind().wireId());
+            buffer.writeUtf(candidate.displayName(), MAXIMUM_DISPLAY_NAME_LENGTH);
+            buffer.writeBoolean(candidate.cultivationStage().isPresent());
+            candidate.cultivationStage().ifPresent(stage -> {
+                buffer.writeVarInt(stage.realm().ordinal());
+                buffer.writeVarInt(stage.layer());
+            });
+            buffer.writeFloat(candidate.distance());
+        }
+    }
+
+    public static PalmBuddhaCandidateSet readCandidates(FriendlyByteBuf buffer) {
+        int candidateCount = readBoundedVarInt(
+                buffer,
+                "candidate count",
+                0,
+                PalmBuddhaMemberPacketLimits.MAXIMUM_CANDIDATE_COUNT
+        );
+        List<PalmBuddhaCandidateSnapshot> candidates = new ArrayList<>(candidateCount);
+        for (int index = 0; index < candidateCount; index++) {
+            java.util.UUID candidateId = buffer.readUUID();
+            PalmBuddhaMemberKind kind = PalmBuddhaMemberKind.fromWireId(buffer.readVarInt());
+            String displayName = buffer.readUtf(MAXIMUM_DISPLAY_NAME_LENGTH);
+            Optional<CultivationStage> cultivationStage = Optional.empty();
+            if (buffer.readBoolean()) {
+                int realmOrdinal = buffer.readVarInt();
+                CultivationRealm[] realms = CultivationRealm.values();
+                if (realmOrdinal < 0 || realmOrdinal >= realms.length) {
+                    throw new IllegalArgumentException("Invalid palm-buddha candidate cultivation realm");
+                }
+                cultivationStage = Optional.of(new CultivationStage(realms[realmOrdinal], buffer.readVarInt()));
+            }
+            candidates.add(new PalmBuddhaCandidateSnapshot(
+                    candidateId,
+                    displayName,
+                    kind,
+                    cultivationStage,
+                    buffer.readFloat()
+            ));
+        }
+        return new PalmBuddhaCandidateSet(candidates);
+    }
     public static PalmBuddhaMemberPageSnapshot readPage(FriendlyByteBuf buffer) {
         int pageIndex = readBoundedVarInt(buffer, "page index", 0, MAXIMUM_PAGE_INDEX);
         int pageCount = readBoundedVarInt(
@@ -87,6 +141,7 @@ public final class PalmBuddhaMemberPacketUtility {
 
     private static PalmBuddhaMemberSnapshot readMember(FriendlyByteBuf buffer) {
         java.util.UUID memberId = buffer.readUUID();
+        PalmBuddhaMemberKind kind = PalmBuddhaMemberKind.fromWireId(buffer.readVarInt());
         String displayName = buffer.readUtf(MAXIMUM_DISPLAY_NAME_LENGTH);
         boolean online = buffer.readBoolean();
         Optional<ResourceLocation> currentDimension = buffer.readBoolean()
@@ -113,7 +168,8 @@ public final class PalmBuddhaMemberPacketUtility {
                 currentDimension,
                 inExpectedRealm,
                 currentPosition,
-                cultivationStage
+                cultivationStage,
+                kind
         );
     }
 
@@ -125,3 +181,4 @@ public final class PalmBuddhaMemberPacketUtility {
         return value;
     }
 }
+

@@ -12,7 +12,7 @@ import java.util.UUID;
 import java.util.function.Supplier;
 
 /**
- * 由施法者请求放出自己佛国中的一名在线玩家。
+ * 由施法者请求放出自己佛国中的一名成员。
  *
  * <p>请求只携带目标 UUID；归属、在线状态、原位置和实际迁移均由服务端
  * {@link PalmBuddhaRealmManager} 权威处理。</p>
@@ -42,7 +42,7 @@ public record ReleasePalmBuddhaMemberPacket(UUID memberId) {
             ServerPlayer owner = context.getSender();
             if (owner != null) {
                 PalmBuddhaReleaseResult result = PalmBuddhaRealmManager.get(owner.server)
-                        .releasePlayerWithResult(owner, packet.memberId());
+                        .releaseMemberWithResult(owner, packet.memberId());
                 ModNetwork.sendPalmBuddhaReleaseResult(owner, result, packet.memberId());
             }
         });

@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -136,7 +137,33 @@ public final class PalmBuddhaEntityState {
         if (oldRecord == null) {
             return false;
         }
-        EntityRecord updatedRecord = oldRecord.withCurrentState(x, y, z, yRot, xRot);
+        return this.updateCurrentState(
+                memberId,
+                x,
+                y,
+                z,
+                yRot,
+                xRot,
+                oldRecord.nbt()
+        );
+    }
+
+    public synchronized boolean updateCurrentState(
+            UUID memberId,
+            double x,
+            double y,
+            double z,
+            float yRot,
+            float xRot,
+            String nbt
+    ) {
+        Objects.requireNonNull(memberId, "memberId");
+        Objects.requireNonNull(nbt, "nbt");
+        EntityRecord oldRecord = this.thisMembersById.get(memberId);
+        if (oldRecord == null) {
+            return false;
+        }
+        EntityRecord updatedRecord = oldRecord.withCurrentState(x, y, z, yRot, xRot, nbt);
         this.thisMembersById.put(memberId, updatedRecord);
         if (!this.save()) {
             this.thisMembersById.put(memberId, oldRecord);
@@ -149,6 +176,45 @@ public final class PalmBuddhaEntityState {
         return this.thisMembersById.entrySet().stream()
                 .map(entry -> new EntityEntry(entry.getKey(), entry.getValue()))
                 .toList();
+    }
+
+    /**
+     * Applies one reconciliation pass atomically and writes the state file only
+     * once. Entity reconciliation runs on a coarse interval; batching keeps a
+     * page of loaded entities from causing one full JSON rewrite per entity.
+     */
+    public synchronized boolean applyReconciliation(
+            Map<UUID, EntityRecord> updatedRecords,
+            Set<UUID> removedMemberIds
+    ) {
+        Objects.requireNonNull(updatedRecords, "updatedRecords");
+        Objects.requireNonNull(removedMemberIds, "removedMemberIds");
+        if (updatedRecords.isEmpty() && removedMemberIds.isEmpty()) {
+            return true;
+        }
+
+        LinkedHashMap<UUID, EntityRecord> previousRecords = new LinkedHashMap<>(this.thisMembersById);
+        for (UUID memberId : removedMemberIds) {
+            Objects.requireNonNull(memberId, "removedMemberId");
+            this.thisMembersById.remove(memberId);
+        }
+        for (Map.Entry<UUID, EntityRecord> entry : updatedRecords.entrySet()) {
+            UUID memberId = Objects.requireNonNull(entry.getKey(), "updatedMemberId");
+            EntityRecord entityRecord = Objects.requireNonNull(entry.getValue(), "updatedRecord");
+            if (this.thisMembersById.containsKey(memberId)) {
+                this.thisMembersById.put(memberId, entityRecord);
+            }
+        }
+
+        if (this.thisMembersById.equals(previousRecords)) {
+            return true;
+        }
+        if (!this.save()) {
+            this.thisMembersById.clear();
+            this.thisMembersById.putAll(previousRecords);
+            return false;
+        }
+        return true;
     }
 
     private synchronized boolean save() {
@@ -348,6 +414,17 @@ public final class PalmBuddhaEntityState {
                 float yRot,
                 float xRot
         ) {
+            return this.withCurrentState(x, y, z, yRot, xRot, this.nbt);
+        }
+
+        public EntityRecord withCurrentState(
+                double x,
+                double y,
+                double z,
+                float yRot,
+                float xRot,
+                String nbt
+        ) {
             return new EntityRecord(
                     this.ownerId,
                     this.entityType,
@@ -362,7 +439,7 @@ public final class PalmBuddhaEntityState {
                     z,
                     yRot,
                     xRot,
-                    this.nbt
+                    nbt
             );
         }
 

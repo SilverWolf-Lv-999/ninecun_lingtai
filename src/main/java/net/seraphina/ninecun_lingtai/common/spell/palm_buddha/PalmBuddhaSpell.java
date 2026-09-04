@@ -1,30 +1,19 @@
 package net.seraphina.ninecun_lingtai.common.spell.palm_buddha;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
-import net.seraphina.ninecun_lingtai.api.cultivation.CultivationApi;
-import net.seraphina.ninecun_lingtai.api.cultivation.CultivationRealm;
-import net.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
 import net.seraphina.ninecun_lingtai.api.spell.Spell;
 import net.seraphina.ninecun_lingtai.api.spell.SpellCastContext;
 import net.seraphina.ninecun_lingtai.common.realm.ThreeThousandRealmManager;
-import net.minecraft.network.chat.Component;
 
 import java.util.Objects;
 
-/**
- * 掌中佛国的第一阶段施法实现：准心单选玩家或普通生物。
- *
- * <p>服务器会重新解析目标、验证距离与视线，并再次执行境界限制，客户端只负责
- * 提交准心锁定的 UUID，不能直接指定迁移位置或伪造目标境界。</p>
- */
+
 public final class PalmBuddhaSpell extends Spell {
-    private static final double MAXIMUM_TARGET_DISTANCE = 32.0D;
-    private static final double MAXIMUM_TARGET_DISTANCE_SQUARED =
+    public static final double MAXIMUM_TARGET_DISTANCE = 32.0D;
+    public static final double MAXIMUM_TARGET_DISTANCE_SQUARED =
             MAXIMUM_TARGET_DISTANCE * MAXIMUM_TARGET_DISTANCE;
 
     @Override
@@ -72,7 +61,7 @@ public final class PalmBuddhaSpell extends Spell {
                 || !target.getType().canSerialize()) {
             return false;
         }
-        if (target.serverLevel() != player.serverLevel()
+        if (target.level() != player.level()
                 || ThreeThousandRealmManager.get(player.server)
                 .isManagedRealm(player.serverLevel().dimension())) {
             return false;
@@ -81,3 +70,4 @@ public final class PalmBuddhaSpell extends Spell {
                 && player.hasLineOfSight(target);
     }
 }
+

@@ -155,9 +155,17 @@ public final class PalmBuddhaOverlayRenderUtility {
             PalmBuddhaMemberSnapshot member = page.members().get(index);
             int rowY = Mth.floor(PalmBuddhaOverlayGeometryUtility.rowTextTop(panelBounds, index));
             int statusColor = member.online() && member.inExpectedRealm() ? 0xE5637650 : MUTED_INK_COLOR;
-            String status = !member.online() ? "离线" : member.inExpectedRealm() ? "在国" : "归位中";
+            String status = !member.online()
+                    ? (member.kind() == net.seraphina.ninecun_lingtai.common.spell.palm_buddha.PalmBuddhaMemberKind.CREATURE
+                            ? "未加载"
+                            : "离线")
+                    : member.inExpectedRealm() ? "在国" : "归位中";
             String realm = member.cultivationRealmName();
-            String suffix = realm.isEmpty() ? status : status + " · " + realm;
+            String kindLabel = member.kind()
+                    == net.seraphina.ninecun_lingtai.common.spell.palm_buddha.PalmBuddhaMemberKind.CREATURE
+                    ? "生灵 · "
+                    : "";
+            String suffix = kindLabel + (realm.isEmpty() ? status : status + " · " + realm);
             guiGraphics.drawString(font, Component.literal(member.displayName()), textLeft, rowY, INK_COLOR, false);
             int suffixWidth = font.width(suffix);
             guiGraphics.drawString(

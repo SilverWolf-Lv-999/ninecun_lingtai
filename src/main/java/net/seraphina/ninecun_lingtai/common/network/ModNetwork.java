@@ -51,7 +51,9 @@ import net.seraphina.ninecun_lingtai.common.network.packet.PushingMountainsSelec
 import net.seraphina.ninecun_lingtai.common.network.packet.PushingMountainsThrowPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.RequestCultivationInfoPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.ReleasePalmBuddhaMemberPacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.RequestPalmBuddhaCandidatesPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.RequestPalmBuddhaMembersPacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.SyncPalmBuddhaCandidatesPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.SyncPalmBuddhaMembersPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.SyncPalmBuddhaReleaseResultPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.RequestPlayerValueControlSettingsPacket;
@@ -164,7 +166,7 @@ import java.util.Set;
 import java.util.UUID;
 
 public final class ModNetwork {
-    private static final String PROTOCOL_VERSION = "91781368";
+    private static final String PROTOCOL_VERSION = "91781369";
     private static final float ASCENSION_TRIBULATION_RADIUS = 24.0F;
     private static final float ASCENSION_TRIBULATION_INTENSITY = 1.65F;
     private static final SimpleChannel CHANNEL = NetworkRegistry.ChannelBuilder
@@ -1727,6 +1729,14 @@ public final class ModNetwork {
         );
     }
 
+    public static void sendPalmBuddhaCandidates(ServerPlayer player) {
+        CHANNEL.send(
+                PacketDistributor.PLAYER.with(() -> player),
+                new SyncPalmBuddhaCandidatesPacket(
+                        PalmBuddhaRealmManager.get(player.server).getCandidateSet(player)
+                )
+        );
+    }
     public static void sendPalmBuddhaMembers(ServerPlayer player, int pageIndex) {
         PalmBuddhaMemberPageSnapshot snapshot = PalmBuddhaRealmManager.get(player.server)
                 .getMemberPage(player, pageIndex);
@@ -1751,3 +1761,5 @@ public final class ModNetwork {
         CHANNEL.sendToServer(packet);
     }
 }
+
+

@@ -7,11 +7,16 @@
 6. 工具类中，如果不需要init来初始化一些字段或别的内容，绝对禁止写构造方法
 7. 如果迁移一些别的项目的内容，绝对禁止使用最小接入，必须是完整版
 8. 绝对禁止频繁全量扫描
-9. 对于Minecraft / Forge的类，使用AT来强行访问方法、字段
+9. 对于 Minecraft / Forge 的类，使用AT来强行访问方法、字段
 10. 对于别的Mod/依赖的类，必须使用VarHandler/MethodHandler
 11. 绝对写任何形式的注释
-12. 绝对禁止以普通项目思维进行开发，该项目至少是ASM级别
+12. 绝对禁止以普通项目思维进行开发，该项目至少是 ASM 级别
 13. 遇到着色器编写时，必须参考 [Shader](docs/aiskill) 下的文档
 14. 面对需要修改类的要求时，如果是forge/minecraft/mod的类，优先考虑使用 asm ，通过 [PL](src/main/java/net/seraphina/ninecun_lingtai/transform/SeraLPService.java) 修改
 15. 如果是面对来自 jdk. 包下的类或已经加载的类，则优先考虑使用 [Agent](src/main/java/net/seraphina/ninecun_lingtai/utility/jvm/AgentUtility.java) 加载转换器来修改
 16. Mixin只有在非我所要求的情况，比如修改mc原版类实现mod的一些游玩功能，修复与别的mod之间的简单冲突。才能进行使用
+17. 对于用处少的常量，如只有一到三次引用，则直接内联，绝对禁止新增无意义的字段/方法
+18. 工具类能少则少，没必要创建一大堆
+19. 绝对禁止创建大量子方法
+20. 编写功法时，功法的文本必须超级复杂
+21. 尽量力大转飞，绝对禁止各种形式的什么什么安全

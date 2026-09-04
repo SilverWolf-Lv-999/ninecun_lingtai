@@ -1,6 +1,7 @@
 package net.seraphina.ninecun_lingtai.mixin.common.spell;
 
 import net.minecraft.server.MinecraftServer;
+import java.util.function.BooleanSupplier;
 import net.seraphina.ninecun_lingtai.common.spell.palm_buddha.PalmBuddhaRealmManager;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -15,6 +16,14 @@ public abstract class MinecraftServerPalmBuddhaRealmMixin {
     @Inject(method = "createLevels", at = @At("HEAD"))
     private void ninecunLingtai$registerPalmBuddhaRealmDefinitions(CallbackInfo callbackInfo) {
         PalmBuddhaRealmManager.registerPersistedRealmDefinitions((MinecraftServer) (Object) this);
+    }
+
+    @Inject(method = "tickServer", at = @At("TAIL"))
+    private void ninecunLingtai$tickPalmBuddhaEntities(
+            BooleanSupplier haveTime,
+            CallbackInfo callbackInfo
+    ) {
+        PalmBuddhaRealmManager.get((MinecraftServer) (Object) this).tickEntityMembers();
     }
 
     @Inject(method = "stopServer", at = @At("HEAD"))
