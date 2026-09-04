@@ -52,6 +52,15 @@ public class Static {
         System.out.println(message);
     }
 
+    public static boolean is(String side) {
+        return switch (side) {
+            case "CLIENT" -> FMLEnvironment.dist == Dist.CLIENT;
+            case "SERVER" -> FMLEnvironment.dist != Dist.CLIENT;
+            case "DEV" -> FMLEnvironment.production;
+            default -> throw new IllegalArgumentException("Invalid side " + side);
+        };
+    }
+
 //    @OnlyIn(Dist.CLIENT)
 //    public static boolean isCN() {
 //        Minecraft mc = Minecraft.getInstance();
