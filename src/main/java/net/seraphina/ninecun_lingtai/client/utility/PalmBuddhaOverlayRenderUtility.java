@@ -12,9 +12,12 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
+import net.seraphina.ninecun_lingtai.client.player.ClientPalmBuddhaCandidateManager;
 import net.seraphina.ninecun_lingtai.client.player.ClientPalmBuddhaMemberManager;
 import net.seraphina.ninecun_lingtai.client.player.ClientPalmBuddhaOverlayManager;
 import net.seraphina.ninecun_lingtai.client.render.PalmBuddhaOverlayShader;
+import net.seraphina.ninecun_lingtai.common.spell.palm_buddha.PalmBuddhaCandidateSnapshot;
+import net.seraphina.ninecun_lingtai.common.spell.palm_buddha.PalmBuddhaMemberPacketLimits;
 import net.seraphina.ninecun_lingtai.common.spell.palm_buddha.PalmBuddhaMemberPageSnapshot;
 import net.seraphina.ninecun_lingtai.common.spell.palm_buddha.PalmBuddhaMemberSnapshot;
 import org.joml.Matrix4f;
@@ -79,8 +82,25 @@ public final class PalmBuddhaOverlayRenderUtility {
         shaderInstance.safeGetUniform("FeedbackType").set(
                 ClientPalmBuddhaOverlayManager.getReleaseFeedbackType()
         );
-        shaderInstance.safeGetUniform("PageIndex").set((float) page.pageIndex());
-        shaderInstance.safeGetUniform("PageCount").set((float) page.pageCount());
+        shaderInstance.safeGetUniform("PageIndex").set(
+                ClientPalmBuddhaOverlayManager.isCandidateView()
+                        ? (float) ClientPalmBuddhaOverlayManager.getCandidatePageIndex()
+                        : (float) page.pageIndex()
+        );
+        shaderInstance.safeGetUniform("PageCount").set(
+                ClientPalmBuddhaOverlayManager.isCandidateView()
+                        ? (float) ClientPalmBuddhaOverlayManager.getCandidatePageCount()
+                        : (float) page.pageCount()
+        );
+        shaderInstance.safeGetUniform("CandidateView").set(
+                ClientPalmBuddhaOverlayManager.isCandidateView() ? 1.0F : 0.0F
+        );
+        shaderInstance.safeGetUniform("CandidateCount").set(
+                (float) ClientPalmBuddhaCandidateManager.getCandidates().size()
+        );
+        shaderInstance.safeGetUniform("CandidatePending").set(
+                ClientPalmBuddhaCandidateManager.isRequestPending() ? 1.0F : 0.0F
+        );
 
         Matrix4f matrix = guiGraphics.pose().last().pose();
         BufferBuilder bufferBuilder = Tesselator.getInstance().getBuilder();
@@ -113,6 +133,10 @@ public final class PalmBuddhaOverlayRenderUtility {
             Font font,
             PalmBuddhaOverlayGeometryUtility.PanelBounds panelBounds
     ) {
+        if (ClientPalmBuddhaOverlayManager.isCandidateView()) {
+            drawCandidateText(guiGraphics, font, panelBounds);
+            return;
+        }
         PalmBuddhaMemberPageSnapshot page = ClientPalmBuddhaMemberManager.getCurrentPage();
         float left = panelBounds.left();
         float top = panelBounds.top();
@@ -206,6 +230,121 @@ public final class PalmBuddhaOverlayRenderUtility {
                     false
             );
         });
+        guiGraphics.drawString(
+                font,
+                Component.literal("掌印"),
+                Mth.floor(left + panelWidth - 58.0F),
+                footerY,
+                SEAL_COLOR,
+                false
+        );
+    }
+
+    private static void drawCandidateText(
+            GuiGraphics guiGraphics,
+            Font font,
+            PalmBuddhaOverlayGeometryUtility.PanelBounds panelBounds
+    ) {
+        float left = panelBounds.left();
+        float top = panelBounds.top();
+        float panelWidth = panelBounds.width();
+        float panelHeight = panelBounds.height();
+        int textLeft = Mth.floor(left + 28.0F);
+        int titleY = Mth.floor(top + 22.0F);
+        int candidateCount = ClientPalmBuddhaCandidateManager.getCandidates().size();
+        int candidatePageIndex = ClientPalmBuddhaOverlayManager.getCandidatePageIndex();
+        int candidatePageCount = ClientPalmBuddhaOverlayManager.getCandidatePageCount();
+        guiGraphics.drawString(font, Component.literal("掌中佛国"), textLeft, titleY, INK_COLOR, false);
+        guiGraphics.drawString(
+                font,
+                Component.literal(
+                        ClientPalmBuddhaCandidateManager.isRequestPending()
+                                ? "周天墨影 · 观照中"
+                                : "周天墨影 · 可摄众生"
+                ),
+                textLeft,
+                titleY + 18,
+                MUTED_INK_COLOR,
+                false
+        );
+        String pageLabel = candidatePageCount == 0
+                ? "空"
+                : (candidatePageIndex + 1) + " / " + candidatePageCount;
+        int pageWidth = font.width(pageLabel);
+        guiGraphics.drawString(
+                font,
+                Component.literal(pageLabel),
+                Mth.floor(left + panelWidth - pageWidth - 28.0F),
+                titleY + 9,
+                MUTED_INK_COLOR,
+                false
+        );
+
+        int rowsTop = Mth.floor(panelBounds.rowsTop());
+        int rowsBottom = Mth.floor(panelBounds.rowsBottom());
+        guiGraphics.enableScissor(
+                Mth.floor(left + 20.0F),
+                rowsTop,
+                Mth.floor(left + panelWidth - 20.0F),
+                rowsBottom
+        );
+        int firstCandidateIndex = candidatePageIndex * PalmBuddhaMemberPacketLimits.MAXIMUM_PAGE_SIZE;
+        int lastCandidateIndex = Math.min(
+                firstCandidateIndex + PalmBuddhaMemberPacketLimits.MAXIMUM_PAGE_SIZE,
+                candidateCount
+        );
+        for (int index = firstCandidateIndex; index < lastCandidateIndex; index++) {
+            PalmBuddhaCandidateSnapshot candidate = ClientPalmBuddhaCandidateManager.getCandidates().get(index);
+            int rowY = Mth.floor(
+                    PalmBuddhaOverlayGeometryUtility.rowTextTop(
+                            panelBounds,
+                            index - firstCandidateIndex
+                    )
+            );
+            String cultivation = candidate.cultivationStage()
+                    .map(stage -> stage.realm().getChineseName() + " " + stage.layer() + "层")
+                    .orElse("未显境界");
+            String kind = candidate.kind()
+                    == net.seraphina.ninecun_lingtai.common.spell.palm_buddha.PalmBuddhaMemberKind.CREATURE
+                    ? "生灵"
+                    : "修士";
+            String suffix = kind + " · " + cultivation + " · "
+                    + Mth.floor(candidate.distance() + 0.5F) + "格";
+            guiGraphics.drawString(font, Component.literal(candidate.displayName()), textLeft, rowY, INK_COLOR, false);
+            int suffixWidth = font.width(suffix);
+            guiGraphics.drawString(
+                    font,
+                    Component.literal(suffix),
+                    Mth.floor(left + panelWidth - suffixWidth - 28.0F),
+                    rowY,
+                    0xE0526049,
+                    false
+            );
+        }
+        if (!ClientPalmBuddhaCandidateManager.isRequestPending() && candidateCount == 0) {
+            guiGraphics.drawString(
+                    font,
+                    Component.literal("四野无可摄众生"),
+                    textLeft,
+                    Mth.floor(PalmBuddhaOverlayGeometryUtility.rowTextTop(panelBounds, 0)),
+                    MUTED_INK_COLOR,
+                    false
+            );
+        }
+        guiGraphics.disableScissor();
+
+        int footerY = Mth.floor(top + panelHeight - 28.0F);
+        String footer = ClientPalmBuddhaCandidateManager.isRequestPending()
+                ? "周天观照中 · 等待服务端候选集"
+                : "候选 " + candidateCount + " · 换手键 收卷墨影    ← / → 翻页    Esc 收卷";
+        guiGraphics.drawString(
+                font,
+                Component.literal(footer),
+                Mth.floor(left + 28.0F),
+                footerY,
+                MUTED_INK_COLOR,
+                false
+        );
         guiGraphics.drawString(
                 font,
                 Component.literal("掌印"),

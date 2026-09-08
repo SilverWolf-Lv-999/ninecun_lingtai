@@ -4,6 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.seraphina.ninecun_lingtai.client.utility.PalmBuddhaOverlayGeometryUtility;
 import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import net.seraphina.ninecun_lingtai.common.network.packet.ReleasePalmBuddhaMemberPacket;
+import net.seraphina.ninecun_lingtai.common.spell.palm_buddha.PalmBuddhaMemberPacketLimits;
 import net.seraphina.ninecun_lingtai.common.spell.palm_buddha.PalmBuddhaMemberSnapshot;
 import net.seraphina.ninecun_lingtai.common.spell.palm_buddha.PalmBuddhaReleaseResult;
 
@@ -22,6 +23,8 @@ public final class ClientPalmBuddhaOverlayManager {
     private static final int RELEASE_RESULT_TIMEOUT_TICKS = 80;
 
     private static boolean thisActive;
+    private static boolean thisCandidateView;
+    private static int thisCandidatePage;
     private static int thisSelectedRow = -1;
     private static UUID thisPendingReleaseMemberId;
     private static int thisPendingReleaseTicks;
@@ -34,20 +37,27 @@ public final class ClientPalmBuddhaOverlayManager {
             return;
         }
         thisActive = true;
+        thisCandidateView = false;
+        thisCandidatePage = 0;
         thisSelectedRow = -1;
         thisPendingReleaseMemberId = null;
         thisPendingReleaseTicks = 0;
         ClientPalmBuddhaReleaseFeedbackManager.reset();
         ClientPalmBuddhaMemberManager.reset();
+        ClientPalmBuddhaCandidateManager.reset();
         ClientPalmBuddhaMemberManager.requestFirstPage();
+        ClientPalmBuddhaCandidateManager.request();
     }
 
     public static void close() {
         thisActive = false;
+        thisCandidateView = false;
+        thisCandidatePage = 0;
         thisSelectedRow = -1;
         thisPendingReleaseMemberId = null;
         thisPendingReleaseTicks = 0;
         ClientPalmBuddhaReleaseFeedbackManager.reset();
+        ClientPalmBuddhaCandidateManager.reset();
     }
 
     public static boolean isActive() {
@@ -56,6 +66,12 @@ public final class ClientPalmBuddhaOverlayManager {
 
     public static void nextPage() {
         if (!isActive() || isInteractionLocked()) {
+            return;
+        }
+        if (thisCandidateView) {
+            if (thisCandidatePage + 1 < getCandidatePageCount()) {
+                thisCandidatePage++;
+            }
             return;
         }
         int pageCount = ClientPalmBuddhaMemberManager.getCurrentPage().pageCount();
@@ -70,11 +86,42 @@ public final class ClientPalmBuddhaOverlayManager {
         if (!isActive() || isInteractionLocked()) {
             return;
         }
+        if (thisCandidateView) {
+            if (thisCandidatePage > 0) {
+                thisCandidatePage--;
+            }
+            return;
+        }
         int currentPage = ClientPalmBuddhaMemberManager.getCurrentPage().pageIndex();
         if (currentPage > 0) {
             thisSelectedRow = -1;
             ClientPalmBuddhaMemberManager.requestPage(currentPage - 1);
         }
+    }
+
+    public static void toggleCandidateView() {
+        if (!isActive() || isInteractionLocked()) {
+            return;
+        }
+        thisCandidateView = !thisCandidateView;
+        thisCandidatePage = 0;
+        thisSelectedRow = -1;
+    }
+
+    public static boolean isCandidateView() {
+        return isActive() && thisCandidateView;
+    }
+
+    public static int getCandidatePageIndex() {
+        return isCandidateView() ? thisCandidatePage : 0;
+    }
+
+    public static int getCandidatePageCount() {
+        int candidateCount = ClientPalmBuddhaCandidateManager.getCandidates().size();
+        return candidateCount == 0
+                ? 0
+                : (candidateCount + PalmBuddhaMemberPacketLimits.MAXIMUM_PAGE_SIZE - 1)
+                / PalmBuddhaMemberPacketLimits.MAXIMUM_PAGE_SIZE;
     }
 
     /** Consumes only the few navigation key mappings used by this overlay. */
@@ -90,6 +137,10 @@ public final class ClientPalmBuddhaOverlayManager {
         }
         while (minecraft.options.keyRight.consumeClick()) {
             nextPage();
+            consumed = true;
+        }
+        while (minecraft.options.keySwapOffhand.consumeClick()) {
+            toggleCandidateView();
             consumed = true;
         }
         while (minecraft.options.keyInventory.consumeClick()) {
@@ -119,7 +170,7 @@ public final class ClientPalmBuddhaOverlayManager {
      * client-authored state is included in the release request.
      */
     public static boolean releaseSelectedMemberAt(double mouseX, double mouseY) {
-        if (!isActive() || isInteractionLocked() || thisSelectedRow < 0) {
+        if (!isActive() || thisCandidateView || isInteractionLocked() || thisSelectedRow < 0) {
             return false;
         }
         Minecraft minecraft = Minecraft.getInstance();
@@ -228,7 +279,7 @@ public final class ClientPalmBuddhaOverlayManager {
 
     /** Selects one visible member row; -1 means that the click hit no row. */
     public static void selectMemberAt(double mouseX, double mouseY) {
-        if (!isActive() || isInteractionLocked()) {
+        if (!isActive() || thisCandidateView || isInteractionLocked()) {
             return;
         }
         Minecraft minecraft = Minecraft.getInstance();
@@ -257,7 +308,7 @@ public final class ClientPalmBuddhaOverlayManager {
     }
 
     private static Optional<PalmBuddhaMemberSnapshot> getSelectedMember() {
-        if (!isActive() || thisSelectedRow < 0) {
+        if (!isActive() || thisCandidateView || thisSelectedRow < 0) {
             return Optional.empty();
         }
         var members = ClientPalmBuddhaMemberManager.getCurrentPage().members();
@@ -269,10 +320,13 @@ public final class ClientPalmBuddhaOverlayManager {
 
     public static void reset() {
         thisActive = false;
+        thisCandidateView = false;
+        thisCandidatePage = 0;
         thisSelectedRow = -1;
         thisPendingReleaseMemberId = null;
         thisPendingReleaseTicks = 0;
         ClientPalmBuddhaReleaseFeedbackManager.reset();
         ClientPalmBuddhaMemberManager.reset();
+        ClientPalmBuddhaCandidateManager.reset();
     }
 }

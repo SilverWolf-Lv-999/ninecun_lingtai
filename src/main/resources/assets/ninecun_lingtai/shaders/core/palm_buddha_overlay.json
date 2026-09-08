@@ -78,6 +78,24 @@
       "type": "float",
       "count": 1,
       "values": [0.0]
+    },
+    {
+      "name": "CandidateView",
+      "type": "float",
+      "count": 1,
+      "values": [0.0]
+    },
+    {
+      "name": "CandidateCount",
+      "type": "float",
+      "count": 1,
+      "values": [0.0]
+    },
+    {
+      "name": "CandidatePending",
+      "type": "float",
+      "count": 1,
+      "values": [0.0]
     }
   ]
 }

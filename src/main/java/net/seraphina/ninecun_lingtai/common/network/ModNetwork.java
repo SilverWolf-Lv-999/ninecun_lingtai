@@ -549,6 +549,24 @@ public final class ModNetwork {
                 .consumerMainThread(OpenPalmBuddhaOverlayPacket::handle)
                 .add();
         CHANNEL.messageBuilder(
+                        RequestPalmBuddhaCandidatesPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(RequestPalmBuddhaCandidatesPacket::encode)
+                .decoder(RequestPalmBuddhaCandidatesPacket::decode)
+                .consumerMainThread(RequestPalmBuddhaCandidatesPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        SyncPalmBuddhaCandidatesPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(SyncPalmBuddhaCandidatesPacket::encode)
+                .decoder(SyncPalmBuddhaCandidatesPacket::decode)
+                .consumerMainThread(SyncPalmBuddhaCandidatesPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
                         RequestPalmBuddhaMembersPacket.class,
                         getId(),
                         NetworkDirection.PLAY_TO_SERVER

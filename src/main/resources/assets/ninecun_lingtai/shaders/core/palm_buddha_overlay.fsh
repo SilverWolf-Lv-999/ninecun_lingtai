@@ -12,6 +12,9 @@ uniform float FeedbackProgress;
 uniform float FeedbackType;
 uniform float PageIndex;
 uniform float PageCount;
+uniform float CandidateView;
+uniform float CandidateCount;
+uniform float CandidatePending;
 
 out vec4 fragColor;
 
@@ -68,6 +71,11 @@ void main() {
     float divider = lineBand(rowInside, 0.985, 0.008, 0.018);
     color = mix(color, vec3(0.34, 0.27, 0.19), divider * 0.34);
 
+    float candidateWash = CandidateView * (0.05 + 0.035 * noise(
+            vec2(row * 0.37, rowInside * 4.0 + Time * 0.04)
+    ));
+    color = mix(color, vec3(0.20, 0.30, 0.22), candidateWash);
+
     float selectedMask = step(0.0, SelectedRow + 0.01)
             * (1.0 - step(SelectedRow + 1.0, row))
             * (1.0 - step(row, SelectedRow - 0.001));
@@ -87,6 +95,16 @@ void main() {
             + lineBand(rowInside, 0.92, 0.010, 0.026)
     );
     color = mix(color, vec3(0.20, 0.19, 0.16), pendingEdge * (0.36 + 0.18 * sin(Time * 1.4)));
+
+    vec2 candidatePoint = centered - vec2(PanelSize.x * 0.34, -PanelSize.y * 0.34);
+    float candidateRadius = min(PanelSize.x, PanelSize.y) * 0.068;
+    float candidateDistance = abs(length(candidatePoint) - candidateRadius);
+    float candidateRing = 1.0 - smoothstep(0.7, 2.2, candidateDistance);
+    float candidateAmount = min(CandidateCount, 48.0) / 48.0;
+    float candidatePulse = 0.20 + 0.18 * sin(Time * 1.1 + candidateAmount * 6.2831853);
+    float candidateMark = CandidateView * candidateRing * (candidatePulse + candidateAmount * 0.42);
+    float candidateWaiting = CandidatePending * candidateRing * (0.18 + 0.14 * sin(Time * 2.3));
+    color = mix(color, vec3(0.15, 0.30, 0.20), candidateMark + candidateWaiting);
 
     vec2 sealPoint = centered - vec2(-PanelSize.x * 0.34, -PanelSize.y * 0.34);
     float sealRadius = min(PanelSize.x, PanelSize.y) * 0.105;

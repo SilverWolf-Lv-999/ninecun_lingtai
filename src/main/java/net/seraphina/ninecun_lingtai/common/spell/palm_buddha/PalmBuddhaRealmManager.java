@@ -243,8 +243,12 @@ public final class PalmBuddhaRealmManager {
                         target,
                         Math.sqrt(owner.distanceToSqr(target))
                 ))
-                .sorted(Comparator.comparingDouble(candidate -> candidate.distance())
-                        .thenComparing(candidate -> candidate.memberId().toString()))
+                .sorted(
+                        Comparator.<PalmBuddhaCandidateSnapshot>comparingDouble(
+                                        PalmBuddhaCandidateSnapshot::distance
+                                )
+                                .thenComparing(candidate -> candidate.memberId().toString())
+                )
                 .limit(PalmBuddhaMemberPacketLimits.MAXIMUM_CANDIDATE_COUNT)
                 .toList();
         return new PalmBuddhaCandidateSet(candidates);
