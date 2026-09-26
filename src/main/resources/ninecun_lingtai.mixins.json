@@ -49,6 +49,7 @@
     "client.ForgeGuiMixin",
     "client.GameRendererMixin",
     "client.ItemRendererMixin",
+    "client.LevelRenderMixin",
     "client.LevelRendererMixin",
     "client.LightTextureMixin",
     "client.LivingEntityRendererMixin",

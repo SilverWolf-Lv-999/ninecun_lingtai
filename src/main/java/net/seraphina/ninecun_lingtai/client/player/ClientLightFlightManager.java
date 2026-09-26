@@ -58,9 +58,14 @@ public final class ClientLightFlightManager {
                 if (visualState != null && visualState.isFlying()) {
                     enforceFlightPose(player);
                     if (visualState.style() == LightFlightStyle.LIGHT) {
-                        visualState.recordTrailPosition(
-                                player.position().add(0.0D, player.getBbHeight() * 0.52D, 0.0D)
+                        Vec3 visualPosition = player.position().add(
+                                0.0D,
+                                player.getBbHeight() * 0.52D,
+                                0.0D
                         );
+                        if (visualState.observePosition(visualPosition)) {
+                            triggerStopImpact(player, visualState);
+                        }
                     }
                 }
             }

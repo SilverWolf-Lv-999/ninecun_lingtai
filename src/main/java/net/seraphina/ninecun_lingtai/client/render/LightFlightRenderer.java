@@ -15,7 +15,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.client.event.RenderPlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -59,23 +58,22 @@ public final class LightFlightRenderer {
         event.setCanceled(true);
     }
 
-    @SubscribeEvent
-    public static void onRenderLevelStage(RenderLevelStageEvent event) {
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES) {
-            return;
-        }
+    public static void renderPostWorld(
+            float partialTick,
+            PoseStack poseStack,
+            Camera camera,
+            Matrix4f projectionMatrix
+    ) {
         ShaderInstance shaderInstance = LightFlightShader.getLightFlightShader();
         Minecraft minecraft = Minecraft.getInstance();
         if (shaderInstance == null || minecraft.level == null) {
             return;
         }
 
-        Camera camera = event.getCamera();
         Vec3 cameraPosition = camera.getPosition();
         Quaternionf cameraRotation = new Quaternionf(camera.rotation());
         Vector3f cameraRight = new Vector3f(1.0F, 0.0F, 0.0F).rotate(cameraRotation);
         Vector3f cameraUp = new Vector3f(0.0F, 1.0F, 0.0F).rotate(cameraRotation);
-        PoseStack poseStack = event.getPoseStack();
         poseStack.pushPose();
         poseStack.translate(-cameraPosition.x, -cameraPosition.y, -cameraPosition.z);
 
@@ -85,8 +83,12 @@ public final class LightFlightRenderer {
         RenderSystem.depthMask(false);
         RenderSystem.disableCull();
         RenderSystem.setShader(() -> shaderInstance);
+        shaderInstance.MODEL_VIEW_MATRIX.set(poseStack.last().pose());
+        shaderInstance.MODEL_VIEW_MATRIX.upload();
+        shaderInstance.PROJECTION_MATRIX.set(projectionMatrix);
+        shaderInstance.PROJECTION_MATRIX.upload();
         shaderInstance.safeGetUniform("Time").set(
-                (minecraft.level.getGameTime() + event.getPartialTick()) / 20.0F
+                (minecraft.level.getGameTime() + partialTick) / 20.0F
         );
 
         for (Map.Entry<UUID, LightFlightVisualState> entry : ClientLightFlightManager.getVisualStates().entrySet()) {
@@ -97,7 +99,7 @@ public final class LightFlightRenderer {
                     || player.distanceToSqr(cameraPosition) > MAXIMUM_RENDER_DISTANCE_SQUARED) {
                 continue;
             }
-            float visibility = visualState.visibility(event.getPartialTick());
+            float visibility = visualState.visibility(partialTick);
             if (visibility <= 0.0F) {
                 continue;
             }
@@ -106,7 +108,7 @@ public final class LightFlightRenderer {
                     shaderInstance,
                     player,
                     visualState,
-                    event.getPartialTick(),
+                    partialTick,
                     visibility,
                     cameraRight,
                     cameraUp
@@ -115,7 +117,7 @@ public final class LightFlightRenderer {
         renderStopImpact(
                 poseStack.last().pose(),
                 shaderInstance,
-                event.getPartialTick(),
+                partialTick,
                 cameraPosition
         );
 

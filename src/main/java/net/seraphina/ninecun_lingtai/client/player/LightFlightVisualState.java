@@ -25,6 +25,9 @@ public final class LightFlightVisualState {
     private float boostVisibility;
     private Vec3 lastTrailPosition = Vec3.ZERO;
     private boolean hasTrailPosition;
+    private Vec3 lastObservedPosition = Vec3.ZERO;
+    private boolean hasObservedPosition;
+    private int stationaryTicks;
     private double motionSpeed;
     private final Deque<Vec3> trailPositions = new ArrayDeque<>();
 
@@ -90,6 +93,31 @@ public final class LightFlightVisualState {
         if (!moving) {
             this.motionSpeed = 0.0D;
         }
+    }
+
+    public boolean observePosition(Vec3 position) {
+        if (!this.hasObservedPosition) {
+            this.lastObservedPosition = position;
+            this.hasObservedPosition = true;
+            this.stationaryTicks = 0;
+            this.recordTrailPosition(position);
+            return false;
+        }
+        double distance = position.distanceTo(this.lastObservedPosition);
+        this.lastObservedPosition = position;
+        boolean stopped = false;
+        if (distance > 0.0015D) {
+            this.stationaryTicks = 0;
+            this.setMoving(true);
+        } else {
+            this.stationaryTicks++;
+            if (this.stationaryTicks >= 3 && this.moving) {
+                this.setMoving(false);
+                stopped = true;
+            }
+        }
+        this.recordTrailPosition(position);
+        return stopped;
     }
 
     public void recordTrailPosition(Vec3 position) {
