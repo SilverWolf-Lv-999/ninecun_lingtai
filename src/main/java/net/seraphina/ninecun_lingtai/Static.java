@@ -30,6 +30,27 @@ public class Static {
         } catch (Exception exception) {
             isOptifineLoaded.set(false);
         }
+        @SuppressWarnings("all")
+        final String[] look1 = {
+                "本修仙Mod没有对别的Mod有任何形式的针对，可以屠杀99%的防御，如果你认为写ASM是违法的，那你赢了",
+                "这些防御包括：",
+                "终环",
+                "无尽套",
+                "梦幻终焉套",
+                "星轨立方套装",
+                "EOPL",
+                "以及部分准秒杀",
+                "如果你拿xxx mod来吹，我会当空气无视"
+        };
+        @SuppressWarnings("all")
+        final String[] look2 = {
+                "我极度厌恶针对",
+                "如果你进行针对我的Mod这种愚蠢行为",
+                "包括 Mixin、ASM、CoreMod、Java Agent、反射等等",
+                "只要对 Mod 进行了特殊处理以保证你的、别的Mod的功能可以不受到来自我的Mod的负面影响",
+                "我会视为你在挑战我的底线",
+                "多群通报并发布视频展示你的愚蠢行为"
+        };
     }
 
     public static boolean isOptifineLoaded() {
