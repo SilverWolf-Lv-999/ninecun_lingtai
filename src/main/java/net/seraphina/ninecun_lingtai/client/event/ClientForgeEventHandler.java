@@ -221,6 +221,9 @@ public final class ClientForgeEventHandler {
             input.shiftKeyDown = false;
             return;
         }
+        if (ClientLightFlightManager.handleMovementInput(event.getInput())) {
+            return;
+        }
         if (!ClientMeditationManager.isLocalPlayerMeditating()) {
             return;
         }

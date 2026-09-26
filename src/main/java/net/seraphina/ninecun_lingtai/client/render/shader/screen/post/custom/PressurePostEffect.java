@@ -7,7 +7,7 @@ import net.seraphina.ninecun_lingtai.client.render.shader.screen.CustomScreenEff
 public final class PressurePostEffect implements CustomScreenEffect {
     private static final ResourceLocation SHADER_LOCATION = ResourceLocation.fromNamespaceAndPath(
             ModMain.MOD_ID,
-            "shaders/post/pressure_blur.json"
+            "pressure_blur.json"
     );
 
     @Override

@@ -46,6 +46,7 @@ import net.seraphina.ninecun_lingtai.client.render.TestCloudShader;
 import net.seraphina.ninecun_lingtai.client.render.TribulationCloudShader;
 import net.seraphina.ninecun_lingtai.client.render.PushingMountainsCollisionRenderer;
 import net.seraphina.ninecun_lingtai.client.render.PushingMountainsEntityRenderer;
+import net.seraphina.ninecun_lingtai.client.render.LightFlightShader;
 import net.seraphina.ninecun_lingtai.client.render.layer.BodyDefenseSpellLayer;
 import net.seraphina.ninecun_lingtai.common.item.ColorItem;
 import net.seraphina.ninecun_lingtai.common.entity.tribulation.ThunderTribulationEntity;
@@ -133,6 +134,10 @@ public final class ClientModEventHandler {
     private static final ResourceLocation SWORD_QI_SHADER = ResourceLocation.fromNamespaceAndPath(
             ModMain.MOD_ID,
             "sword_qi"
+    );
+    private static final ResourceLocation LIGHT_FLIGHT_SHADER = ResourceLocation.fromNamespaceAndPath(
+            ModMain.MOD_ID,
+            "light_flight"
     );
 
     @SubscribeEvent
@@ -374,6 +379,14 @@ public final class ClientModEventHandler {
                         DefaultVertexFormat.POSITION_COLOR_TEX
                 ),
                 SwordQiShader::setSwordQiShader
+        );
+        event.registerShader(
+                new ShaderInstance(
+                        event.getResourceProvider(),
+                        LIGHT_FLIGHT_SHADER,
+                        DefaultVertexFormat.POSITION_COLOR_TEX
+                ),
+                LightFlightShader::setLightFlightShader
         );
     }
 }

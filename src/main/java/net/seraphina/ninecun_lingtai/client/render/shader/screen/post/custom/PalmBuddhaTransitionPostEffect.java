@@ -10,7 +10,7 @@ import net.seraphina.ninecun_lingtai.client.render.shader.screen.post.PostEffect
 public final class PalmBuddhaTransitionPostEffect implements CustomScreenEffect {
     private static final ResourceLocation SHADER_LOCATION = ResourceLocation.fromNamespaceAndPath(
             ModMain.MOD_ID,
-            "shaders/post/palm_buddha_transition.json"
+            "palm_buddha_transition.json"
     );
 
     @Override

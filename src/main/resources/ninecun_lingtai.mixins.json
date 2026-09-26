@@ -54,6 +54,7 @@
     "client.LivingEntityRendererMixin",
     "client.MinecraftMixin",
     "client.KeyboardInputMixin",
+    "client.LocalPlayerMixin",
     "client.KeyboardHandlerMixin",
     "client.MerchantScreenImmortalTradeMixin",
     "client.MouseHandlerMixin",

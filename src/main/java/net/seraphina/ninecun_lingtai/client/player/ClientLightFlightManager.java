@@ -7,8 +7,12 @@ import net.seraphina.ninecun_lingtai.common.network.packet.BoostLightFlightPacke
 import net.seraphina.ninecun_lingtai.common.network.packet.SetLightFlightPacket;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.player.Input;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.Vec3;
 import org.lwjgl.glfw.GLFW;
 
 import javax.annotation.Nullable;
@@ -21,10 +25,18 @@ public final class ClientLightFlightManager {
     private static final int DEFAULT_LIGHT_COLOR = 0xF2F7FF;
     private static final long DOUBLE_TAP_WINDOW_MILLISECONDS = 300L;
     private static final double BOOST_FOV_STRETCH = 0.08D;
+    private static final float STOP_IMPACT_STEP = 0.075F;
 
     private static final Map<UUID, LightFlightVisualState> VISUAL_STATES = new HashMap<>();
 
     private static long lastJumpPressTime;
+    private static float previousStopImpactProgress;
+    private static float stopImpactProgress = 1.0F;
+    private static float previousStopImpactTime;
+    private static float stopImpactTime = 1.0F;
+    private static Vec3 previousStopImpactPosition = Vec3.ZERO;
+    private static Vec3 stopImpactPosition = Vec3.ZERO;
+    private static int stopImpactColor = DEFAULT_LIGHT_COLOR;
 
     private ClientLightFlightManager() {
     }
@@ -32,12 +44,24 @@ public final class ClientLightFlightManager {
     public static void tick() {
         VISUAL_STATES.values().forEach(LightFlightVisualState::tick);
         VISUAL_STATES.entrySet().removeIf(entry -> entry.getValue().hasFinishedExiting());
+        previousStopImpactProgress = stopImpactProgress;
+        previousStopImpactTime = stopImpactTime;
+        if (stopImpactProgress < 1.0F) {
+            stopImpactProgress = Math.min(1.0F, stopImpactProgress + STOP_IMPACT_STEP);
+            stopImpactTime += 1.0F;
+        }
 
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level != null && !VISUAL_STATES.isEmpty()) {
             for (Player player : minecraft.level.players()) {
-                if (isFlying(player.getUUID())) {
+                LightFlightVisualState visualState = VISUAL_STATES.get(player.getUUID());
+                if (visualState != null && visualState.isFlying()) {
                     enforceFlightPose(player);
+                    if (visualState.style() == LightFlightStyle.LIGHT) {
+                        visualState.recordTrailPosition(
+                                player.position().add(0.0D, player.getBbHeight() * 0.52D, 0.0D)
+                        );
+                    }
                 }
             }
         }
@@ -50,6 +74,67 @@ public final class ClientLightFlightManager {
                 && !ClientSoulRoamingManager.isLocalPlayerSoulRoaming()) {
             player.getAbilities().flying = true;
         }
+    }
+
+    public static boolean handleMovementInput(Input input) {
+        Minecraft minecraft = Minecraft.getInstance();
+        LocalPlayer player = minecraft.player;
+        if (player == null
+                || minecraft.screen != null
+                || !isFlying(player.getUUID())
+                || getStyle(player.getUUID()) != LightFlightStyle.LIGHT) {
+            return false;
+        }
+        float forwardImpulse = input.forwardImpulse;
+        boolean moving = Math.abs(forwardImpulse) > 1.0E-4F;
+        LightFlightVisualState visualState = VISUAL_STATES.get(player.getUUID());
+        if (visualState != null && visualState.isMoving() != moving) {
+            visualState.setMoving(moving);
+            if (!moving) {
+                triggerStopImpact(player, visualState);
+            }
+        }
+        input.leftImpulse = 0.0F;
+        input.forwardImpulse = forwardImpulse;
+        if (input.shiftKeyDown) {
+            input.forwardImpulse *= 0.35F;
+            input.shiftKeyDown = false;
+        }
+        if (!moving) {
+            player.setDeltaMovement(Vec3.ZERO);
+        }
+        return true;
+    }
+
+    public static boolean applyFlightMovement(LocalPlayer player) {
+        if (!isFlying(player.getUUID())
+                || getStyle(player.getUUID()) != LightFlightStyle.LIGHT
+                || Minecraft.getInstance().screen != null) {
+            return false;
+        }
+        Input input = player.input;
+        if (Math.abs(input.forwardImpulse) <= 1.0E-4F) {
+            LightFlightVisualState visualState = VISUAL_STATES.get(player.getUUID());
+            if (visualState != null && visualState.isMoving()) {
+                visualState.setMoving(false);
+                triggerStopImpact(player, visualState);
+            }
+            player.setDeltaMovement(Vec3.ZERO);
+            return true;
+        }
+        LightFlightVisualState visualState = VISUAL_STATES.get(player.getUUID());
+        if (visualState != null) {
+            visualState.setMoving(true);
+        }
+        Vec3 direction = player.getLookAngle().normalize();
+        double speed = player.getAbilities().getFlyingSpeed() * 3.0D;
+        if (input.shiftKeyDown) {
+            speed *= 0.35D;
+        }
+        player.setDeltaMovement(direction.scale(speed * input.forwardImpulse));
+        player.move(MoverType.SELF, player.getDeltaMovement());
+        player.setDeltaMovement(Vec3.ZERO);
+        return true;
     }
 
     public static void onJumpPressed() {
@@ -112,6 +197,14 @@ public final class ClientLightFlightManager {
         } else {
             LightFlightVisualState visualState = VISUAL_STATES.get(playerId);
             if (visualState != null) {
+                if (visualState.isFlying() && sanitizedStyle == LightFlightStyle.LIGHT) {
+                    Minecraft minecraft = Minecraft.getInstance();
+                    Player player = minecraft.level == null ? null : minecraft.level.getPlayerByUUID(playerId);
+                    if (player != null) {
+                        triggerStopImpact(player, visualState);
+                    }
+                }
+                visualState.setMoving(false);
                 visualState.stopFlying();
             }
         }
@@ -165,6 +258,26 @@ public final class ClientLightFlightManager {
         return 1.0D + BOOST_FOV_STRETCH * easedBoost;
     }
 
+    public static float getStopImpactProgress(float partialTick) {
+        return Mth.lerp(partialTick, previousStopImpactProgress, stopImpactProgress);
+    }
+
+    public static float getStopImpactTime(float partialTick) {
+        return Mth.lerp(partialTick, previousStopImpactTime, stopImpactTime);
+    }
+
+    public static Vec3 getStopImpactPosition(float partialTick) {
+        return previousStopImpactPosition.lerp(stopImpactPosition, partialTick);
+    }
+
+    public static int getStopImpactColor() {
+        return stopImpactColor;
+    }
+
+    public static boolean isStopImpactActive() {
+        return stopImpactProgress < 1.0F;
+    }
+
     public static void removePlayer(UUID playerId) {
         VISUAL_STATES.remove(playerId);
         LightFlightAnimationManager.setFlying(playerId, false, LightFlightStyle.LIGHT);
@@ -176,6 +289,24 @@ public final class ClientLightFlightManager {
         );
         VISUAL_STATES.clear();
         lastJumpPressTime = 0L;
+        previousStopImpactProgress = 1.0F;
+        stopImpactProgress = 1.0F;
+        previousStopImpactTime = 1.0F;
+        stopImpactTime = 1.0F;
+        previousStopImpactPosition = Vec3.ZERO;
+        stopImpactPosition = Vec3.ZERO;
+        stopImpactColor = DEFAULT_LIGHT_COLOR;
+    }
+
+    private static void triggerStopImpact(Player player, LightFlightVisualState visualState) {
+        previousStopImpactProgress = 0.0F;
+        stopImpactProgress = 0.0F;
+        previousStopImpactTime = stopImpactTime;
+        stopImpactTime += 1.0F;
+        Vec3 impactPosition = player.position().add(0.0D, player.getBbHeight() * 0.52D, 0.0D);
+        previousStopImpactPosition = impactPosition;
+        stopImpactPosition = impactPosition;
+        stopImpactColor = visualState.color();
     }
 
     private static void requestFlying(LocalPlayer player, boolean flying) {
@@ -218,6 +349,12 @@ public final class ClientLightFlightManager {
 
     private static void enforceFlightPose(Player player) {
         player.setPose(Pose.STANDING);
+        if (getStyle(player.getUUID()) == LightFlightStyle.LIGHT) {
+            player.yBodyRot = player.getYRot();
+            player.yBodyRotO = player.yRotO;
+            player.yHeadRot = player.getYRot();
+            player.yHeadRotO = player.yRotO;
+        }
         player.walkAnimation.update(0.0F, 1.0F);
         player.walkAnimation.update(0.0F, 1.0F);
     }

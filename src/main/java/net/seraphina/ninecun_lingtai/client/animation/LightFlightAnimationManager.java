@@ -67,11 +67,11 @@ public final class LightFlightAnimationManager {
         if (!(animation instanceof LightFlightAnimationLayer lightFlightLayer)) {
             return;
         }
-        if (!flying) {
+        LightFlightStyle sanitizedStyle = style == null ? LightFlightStyle.LIGHT : style;
+        if (!flying || sanitizedStyle == LightFlightStyle.LIGHT) {
             lightFlightLayer.setAnimation(null, null);
             return;
         }
-        LightFlightStyle sanitizedStyle = style == null ? LightFlightStyle.LIGHT : style;
         if (lightFlightLayer.isActive() && lightFlightLayer.getStyle() == sanitizedStyle) {
             return;
         }

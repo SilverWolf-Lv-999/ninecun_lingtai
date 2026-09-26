@@ -9,7 +9,7 @@ import net.seraphina.ninecun_lingtai.client.render.shader.screen.post.PostEffect
 public final class BreakthroughBlurPostEffect implements CustomScreenEffect {
     private static final ResourceLocation SHADER_LOCATION = ResourceLocation.fromNamespaceAndPath(
             ModMain.MOD_ID,
-            "shaders/post/breakthrough_blur.json"
+            "breakthrough_blur.json"
     );
 
     @Override

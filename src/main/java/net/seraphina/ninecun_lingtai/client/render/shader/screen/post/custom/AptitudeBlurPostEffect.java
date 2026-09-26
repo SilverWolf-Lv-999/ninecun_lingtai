@@ -7,7 +7,7 @@ import net.seraphina.ninecun_lingtai.client.render.shader.screen.CustomScreenEff
 public final class AptitudeBlurPostEffect implements CustomScreenEffect {
     private static final ResourceLocation SHADER_LOCATION = ResourceLocation.fromNamespaceAndPath(
             ModMain.MOD_ID,
-            "shaders/post/aptitude_blur.json"
+            "aptitude_blur.json"
     );
 
     @Override
