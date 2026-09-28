@@ -121,6 +121,9 @@ import net.seraphina.ninecun_lingtai.common.network.packet.SyncThreeThousandReal
 import net.seraphina.ninecun_lingtai.common.network.packet.ThreeThousandRealmTravelResultPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.TravelToThreeThousandRealmPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.TriggerBodyShieldPacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.RequestSpaceRiftGuiPacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.OpenSpaceRiftGuiPacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.CreateSpaceRiftPacket;
 import net.seraphina.ninecun_lingtai.common.flight.LightFlightManager;
 import net.seraphina.ninecun_lingtai.common.player.PlayerLightFlightData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerShrinkEarthData;
@@ -179,6 +182,33 @@ public final class ModNetwork {
     private static int nextPacketId;
 
     public static void register() {
+        CHANNEL.messageBuilder(
+                        RequestSpaceRiftGuiPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(RequestSpaceRiftGuiPacket::encode)
+                .decoder(RequestSpaceRiftGuiPacket::decode)
+                .consumerMainThread(RequestSpaceRiftGuiPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        OpenSpaceRiftGuiPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(OpenSpaceRiftGuiPacket::encode)
+                .decoder(OpenSpaceRiftGuiPacket::decode)
+                .consumerMainThread(OpenSpaceRiftGuiPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        CreateSpaceRiftPacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(CreateSpaceRiftPacket::encode)
+                .decoder(CreateSpaceRiftPacket::decode)
+                .consumerMainThread(CreateSpaceRiftPacket::handle)
+                .add();
         CHANNEL.messageBuilder(
                         RequestGreatCausalityPacket.class,
                         getId(),
@@ -1754,6 +1784,13 @@ public final class ModNetwork {
                         PalmBuddhaRealmManager.get(player.server).getCandidateSet(player)
                 )
         );
+    }
+
+    public static void sendOpenSpaceRiftGui(
+            ServerPlayer player,
+            OpenSpaceRiftGuiPacket packet
+    ) {
+        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), packet);
     }
     public static void sendPalmBuddhaMembers(ServerPlayer player, int pageIndex) {
         PalmBuddhaMemberPageSnapshot snapshot = PalmBuddhaRealmManager.get(player.server)

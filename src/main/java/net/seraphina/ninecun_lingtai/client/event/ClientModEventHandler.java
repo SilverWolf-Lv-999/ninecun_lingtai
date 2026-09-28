@@ -40,6 +40,8 @@ import net.seraphina.ninecun_lingtai.client.render.SoulRenderer;
 import net.seraphina.ninecun_lingtai.client.render.SpiritualEnergyShader;
 import net.seraphina.ninecun_lingtai.client.render.SwordQiShader;
 import net.seraphina.ninecun_lingtai.client.render.SwordQiEntityRenderer;
+import net.seraphina.ninecun_lingtai.client.render.SpaceRiftEntityRenderer;
+import net.seraphina.ninecun_lingtai.client.render.SpaceRiftShader;
 import net.seraphina.ninecun_lingtai.client.render.TechniqueCloudShader;
 import net.seraphina.ninecun_lingtai.client.render.TestCloudEntityRenderer;
 import net.seraphina.ninecun_lingtai.client.render.TestCloudShader;
@@ -139,6 +141,10 @@ public final class ClientModEventHandler {
             ModMain.MOD_ID,
             "light_flight"
     );
+    private static final ResourceLocation SPACE_RIFT_SHADER = ResourceLocation.fromNamespaceAndPath(
+            ModMain.MOD_ID,
+            "space_rift"
+    );
 
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
@@ -169,6 +175,7 @@ public final class ClientModEventHandler {
         event.register(ModKeyMappings.STORAGE_RING_IMMERSION);
         event.register(ModKeyMappings.SOUL_SENSE);
         event.register(ModKeyMappings.SOUL_SENSE_FILTER);
+        event.register(ModKeyMappings.SPACE_RIFT);
     }
 
     @SubscribeEvent
@@ -232,6 +239,7 @@ public final class ClientModEventHandler {
                 ModEntityTypes.SWORD_QI_ENTITY.get(),
                 SwordQiEntityRenderer::new
         );
+        event.registerEntityRenderer(ModEntityTypes.SPACE_RIFT.get(), SpaceRiftEntityRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.MIND_DEMON.get(), MindDemonRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.MORTAL_BODY.get(), MortalBodyRenderer::new);
     }
@@ -387,6 +395,14 @@ public final class ClientModEventHandler {
                         DefaultVertexFormat.POSITION_COLOR_TEX
                 ),
                 LightFlightShader::setLightFlightShader
+        );
+        event.registerShader(
+                new ShaderInstance(
+                        event.getResourceProvider(),
+                        SPACE_RIFT_SHADER,
+                        DefaultVertexFormat.POSITION_COLOR_TEX
+                ),
+                SpaceRiftShader::setSpaceRiftShader
         );
     }
 }

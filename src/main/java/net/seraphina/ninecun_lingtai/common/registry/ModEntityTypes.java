@@ -7,6 +7,7 @@ import net.seraphina.ninecun_lingtai.common.entity.SoulEntity;
 import net.seraphina.ninecun_lingtai.common.entity.ability.PushingMountainsCollisionEntity;
 import net.seraphina.ninecun_lingtai.common.entity.ability.PushingMountainsEntity;
 import net.seraphina.ninecun_lingtai.common.entity.ability.SwordQiEntity;
+import net.seraphina.ninecun_lingtai.common.entity.ability.SpaceRiftEntity;
 import net.seraphina.ninecun_lingtai.common.entity.spell.DefenseSpellGuardianEntity;
 import net.seraphina.ninecun_lingtai.common.entity.test.TestCloudEntity;
 import net.seraphina.ninecun_lingtai.common.entity.tribulation.ThunderTribulationEntity;
@@ -84,6 +85,16 @@ public final class ModEntityTypes {
                     .clientTrackingRange(128)
                     .updateInterval(1)
                     .build("sword_qi_entity")
+    );
+
+    public static final RegistryObject<EntityType<SpaceRiftEntity>> SPACE_RIFT = ENTITY_TYPES.register(
+            "space_rift",
+            () -> EntityType.Builder
+                    .of(SpaceRiftEntity::new, MobCategory.MISC)
+                    .sized(2.0F, 4.0F)
+                    .clientTrackingRange(256)
+                    .updateInterval(1)
+                    .build("space_rift")
     );
 
     public static final RegistryObject<EntityType<TestCloudEntity>> TEST_CLOUD_ENTITY = ENTITY_TYPES.register(

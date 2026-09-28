@@ -50,6 +50,7 @@ import net.seraphina.ninecun_lingtai.client.player.ClientSoulInjuryData;
 import net.seraphina.ninecun_lingtai.client.player.ClientPalmBuddhaOverlayManager;
 import net.seraphina.ninecun_lingtai.client.screen.BreakthroughRitualHud;
 import net.seraphina.ninecun_lingtai.client.screen.SoulConstellationOverlay;
+import net.seraphina.ninecun_lingtai.client.space.ClientSpaceRiftManager;
 import net.seraphina.ninecun_lingtai.client.utility.SpiritualEnergyHudRenderUtility;
 import net.seraphina.ninecun_lingtai.client.utility.SpiritualEnergyRenderUtility;
 import net.seraphina.ninecun_lingtai.utility.BookItemUtility;
@@ -130,11 +131,15 @@ public final class ClientForgeEventHandler {
             ClientTribulationManager.tick();
             ClientPushingMountainsManager.tick();
             ClientStorageRingImmersionManager.tick();
+            ClientSpaceRiftManager.tick();
         }
     }
 
     @SubscribeEvent
     public static void onKeyInput(InputEvent.Key event) {
+        if (ClientSpaceRiftManager.onKeyInput(event.getKey(), event.getAction())) {
+            return;
+        }
         if (event.getAction() == GLFW.GLFW_PRESS
                 && ModKeyMappings.STORAGE_RING_IMMERSION.matches(event.getKey(), event.getScanCode())
                 && ClientStorageRingImmersionManager.beginExiting()) {
@@ -159,6 +164,13 @@ public final class ClientForgeEventHandler {
         if (event.getAction() == GLFW.GLFW_PRESS
                 && (event.getKey() == GLFW.GLFW_KEY_LEFT_CONTROL || event.getKey() == GLFW.GLFW_KEY_RIGHT_CONTROL)) {
             ClientLightFlightManager.onControlPressed();
+        }
+    }
+
+    @SubscribeEvent
+    public static void onMouseButton(InputEvent.MouseButton event) {
+        if (ClientSpaceRiftManager.onMouseButton(event.getButton(), event.getAction())) {
+            event.setCanceled(true);
         }
     }
 
@@ -274,6 +286,7 @@ public final class ClientForgeEventHandler {
                 event.getWindow().getGuiScaledWidth(),
                 event.getWindow().getGuiScaledHeight()
         );
+        ClientSpaceRiftManager.render(event);
     }
 
     @SubscribeEvent
@@ -300,6 +313,7 @@ public final class ClientForgeEventHandler {
 
     @SubscribeEvent
     public static void onLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
+        ClientSpaceRiftManager.reset();
         ClientAptitudeScreenManager.reset();
         ClientPalmBuddhaOverlayManager.reset();
         BreakthroughAnimationManager.reset();

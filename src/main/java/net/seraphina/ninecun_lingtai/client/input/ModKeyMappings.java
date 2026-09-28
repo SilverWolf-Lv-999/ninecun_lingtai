@@ -72,4 +72,12 @@ public final class ModKeyMappings {
             GLFW.GLFW_KEY_H,
             "key.categories." + ModMain.MOD_ID
     );
+
+    public static final KeyMapping SPACE_RIFT = new KeyMapping(
+            "key." + ModMain.MOD_ID + ".space_rift",
+            KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_Z,
+            "key.categories." + ModMain.MOD_ID
+    );
 }
