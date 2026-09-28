@@ -684,5 +684,6 @@
   "message.ninecun_lingtai.death.soul_return_started": "Your soul rises free — drift back to your corpse within %s minute(s) before your soul power runs dry",
   "message.ninecun_lingtai.death.soul_return_success": "Soul and body rejoin — you draw breath again, but your soul is badly hurt",
   "message.ninecun_lingtai.death.soul_return_timeout": "Soul power spent before reaching the corpse — forcing a body together at terrible cost",
-  "message.ninecun_lingtai.death.burn_nascent_done": "The nascent soul burns away in golden light — you live, at the cost of an entire major realm"
-,\n  "key.ninecun_lingtai.space_rift": "Tear Space"\n}\n
+  "message.ninecun_lingtai.death.burn_nascent_done": "The nascent soul burns away in golden light — you live, at the cost of an entire major realm",
+  "key.ninecun_lingtai.space_rift": "Tear Space"
+}

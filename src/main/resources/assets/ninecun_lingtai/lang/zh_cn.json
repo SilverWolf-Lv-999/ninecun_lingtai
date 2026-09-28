@@ -684,5 +684,6 @@
   "message.ninecun_lingtai.death.soul_return_started": "魂魄离体而起，限时 %s 分钟内飘回尸身，逾时魂力耗尽",
   "message.ninecun_lingtai.death.soul_return_success": "魂归其位，还阳一口气——魂魄却伤得不轻",
   "message.ninecun_lingtai.death.soul_return_timeout": "魂力耗尽，未及归体——强行凝身，代价惨重",
-  "message.ninecun_lingtai.death.burn_nascent_done": "元婴自焚，金光散尽——你活了下来，代价是整整一个大境界"
-,\n  "key.ninecun_lingtai.space_rift": "撕裂虚空"\n}\n
+  "message.ninecun_lingtai.death.burn_nascent_done": "元婴自焚，金光散尽——你活了下来，代价是整整一个大境界",
+  "key.ninecun_lingtai.space_rift": "撕裂虚空"
+}

@@ -46,9 +46,9 @@ public final class SpaceRiftManager {
             return;
         }
         ResourceLocation sourceId = player.serverLevel().dimension().location();
-        Vec3 sourcePosition = player.position().add(player.getLookAngle().scale(1.75D));
+        Vec3 direction = player.getLookAngle().normalize();
+        Vec3 sourcePosition = player.position().add(direction.scale(3.0D));
         Vec3 targetPosition = new Vec3(player.getX(), player.getY(), player.getZ());
-        Vec3 direction = player.getLookAngle();
         SpaceRiftEntity source = ModEntityTypes.SPACE_RIFT.get().create(player.serverLevel());
         SpaceRiftEntity target = ModEntityTypes.SPACE_RIFT.get().create(targetLevel);
         if (source == null || target == null) {

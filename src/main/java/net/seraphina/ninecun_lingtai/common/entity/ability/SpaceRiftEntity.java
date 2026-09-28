@@ -86,7 +86,7 @@ public final class SpaceRiftEntity extends Entity implements IEntityAdditionalSp
             forceChunks(serverLevel, true);
             long gameTime = serverLevel.getGameTime();
             for (ServerPlayer player : serverLevel.players()) {
-                if (player.distanceToSqr(this) > 6.25D
+                if (player.distanceToSqr(this) > 2.25D
                         || player.getPersistentData().getLong(TELEPORT_COOLDOWN_KEY) > gameTime) {
                     continue;
                 }
