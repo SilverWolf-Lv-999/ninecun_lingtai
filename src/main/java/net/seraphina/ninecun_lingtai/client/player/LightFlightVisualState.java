@@ -11,7 +11,7 @@ public final class LightFlightVisualState {
     private static final float VISIBILITY_STEP = 0.18F;
     private static final float BOOST_FADE_IN_STEP = 0.35F;
     private static final float BOOST_FADE_OUT_STEP = 0.20F;
-    private static final int MAXIMUM_TRAIL_POINTS = 48;
+    private static final int MAXIMUM_TRAIL_POINTS = 640;
     private static final double MINIMUM_TRAIL_POINT_DISTANCE = 0.08D;
 
     private LightFlightStyle style;

@@ -144,7 +144,7 @@ public final class LightFlightRenderer {
         anchors.add(position);
         List<Vec3> history = new ArrayList<>(state.trailPositions());
         float length = 0.0F;
-        float maximumLength = 13.0F + 5.0F * state.boostVisibility(partialTick);
+        float maximumLength = 50.0F;
         for (int i = state.isMoving() && history.size() > 1 ? 1 : 0; i < history.size(); i++) {
             Vec3 last = anchors.get(anchors.size() - 1);
             Vec3 point = history.get(i);
@@ -164,7 +164,7 @@ public final class LightFlightRenderer {
         }
         List<Vec3> trail = new ArrayList<>();
         trail.add(position);
-        for (int i = 0; i < anchors.size() - 1 && trail.size() < 160; i++) {
+        for (int i = 0; i < anchors.size() - 1 && trail.size() < 640; i++) {
             Vec3 a = anchors.get(Math.max(0, i - 1));
             Vec3 b = anchors.get(i);
             Vec3 c = anchors.get(i + 1);
@@ -174,7 +174,7 @@ public final class LightFlightRenderer {
             Vec3 tangent0 = c.subtract(a).normalize().scale(distance);
             Vec3 tangent1 = d.subtract(b).normalize().scale(distance);
             int steps = Mth.clamp((int) Math.ceil(distance / 0.22D), 1, 12);
-            for (int step = 1; step <= steps && trail.size() < 160; step++) {
+            for (int step = 1; step <= steps && trail.size() < 640; step++) {
                 double t = step / (double) steps;
                 double t2 = t * t;
                 double t3 = t2 * t;
