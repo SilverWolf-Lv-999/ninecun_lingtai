@@ -11,8 +11,8 @@ public final class LightFlightVisualState {
     private static final float VISIBILITY_STEP = 0.18F;
     private static final float BOOST_FADE_IN_STEP = 0.35F;
     private static final float BOOST_FADE_OUT_STEP = 0.20F;
-    private static final int MAXIMUM_TRAIL_POINTS = 24;
-    private static final double MINIMUM_TRAIL_POINT_DISTANCE = 0.025D;
+    private static final int MAXIMUM_TRAIL_POINTS = 48;
+    private static final double MINIMUM_TRAIL_POINT_DISTANCE = 0.08D;
 
     private LightFlightStyle style;
     private int color;
@@ -29,6 +29,8 @@ public final class LightFlightVisualState {
     private boolean hasObservedPosition;
     private int stationaryTicks;
     private double motionSpeed;
+    private float previousTrailVisibility;
+    private float trailVisibility;
     private final Deque<Vec3> trailPositions = new ArrayDeque<>();
 
     public LightFlightVisualState(LightFlightStyle style, int color, boolean boosting) {
@@ -62,6 +64,13 @@ public final class LightFlightVisualState {
     public void tick() {
         this.previousVisibility = this.visibility;
         this.previousBoostVisibility = this.boostVisibility;
+        this.previousTrailVisibility = this.trailVisibility;
+        this.trailVisibility = approach(this.trailVisibility, this.moving && this.flying ? 1.0F : 0.0F,
+                this.moving && this.flying ? 0.12F : 0.5F);
+        if (this.previousTrailVisibility == 0.0F && this.trailVisibility == 0.0F && !this.moving) {
+            this.trailPositions.clear();
+            this.hasTrailPosition = false;
+        }
         this.visibility = approach(this.visibility, this.flying ? 1.0F : 0.0F, VISIBILITY_STEP);
         this.boostVisibility = approach(
                 this.boostVisibility,
@@ -129,14 +138,15 @@ public final class LightFlightVisualState {
         }
         double distance = position.distanceTo(this.lastTrailPosition);
         this.motionSpeed = distance;
-        if (distance >= MINIMUM_TRAIL_POINT_DISTANCE) {
+        if (distance > 32.0D) {
+            this.trailPositions.clear();
+        }
+        if (this.trailPositions.isEmpty()
+                || position.distanceTo(this.trailPositions.peekFirst()) >= MINIMUM_TRAIL_POINT_DISTANCE) {
             this.trailPositions.addFirst(position);
             while (this.trailPositions.size() > MAXIMUM_TRAIL_POINTS) {
                 this.trailPositions.removeLast();
             }
-        } else if (!this.trailPositions.isEmpty()) {
-            this.trailPositions.removeFirst();
-            this.trailPositions.addFirst(position);
         }
         this.lastTrailPosition = position;
     }
@@ -167,6 +177,10 @@ public final class LightFlightVisualState {
 
     public float boostVisibility(float partialTick) {
         return Mth.lerp(partialTick, this.previousBoostVisibility, this.boostVisibility);
+    }
+
+    public float trailVisibility(float partialTick) {
+        return Mth.lerp(partialTick, this.previousTrailVisibility, this.trailVisibility);
     }
 
     private static float approach(float value, float target, float step) {

@@ -9,9 +9,12 @@ uniform mat4 ProjMat;
 
 out vec4 vertexColor;
 out vec2 lightFlightUv;
+out float vertexDistance;
 
 void main() {
-    gl_Position = ProjMat * ModelViewMat * vec4(Position, 1.0);
+    vec4 viewPosition = ModelViewMat * vec4(Position, 1.0);
+    gl_Position = ProjMat * viewPosition;
+    vertexDistance = length(viewPosition.xyz);
     vertexColor = Color;
     lightFlightUv = UV0;
 }
