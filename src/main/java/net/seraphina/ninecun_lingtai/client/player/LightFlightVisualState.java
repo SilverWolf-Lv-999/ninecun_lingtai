@@ -32,6 +32,9 @@ public final class LightFlightVisualState {
     private float previousTrailVisibility;
     private float trailVisibility;
     private final Deque<Vec3> trailPositions = new ArrayDeque<>();
+    private final Deque<FlightMote> flightMotes = new ArrayDeque<>();
+    private int visualTicks;
+    private int emissionSequence;
 
     public LightFlightVisualState(LightFlightStyle style, int color, boolean boosting) {
         this.style = style == null ? LightFlightStyle.LIGHT : style;
@@ -62,6 +65,8 @@ public final class LightFlightVisualState {
     }
 
     public void tick() {
+        this.visualTicks++;
+        this.flightMotes.removeIf(mote -> this.visualTicks - mote.birthTick() > mote.lifetime());
         this.previousVisibility = this.visibility;
         this.previousBoostVisibility = this.boostVisibility;
         this.previousTrailVisibility = this.trailVisibility;
@@ -140,6 +145,33 @@ public final class LightFlightVisualState {
         this.motionSpeed = distance;
         if (distance > 32.0D) {
             this.trailPositions.clear();
+            this.flightMotes.clear();
+        } else if (this.flying && this.moving && this.style == LightFlightStyle.LIGHT && distance > 0.0015D) {
+            Vec3 forward = position.subtract(this.lastTrailPosition).normalize();
+            Vec3 side = forward.cross(new Vec3(0.0D, 1.0D, 0.0D));
+            if (side.lengthSqr() < 0.0001D) {
+                side = forward.cross(new Vec3(1.0D, 0.0D, 0.0D));
+            }
+            side = side.normalize();
+            Vec3 up = side.cross(forward).normalize();
+            int count = Mth.clamp((int) Math.ceil(distance / 0.16D), 1, 8);
+            for (int index = 0; index < count; index++) {
+                int seed = ++this.emissionSequence * 0x9E3779B9;
+                seed = (seed ^ seed >>> 16) * 0x85EBCA6B;
+                seed ^= seed >>> 13;
+                float phase = (seed & 65535) / 65535.0F * Mth.TWO_PI;
+                float variation = (seed >>> 16 & 255) / 255.0F;
+                Vec3 radial = side.scale(Mth.cos(phase)).add(up.scale(Mth.sin(phase)));
+                Vec3 origin = this.lastTrailPosition.lerp(position, (index + 0.5D) / count)
+                        .add(radial.scale(0.16D + variation * 0.3D));
+                Vec3 velocity = radial.scale(0.016D + variation * 0.034D)
+                        .add(forward.scale(-0.075D - variation * 0.07D));
+                this.flightMotes.addLast(new FlightMote(origin, velocity, this.visualTicks,
+                        13 + (seed >>> 24 & 15), phase, 0.018F + variation * 0.018F));
+                while (this.flightMotes.size() > 160) {
+                    this.flightMotes.removeFirst();
+                }
+            }
         }
         if (this.trailPositions.isEmpty()
                 || position.distanceTo(this.trailPositions.peekFirst()) >= MINIMUM_TRAIL_POINT_DISTANCE) {
@@ -160,7 +192,19 @@ public final class LightFlightVisualState {
     }
 
     public boolean hasFinishedExiting() {
-        return !this.flying && this.visibility <= 0.0F && this.boostVisibility <= 0.0F;
+        return !this.flying && this.visibility <= 0.0F && this.boostVisibility <= 0.0F
+                && this.flightMotes.isEmpty();
+    }
+
+    public Deque<FlightMote> flightMotes() {
+        return new ArrayDeque<>(this.flightMotes);
+    }
+
+    public float visualAge(float partialTick) {
+        return this.visualTicks - 1 + partialTick;
+    }
+
+    public record FlightMote(Vec3 position, Vec3 velocity, int birthTick, int lifetime, float phase, float size) {
     }
 
     public int color() {

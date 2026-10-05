@@ -89,8 +89,7 @@ public final class LightFlightRenderer {
                 Player player = minecraft.level.getPlayerByUUID(entry.getKey());
                 LightFlightVisualState state = entry.getValue();
                 if (player == null || state.style() != LightFlightStyle.LIGHT
-                        || player.distanceToSqr(cameraPosition) > MAXIMUM_RENDER_DISTANCE_SQUARED
-                        || state.visibility(partialTick) <= 0.0F) {
+                        || player.distanceToSqr(cameraPosition) > MAXIMUM_RENDER_DISTANCE_SQUARED) {
                     continue;
                 }
                 Vec3 position = new Vec3(
@@ -110,7 +109,13 @@ public final class LightFlightRenderer {
                     appendTail(matrix, shader, trail, cameraPosition, cameraRight, time,
                             boost, visibility * state.trailVisibility(partialTick));
                 }
+                renderFlightMotes(matrix, shader, state, partialTick, cameraPosition, cameraRight,
+                        insideLocalLight ? 0.12F : 1.0F);
                 if (state.isMoving() && !insideLocalLight) {
+                    Vec3 direction = trail.size() > 1 ? position.subtract(trail.get(1)).normalize()
+                            : player.getLookAngle();
+                    renderFlightEnvelope(matrix, shader, position, direction, cameraPosition,
+                            time, boost, visibility);
                     shader.safeGetUniform("Mode").set(0.0F);
                     BufferBuilder buffer = Tesselator.getInstance().getBuilder();
                     buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR_TEX);
@@ -191,8 +196,21 @@ public final class LightFlightRenderer {
         Vec3[] sides = new Vec3[count];
         Vec3[] ups = new Vec3[count];
         float[] distances = new float[count];
+        float[] bendWidths = new float[count];
         for (int i = 0; i < count; i++) {
-            Vec3 tangent = trail.get(Math.max(0, i - 1)).subtract(trail.get(Math.min(count - 1, i + 1))).normalize();
+            bendWidths[i] = 1.0F;
+            if (i > 0 && i < count - 1) {
+                Vec3 incoming = trail.get(i).subtract(trail.get(i - 1)).normalize();
+                Vec3 outgoing = trail.get(i + 1).subtract(trail.get(i)).normalize();
+                bendWidths[i] = Mth.clamp((float) Math.sqrt(Math.max(0.0D,
+                        (1.0D + incoming.dot(outgoing)) * 0.5D)) * 1.3F, 0.08F, 1.0F);
+            }
+            Vec3 tangent = trail.get(Math.max(0, i - 1)).subtract(trail.get(Math.min(count - 1, i + 1)));
+            if (tangent.lengthSqr() < 0.000001D) {
+                tangent = i + 1 < count ? trail.get(i).subtract(trail.get(i + 1))
+                        : trail.get(i - 1).subtract(trail.get(i));
+            }
+            tangent = tangent.normalize();
             Vec3 side = tangent.cross(cameraPosition.subtract(trail.get(i)).normalize());
             if (side.lengthSqr() < 0.0001D) {
                 side = cameraRight.subtract(tangent.scale(cameraRight.dot(tangent)));
@@ -216,29 +234,33 @@ public final class LightFlightRenderer {
         for (int layer = 0; layer < 2; layer++) {
             shader.safeGetUniform("Mode").set(layer == 0 ? 1.0F : 3.0F);
             buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR_TEX);
-            int strands = layer == 0 ? 1 : 8;
+            int strands = layer == 0 ? 2 : 6;
             for (int strand = 0; strand < strands; strand++) {
                 Vec3 previousLeft = Vec3.ZERO;
                 Vec3 previousRight = Vec3.ZERO;
                 for (int i = 0; i < count; i++) {
                     float u = distances[i] / totalLength;
-                    float taper = (float) Math.pow(1.0F - u, 0.62D);
-                    float spread = (0.1F + 0.26F * Mth.sin(Math.min(1.0F, distances[i] / 2.5F) * Mth.HALF_PI)) * taper;
-                    float phase = strand * 2.399963F + distances[i] * (0.6F + strand * 0.045F) - time * (1.2F + strand * 0.11F);
+                    float taper = (float) Math.pow(1.0F - u, 0.3D) * bendWidths[i];
+                    float opening = (float) Math.sqrt(Math.min(1.0F, distances[i] / 3.0F));
+                    float spread = (0.06F + 0.48F * opening) * taper * (1.0F + boost * 0.3F);
+                    float phase = strand * 2.399963F + distances[i] * (0.5F + strand * 0.018F) - time * 0.85F;
                     Vec3 center = trail.get(i).subtract(cameraPosition);
                     float width;
                     if (layer == 0) {
-                        width = (0.38F + 0.14F * boost) * taper + 0.012F;
+                        width = spread * (strand == 0 ? 1.45F : 0.8F) + 0.008F;
                     } else {
-                        center = center.add(sides[i].scale(Mth.sin(phase) * spread))
-                                .add(ups[i].scale(Mth.cos(phase * 0.83F) * spread * 0.7F));
-                        width = (0.018F + (strand % 3) * 0.009F) * taper * (1.0F + boost * 0.25F);
+                        float offset = (strand - 2.5F) / 3.6F + Mth.sin(phase) * 0.17F;
+                        center = center.add(sides[i].scale(offset * spread))
+                                .add(ups[i].scale(Mth.sin(phase * 0.61F) * spread * 0.18F));
+                        width = (strand % 2 == 0 ? 0.075F : 0.026F) * taper * (0.4F + opening * 0.6F)
+                                * (1.0F + boost * 0.25F);
                     }
                     Vec3 left = center.subtract(sides[i].scale(width));
                     Vec3 right = center.add(sides[i].scale(width));
                     if (i > 0) {
                         float previousU = distances[i - 1] / totalLength;
-                        float opacity = alpha * (layer == 0 ? 0.68F : 0.42F + (strand % 3) * 0.1F);
+                        float opacity = alpha * (layer == 0 ? (strand == 0 ? 0.56F : 0.45F)
+                                : (strand % 2 == 0 ? 0.42F : 0.48F));
                         appendVertex(buffer, matrix, previousLeft, opacity, previousU, 0.0F);
                         appendVertex(buffer, matrix, left, opacity, u, 0.0F);
                         appendVertex(buffer, matrix, right, opacity, u, 1.0F);
@@ -250,27 +272,82 @@ public final class LightFlightRenderer {
             }
             BufferUploader.drawWithShader(buffer.end());
         }
+    }
+
+    private static void renderFlightMotes(Matrix4f matrix, ShaderInstance shader, LightFlightVisualState state,
+                                          float partialTick, Vec3 cameraPosition, Vec3 cameraRight, float alpha) {
+        var motes = state.flightMotes();
+        if (motes.isEmpty()) {
+            return;
+        }
         shader.safeGetUniform("Mode").set(4.0F);
+        BufferBuilder buffer = Tesselator.getInstance().getBuilder();
         buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR_TEX);
-        for (int spark = 0; spark < 24; spark++) {
-            float u = Mth.frac(spark * 0.618034F + time * (0.18F + (spark % 3) * 0.025F));
-            float distance = u * totalLength;
-            int segment = 1;
-            while (segment < count - 1 && distances[segment] < distance) {
-                segment++;
+        for (LightFlightVisualState.FlightMote mote : motes) {
+            float age = state.visualAge(partialTick) - mote.birthTick();
+            if (age <= 0.0F || age >= mote.lifetime()) {
+                continue;
             }
-            float fraction = (distance - distances[segment - 1])
-                    / Math.max(0.001F, distances[segment] - distances[segment - 1]);
-            Vec3 side = sides[segment - 1].lerp(sides[segment], fraction).normalize();
-            Vec3 tangent = trail.get(segment - 1).subtract(trail.get(segment)).normalize();
-            float spread = Mth.sin(u * Mth.PI) * (0.2F + (spark % 5) * 0.035F);
-            Vec3 point = trail.get(segment - 1).lerp(trail.get(segment), fraction).subtract(cameraPosition)
-                    .add(side.scale(Mth.sin(spark * 2.399963F + time * 0.6F) * spread))
-                    .add(ups[segment].scale(Mth.cos(spark * 1.37F) * spread));
-            float opacity = alpha * Mth.sin(u * Mth.PI) * (1.0F - u) * 0.7F;
-            float width = 0.009F + (spark % 3) * 0.003F;
-            float length = 0.035F + (spark % 4) * 0.016F;
-            appendBillboard(buffer, matrix, point, tangent.scale(length), side.scale(width), opacity);
+            float life = age / mote.lifetime();
+            double drift = (1.0D - Math.exp(-age * 0.065D)) / 0.065D;
+            double flutter = (Math.sin(age * 0.24D + mote.phase()) - Math.sin(mote.phase())) * 0.09D;
+            Vec3 center = mote.position().subtract(cameraPosition).add(mote.velocity().scale(drift))
+                    .add(flutter * Mth.cos(mote.phase()), age * 0.004D,
+                            flutter * Mth.sin(mote.phase()));
+            Vec3 view = center.scale(-1.0D).normalize();
+            Vec3 axis = mote.velocity().subtract(view.scale(mote.velocity().dot(view)));
+            if (axis.lengthSqr() < 0.000001D) {
+                axis = cameraRight;
+            }
+            axis = axis.normalize();
+            Vec3 side = axis.cross(view).normalize();
+            float fade = (float) Mth.smoothstep(Math.min(1.0F, age / 2.0F))
+                    * (1.0F - (float) Mth.smoothstep(life));
+            float twinkle = 0.82F + 0.18F * Mth.sin(mote.phase() + age * 0.33F);
+            float nearFade = Mth.clamp((float) center.length() - 0.2F, 0.0F, 1.0F);
+            appendBillboard(buffer, matrix, center, axis.scale(mote.size() * (2.8F - life)),
+                    side.scale(mote.size()), alpha * fade * twinkle * nearFade);
+        }
+        BufferUploader.drawWithShader(buffer.end());
+    }
+
+    private static void renderFlightEnvelope(Matrix4f matrix, ShaderInstance shader, Vec3 position,
+                                             Vec3 direction, Vec3 cameraPosition, float time,
+                                             float boost, float alpha) {
+        Vec3 forward = direction.lengthSqr() < 0.0001D ? new Vec3(0.0D, 0.0D, 1.0D) : direction.normalize();
+        Vec3 side = forward.cross(new Vec3(0.0D, 1.0D, 0.0D));
+        if (side.lengthSqr() < 0.0001D) {
+            side = forward.cross(new Vec3(1.0D, 0.0D, 0.0D));
+        }
+        side = side.normalize();
+        Vec3 up = side.cross(forward).normalize();
+        Vec3 center = position.subtract(cameraPosition);
+        float nearFade = Mth.clamp(((float) center.length() - 0.8F) / 1.2F, 0.0F, 1.0F);
+        shader.safeGetUniform("Mode").set(6.0F);
+        BufferBuilder buffer = Tesselator.getInstance().getBuilder();
+        buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR_TEX);
+        for (int ring = 0; ring < 16; ring++) {
+            for (int slice = 0; slice < 24; slice++) {
+                for (int corner = 0; corner < 4; corner++) {
+                    float u = (ring + (corner == 1 || corner == 2 ? 1 : 0)) / 16.0F;
+                    float v = (slice + (corner >= 2 ? 1 : 0)) / 24.0F;
+                    float angle = v * Mth.TWO_PI;
+                    float latitude = u * Mth.PI;
+                    Vec3 radial = side.scale(Mth.cos(angle)).add(up.scale(Mth.sin(angle)));
+                    float ripple = 1.0F + Mth.sin(angle * 3.0F + u * 8.0F - time * 3.2F) * 0.045F
+                            + Mth.sin(angle * 5.0F - u * 11.0F + time * 2.1F) * 0.025F;
+                    float radius = Mth.sin(latitude) * (0.43F + boost * 0.08F) * ripple;
+                    Vec3 point = center.add(forward.scale(Mth.cos(latitude) * (0.82F + boost * 0.2F) - 0.22F))
+                            .add(radial.scale(radius));
+                    Vec3 normal = forward.scale(Mth.cos(latitude) / (0.82F + boost * 0.2F))
+                            .add(radial.scale(Mth.sin(latitude) / (0.43F + boost * 0.08F))).normalize();
+                    float facing = (float) normal.dot(point.scale(-1.0D).normalize());
+                    float rim = (float) Math.pow(1.0F - Math.abs(facing), 1.5D)
+                            * (float) Mth.smoothstep(Math.min(1.0F, Math.abs(facing) / 0.3F));
+                    float opacity = alpha * nearFade * (0.08F + rim * 0.46F) * (facing >= 0.0F ? 1.0F : 0.3F);
+                    appendVertex(buffer, matrix, point, opacity, u, v);
+                }
+            }
         }
         BufferUploader.drawWithShader(buffer.end());
     }
@@ -287,7 +364,9 @@ public final class LightFlightRenderer {
         Vec3 center = worldCenter.subtract(cameraPosition);
         float progress = ClientLightFlightManager.getStopImpactProgress(partialTick);
         float expansion = 1.0F - (float) Math.exp(-progress * 16.0D);
-        float fade = 1.0F - (float) Mth.smoothstep(progress);
+        float nearFade = (float) Mth.smoothstep(Mth.clamp((float) center.length() / 2.0F, 0.0F, 1.0F));
+        nearFade *= nearFade;
+        float fade = (1.0F - (float) Mth.smoothstep(progress)) * nearFade;
         shader.safeGetUniform("ImpactProgress").set(progress);
         shader.safeGetUniform("Boost").set(0.0F);
         BufferBuilder buffer = Tesselator.getInstance().getBuilder();
@@ -296,7 +375,7 @@ public final class LightFlightRenderer {
         for (int plume = 0; plume < 9; plume++) {
             float angle = plume * 2.399963F;
             float radius = expansion * (0.45F + (plume % 3) * 0.24F);
-            Vec3 point = center.add(cameraRight.scale(Mth.cos(angle) * radius))
+            Vec3 point = center.add(Mth.cos(angle) * radius, 0.0D, Mth.sin(angle * 1.3F) * radius * 0.65D)
                     .add(0.0D, Mth.sin(angle) * radius + progress * 0.95F, 0.0D);
             float size = 0.3F + expansion * (0.42F + (plume % 3) * 0.14F);
             appendBillboard(buffer, matrix, point, cameraRight.scale(size), cameraUp.scale(size * 1.8F),
@@ -326,7 +405,8 @@ public final class LightFlightRenderer {
         buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR_TEX);
         float flash = 1.0F - (float) Mth.smoothstep(Mth.clamp(progress / 0.58F, 0.0F, 1.0F));
         float size = 1.3F + expansion * 0.7F;
-        appendBillboard(buffer, matrix, center, cameraRight.scale(size), cameraUp.scale(size), flash);
+        Vec3 flashCenter = center.subtract(center.normalize().scale(Math.min(0.4D, center.length() * 0.25D)));
+        appendBillboard(buffer, matrix, flashCenter, cameraRight.scale(size), cameraUp.scale(size), flash * nearFade);
         BufferUploader.drawWithShader(buffer.end());
     }
 
