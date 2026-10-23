@@ -80,15 +80,15 @@ run/config/ninecun_lingtai-common.toml
 
 | 目标                        | 文档                                             |
 |---------------------------|------------------------------------------------|
-| 世界观、灵根、灵气、境界与寿元           | [docs/一些基础设定.md](docs/一些基础设定.md)               |
-| 五行相生相克与环境灵气               | [docs/五行相生.md](docs/五行相生.md)                   |
-| 功法、法术和防御法术规则              | [docs/功法.md](docs/功法.md)                       |
-| 功法数据包字段                   | [docs/功法数据包格式.md](docs/功法数据包格式.md)             |
-| 伤害元素和环境规则数据包              | [docs/伤害元素JSON说明.md](docs/伤害元素JSON说明.md)       |
-| 炼丹设计                      | [docs/炼丹.md](docs/炼丹.md)                       |
-| 储物戒指设计                    | [docs/储物戒指.md](docs/储物戒指.md)                   |
-| 灵石生成和品级                   | [docs/灵石.md](docs/灵石.md)                       |
-| Filters API 的复杂 NBT 创意栏兼容 | [docs/Fitter API 修复.md](docs/Fitter API 修复.md) |
+| 世界观、灵根、灵气、境界与寿元           | [docs/一些基础设定.md](一些基础设定.md)               |
+| 五行相生相克与环境灵气               | [docs/五行相生.md](五行相生.md)                   |
+| 功法、法术和防御法术规则              | [docs/功法.md](功法.md)                       |
+| 功法数据包字段                   | [docs/功法数据包格式.md](功法数据包格式.md)             |
+| 伤害元素和环境规则数据包              | [docs/伤害元素JSON说明.md](伤害元素JSON说明.md)       |
+| 炼丹设计                      | [docs/炼丹.md](炼丹.md)                       |
+| 储物戒指设计                    | [docs/储物戒指.md](储物戒指.md)                   |
+| 灵石生成和品级                   | [docs/灵石.md](灵石.md)                       |
+| Filters API 的复杂 NBT 创意栏兼容 | [docs/Fitter API 修复.md](Fitter%20API%20修复.md) |
 | 前置和开发辅助模组                 | [docs/必须(前置内容)：.md](docs/必须(前置内容)：.md)         |
 
 `docs/修仙_by at(或许可以参考一下？)/` 下的资料是世界观和灵感参考，不应在没有明确设计确认的
