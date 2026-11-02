@@ -11,6 +11,7 @@ import net.seraphina.ninecun_lingtai.client.tooltip.BookTooltipComponent;
 import net.seraphina.ninecun_lingtai.client.tooltip.FiveElementWheelClientTooltipComponent;
 import net.seraphina.ninecun_lingtai.client.tooltip.FiveElementWheelTooltipComponent;
 import net.seraphina.ninecun_lingtai.client.inventorytab.CultivationInfoTabRegistrar;
+import net.seraphina.ninecun_lingtai.client.inventorytab.DaoTitleTabRegistrar;
 import net.seraphina.ninecun_lingtai.client.inventorytab.AlchemyRecipeLibraryTabRegistrar;
 import net.seraphina.ninecun_lingtai.client.inventorytab.PlayerValueControlTabRegistrar;
 import net.seraphina.ninecun_lingtai.client.inventorytab.TechniqueLibraryTabRegistrar;
@@ -159,6 +160,7 @@ public final class ClientModEventHandler {
             MeditationAnimationManager.register();
             LightFlightAnimationManager.register();
             CultivationInfoTabRegistrar.register();
+            DaoTitleTabRegistrar.register();
             TechniqueLibraryTabRegistrar.register();
             AlchemyRecipeLibraryTabRegistrar.register();
             PlayerValueControlTabRegistrar.register();

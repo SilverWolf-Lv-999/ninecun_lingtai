@@ -6,6 +6,8 @@ import net.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
+import net.seraphina.ninecun_lingtai.common.daotitle.DaoTitleManager;
 
 import java.util.Optional;
 
@@ -42,10 +44,20 @@ public final class PlayerCultivationData {
         stageData.putString(REALM_KEY, stage.realm().getSerializedName());
         stageData.putInt(LAYER_KEY, stage.layer());
         player.getPersistentData().put(CULTIVATION_KEY, stageData);
+        if (player instanceof ServerPlayer serverPlayer) {
+            serverPlayer.refreshDisplayName();
+            serverPlayer.refreshTabListName();
+            DaoTitleManager.syncToAll(serverPlayer);
+        }
     }
 
     public static void clearStage(Player player) {
         player.getPersistentData().remove(CULTIVATION_KEY);
+        if (player instanceof ServerPlayer serverPlayer) {
+            serverPlayer.refreshDisplayName();
+            serverPlayer.refreshTabListName();
+            DaoTitleManager.syncToAll(serverPlayer);
+        }
     }
 
     public static void copy(Player sourcePlayer, Player targetPlayer) {

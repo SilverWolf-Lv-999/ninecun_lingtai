@@ -1,0 +1,15 @@
+package net.seraphina.ninecun_lingtai.common.player;
+
+import net.seraphina.ninecun_lingtai.api.cultivation.CultivationRealm;
+import net.seraphina.ninecun_lingtai.api.daotitle.DaoTitleSuffix;
+
+public record DaoTitleSnapshot(String customName, DaoTitleSuffix immortalSuffix, CultivationRealm realm) {
+    public DaoTitleSnapshot {
+        customName = customName == null ? "" : customName;
+        immortalSuffix = immortalSuffix == null ? DaoTitleSuffix.IMMORTAL : immortalSuffix;
+    }
+
+    public boolean isUnlocked() {
+        return this.realm != null && this.realm.ordinal() >= CultivationRealm.GOLDEN_CORE.ordinal();
+    }
+}

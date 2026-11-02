@@ -50,6 +50,9 @@ import net.seraphina.ninecun_lingtai.common.network.packet.PushingMountainsResto
 import net.seraphina.ninecun_lingtai.common.network.packet.PushingMountainsSelectPointPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.PushingMountainsThrowPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.RequestCultivationInfoPacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.RequestDaoTitlePacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.SetDaoTitlePacket;
+import net.seraphina.ninecun_lingtai.common.network.packet.SyncDaoTitlePacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.ReleasePalmBuddhaMemberPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.RequestPalmBuddhaCandidatesPacket;
 import net.seraphina.ninecun_lingtai.common.network.packet.RequestPalmBuddhaMembersPacket;
@@ -128,6 +131,7 @@ import net.seraphina.ninecun_lingtai.common.flight.LightFlightManager;
 import net.seraphina.ninecun_lingtai.common.player.PlayerLightFlightData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerShrinkEarthData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerValueControlData;
+import net.seraphina.ninecun_lingtai.utility.DaoTitleUtility;
 import net.seraphina.ninecun_lingtai.common.player.PlayerSwordFlightData;
 import net.seraphina.ninecun_lingtai.common.player.DefenseResourceSnapshot;
 import net.seraphina.ninecun_lingtai.common.player.DefenseSpellSnapshot;
@@ -361,6 +365,33 @@ public final class ModNetwork {
                 .encoder(OpenAscensionQuestionScreenPacket::encode)
                 .decoder(OpenAscensionQuestionScreenPacket::decode)
                 .consumerMainThread(OpenAscensionQuestionScreenPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        RequestDaoTitlePacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(RequestDaoTitlePacket::encode)
+                .decoder(RequestDaoTitlePacket::decode)
+                .consumerMainThread(RequestDaoTitlePacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        SetDaoTitlePacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_SERVER
+                )
+                .encoder(SetDaoTitlePacket::encode)
+                .decoder(SetDaoTitlePacket::decode)
+                .consumerMainThread(SetDaoTitlePacket::handle)
+                .add();
+        CHANNEL.messageBuilder(
+                        SyncDaoTitlePacket.class,
+                        getId(),
+                        NetworkDirection.PLAY_TO_CLIENT
+                )
+                .encoder(SyncDaoTitlePacket::encode)
+                .decoder(SyncDaoTitlePacket::decode)
+                .consumerMainThread(SyncDaoTitlePacket::handle)
                 .add();
         CHANNEL.messageBuilder(
                         RequestCultivationInfoPacket.class,
@@ -1138,6 +1169,12 @@ public final class ModNetwork {
                 .add();
     }
 
+    public static void sendDaoTitle(ServerPlayer recipient, ServerPlayer subject) {
+        CHANNEL.send(
+                PacketDistributor.PLAYER.with(() -> recipient),
+                new SyncDaoTitlePacket(subject.getUUID(), DaoTitleUtility.getSnapshot(subject))
+        );
+    }
     public static void sendOpenSealCarveScreen(ServerPlayer player, OpenSealCarveScreenPacket packet) {
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), packet);
     }
@@ -1816,5 +1853,3 @@ public final class ModNetwork {
         CHANNEL.sendToServer(packet);
     }
 }
-
-
