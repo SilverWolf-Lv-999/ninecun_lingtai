@@ -16,6 +16,10 @@ public final class CustomFontConstants {
             ModMain.MOD_ID,
             "technique"
     );
+    public static final ResourceLocation DAO_TITLE_FONT_ID = ResourceLocation.fromNamespaceAndPath(
+            ModMain.MOD_ID,
+            "dao_title"
+    );
     public static final ResourceLocation TECHNIQUE_DISPLAY_FONT_ID =
             ResourceLocation.fromNamespaceAndPath(
                     ModMain.MOD_ID,
