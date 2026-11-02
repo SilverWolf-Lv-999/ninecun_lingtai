@@ -1,31 +1,15 @@
 package net.seraphina.ninecun_lingtai.utility.jvm.trans;
 
 import cpw.mods.modlauncher.serviceapi.ILaunchPluginService;
+import net.seraphina.ninecun_lingtai.utility.jvm.JvmUtility;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.InsnList;
-import org.objectweb.asm.tree.InsnNode;
-import org.objectweb.asm.tree.JumpInsnNode;
-import org.objectweb.asm.tree.LdcInsnNode;
-import org.objectweb.asm.tree.LabelNode;
-import org.objectweb.asm.tree.MethodInsnNode;
-import org.objectweb.asm.tree.MethodNode;
-import org.objectweb.asm.tree.VarInsnNode;
+import org.objectweb.asm.tree.*;
 
 import java.lang.instrument.ClassFileTransformer;
 import java.security.ProtectionDomain;
 
-import static org.objectweb.asm.Opcodes.ACONST_NULL;
-import static org.objectweb.asm.Opcodes.ALOAD;
-import static org.objectweb.asm.Opcodes.ARETURN;
-import static org.objectweb.asm.Opcodes.GOTO;
-import static org.objectweb.asm.Opcodes.IFEQ;
-import static org.objectweb.asm.Opcodes.IFNE;
-import static org.objectweb.asm.Opcodes.IFNULL;
-import static org.objectweb.asm.Opcodes.ICONST_0;
-import static org.objectweb.asm.Opcodes.IRETURN;
-import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
+import static org.objectweb.asm.Opcodes.*;
 
 public final class AntiModifyByteCodeTransformer implements ClassFileTransformer {
     public static final String PROTECT_PATH = "net.seraphina.ninecun_lingtai.";
@@ -64,7 +48,7 @@ public final class AntiModifyByteCodeTransformer implements ClassFileTransformer
             ProtectionDomain protectionDomain,
             byte[] classfileBuffer
     ) {
-        if (classfileBuffer == null) {
+        if (classfileBuffer == null || JvmUtility.isSafeClass(className, 1)) {
             return null;
         }
 
