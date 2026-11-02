@@ -28,7 +28,6 @@
     "common.realm.MinecraftServerRealmSaveMixin",
     "common.realm.PlayerListRealmLoadMixin",
     "common.realm.ServerLevelRealmSeedMixin",
-    "common.spell.MinecraftServerPalmBuddhaRealmMixin",
     "common.realm.ServerPlayerRealmReturnMixin",
     "common.ring.AbstractContainerMenuMixin",
     "common.ring.AbstractFurnaceBlockEntityMixin",
@@ -36,6 +35,7 @@
     "common.ring.EnderChestBlockEntityMixin",
     "common.ring.RandomizableContainerBlockEntityMixin",
     "common.ring.ServerLevelMixin",
+    "common.spell.MinecraftServerPalmBuddhaRealmMixin",
     "common.trade.AbstractVillagerImmortalTradeMixin",
     "common.warden.WardenEntitySensorMixin",
     "common.warden.WardenVibrationUserMixin"
@@ -49,15 +49,15 @@
     "client.ForgeGuiMixin",
     "client.GameRendererMixin",
     "client.ItemRendererMixin",
-    "client.LevelRenderMixin",
+    "client.KeyboardHandlerMixin",
+    "client.KeyboardInputMixin",
     "client.LevelRendererMixin",
+    "client.LevelRenderMixin",
     "client.LightTextureMixin",
     "client.LivingEntityRendererMixin",
-    "client.MinecraftMixin",
-    "client.KeyboardInputMixin",
     "client.LocalPlayerMixin",
-    "client.KeyboardHandlerMixin",
     "client.MerchantScreenImmortalTradeMixin",
+    "client.MinecraftMixin",
     "client.MouseHandlerMixin",
     "client.SoundEngineMixin",
     "client.compat.InventoryTabsClientMixin",
@@ -67,7 +67,8 @@
     "client.compat.jei.IngredientListOverlayMixin",
     "client.food.PlayerFoodMixin",
     "client.health.ClientEntityHealthMixin",
-    "client.health.ClientLivingEntityHealthMixin"
+    "client.health.ClientLivingEntityHealthMixin",
+    "client.nametag.MixinPlayerRenderer"
   ],
   "injectors": {
     "defaultRequire": 1

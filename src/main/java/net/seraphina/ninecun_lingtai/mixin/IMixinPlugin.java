@@ -63,6 +63,7 @@ public final class IMixinPlugin implements IMixinConfigPlugin {
             return false;
         }
 
+
         if (classNode == null) {
             return false;
         }
