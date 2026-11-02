@@ -2,28 +2,44 @@ package net.seraphina.ninecun_lingtai.utility;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.seraphina.ninecun_lingtai.common.font.CustomFontConstants;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.network.chat.Style;
 import net.seraphina.ninecun_lingtai.api.cultivation.CultivationRealm;
 import net.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
+import net.seraphina.ninecun_lingtai.api.daotitle.DaoTitleColors;
 import net.seraphina.ninecun_lingtai.api.daotitle.DaoTitleSuffix;
+import net.seraphina.ninecun_lingtai.common.font.CustomFontConstants;
 import net.seraphina.ninecun_lingtai.common.player.DaoTitleSnapshot;
 import net.seraphina.ninecun_lingtai.common.player.PlayerCultivationData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerDaoTitleData;
+import net.minecraft.world.entity.player.Player;
 
 public final class DaoTitleUtility {
+    public static final String DAO_TITLE_GRADIENT_PREFIX = "ninecun_lingtai:dao_title_gradient:";
+
     public static DaoTitleSnapshot getSnapshot(Player player) {
         CultivationStage stage = PlayerCultivationData.getStage(player).orElse(null);
         return new DaoTitleSnapshot(
                 PlayerDaoTitleData.getCustomName(player),
                 PlayerDaoTitleData.getImmortalSuffix(player),
-                stage == null ? null : stage.realm()
+                stage == null ? null : stage.realm(),
+                PlayerDaoTitleData.getColors(player)
         );
     }
 
     public static String getDisplayTitle(Player player) {
-        DaoTitleSnapshot snapshot = getSnapshot(player);
-        return getDisplayTitle(snapshot);
+        return getDisplayTitle(getSnapshot(player));
+    }
+
+    public static boolean isValidCustomName(String customName) {
+        if (customName == null) {
+            return false;
+        }
+        int length = customName.codePointCount(0, customName.length());
+        return length >= 2
+                && length <= 10
+                && customName.codePoints().allMatch(
+                codePoint -> Character.UnicodeScript.of(codePoint) == Character.UnicodeScript.HAN
+        );
     }
 
     public static String getDisplayTitle(DaoTitleSnapshot snapshot) {
@@ -44,12 +60,27 @@ public final class DaoTitleUtility {
     }
 
     public static MutableComponent formatName(Component username, String title) {
+        return formatName(username, title, DaoTitleColors.defaults());
+    }
+
+    public static MutableComponent formatName(Component username, DaoTitleSnapshot snapshot) {
+        return formatName(username, getDisplayTitle(snapshot), snapshot.colors());
+    }
+
+    public static MutableComponent formatName(Component username, String title, DaoTitleColors colors) {
         if (title == null || title.isBlank()) {
             return username.copy();
         }
-        return Component.literal("[ " + title + " ] ")
-                .withStyle(style -> style.withFont(CustomFontConstants.DAO_TITLE_FONT_ID))
-                .append(username.copy());
+        String prefix = "[ " + title + " ] ";
+        MutableComponent result = Component.empty();
+        for (int index = 0; index < prefix.length(); index++) {
+            result.append(Component.literal(String.valueOf(prefix.charAt(index))).withStyle(
+                    Style.EMPTY
+                            .withFont(CustomFontConstants.DAO_TITLE_FONT_ID)
+                            .withInsertion(DAO_TITLE_GRADIENT_PREFIX + colors.firstColor() + ":" + colors.secondColor() + ":" + index)
+            ));
+        }
+        return result.append(username.copy());
     }
 
     public static boolean hasTitle(Component component) {
@@ -60,4 +91,5 @@ public final class DaoTitleUtility {
         DaoTitleSuffix[] suffixes = DaoTitleSuffix.values();
         return index >= 0 && index < suffixes.length ? suffixes[index] : DaoTitleSuffix.IMMORTAL;
     }
+
 }

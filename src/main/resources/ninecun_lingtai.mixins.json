@@ -41,6 +41,7 @@
     "common.warden.WardenVibrationUserMixin"
   ],
   "client": [
+    "client.FontStringRenderOutputMixin",
     "client.AbstractClientPlayerMixin",
     "client.CameraMixin",
     "client.ClientPacketListenerMixin",

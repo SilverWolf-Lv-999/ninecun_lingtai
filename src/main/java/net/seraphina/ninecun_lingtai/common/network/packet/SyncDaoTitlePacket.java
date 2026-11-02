@@ -5,6 +5,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
 import net.seraphina.ninecun_lingtai.api.cultivation.CultivationRealm;
+import net.seraphina.ninecun_lingtai.api.daotitle.DaoTitleColors;
 import net.seraphina.ninecun_lingtai.api.daotitle.DaoTitleSuffix;
 import net.seraphina.ninecun_lingtai.client.player.ClientDaoTitleManager;
 import net.seraphina.ninecun_lingtai.common.player.DaoTitleSnapshot;
@@ -19,6 +20,8 @@ public record SyncDaoTitlePacket(UUID playerId, DaoTitleSnapshot snapshot) {
         buffer.writeUtf(packet.snapshot.customName(), 64);
         buffer.writeVarInt(packet.snapshot.immortalSuffix().ordinal());
         buffer.writeVarInt(packet.snapshot.realm() == null ? -1 : packet.snapshot.realm().ordinal());
+        buffer.writeInt(packet.snapshot.colors().firstColor());
+        buffer.writeInt(packet.snapshot.colors().secondColor());
     }
 
     public static SyncDaoTitlePacket decode(FriendlyByteBuf buffer) {
@@ -28,12 +31,13 @@ public record SyncDaoTitlePacket(UUID playerId, DaoTitleSnapshot snapshot) {
         int realmIndex = buffer.readVarInt();
         CultivationRealm[] realms = CultivationRealm.values();
         CultivationRealm realm = realmIndex >= 0 && realmIndex < realms.length ? realms[realmIndex] : null;
-        return new SyncDaoTitlePacket(playerId, new DaoTitleSnapshot(customName, suffix, realm));
+        DaoTitleColors colors = new DaoTitleColors(buffer.readInt(), buffer.readInt());
+        return new SyncDaoTitlePacket(playerId, new DaoTitleSnapshot(customName, suffix, realm, colors));
     }
 
     public static void handle(SyncDaoTitlePacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
         NetworkEvent.Context context = contextSupplier.get();
-        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClientDaoTitleManager.accept(packet.playerId, packet.snapshot));
+        context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClientDaoTitleManager.accept(packet.playerId, packet.snapshot)));
         context.setPacketHandled(true);
     }
 }

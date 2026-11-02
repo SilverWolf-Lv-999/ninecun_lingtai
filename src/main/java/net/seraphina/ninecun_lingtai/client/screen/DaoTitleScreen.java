@@ -31,7 +31,13 @@ public final class DaoTitleScreen extends Screen {
         int left = (this.width - panelWidth) / 2;
         this.customNameBox = new EditBox(this.font, left + 20, this.height / 2 - 48, panelWidth - 40, 20,
                 Component.translatable("screen.ninecun_lingtai.dao_title.custom_name"));
-        this.customNameBox.setMaxLength(32);
+        this.customNameBox.setMaxLength(10);
+        this.customNameBox.setFilter(value -> value.isEmpty()
+                || (value.codePointCount(0, value.length()) <= 10
+                && value.codePoints().allMatch(
+                codePoint -> Character.UnicodeScript.of(codePoint) == Character.UnicodeScript.HAN
+        )));
+        this.customNameBox.setHint(Component.translatable("screen.ninecun_lingtai.dao_title.custom_name_hint"));
         DaoTitleSnapshot snapshot = ClientDaoTitleManager.getLocalSnapshot();
         if (snapshot != null) {
             this.customNameBox.setValue(snapshot.customName());
@@ -82,11 +88,20 @@ public final class DaoTitleScreen extends Screen {
             String preview = DaoTitleUtility.getDisplayTitle(new DaoTitleSnapshot(
                     this.customNameBox == null ? snapshot.customName() : this.customNameBox.getValue(),
                     this.selectedSuffix,
-                    snapshot.realm()
+                    snapshot.realm(),
+                    snapshot.colors()
             ));
             previewText = preview.isBlank()
                     ? Component.translatable("screen.ninecun_lingtai.dao_title.locked")
-                    : DaoTitleUtility.formatName(Minecraft.getInstance().player.getName(), preview);
+                    : DaoTitleUtility.formatName(
+                            Minecraft.getInstance().player.getName(),
+                            new DaoTitleSnapshot(
+                                    this.customNameBox == null ? snapshot.customName() : this.customNameBox.getValue(),
+                                    this.selectedSuffix,
+                                    snapshot.realm(),
+                                    snapshot.colors()
+                            )
+                    );
         }
         guiGraphics.drawCenteredString(this.font, previewText, this.width / 2, top + 122, 0xFFE7D6B1);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
@@ -110,7 +125,10 @@ public final class DaoTitleScreen extends Screen {
             this.suffixButton.active = immortal;
         }
         if (this.saveButton != null) {
-            this.saveButton.active = unlocked;
+            this.saveButton.active = unlocked
+                    && this.customNameBox != null
+                    && (this.customNameBox.getValue().trim().isEmpty()
+                    || DaoTitleUtility.isValidCustomName(this.customNameBox.getValue().trim()));
         }
     }
 

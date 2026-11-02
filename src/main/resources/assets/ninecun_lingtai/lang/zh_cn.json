@@ -689,6 +689,7 @@
   "inventory_tab.ninecun_lingtai.dao_title": "道号",
   "screen.ninecun_lingtai.dao_title.title": "道号",
   "screen.ninecun_lingtai.dao_title.custom_name": "自定义道名",
+  "screen.ninecun_lingtai.dao_title.custom_name_hint": "仅限2-10个汉字",
   "screen.ninecun_lingtai.dao_title.suffix": "仙境尊号",
   "screen.ninecun_lingtai.dao_title.suffix_value": "%s",
   "screen.ninecun_lingtai.dao_title.preview": "预览",

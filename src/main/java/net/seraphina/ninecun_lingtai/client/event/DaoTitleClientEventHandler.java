@@ -30,7 +30,7 @@ public final class DaoTitleClientEventHandler {
         }
         String title = DaoTitleUtility.getDisplayTitle(snapshot);
         if (!title.isBlank()) {
-            event.setContent(DaoTitleUtility.formatName(event.getContent(), title));
+            event.setContent(DaoTitleUtility.formatName(event.getContent(), snapshot));
         }
     }
 

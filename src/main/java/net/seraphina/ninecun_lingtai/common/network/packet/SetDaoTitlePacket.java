@@ -22,8 +22,11 @@ public record SetDaoTitlePacket(String customName, int suffixIndex) {
     public static void handle(SetDaoTitlePacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
         NetworkEvent.Context context = contextSupplier.get();
         ServerPlayer player = context.getSender();
-        if (player != null && DaoTitleUtility.getSnapshot(player).isUnlocked()) {
-            PlayerDaoTitleData.set(player, packet.customName, DaoTitleUtility.getSuffix(packet.suffixIndex));
+        String customName = packet.customName == null ? "" : packet.customName.trim();
+        if (player != null
+                && DaoTitleUtility.getSnapshot(player).isUnlocked()
+                && (customName.isEmpty() || DaoTitleUtility.isValidCustomName(customName))) {
+            PlayerDaoTitleData.set(player, customName, DaoTitleUtility.getSuffix(packet.suffixIndex));
         }
         context.setPacketHandled(true);
     }

@@ -22,7 +22,7 @@ public final class AiResponseUtility {
         }
     }
 
-    private static String removeMarkdownFence(String content) {
+    public static String removeMarkdownFence(String content) {
         if (!content.startsWith("```") || !content.endsWith("```")) {
             return content;
         }
