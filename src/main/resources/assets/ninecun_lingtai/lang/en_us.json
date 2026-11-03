@@ -689,7 +689,7 @@
   "inventory_tab.ninecun_lingtai.dao_title": "Dao Title",
   "screen.ninecun_lingtai.dao_title.title": "Dao Title",
   "screen.ninecun_lingtai.dao_title.custom_name": "Custom dao name",
-  "screen.ninecun_lingtai.dao_title.custom_name_hint": "2-10 Chinese characters only",
+  "screen.ninecun_lingtai.dao_title.custom_name_hint": "1-10 Chinese characters only",
   "screen.ninecun_lingtai.dao_title.suffix": "Immortal suffix",
   "screen.ninecun_lingtai.dao_title.suffix_value": "%s",
   "screen.ninecun_lingtai.dao_title.preview": "Preview",

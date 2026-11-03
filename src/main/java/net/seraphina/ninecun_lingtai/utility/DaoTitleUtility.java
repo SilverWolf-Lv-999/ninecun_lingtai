@@ -35,7 +35,7 @@ public final class DaoTitleUtility {
             return false;
         }
         int length = customName.codePointCount(0, customName.length());
-        return length >= 2
+        return length >= 1
                 && length <= 10
                 && customName.codePoints().allMatch(
                 codePoint -> Character.UnicodeScript.of(codePoint) == Character.UnicodeScript.HAN
