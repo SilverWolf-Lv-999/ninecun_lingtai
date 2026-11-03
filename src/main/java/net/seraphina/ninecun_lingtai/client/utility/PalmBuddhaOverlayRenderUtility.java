@@ -20,6 +20,7 @@ import net.seraphina.ninecun_lingtai.common.spell.palm_buddha.PalmBuddhaCandidat
 import net.seraphina.ninecun_lingtai.common.spell.palm_buddha.PalmBuddhaMemberPacketLimits;
 import net.seraphina.ninecun_lingtai.common.spell.palm_buddha.PalmBuddhaMemberPageSnapshot;
 import net.seraphina.ninecun_lingtai.common.spell.palm_buddha.PalmBuddhaMemberSnapshot;
+import net.seraphina.ninecun_lingtai.utility.CultivationUtility;
 import org.joml.Matrix4f;
 
 /** Renders the first Palm Buddha member page with one shader-backed surface. */
@@ -302,7 +303,7 @@ public final class PalmBuddhaOverlayRenderUtility {
                     )
             );
             String cultivation = candidate.cultivationStage()
-                    .map(stage -> stage.realm().getChineseName() + " " + stage.layer() + "层")
+                    .map(stage -> CultivationUtility.getDisplayName(stage))
                     .orElse("未显境界");
             String kind = candidate.kind()
                     == net.seraphina.ninecun_lingtai.common.spell.palm_buddha.PalmBuddhaMemberKind.CREATURE

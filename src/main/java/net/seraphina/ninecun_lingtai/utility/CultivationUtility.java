@@ -68,10 +68,12 @@ public final class CultivationUtility {
     }
 
     public static String getDisplayName(CultivationStage stage) {
+        String layer = ChineseNumberUtility.toChineseInteger(stage.layer());
+        if (stage.realm() == CultivationRealm.IMMORTAL) {
+            return layer + "劫仙人";
+        }
         String layerUnit = stage.realm().usesHeavenlyLayerName() ? "重天" : "层";
-        return stage.realm().getChineseName()
-                + ChineseNumberUtility.toChineseInteger(stage.layer())
-                + layerUnit;
+        return stage.realm().getChineseName() + layer + layerUnit;
     }
 
     public static int getProgressionIndex(CultivationStage stage) {

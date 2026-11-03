@@ -16,12 +16,33 @@ public final class CultivationCombatUtility {
             Optional<CultivationStage> attackerStage,
             Optional<CultivationStage> defenderStage
     ) {
-        return attackerStage
-                .map(stage -> stage.realm().ordinal() >= CultivationRealm.SPIRIT_TRANSFORMATION.ordinal())
-                .orElse(false)
-                && defenderStage
-                .map(stage -> stage.realm().ordinal() < CultivationRealm.SPIRIT_TRANSFORMATION.ordinal())
-                .orElse(true);
+        if (attackerStage.isEmpty()) {
+            return false;
+        }
+
+        CultivationStage attacker = attackerStage.get();
+        if (attacker.realm().ordinal() < CultivationRealm.SPIRIT_TRANSFORMATION.ordinal()) {
+            return false;
+        }
+        if (defenderStage.isEmpty()) {
+            return true;
+        }
+
+        CultivationStage defender = defenderStage.get();
+        if (defender.realm().ordinal() < CultivationRealm.SPIRIT_TRANSFORMATION.ordinal()) {
+            return true;
+        }
+        if (attacker.realm() == CultivationRealm.IMMORTAL || attacker.realm() != defender.realm()) {
+            return false;
+        }
+
+        int requiredMinorRealmGap = switch (attacker.realm()) {
+            case SPIRIT_TRANSFORMATION -> 3;
+            case DAO_INTEGRATION -> 2;
+            case VOID_REFINEMENT, MAHAYANA -> 1;
+            default -> 0;
+        };
+        return attacker.layer() - defender.layer() >= requiredMinorRealmGap;
     }
 
     public static boolean canInstantlyKillLowerRealmCultivator(

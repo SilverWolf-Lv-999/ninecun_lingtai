@@ -4,6 +4,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
+import net.seraphina.ninecun_lingtai.utility.CultivationUtility;
 import net.seraphina.ninecun_lingtai.utility.DimensionNameUtility;
 import net.seraphina.ninecun_lingtai.utility.EntityUtility;
 import net.seraphina.ninecun_lingtai.utility.GreatCausalityUtility;
@@ -144,7 +145,7 @@ public final class GreatCausalityQueryService {
     private static CausalityPlayerSnapshot createPlayerSnapshot(ServerPlayer player) {
         String cultivation = player.getName().getString();
         cultivation = net.seraphina.ninecun_lingtai.api.cultivation.CultivationApi.getStage(player)
-                .map(stage -> stage.realm().getChineseName() + " " + stage.layer() + "层")
+                .map(stage -> CultivationUtility.getDisplayName(stage))
                 .orElse("凡人");
         return new CausalityPlayerSnapshot(
                 player.getUUID(),

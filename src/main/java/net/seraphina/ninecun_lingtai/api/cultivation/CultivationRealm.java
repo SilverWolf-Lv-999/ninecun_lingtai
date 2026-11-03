@@ -37,7 +37,7 @@ public enum CultivationRealm {
     }
 
     public boolean usesHeavenlyLayerName() {
-        return this.ordinal() >= SPIRIT_TRANSFORMATION.ordinal();
+        return this.ordinal() >= SPIRIT_TRANSFORMATION.ordinal() && this != IMMORTAL;
     }
 
     public Optional<CultivationRealm> next() {
