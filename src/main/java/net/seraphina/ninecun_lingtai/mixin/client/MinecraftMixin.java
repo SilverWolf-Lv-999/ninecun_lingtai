@@ -34,7 +34,6 @@ public abstract class MinecraftMixin {
             return;
         }
         if (pGuiScreen instanceof DeathScreen && ClientCultivationDefenseUtility.hasActiveDefense(player)) {
-            this.screen = null;
             EntityUtility.protectEntity(player);
             ci.cancel();
         }
@@ -43,7 +42,6 @@ public abstract class MinecraftMixin {
     @Inject(method = "forceSetScreen", at = @At("HEAD"), cancellable = true)
     private void forceSetScreen(Screen pScreen, CallbackInfo ci) {
         if (pScreen instanceof DeathScreen && ClientCultivationDefenseUtility.hasActiveDefense(player)) {
-            this.screen = null;
             EntityUtility.protectEntity(player);
             ci.cancel();
         }

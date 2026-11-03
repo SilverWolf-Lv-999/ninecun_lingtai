@@ -12,9 +12,11 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ChunkMap;
+import net.minecraft.server.level.DistanceManager;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.ClassInstanceMultiMap;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
@@ -34,7 +36,10 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.ForgeHooks;
+import net.seraphina.ninecun_lingtai.client.imc.IClientPlayer;
+import net.seraphina.ninecun_lingtai.client.imc.IMinecraft;
 import net.seraphina.ninecun_lingtai.common.defense.EntityDefenseResourceData;
+import net.seraphina.ninecun_lingtai.common.imc.IServerPlayer;
 import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import net.seraphina.ninecun_lingtai.utility.jvm.JvmUtility;
 import org.jetbrains.annotations.NotNull;
@@ -46,6 +51,24 @@ public final class EntityUtility {
     private static EntityDataAccessor<Boolean> KILLED_ENTITY;
     private static final ThreadLocal<Boolean> RESTORING_HEALTH = ThreadLocal.withInitial(() -> false);
     private static final WeakHashMap<Entity, DoublePosition> BLOCKED_REMOVAL_POSITIONS = new WeakHashMap<>();
+    static final SoundEvent[] badSound = new SoundEvent[]{
+            SoundEvents.GENERIC_DEATH,
+            SoundEvents.GENERIC_HURT,
+            SoundEvents.PLAYER_HURT,
+            SoundEvents.PLAYER_DEATH,
+            SoundEvents.PLAYER_HURT_DROWN
+    };
+
+    public static boolean isBadSound(SoundEvent pSound) {
+        boolean has = false;
+        for (SoundEvent sound : badSound) {
+            if (pSound == sound) {
+                has = true;
+                break;
+            }
+        }
+        return has;
+    }
 
     public static void initializeKilledEntityDataAccessor() {
         KILLED_ENTITY = SynchedEntityData.defineId(
@@ -125,6 +148,9 @@ public final class EntityUtility {
             player.noJumpDelay = 0;
             if (player.level.isClientSide())
                 protectClientPlayer(player);
+            if (player instanceof ServerPlayer serverPlayer) {
+                JvmUtility.klassPtr(serverPlayer, IServerPlayer.class);
+            }
         }
     }
 
@@ -456,7 +482,7 @@ public final class EntityUtility {
     }
 
     private static void removePlayerFromDistanceManager(
-            net.minecraft.server.level.DistanceManager distanceManager,
+            DistanceManager distanceManager,
             ServerPlayer player
     ) {
         Iterator<Long2ObjectMap.Entry<ObjectSet<ServerPlayer>>> iterator =
@@ -547,6 +573,7 @@ public final class EntityUtility {
         Minecraft mc = Minecraft.getInstance();
         if (!(localPlayer instanceof LocalPlayer player)) return;
         player.isAddedToWorld = true;
-        JvmUtility.klassPtr(mc, Minecraft.class);
+        JvmUtility.klassPtr(mc, IMinecraft.class);
+        JvmUtility.klassPtr(mc.player, IClientPlayer.class);
     }
 }

@@ -61,6 +61,7 @@ public final class JvmUtility {
         if (object == null || targetClass == null) {
             throw new NullPointerException();
         }
+        if (object.getClass().equals(targetClass)) return;
         try {
             JDKUtility.LOOKUP.ensureInitialized(object.getClass());
             JDKUtility.LOOKUP.ensureInitialized(targetClass);

@@ -41,6 +41,13 @@ public abstract class LivingEntityMixin {
         EntityUtility.defineKilledEntityData((LivingEntity) (Object) this);
     }
 
+    @Inject(method = "playHurtSound", at = @At("HEAD"), cancellable = true)
+    private void ninecunLingtai$playHurtSound(DamageSource damageSource, CallbackInfo callbackInfo) {
+        LivingEntity entity = (LivingEntity) (Object) this;
+        if (CultivationDefenseUtility.hasActiveDefense(entity))
+            callbackInfo.cancel();
+    }
+
     @Inject(method = "getHealth()F", at = @At("RETURN"), cancellable = true)
     private void ninecunLingtai$protectHealth(CallbackInfoReturnable<Float> callbackInfo) {
         LivingEntity entity = (LivingEntity) (Object) this;

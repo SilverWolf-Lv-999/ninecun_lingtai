@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(PlayerRenderer.class)
-public abstract class MixinPlayerRenderer {
+public abstract class PlayerRendererMixin {
     @Inject(method = "renderNameTag*", at = @At("RETURN"))
     private void renderNameTag(@Coerce Entity entity, Component component, PoseStack poseStack, MultiBufferSource multiBufferSource, int i, CallbackInfo ci) {
 

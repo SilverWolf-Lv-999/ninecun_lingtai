@@ -21,6 +21,7 @@
     "common.food.PlayerMixin",
     "common.health.EntityMixin",
     "common.health.LivingEntityMixin",
+    "common.health.ServerPlayerMixin",
     "common.realm.BaseFireBlockRealmPortalMixin",
     "common.realm.DimensionArgumentRealmAccessMixin",
     "common.realm.EntityRealmReturnMixin",
@@ -41,12 +42,12 @@
     "common.warden.WardenVibrationUserMixin"
   ],
   "client": [
-    "client.FontStringRenderOutputMixin",
     "client.AbstractClientPlayerMixin",
     "client.CameraMixin",
     "client.ClientPacketListenerMixin",
     "client.CreativeModeInventoryScreenFiltersMixin",
     "client.DeathScreenMixin",
+    "client.FontStringRenderOutputMixin",
     "client.ForgeGuiMixin",
     "client.GameRendererMixin",
     "client.ItemRendererMixin",
@@ -69,7 +70,7 @@
     "client.food.PlayerFoodMixin",
     "client.health.ClientEntityHealthMixin",
     "client.health.ClientLivingEntityHealthMixin",
-    "client.nametag.MixinPlayerRenderer"
+    "client.nametag.PlayerRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

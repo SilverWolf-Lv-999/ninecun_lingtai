@@ -1,5 +1,6 @@
 package net.seraphina.ninecun_lingtai.mixin.common.health;
 
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.Entity.RemovalReason;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -106,6 +107,14 @@ public abstract class EntityMixin {
         if (EntityUtility.shouldBlockPositionChange(entity, x, y, z)) {
             EntityUtility.protectEntity(entity);
             callbackInfo.cancel();
+        }
+    }
+
+    @Inject(method = "playSound(Lnet/minecraft/sounds/SoundEvent;FF)V", at = @At("HEAD"), cancellable = true)
+    private void ninecunLingtai$playSound(SoundEvent pSound, float pVolume, float pPitch, CallbackInfo ci) {
+        Entity entity = (Entity) (Object) this;
+        if (entity instanceof LivingEntity livingEntity && CultivationDefenseUtility.hasActiveDefense(livingEntity) && EntityUtility.isBadSound(pSound)) {
+            ci.cancel();
         }
     }
 
