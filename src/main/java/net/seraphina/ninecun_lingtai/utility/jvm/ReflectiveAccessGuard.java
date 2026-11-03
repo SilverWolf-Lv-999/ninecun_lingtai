@@ -17,7 +17,10 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Member;
 import java.net.URL;
 import java.util.Enumeration;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 
 /**
  * Runtime boundary used by {@link ReflectiveAccessTransformer}.
@@ -33,8 +36,14 @@ public final class ReflectiveAccessGuard {
     public static final String GUARD_INTERNAL_NAME =
             "net/seraphina/ninecun_lingtai/utility/jvm/ReflectiveAccessGuard";
 
+    private static final Pattern SRG_NAME_PATTERN = Pattern.compile("[mf]_\\d+_");
     private static final StackWalker STACK_WALKER = StackWalker.getInstance(
             StackWalker.Option.RETAIN_CLASS_REFERENCE);
+    private static final Map<String, String> SRG_MAPPINGS = new ConcurrentHashMap<>();
+    private static volatile ClassLoader srgMappingLoader;
+    private static volatile Method srgRemapMethod;
+    private static volatile Object srgMethodDomain;
+    private static volatile Object srgFieldDomain;
 
     public static Class<?> forName(String className) throws ClassNotFoundException {
         checkClassName(className, "Class.forName");
@@ -410,8 +419,20 @@ public final class ReflectiveAccessGuard {
             String name,
             MethodType type
     ) throws NoSuchMethodException, IllegalAccessException {
-        checkLookupTarget(lookup, targetClass, name);
-        return lookup.findStatic(targetClass, name, type);
+        if (targetClass == Class.class
+                && "forName".equals(name)
+                && (type.equals(MethodType.methodType(Class.class, String.class))
+                || type.equals(MethodType.methodType(
+                Class.class,
+                String.class,
+                boolean.class,
+                ClassLoader.class
+        )))) {
+            return MethodHandles.lookup().findStatic(ReflectiveAccessGuard.class, "forName", type);
+        }
+        String lookupName = remapSrgName(targetClass, name);
+        checkLookupTarget(lookup, targetClass, lookupName);
+        return lookup.findStatic(targetClass, lookupName, type);
     }
 
     public static MethodHandle findVirtual(
@@ -420,8 +441,9 @@ public final class ReflectiveAccessGuard {
             String name,
             MethodType type
     ) throws NoSuchMethodException, IllegalAccessException {
-        checkLookupTarget(lookup, targetClass, name);
-        return lookup.findVirtual(targetClass, name, type);
+        String lookupName = remapSrgName(targetClass, name);
+        checkLookupTarget(lookup, targetClass, lookupName);
+        return lookup.findVirtual(targetClass, lookupName, type);
     }
 
     public static MethodHandle findConstructor(
@@ -440,9 +462,10 @@ public final class ReflectiveAccessGuard {
             MethodType type,
             Class<?> specialCaller
     ) throws NoSuchMethodException, IllegalAccessException {
-        checkLookupTarget(lookup, targetClass, name);
-        checkLookupTarget(lookup, specialCaller, name);
-        return lookup.findSpecial(targetClass, name, type, specialCaller);
+        String lookupName = remapSrgName(targetClass, name);
+        checkLookupTarget(lookup, targetClass, lookupName);
+        checkLookupTarget(lookup, specialCaller, lookupName);
+        return lookup.findSpecial(targetClass, lookupName, type, specialCaller);
     }
 
     public static MethodHandle findGetter(
@@ -451,8 +474,9 @@ public final class ReflectiveAccessGuard {
             String name,
             Class<?> fieldType
     ) throws NoSuchFieldException, IllegalAccessException {
-        checkLookupTarget(lookup, targetClass, name);
-        return lookup.findGetter(targetClass, name, fieldType);
+        String lookupName = remapSrgName(targetClass, name);
+        checkLookupTarget(lookup, targetClass, lookupName);
+        return lookup.findGetter(targetClass, lookupName, fieldType);
     }
 
     public static MethodHandle findSetter(
@@ -461,8 +485,9 @@ public final class ReflectiveAccessGuard {
             String name,
             Class<?> fieldType
     ) throws NoSuchFieldException, IllegalAccessException {
-        checkLookupTarget(lookup, targetClass, name);
-        return lookup.findSetter(targetClass, name, fieldType);
+        String lookupName = remapSrgName(targetClass, name);
+        checkLookupTarget(lookup, targetClass, lookupName);
+        return lookup.findSetter(targetClass, lookupName, fieldType);
     }
 
     public static MethodHandle findStaticGetter(
@@ -471,8 +496,9 @@ public final class ReflectiveAccessGuard {
             String name,
             Class<?> fieldType
     ) throws NoSuchFieldException, IllegalAccessException {
-        checkLookupTarget(lookup, targetClass, name);
-        return lookup.findStaticGetter(targetClass, name, fieldType);
+        String lookupName = remapSrgName(targetClass, name);
+        checkLookupTarget(lookup, targetClass, lookupName);
+        return lookup.findStaticGetter(targetClass, lookupName, fieldType);
     }
 
     public static MethodHandle findStaticSetter(
@@ -481,8 +507,9 @@ public final class ReflectiveAccessGuard {
             String name,
             Class<?> fieldType
     ) throws NoSuchFieldException, IllegalAccessException {
-        checkLookupTarget(lookup, targetClass, name);
-        return lookup.findStaticSetter(targetClass, name, fieldType);
+        String lookupName = remapSrgName(targetClass, name);
+        checkLookupTarget(lookup, targetClass, lookupName);
+        return lookup.findStaticSetter(targetClass, lookupName, fieldType);
     }
 
     public static VarHandle findVarHandle(
@@ -491,8 +518,9 @@ public final class ReflectiveAccessGuard {
             String name,
             Class<?> fieldType
     ) throws NoSuchFieldException, IllegalAccessException {
-        checkLookupTarget(lookup, targetClass, name);
-        return lookup.findVarHandle(targetClass, name, fieldType);
+        String lookupName = remapSrgName(targetClass, name);
+        checkLookupTarget(lookup, targetClass, lookupName);
+        return lookup.findVarHandle(targetClass, lookupName, fieldType);
     }
 
     public static VarHandle findStaticVarHandle(
@@ -501,8 +529,9 @@ public final class ReflectiveAccessGuard {
             String name,
             Class<?> fieldType
     ) throws NoSuchFieldException, IllegalAccessException {
-        checkLookupTarget(lookup, targetClass, name);
-        return lookup.findStaticVarHandle(targetClass, name, fieldType);
+        String lookupName = remapSrgName(targetClass, name);
+        checkLookupTarget(lookup, targetClass, lookupName);
+        return lookup.findStaticVarHandle(targetClass, lookupName, fieldType);
     }
 
     public static Class<?> findClass(
@@ -520,7 +549,11 @@ public final class ReflectiveAccessGuard {
             MethodType type
     ) throws NoSuchMethodException, IllegalAccessException {
         checkClass(lookup.lookupClass(), "MethodHandles.Lookup.bind");
-        return lookup.bind(receiver, name, type);
+        String lookupName = remapSrgName(
+                receiver == null ? lookup.lookupClass() : receiver.getClass(),
+                name
+        );
+        return lookup.bind(receiver, lookupName, type);
     }
 
     public static MethodHandle unreflect(
@@ -881,6 +914,65 @@ public final class ReflectiveAccessGuard {
         }
         return first.getProtectionDomain().getCodeSource().getLocation().equals(
                 second.getProtectionDomain().getCodeSource().getLocation());
+    }
+
+    private static String remapSrgName(Class<?> targetClass, String name) {
+        if (name == null || !SRG_NAME_PATTERN.matcher(name).matches()) {
+            return name;
+        }
+        String mappedName = SRG_MAPPINGS.get(name);
+        if (mappedName != null) {
+            return mappedName;
+        }
+        ClassLoader loader = targetClass == null ? null : targetClass.getClassLoader();
+        if (loader == null) {
+            return name;
+        }
+        try {
+            ensureSrgRemapMethod(loader);
+            Object domain = name.charAt(0) == 'f' ? srgFieldDomain : srgMethodDomain;
+            mappedName = (String) srgRemapMethod.invoke(null, domain, name);
+            SRG_MAPPINGS.put(name, mappedName);
+            return mappedName;
+        } catch (ReflectiveOperationException | LinkageError | RuntimeException exception) {
+            return name;
+        }
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static void ensureSrgRemapMethod(ClassLoader loader)
+            throws ReflectiveOperationException {
+        if (loader == srgMappingLoader && srgRemapMethod != null) {
+            return;
+        }
+        synchronized (SRG_MAPPINGS) {
+            if (loader == srgMappingLoader && srgRemapMethod != null) {
+                return;
+            }
+            Class<?> helperClass = Class.forName(
+                    "net.minecraftforge.fml.util.ObfuscationReflectionHelper",
+                    false,
+                    loader
+            );
+            Class<?> domainClass = Class.forName(
+                    "cpw.mods.modlauncher.api.INameMappingService$Domain",
+                    false,
+                    loader
+            );
+            Class<? extends Enum> enumType = (Class<? extends Enum>) domainClass;
+            Object methodDomain = Enum.valueOf(enumType, "METHOD");
+            Object fieldDomain = Enum.valueOf(enumType, "FIELD");
+            Method remapMethod = helperClass.getMethod(
+                    "remapName",
+                    domainClass,
+                    String.class
+            );
+            SRG_MAPPINGS.clear();
+            srgMethodDomain = methodDomain;
+            srgFieldDomain = fieldDomain;
+            srgRemapMethod = remapMethod;
+            srgMappingLoader = loader;
+        }
     }
 
 }

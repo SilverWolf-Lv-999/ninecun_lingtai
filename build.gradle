@@ -108,6 +108,33 @@ sourceSets.transformationService.runtimeClasspath += sourceSets.main.runtimeClas
 sourceSets.test.compileClasspath += sourceSets.transformationService.output
 sourceSets.test.runtimeClasspath += sourceSets.transformationService.output
 
+configurations {
+    rimulibSource
+    shootingStarSource
+}
+
+def patchedRimulib = layout.buildDirectory.file('patched/rimulib-forge-1.2.1.jar')
+def patchedShootingStar = layout.buildDirectory.file('patched/the-shooting-star-demo-forge-1.5.1.jar')
+
+def registerTestModPatch = { String taskName, Configuration sourceConfiguration, Provider<RegularFile> output ->
+    tasks.register(taskName, JavaExec) {
+        dependsOn tasks.named('classes'), tasks.named('createSrgToMcp')
+        classpath = sourceSets.main.output + configurations.compileClasspath
+        mainClass = 'net.seraphina.ninecun_lingtai.utility.jvm.trans.RimulibFixTransformer'
+        inputs.files(sourceConfiguration)
+        inputs.file(layout.buildDirectory.file('createSrgToMcp/output.srg'))
+        outputs.file(output)
+        doFirst {
+            args sourceConfiguration.singleFile.absolutePath,
+                    output.get().asFile.absolutePath,
+                    layout.buildDirectory.file('createSrgToMcp/output.srg').get().asFile.absolutePath
+        }
+    }
+}
+
+def patchRimulib = registerTestModPatch('patchRimulib', configurations.rimulibSource, patchedRimulib)
+def patchShootingStar = registerTestModPatch('patchShootingStar', configurations.shootingStarSource, patchedShootingStar)
+
 def agentJar = tasks.register('agentJar', Jar) {
     archiveFileName = 'agent.jar'
     destinationDirectory = layout.buildDirectory.dir('generated/agent')
@@ -140,13 +167,19 @@ def devTransformationServiceJar = tasks.register('devTransformationServiceJar', 
 tasks.matching {
     it.name in ['runClient', 'runServer', 'runGameTestServer']
 }.configureEach {
-    dependsOn(devTransformationServiceJar)
+    dependsOn(devTransformationServiceJar, patchRimulib, patchShootingStar)
     classpath(devTransformationServiceJar)
     systemProperty 'ninecun_lingtai.devTransformationService', 'true'
     if (serverRegression) {
         systemProperty 'ninecun_lingtai.disableInstrumentPatch', 'true'
         systemProperty 'ninecun_lingtai.disableRuntimeHooks', 'true'
     }
+}
+
+tasks.matching {
+    it.name.startsWith('prepareRun')
+}.configureEach {
+    dependsOn(patchRimulib, patchShootingStar)
 }
 
 repositories {
@@ -218,10 +251,13 @@ repositories {
 
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+    rimulibSource fg.deobf("curse.maven:rimulib-1753907:9399933")
+    shootingStarSource fg.deobf("curse.maven:the-shooting-star-demo-1719195:${the_shooting_star_demo_version}")
 
     implementation fg.deobf("top.theillusivec4.curios:curios-forge:${curios_version}")
     implementation fg.deobf("dev.kosmx.player-anim:player-animation-lib-forge:${player_animator_version}")
     compileOnly fg.deobf("curse.maven:inventory-tabs-forge-716101:${inventory_tabs_version}")
+    runtimeOnly files(patchedRimulib, patchedShootingStar)
     if (!serverRegression) {
         runtimeOnly fg.deobf("curse.maven:inventory-tabs-forge-716101:${inventory_tabs_version}")
     }
