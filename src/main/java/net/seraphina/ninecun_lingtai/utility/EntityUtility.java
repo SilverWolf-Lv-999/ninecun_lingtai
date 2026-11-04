@@ -142,6 +142,7 @@ public final class EntityUtility {
         living.setAirSupply(300);
         living.clearFire();
         living.dead = false;
+        MobEffectUtility.cleanBadEffect(living);
         if (living instanceof Player player) {
             player.removeStingerTime = 0;
             player.removeArrowTime = 0;

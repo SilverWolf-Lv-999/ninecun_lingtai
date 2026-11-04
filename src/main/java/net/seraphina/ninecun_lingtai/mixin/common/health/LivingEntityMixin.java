@@ -8,6 +8,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.seraphina.ninecun_lingtai.utility.CultivationDefenseUtility;
 import net.seraphina.ninecun_lingtai.utility.EntityUtility;
+import net.seraphina.ninecun_lingtai.utility.MobEffectUtility;
 import net.seraphina.ninecun_lingtai.utility.StackTraceEffectImmunityUtility;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -114,11 +115,11 @@ public abstract class LivingEntityMixin {
         }
     }
 
-    @Inject(method = "addEffect(Lnet/minecraft/world/effect/MobEffectInstance;Lnet/minecraft/world/entity/Entity;)Z", at = @At("HEAD"))
+    @Inject(method = "addEffect(Lnet/minecraft/world/effect/MobEffectInstance;Lnet/minecraft/world/entity/Entity;)Z", at = @At("HEAD"), cancellable = true)
     private void ninecunLingtai$addEffect(MobEffectInstance pEffectInstance, Entity pEntity, CallbackInfoReturnable<Boolean> cir) {
         LivingEntity entity = (LivingEntity) (Object) this;
-        if (EntityUtility.hasActiveDefense(entity) && !pEffectInstance.getEffect().isBeneficial()) {
-
+        if (EntityUtility.hasActiveDefense(entity) && MobEffectUtility.isBadMobEffect(pEffectInstance.getEffect())) {
+            cir.setReturnValue(false);
         }
     }
 
@@ -134,6 +135,9 @@ public abstract class LivingEntityMixin {
         LivingEntity entity = (LivingEntity) (Object) this;
         if (entity instanceof Player player
                 && StackTraceEffectImmunityUtility.shouldBlockSlowness(player, effectInstance)) {
+            callbackInfo.setReturnValue(false);
+        }
+        if (EntityUtility.hasActiveDefense(entity) && MobEffectUtility.isBadMobEffect(effectInstance.getEffect())) {
             callbackInfo.setReturnValue(false);
         }
     }
