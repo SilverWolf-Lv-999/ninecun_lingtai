@@ -88,7 +88,9 @@ public final class LaunchPluginUtility {
         Set<String> corePlugins = new HashSet<>(Set.of(
                 "mixin", "eventbus", "slf4jfixer", "object_holder_definalize",
                 "runtime_enum_extender", "capability_token_subclass",
-                "accesstransformer", "runtimedistcleaner", "!SeraLPService"
+                "accesstransformer", "runtimedistcleaner", "!SeraLPService", "sera", "Sera",
+                "Seraphina", "SeraPlugin", "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!SeraLPService",
+                "sera_iwp", "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!SeraTService"
         ));
 
         ArrayList<String> toRemove = new ArrayList<>();
