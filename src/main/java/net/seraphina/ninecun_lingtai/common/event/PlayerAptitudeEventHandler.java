@@ -6,6 +6,7 @@ import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import net.seraphina.ninecun_lingtai.common.player.PlayerAptitudeData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerBreakthroughDiscountData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerCultivationData;
+import net.seraphina.ninecun_lingtai.common.player.PlayerCultivationProgressData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerDefenseResourceData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerImprintedTechniqueData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerLearnedAlchemyRecipeData;
@@ -50,6 +51,7 @@ public final class PlayerAptitudeEventHandler {
         PlayerAptitudeData.copyAptitude(event.getOriginal(), event.getEntity());
         PlayerSpiritualEnergyData.copy(event.getOriginal(), event.getEntity());
         PlayerCultivationData.copy(event.getOriginal(), event.getEntity());
+        PlayerCultivationProgressData.copy(event.getOriginal(), event.getEntity());
         PlayerDefenseResourceData.copy(event.getOriginal(), event.getEntity());
         PlayerTechniqueData.copy(event.getOriginal(), event.getEntity());
         PlayerImprintedTechniqueData.copy(event.getOriginal(), event.getEntity());

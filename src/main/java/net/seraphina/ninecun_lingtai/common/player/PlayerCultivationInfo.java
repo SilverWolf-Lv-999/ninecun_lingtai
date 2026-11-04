@@ -21,14 +21,41 @@ public record PlayerCultivationInfo(
         Optional<SoulStrength> soulStrength,
         Optional<CultivationStage> cultivationStage,
         Map<ElementType, Double> spiritualEnergy,
+        double chaosQi,
+        double heavenlyLaws,
+        double immortalEssence,
         LifespanSnapshot lifespan,
         Optional<AuraQuality> auraQuality
 ) {
+    public PlayerCultivationInfo(
+            Optional<SpiritualRoot> spiritualRoot,
+            Optional<SoulStrength> soulStrength,
+            Optional<CultivationStage> cultivationStage,
+            Map<ElementType, Double> spiritualEnergy,
+            LifespanSnapshot lifespan,
+            Optional<AuraQuality> auraQuality
+    ) {
+        this(
+                spiritualRoot,
+                soulStrength,
+                cultivationStage,
+                spiritualEnergy,
+                0.0D,
+                0.0D,
+                0.0D,
+                lifespan,
+                auraQuality
+        );
+    }
+
     public PlayerCultivationInfo {
         spiritualRoot = spiritualRoot == null ? Optional.empty() : spiritualRoot;
         soulStrength = soulStrength == null ? Optional.empty() : soulStrength;
         cultivationStage = cultivationStage == null ? Optional.empty() : cultivationStage;
         spiritualEnergy = immutableEnumMap(spiritualEnergy);
+        chaosQi = finiteOrZero(chaosQi);
+        heavenlyLaws = finiteOrZero(heavenlyLaws);
+        immortalEssence = finiteOrZero(immortalEssence);
         lifespan = lifespan == null ? LifespanSnapshot.empty() : lifespan;
         auraQuality = auraQuality == null ? Optional.empty() : auraQuality;
     }
@@ -44,6 +71,9 @@ public record PlayerCultivationInfo(
                 PlayerAptitudeData.getSoulStrength(player),
                 PlayerCultivationData.getStage(player),
                 PlayerSpiritualEnergyData.getAllEnergy(player),
+                PlayerCultivationProgressData.getChaosQi(player),
+                PlayerCultivationProgressData.getHeavenlyLaws(player),
+                PlayerCultivationProgressData.getImmortalEssence(player),
                 EntityLifespanData.capture(player),
                 auraQuality
         );
@@ -55,6 +85,9 @@ public record PlayerCultivationInfo(
                 Optional.empty(),
                 Optional.empty(),
                 Map.of(),
+                0.0D,
+                0.0D,
+                0.0D,
                 LifespanSnapshot.empty(),
                 Optional.empty()
         );
@@ -62,6 +95,10 @@ public record PlayerCultivationInfo(
 
     public double getSpiritualEnergy(ElementType element) {
         return this.spiritualEnergy.getOrDefault(element, 0.0D);
+    }
+
+    private static double finiteOrZero(double value) {
+        return Double.isFinite(value) && value > 0.0D ? value : 0.0D;
     }
 
     private static <T> Map<ElementType, T> immutableEnumMap(Map<ElementType, T> values) {

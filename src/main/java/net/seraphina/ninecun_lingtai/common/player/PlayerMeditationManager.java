@@ -2,6 +2,7 @@ package net.seraphina.ninecun_lingtai.common.player;
 
 import net.seraphina.ninecun_lingtai.api.aptitude.SpiritualRoot;
 import net.seraphina.ninecun_lingtai.api.cultivation.BreakthroughResult;
+import net.seraphina.ninecun_lingtai.api.cultivation.CultivationRealm;
 import net.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
 import net.seraphina.ninecun_lingtai.api.element.ElementType;
 import net.seraphina.ninecun_lingtai.api.element.FiveElementValues;
@@ -20,9 +21,11 @@ import net.seraphina.ninecun_lingtai.common.network.ModNetwork;
 import net.seraphina.ninecun_lingtai.common.ascension.AscensionManager;
 import net.seraphina.ninecun_lingtai.common.tribulation.TribulationManager;
 import net.seraphina.ninecun_lingtai.utility.CultivationDefenseUtility;
+import net.seraphina.ninecun_lingtai.utility.CultivationProgressUtility;
 import net.seraphina.ninecun_lingtai.utility.CultivationUtility;
 import net.seraphina.ninecun_lingtai.utility.SoulTemperingUtility;
 import net.seraphina.ninecun_lingtai.utility.SpiritualEnergyUtility;
+import net.seraphina.ninecun_lingtai.utility.SpiritualRootUtility;
 import net.seraphina.ninecun_lingtai.utility.SpiritualStoneUtility;
 import net.seraphina.ninecun_lingtai.utility.TechniqueUtility;
 import net.minecraft.network.chat.Component;
@@ -77,7 +80,9 @@ public final class PlayerMeditationManager {
             syncSelfState(player, isMeditating(player));
             return false;
         }
-        if (cultivatingRealm && !isBreathingTechnique(techniqueId)) {
+        if (cultivatingRealm
+                && !isBreathingTechnique(techniqueId)
+                && !canCultivateAdvancedProgress(player)) {
             remindBreathingTechniqueRequired(player);
             syncSelfState(player, isMeditating(player));
             return false;
@@ -231,8 +236,21 @@ public final class PlayerMeditationManager {
                     CommonConfig.ALCHEMY_TOXIN_MEDITATION_DECAY_PER_MINUTE.get() / 60.0D
             );
         }
+        if (session.cultivatingRealm()
+                && PlayerCultivationData.getStage(player)
+                .map(stage -> stage.realm().ordinal() >= CultivationRealm.DAO_INTEGRATION.ordinal())
+                .orElse(false)) {
+            if (player.tickCount % ABSORPTION_INTERVAL_TICKS == 0) {
+                tickAdvancedCultivation(player);
+                repairDefenseResource(player);
+                syncStateToTrackingAndSelf(player, true);
+            }
+            return;
+        }
         if (session.techniqueId() == null) {
-            // Plain meditation has no technique training or spiritual-energy absorption.
+            if (session.cultivatingRealm() && player.tickCount % ABSORPTION_INTERVAL_TICKS == 0) {
+                tickAdvancedCultivation(player);
+            }
             if (player.tickCount % ABSORPTION_INTERVAL_TICKS == 0) {
                 repairDefenseResource(player);
                 syncStateToTrackingAndSelf(player, true);
@@ -248,6 +266,11 @@ public final class PlayerMeditationManager {
                 double breathingMultiplier = getBreathingAbsorptionMultiplier(player, session.techniqueId());
                 if (breathingMultiplier > 0.0D) {
                     absorbSpiritualEnergy(player, session.techniqueId(), breathingMultiplier);
+                    if (PlayerCultivationData.getStage(player)
+                            .map(CultivationProgressUtility::usesChaosQi)
+                            .orElse(false)) {
+                        condenseChaosQi(player);
+                    }
                     ModNetwork.sendCultivationInfo(player);
                 }
             }
@@ -347,6 +370,148 @@ public final class PlayerMeditationManager {
                 && player.onGround();
     }
 
+    private static boolean canCultivateAdvancedProgress(ServerPlayer player) {
+        return PlayerCultivationData.getStage(player)
+                .map(stage -> stage.realm().ordinal() >= CultivationRealm.SPIRIT_TRANSFORMATION.ordinal())
+                .orElse(false);
+    }
+
+    private static void tickAdvancedCultivation(ServerPlayer player) {
+        Optional<CultivationStage> stageOptional = PlayerCultivationData.getStage(player);
+        if (stageOptional.isEmpty()) {
+            return;
+        }
+        CultivationStage stage = stageOptional.get();
+        if (stage.realm() == CultivationRealm.IMMORTAL) {
+            tickImmortalProgress(player, stage);
+            ModNetwork.sendCultivationInfo(player);
+            return;
+        }
+        if (stage.realm() == CultivationRealm.SPIRIT_TRANSFORMATION && stage.layer() < CultivationStage.MAXIMUM_LAYER) {
+            return;
+        }
+        int stars = PlayerAptitudeData.getSoulStrength(player).map(value -> value.illuminatedStars()).orElse(1);
+        if (stage.realm() == CultivationRealm.MAHAYANA) {
+            PlayerCultivationProgressData.addImmortalEssence(
+                    player,
+                    1000.0D / CultivationProgressUtility.getImmortalEssenceMillisPerDrop(stage)
+            );
+            advanceImmortalEssenceStage(player);
+            ModNetwork.sendCultivationInfo(player);
+            return;
+        }
+        PlayerCultivationProgressData.addHeavenlyLaws(
+                player,
+                CultivationProgressUtility.getHeavenlyLawGainPerSecond(stars)
+        );
+        advanceHeavenlyLawStage(player);
+        ModNetwork.sendCultivationInfo(player);
+    }
+
+    private static void tickImmortalProgress(ServerPlayer player, CultivationStage stage) {
+        if (stage.layer() >= CultivationStage.MAXIMUM_LAYER) {
+            return;
+        }
+        long now = System.currentTimeMillis();
+        long previous = PlayerCultivationProgressData.getLastRealTimeMillis(player);
+        if (previous <= 0L || now < previous) {
+            PlayerCultivationProgressData.setLastRealTimeMillis(player, now);
+            return;
+        }
+        long elapsed = Math.min(now - previous, 60_000L);
+        PlayerCultivationProgressData.setLastRealTimeMillis(player, now);
+        long progress = PlayerCultivationProgressData.getImmortalProgressMillis(player) + elapsed;
+        long required = CultivationProgressUtility.getImmortalBreakthroughMillis(
+                stage,
+                PlayerAptitudeData.getSoulStrength(player).map(value -> value.illuminatedStars()).orElse(1)
+        );
+        if (progress < required) {
+            PlayerCultivationProgressData.setImmortalProgressMillis(player, progress);
+            return;
+        }
+        PlayerCultivationProgressData.resetImmortalProgress(player);
+        PlayerCultivationData.setStage(
+                player,
+                new CultivationStage(CultivationRealm.IMMORTAL, stage.layer() + 1)
+        );
+        ModNetwork.sendCultivationInfo(player);
+    }
+
+    private static void advanceHeavenlyLawStage(ServerPlayer player) {
+        Optional<CultivationStage> current = PlayerCultivationData.getStage(player);
+        if (current.isEmpty()) {
+            return;
+        }
+        CultivationStage stage = current.get();
+        double laws = PlayerCultivationProgressData.getHeavenlyLaws(player);
+        if (stage.realm() == CultivationRealm.DAO_INTEGRATION || stage.realm() == CultivationRealm.VOID_REFINEMENT) {
+            if (stage.layer() < CultivationStage.MAXIMUM_LAYER) {
+                CultivationStage next = new CultivationStage(stage.realm(), stage.layer() + 1);
+                if (laws >= CultivationProgressUtility.getHeavenlyLawRequirement(next)) {
+                    PlayerCultivationData.setStage(player, next);
+                }
+            } else {
+                CultivationStage next = stage.realm() == CultivationRealm.DAO_INTEGRATION
+                        ? new CultivationStage(CultivationRealm.VOID_REFINEMENT, 1)
+                        : new CultivationStage(CultivationRealm.MAHAYANA, 1);
+                if (laws >= CultivationProgressUtility.getHeavenlyLawRequirement(next)) {
+                    PlayerCultivationData.setStage(player, next);
+                }
+            }
+        }
+    }
+
+    private static void advanceImmortalEssenceStage(ServerPlayer player) {
+        Optional<CultivationStage> current = PlayerCultivationData.getStage(player);
+        if (current.isEmpty() || current.get().realm() != CultivationRealm.MAHAYANA) {
+            return;
+        }
+        CultivationStage stage = current.get();
+        if (stage.layer() < CultivationStage.MAXIMUM_LAYER) {
+            CultivationStage next = new CultivationStage(CultivationRealm.MAHAYANA, stage.layer() + 1);
+            if (PlayerCultivationProgressData.getImmortalEssence(player)
+                    >= CultivationProgressUtility.getImmortalEssenceRequirement(next)) {
+                PlayerCultivationData.setStage(player, next);
+            }
+        }
+    }
+
+    private static void condenseChaosQi(ServerPlayer player) {
+        Optional<CultivationStage> stageOptional = PlayerCultivationData.getStage(player);
+        if (stageOptional.isEmpty() || !CultivationProgressUtility.usesChaosQi(stageOptional.get())) {
+            return;
+        }
+        double cost = CultivationProgressUtility.getChaosQiConversionCost(stageOptional.get());
+        Optional<SpiritualRoot> root = PlayerAptitudeData.getSpiritualRoot(player);
+        if (root.isEmpty()) {
+            return;
+        }
+        Map<ElementType, Double> consumed = PlayerSpiritualEnergyData.consumeEnergyAny(
+                player,
+                SpiritualRootUtility.getIndependentRootElements(root.get()),
+                cost
+        );
+        if (consumed != null) {
+            PlayerCultivationProgressData.addChaosQi(player, 1.0D);
+            tryAdvanceAdvancedLayer(player);
+        }
+    }
+
+    private static void tryAdvanceAdvancedLayer(ServerPlayer player) {
+        Optional<CultivationStage> stageOptional = PlayerCultivationData.getStage(player);
+        if (stageOptional.isEmpty()) {
+            return;
+        }
+        CultivationStage stage = stageOptional.get();
+        if (stage.realm() != CultivationRealm.SPIRIT_TRANSFORMATION || stage.layer() >= CultivationStage.MAXIMUM_LAYER) {
+            return;
+        }
+        CultivationStage next = new CultivationStage(CultivationRealm.SPIRIT_TRANSFORMATION, stage.layer() + 1);
+        if (PlayerCultivationProgressData.getChaosQi(player) >= CultivationProgressUtility.getChaosQiRequirement(next)) {
+            PlayerCultivationData.setStage(player, next);
+        }
+    }
+
     private static boolean canContinueMeditating(ServerPlayer player) {
         return player.isAlive()
                 && !player.isSpectator()
@@ -435,7 +600,10 @@ public final class PlayerMeditationManager {
         for (Map.Entry<ElementType, Double> entry : absorbableEnergy.entrySet()) {
             PlayerSpiritualEnergyData.addEnergy(player, entry.getKey(), entry.getValue());
         }
-        if (!absorbableEnergy.isEmpty()) {
+        if (!absorbableEnergy.isEmpty()
+                && !PlayerCultivationData.getStage(player)
+                .map(CultivationProgressUtility::usesChaosQi)
+                .orElse(false)) {
             tryAdvanceLayer(player);
         }
     }
@@ -493,7 +661,11 @@ public final class PlayerMeditationManager {
                     entry.getValue() * absorptionRatio
             );
         }
-        tryAdvanceLayer(player);
+        if (!PlayerCultivationData.getStage(player)
+                .map(CultivationProgressUtility::usesChaosQi)
+                .orElse(false)) {
+            tryAdvanceLayer(player);
+        }
     }
 
     /** 悟道印记"灵息绵长"等打坐吸收加成的单点乘区（R9：经 InsightEffectUtility 集中读取）。 */

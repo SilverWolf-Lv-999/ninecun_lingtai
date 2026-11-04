@@ -19,7 +19,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
 
-import java.math.BigInteger;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -110,7 +109,7 @@ public final class BreakthroughRequestPacket {
                     false,
                     Component.translatable(
                             "message.ninecun_lingtai.breakthrough_insufficient_energy",
-                            getRequiredEnergyText(previousStage)
+                            getRequiredEnergyText(player, previousStage)
                     )
             );
         }
@@ -159,7 +158,7 @@ public final class BreakthroughRequestPacket {
                     false,
                     Component.translatable(
                             "message.ninecun_lingtai.breakthrough_insufficient_energy",
-                            getRequiredEnergyText(PlayerCultivationData.getStage(player))
+                            getRequiredEnergyText(player, PlayerCultivationData.getStage(player))
                     )
             );
             case CANNOT_MEDITATE -> ModNetwork.sendCultivationFeedback(
@@ -180,14 +179,17 @@ public final class BreakthroughRequestPacket {
         return Long.toString(Math.max(1L, (remainingTicks + 23999L) / 24000L));
     }
 
-    private static String getRequiredEnergyText(Optional<CultivationStage> currentStage) {
+    private static String getRequiredEnergyText(ServerPlayer player, Optional<CultivationStage> currentStage) {
         CultivationStage targetStage = currentStage
                 .flatMap(stage -> stage.realm().next())
                 .map(nextRealm -> new CultivationStage(nextRealm, CultivationStage.MINIMUM_LAYER))
                 .orElse(CultivationStage.first());
-        return Optional.of(targetStage)
-                .map(CultivationUtility::getRequiredSpiritualEnergy)
-                .map(ChineseNumberUtility::toCompactChinese)
-                .orElse(ChineseNumberUtility.toChineseInteger(BigInteger.ZERO));
+        if (targetStage.realm().ordinal() > net.seraphina.ninecun_lingtai.api.cultivation.CultivationRealm.SPIRIT_TRANSFORMATION.ordinal()) {
+            return ChineseNumberUtility.toCompactChinese(
+                    PlayerCultivationManager.getDiscountedRequirement(player, targetStage),
+                    1
+            );
+        }
+        return ChineseNumberUtility.toCompactChinese(CultivationUtility.getRequiredSpiritualEnergy(targetStage));
     }
 }

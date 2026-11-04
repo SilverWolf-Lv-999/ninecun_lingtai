@@ -2,6 +2,7 @@ package net.seraphina.ninecun_lingtai.api.cultivation;
 
 import net.seraphina.ninecun_lingtai.common.player.PlayerCultivationData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerCultivationManager;
+import net.seraphina.ninecun_lingtai.common.player.PlayerCultivationProgressData;
 import net.seraphina.ninecun_lingtai.utility.CultivationUtility;
 import net.minecraft.world.entity.player.Player;
 
@@ -34,5 +35,17 @@ public final class CultivationApi {
         return getStage(player)
                 .map(stage -> stage.layer() >= CultivationStage.MAXIMUM_LAYER)
                 .orElse(false);
+    }
+
+    public static double getChaosQi(Player player) {
+        return PlayerCultivationProgressData.getChaosQi(player);
+    }
+
+    public static double getHeavenlyLaws(Player player) {
+        return PlayerCultivationProgressData.getHeavenlyLaws(player);
+    }
+
+    public static double getImmortalEssence(Player player) {
+        return PlayerCultivationProgressData.getImmortalEssence(player);
     }
 }

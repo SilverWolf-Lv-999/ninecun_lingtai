@@ -173,7 +173,7 @@ import java.util.Set;
 import java.util.UUID;
 
 public final class ModNetwork {
-    private static final String PROTOCOL_VERSION = "91781369";
+    private static final String PROTOCOL_VERSION = "91781370";
     private static final float ASCENSION_TRIBULATION_RADIUS = 24.0F;
     private static final float ASCENSION_TRIBULATION_INTENSITY = 1.65F;
     private static final SimpleChannel CHANNEL = NetworkRegistry.ChannelBuilder

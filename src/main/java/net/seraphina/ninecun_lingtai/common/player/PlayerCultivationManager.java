@@ -6,6 +6,7 @@ import net.seraphina.ninecun_lingtai.api.cultivation.CultivationRealm;
 import net.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
 import net.seraphina.ninecun_lingtai.api.element.ElementType;
 import net.seraphina.ninecun_lingtai.utility.CultivationUtility;
+import net.seraphina.ninecun_lingtai.utility.CultivationProgressUtility;
 import net.seraphina.ninecun_lingtai.utility.SpiritualRootUtility;
 import net.minecraft.world.entity.player.Player;
 
@@ -62,6 +63,16 @@ public final class PlayerCultivationManager {
     }
 
     public static boolean hasEnoughEnergyForTarget(Player player, CultivationStage targetStage) {
+        if (targetStage.realm() == CultivationRealm.SPIRIT_TRANSFORMATION
+                && PlayerCultivationData.getStage(player)
+                .map(stage -> stage.realm() == CultivationRealm.SPIRIT_TRANSFORMATION)
+                .orElse(false)) {
+            return PlayerCultivationProgressData.getChaosQi(player)
+                    >= CultivationProgressUtility.getChaosQiRequirement(targetStage);
+        }
+        if (targetStage.realm().ordinal() > CultivationRealm.SPIRIT_TRANSFORMATION.ordinal()) {
+            return hasEnoughAdvancedProgress(player, targetStage);
+        }
         Optional<SpiritualRoot> spiritualRoot = PlayerAptitudeData.getSpiritualRoot(player);
         if (spiritualRoot.isEmpty()) {
             return false;
@@ -72,6 +83,15 @@ public final class PlayerCultivationManager {
     }
 
     public static boolean consumeEnergyForTarget(Player player, CultivationStage targetStage) {
+        if (targetStage.realm() == CultivationRealm.SPIRIT_TRANSFORMATION
+                && PlayerCultivationData.getStage(player)
+                .map(stage -> stage.realm() == CultivationRealm.SPIRIT_TRANSFORMATION)
+                .orElse(false)) {
+            return hasEnoughEnergyForTarget(player, targetStage);
+        }
+        if (targetStage.realm().ordinal() > CultivationRealm.SPIRIT_TRANSFORMATION.ordinal()) {
+            return hasEnoughAdvancedProgress(player, targetStage);
+        }
         Optional<SpiritualRoot> spiritualRoot = PlayerAptitudeData.getSpiritualRoot(player);
         if (spiritualRoot.isEmpty() || !hasEnoughEnergyForTarget(player, targetStage)) {
             return false;
@@ -92,6 +112,15 @@ public final class PlayerCultivationManager {
      * 折扣后的单池灵力需求（破境仪式启动时锁定需求快照用，§5.4 防仪式中吃丹改折扣）。
      */
     public static double getDiscountedRequirement(Player player, CultivationStage targetStage) {
+        if (targetStage.realm() == CultivationRealm.SPIRIT_TRANSFORMATION
+                && PlayerCultivationData.getStage(player)
+                .map(stage -> stage.realm() == CultivationRealm.SPIRIT_TRANSFORMATION)
+                .orElse(false)) {
+            return CultivationProgressUtility.getChaosQiRequirement(targetStage);
+        }
+        if (targetStage.realm().ordinal() > CultivationRealm.SPIRIT_TRANSFORMATION.ordinal()) {
+            return getAdvancedProgressRequirement(targetStage);
+        }
         double requiredEnergy = CultivationUtility.getRequiredSpiritualEnergy(targetStage).doubleValue();
         if (!isRealmBreakthrough(player, targetStage)) {
             return requiredEnergy;
@@ -107,6 +136,27 @@ public final class PlayerCultivationManager {
         return PlayerCultivationData.getStage(player)
                 .map(stage -> stage.realm() != targetStage.realm())
                 .orElse(false);
+    }
+
+    private static boolean hasEnoughAdvancedProgress(Player player, CultivationStage targetStage) {
+        return switch (targetStage.realm()) {
+            case DAO_INTEGRATION, VOID_REFINEMENT, MAHAYANA ->
+                    PlayerCultivationProgressData.getHeavenlyLaws(player)
+                            >= CultivationProgressUtility.getHeavenlyLawRequirement(targetStage);
+            case IMMORTAL ->
+                    PlayerCultivationProgressData.getImmortalEssence(player)
+                            >= CultivationProgressUtility.getImmortalEssenceRequirement(targetStage);
+            default -> false;
+        };
+    }
+
+    private static double getAdvancedProgressRequirement(CultivationStage targetStage) {
+        return switch (targetStage.realm()) {
+            case DAO_INTEGRATION, VOID_REFINEMENT, MAHAYANA ->
+                    CultivationProgressUtility.getHeavenlyLawRequirement(targetStage);
+            case IMMORTAL -> CultivationProgressUtility.getImmortalEssenceRequirement(targetStage);
+            default -> 0.0D;
+        };
     }
 
     /**
@@ -125,6 +175,17 @@ public final class PlayerCultivationManager {
             return false;
         }
         return PlayerSpiritualEnergyData.consumeEnergy(player, rootElements, snapshotAmount);
+    }
+
+    public static boolean consumeSnapshotEnergyForTarget(
+            Player player,
+            CultivationStage targetStage,
+            double snapshotAmount
+    ) {
+        if (targetStage.realm().ordinal() > CultivationRealm.SPIRIT_TRANSFORMATION.ordinal()) {
+            return hasEnoughAdvancedProgress(player, targetStage);
+        }
+        return consumeSnapshotEnergyForTarget(player, snapshotAmount);
     }
 
     /**

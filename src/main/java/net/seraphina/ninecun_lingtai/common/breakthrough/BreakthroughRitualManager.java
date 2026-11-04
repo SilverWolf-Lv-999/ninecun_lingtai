@@ -312,6 +312,7 @@ public final class BreakthroughRitualManager {
         CultivationStage targetStage = session.targetStage();
         if (!PlayerCultivationManager.consumeSnapshotEnergyForTarget(
                 player,
+                targetStage,
                 session.requiredSnapshot()
         )) {
             // 仪式期间灵力被外力抽走（理论不可达：仪式姿态锁行为）。不奖不罚，软取消。

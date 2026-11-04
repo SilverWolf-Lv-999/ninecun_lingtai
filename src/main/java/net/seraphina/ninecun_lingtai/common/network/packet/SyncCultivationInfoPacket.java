@@ -40,6 +40,9 @@ public record SyncCultivationInfoPacket(PlayerCultivationInfo cultivationInfo) {
         for (ElementType element : ElementType.values()) {
             buffer.writeDouble(cultivationInfo.getSpiritualEnergy(element));
         }
+        buffer.writeDouble(cultivationInfo.chaosQi());
+        buffer.writeDouble(cultivationInfo.heavenlyLaws());
+        buffer.writeDouble(cultivationInfo.immortalEssence());
         buffer.writeVarLong(cultivationInfo.lifespan().ageTicks());
         buffer.writeVarInt(cultivationInfo.lifespan().maximumLifespanYears());
         buffer.writeBoolean(cultivationInfo.lifespan().immortal());
@@ -74,6 +77,9 @@ public record SyncCultivationInfoPacket(PlayerCultivationInfo cultivationInfo) {
                 spiritualEnergy.put(element, energy);
             }
         }
+        double chaosQi = buffer.readDouble();
+        double heavenlyLaws = buffer.readDouble();
+        double immortalEssence = buffer.readDouble();
         LifespanSnapshot lifespan = new LifespanSnapshot(
                 buffer.readVarLong(),
                 buffer.readVarInt(),
@@ -90,6 +96,9 @@ public record SyncCultivationInfoPacket(PlayerCultivationInfo cultivationInfo) {
                 soulStrength,
                 cultivationStage,
                 spiritualEnergy,
+                chaosQi,
+                heavenlyLaws,
+                immortalEssence,
                 lifespan,
                 auraQuality
         ));

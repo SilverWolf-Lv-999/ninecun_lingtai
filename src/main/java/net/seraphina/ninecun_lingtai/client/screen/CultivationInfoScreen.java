@@ -3,6 +3,7 @@ package net.seraphina.ninecun_lingtai.client.screen;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.seraphina.ninecun_lingtai.api.aptitude.SpiritualRoot;
 import net.seraphina.ninecun_lingtai.api.cultivation.CultivationStage;
+import net.seraphina.ninecun_lingtai.api.cultivation.CultivationRealm;
 import net.seraphina.ninecun_lingtai.api.element.ElementType;
 import net.seraphina.ninecun_lingtai.client.menu.CultivationInfoMenu;
 import net.seraphina.ninecun_lingtai.client.player.ClientCultivationInfoManager;
@@ -270,7 +271,11 @@ public final class CultivationInfoScreen extends AbstractContainerScreen<Cultiva
                 ? 19
                 : CULTIVATION_OVERVIEW_HEIGHT + rootElements.size() * (CARD_HEIGHT + CARD_GAP);
         int energyHeight = 22 + Math.max(1, storedEnergyElements.size()) * ENERGY_ROW_HEIGHT;
-        int contentHeight = cultivationHeight + energyHeight;
+        int advancedHeight = cultivationInfo.cultivationStage()
+                .filter(stage -> stage.realm().ordinal() >= CultivationRealm.SPIRIT_TRANSFORMATION.ordinal())
+                .map(stage -> 4 * ENERGY_ROW_HEIGHT + 4)
+                .orElse(0);
+        int contentHeight = cultivationHeight + energyHeight + advancedHeight;
         int viewportHeight = Math.max(1, viewportBottom - viewportTop);
         this.maximumScrollOffset = Math.max(0, contentHeight - viewportHeight);
         this.scrollOffset = Mth.clamp(this.scrollOffset, 0.0D, this.maximumScrollOffset);
@@ -331,6 +336,44 @@ public final class CultivationInfoScreen extends AbstractContainerScreen<Cultiva
                 );
                 contentY += ENERGY_ROW_HEIGHT;
             }
+        }
+        if (advancedHeight > 0) {
+            contentY += 4;
+            drawFittedText(
+                    guiGraphics,
+                    styledText(Component.translatable("screen.ninecun_lingtai.special_cultivation").getString(), PRIMARY_TEXT_COLOR),
+                    left + 3,
+                    contentY,
+                    right - left - 8,
+                    PRIMARY_TEXT_COLOR
+            );
+            contentY += ENERGY_ROW_HEIGHT;
+            drawFittedText(
+                    guiGraphics,
+                    styledText(Component.translatable("screen.ninecun_lingtai.chaos_qi", formatEnergy(cultivationInfo.chaosQi())).getString(), SECONDARY_TEXT_COLOR),
+                    left + 8,
+                    contentY,
+                    right - left - 14,
+                    SECONDARY_TEXT_COLOR
+            );
+            contentY += ENERGY_ROW_HEIGHT;
+            drawFittedText(
+                    guiGraphics,
+                    styledText(Component.translatable("screen.ninecun_lingtai.heavenly_laws", formatEnergy(cultivationInfo.heavenlyLaws())).getString(), SECONDARY_TEXT_COLOR),
+                    left + 8,
+                    contentY,
+                    right - left - 14,
+                    SECONDARY_TEXT_COLOR
+            );
+            contentY += ENERGY_ROW_HEIGHT;
+            drawFittedText(
+                    guiGraphics,
+                    styledText(Component.translatable("screen.ninecun_lingtai.immortal_essence", formatEnergy(cultivationInfo.immortalEssence())).getString(), SECONDARY_TEXT_COLOR),
+                    left + 8,
+                    contentY,
+                    right - left - 14,
+                    SECONDARY_TEXT_COLOR
+            );
         }
         guiGraphics.disableScissor();
         renderScrollBar(guiGraphics, right + 2, viewportTop, viewportBottom, contentHeight);
