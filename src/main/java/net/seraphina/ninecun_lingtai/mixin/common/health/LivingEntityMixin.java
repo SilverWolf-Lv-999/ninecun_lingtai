@@ -3,6 +3,7 @@ package net.seraphina.ninecun_lingtai.mixin.common.health;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.seraphina.ninecun_lingtai.utility.CultivationDefenseUtility;
@@ -110,6 +111,14 @@ public abstract class LivingEntityMixin {
         if (EntityUtility.hasActiveDefense(entity)) {
             EntityUtility.protectEntity(entity);
             callbackInfo.cancel();
+        }
+    }
+
+    @Inject(method = "addEffect(Lnet/minecraft/world/effect/MobEffectInstance;Lnet/minecraft/world/entity/Entity;)Z", at = @At("HEAD"))
+    private void ninecunLingtai$addEffect(MobEffectInstance pEffectInstance, Entity pEntity, CallbackInfoReturnable<Boolean> cir) {
+        LivingEntity entity = (LivingEntity) (Object) this;
+        if (EntityUtility.hasActiveDefense(entity) && !pEffectInstance.getEffect().isBeneficial()) {
+
         }
     }
 

@@ -10,7 +10,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.seraphina.ninecun_lingtai.utility.CultivationDefenseUtility;
 
 @SuppressWarnings("all")
-public final class IClientPlayer extends LocalPlayer {
+public class IClientPlayer extends LocalPlayer {
     public IClientPlayer(Minecraft pMinecraft, ClientLevel pClientLevel, ClientPacketListener pConnection, StatsCounter pStats, ClientRecipeBook pRecipeBook, boolean pWasShiftKeyDown, boolean pWasSprinting) {
         super(pMinecraft, pClientLevel, pConnection, pStats, pRecipeBook, pWasShiftKeyDown, pWasSprinting);
     }
@@ -25,5 +25,10 @@ public final class IClientPlayer extends LocalPlayer {
         if (CultivationDefenseUtility.hasActiveDefense(this))
             return;
         super.die(pCause);
+    }
+
+    @Override
+    public void defineSynchedData() {
+        super.defineSynchedData();
     }
 }

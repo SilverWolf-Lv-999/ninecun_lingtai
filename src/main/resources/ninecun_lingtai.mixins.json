@@ -7,6 +7,8 @@
   "mixins": [
     "common.ChatFormattingMixin",
     "common.CommandsMixin",
+    "common.ForgeHooksMixin",
+    "common.MixinEventBus",
     "common.StyleMixin",
     "common.causality.EnderManCausalityMixin",
     "common.causality.LivingEntityCausalityMixin",

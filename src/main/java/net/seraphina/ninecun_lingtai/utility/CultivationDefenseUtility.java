@@ -149,6 +149,7 @@ public final class CultivationDefenseUtility {
     }
 
     public static boolean hasActiveDefense(LivingEntity entity) {
+        if (entity == null) return false;
         if (EntityUtility.isKilledEntity(entity)) {
             return false;
         }

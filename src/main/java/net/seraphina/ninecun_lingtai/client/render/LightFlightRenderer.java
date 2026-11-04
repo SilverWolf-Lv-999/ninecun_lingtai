@@ -36,7 +36,7 @@ import java.util.UUID;
 public final class LightFlightRenderer {
     private static final int LIGHT_COLOR = 0x92FFD0;
     private static final double MAXIMUM_RENDER_DISTANCE_SQUARED = 256.0D * 256.0D;
-    private static final ResourceLocation FLOW_TEXTURE = new ResourceLocation(
+    private static final ResourceLocation FLOW_TEXTURE = ResourceLocation.fromNamespaceAndPath(
             ModMain.MOD_ID, "textures/effect/light_flight/flow.png"
     );
 

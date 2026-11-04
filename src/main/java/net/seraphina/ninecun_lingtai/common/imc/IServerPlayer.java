@@ -8,7 +8,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.seraphina.ninecun_lingtai.utility.CultivationDefenseUtility;
 
 @SuppressWarnings("all")
-public final class IServerPlayer extends ServerPlayer {
+public class IServerPlayer extends ServerPlayer {
     public IServerPlayer(MinecraftServer pServer, ServerLevel pLevel, GameProfile pGameProfile) {
         super(pServer, pLevel, pGameProfile);
     }
@@ -18,5 +18,10 @@ public final class IServerPlayer extends ServerPlayer {
         if (CultivationDefenseUtility.hasActiveDefense(this))
             return;
         super.die(pCause);
+    }
+
+    @Override
+    public void defineSynchedData() {
+        super.defineSynchedData();
     }
 }
