@@ -12,6 +12,7 @@ import net.seraphina.ninecun_lingtai.common.player.PlayerValueControlType;
 import net.seraphina.ninecun_lingtai.common.spell.SwordFlightManager;
 import net.seraphina.ninecun_lingtai.utility.PlayerValueControlUtility;
 import net.seraphina.ninecun_lingtai.utility.PlayerValueControlUnlockUtility;
+import net.seraphina.ninecun_lingtai.utility.CultivationProgressUtility;
 import net.seraphina.ninecun_lingtai.utility.SpiritualRootUtility;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -188,7 +189,11 @@ public final class LightFlightManager {
         if (boostExpired) {
             PlayerLightFlightData.clearBoost(player);
         }
-        if (!player.isCreative() && player.tickCount % ENERGY_CONSUMPTION_INTERVAL_TICKS == 0) {
+        if (!player.isCreative()
+                && player.tickCount % ENERGY_CONSUMPTION_INTERVAL_TICKS == 0
+                && CultivationApi.getStage(player)
+                .map(CultivationProgressUtility::usesSpiritualEnergyEra)
+                .orElse(true)) {
             // 遁逃之执心障：位移法术耗灵 ×1.3（经行为账本单点查询门面）。
             double energyCost = CommonConfig.LIGHT_FLIGHT_ENERGY_COST_PER_SECOND.get()
                     * PlayerBehaviorLedgerData.getMobilityCostMultiplier(player);

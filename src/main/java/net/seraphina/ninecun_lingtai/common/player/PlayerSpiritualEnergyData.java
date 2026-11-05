@@ -2,6 +2,7 @@ package net.seraphina.ninecun_lingtai.common.player;
 
 import net.seraphina.ninecun_lingtai.ModMain;
 import net.seraphina.ninecun_lingtai.api.element.ElementType;
+import net.seraphina.ninecun_lingtai.utility.CultivationProgressUtility;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.entity.player.Player;
@@ -95,6 +96,11 @@ public final class PlayerSpiritualEnergyData {
      * A ratio of zero clears all energy, while a ratio of one leaves it unchanged.
      */
     public static void retainEnergyRatio(Player player, double retainedRatio) {
+        if (PlayerCultivationData.getStage(player)
+                .map(stage -> !CultivationProgressUtility.usesSpiritualEnergyEra(stage))
+                .orElse(false)) {
+            return;
+        }
         if (!Double.isFinite(retainedRatio)) {
             return;
         }

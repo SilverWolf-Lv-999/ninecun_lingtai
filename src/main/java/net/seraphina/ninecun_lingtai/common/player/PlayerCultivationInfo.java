@@ -8,6 +8,7 @@ import net.seraphina.ninecun_lingtai.common.aura.AuraQuality;
 import net.seraphina.ninecun_lingtai.common.aura.SpiritualAuraManager;
 import net.seraphina.ninecun_lingtai.common.lifespan.EntityLifespanData;
 import net.seraphina.ninecun_lingtai.common.lifespan.LifespanSnapshot;
+import net.seraphina.ninecun_lingtai.utility.CultivationProgressUtility;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 
@@ -66,11 +67,17 @@ public record PlayerCultivationInfo(
                         serverPlayer.serverLevel(),
                         serverPlayer.blockPosition()))
                 : Optional.empty();
+        Optional<CultivationStage> cultivationStage = PlayerCultivationData.getStage(player);
+        Map<ElementType, Double> spiritualEnergy = cultivationStage
+                .map(CultivationProgressUtility::usesSpiritualEnergyEra)
+                .orElse(true)
+                ? PlayerSpiritualEnergyData.getAllEnergy(player)
+                : Map.of();
         return new PlayerCultivationInfo(
                 PlayerAptitudeData.getSpiritualRoot(player),
                 PlayerAptitudeData.getSoulStrength(player),
-                PlayerCultivationData.getStage(player),
-                PlayerSpiritualEnergyData.getAllEnergy(player),
+                cultivationStage,
+                spiritualEnergy,
                 PlayerCultivationProgressData.getChaosQi(player),
                 PlayerCultivationProgressData.getHeavenlyLaws(player),
                 PlayerCultivationProgressData.getImmortalEssence(player),

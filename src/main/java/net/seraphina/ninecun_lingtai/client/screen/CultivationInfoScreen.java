@@ -241,6 +241,9 @@ public final class CultivationInfoScreen extends AbstractContainerScreen<Cultiva
                 maximumWidth,
                 PRIMARY_TEXT_COLOR
         );
+        boolean spiritualEnergyEra = cultivationInfo.cultivationStage()
+                .map(stage -> stage.realm().ordinal() < CultivationRealm.SPIRIT_TRANSFORMATION.ordinal())
+                .orElse(true);
         String auraQualityName = cultivationInfo.auraQuality()
                 .map(quality -> Component.translatableWithFallback(
                         quality.getLanguageKey(),
@@ -249,7 +252,12 @@ public final class CultivationInfoScreen extends AbstractContainerScreen<Cultiva
                 .orElse("尚未探明");
         drawFittedText(
                 guiGraphics,
-                styledText("灵气质量　" + auraQualityName, SECONDARY_TEXT_COLOR),
+                styledText(
+                        spiritualEnergyEra
+                                ? "灵气质量　" + auraQualityName
+                                : Component.translatable("screen.ninecun_lingtai.special_cultivation").getString(),
+                        SECONDARY_TEXT_COLOR
+                ),
                 textLeft,
                 top + 98,
                 maximumWidth,
@@ -265,16 +273,18 @@ public final class CultivationInfoScreen extends AbstractContainerScreen<Cultiva
             int viewportTop,
             int viewportBottom
     ) {
-        List<ElementType> rootElements = getRootElements(cultivationInfo);
-        List<ElementType> storedEnergyElements = getStoredEnergyElements(cultivationInfo);
-        int cultivationHeight = rootElements.isEmpty()
+        boolean advanced = cultivationInfo.cultivationStage()
+                .map(stage -> stage.realm().ordinal() >= CultivationRealm.SPIRIT_TRANSFORMATION.ordinal())
+                .orElse(false);
+        List<ElementType> rootElements = advanced ? List.of() : getRootElements(cultivationInfo);
+        List<ElementType> storedEnergyElements = advanced ? List.of() : getStoredEnergyElements(cultivationInfo);
+        int cultivationHeight = advanced
+                ? CULTIVATION_OVERVIEW_HEIGHT
+                : rootElements.isEmpty()
                 ? 19
                 : CULTIVATION_OVERVIEW_HEIGHT + rootElements.size() * (CARD_HEIGHT + CARD_GAP);
-        int energyHeight = 22 + Math.max(1, storedEnergyElements.size()) * ENERGY_ROW_HEIGHT;
-        int advancedHeight = cultivationInfo.cultivationStage()
-                .filter(stage -> stage.realm().ordinal() >= CultivationRealm.SPIRIT_TRANSFORMATION.ordinal())
-                .map(stage -> 4 * ENERGY_ROW_HEIGHT + 4)
-                .orElse(0);
+        int energyHeight = advanced ? 0 : 22 + Math.max(1, storedEnergyElements.size()) * ENERGY_ROW_HEIGHT;
+        int advancedHeight = advanced ? 4 * ENERGY_ROW_HEIGHT + 4 : 0;
         int contentHeight = cultivationHeight + energyHeight + advancedHeight;
         int viewportHeight = Math.max(1, viewportBottom - viewportTop);
         this.maximumScrollOffset = Math.max(0, contentHeight - viewportHeight);
@@ -282,7 +292,10 @@ public final class CultivationInfoScreen extends AbstractContainerScreen<Cultiva
 
         guiGraphics.enableScissor(left, viewportTop, right, viewportBottom);
         int contentY = viewportTop - (int) Math.round(this.scrollOffset);
-        if (rootElements.isEmpty()) {
+        if (advanced) {
+            renderCultivationOverview(guiGraphics, cultivationInfo, left, right, contentY);
+            contentY += CULTIVATION_OVERVIEW_HEIGHT;
+        } else if (rootElements.isEmpty()) {
             drawFittedText(
                     guiGraphics,
                     styledText("尚无可修行的灵根", MUTED_TEXT_COLOR),
@@ -301,40 +314,42 @@ public final class CultivationInfoScreen extends AbstractContainerScreen<Cultiva
             }
         }
 
-        drawFittedText(
-                guiGraphics,
-                styledText("体内灵力", PRIMARY_TEXT_COLOR),
-                left + 3,
-                contentY + 3,
-                right - left - 8,
-                PRIMARY_TEXT_COLOR
-        );
-        contentY += 20;
-        if (storedEnergyElements.isEmpty()) {
+        if (!advanced) {
             drawFittedText(
                     guiGraphics,
-                    styledText("暂无灵力积蓄", MUTED_TEXT_COLOR),
-                    left + 8,
-                    contentY,
-                    right - left - 14,
-                    MUTED_TEXT_COLOR
+                    styledText("体内灵力", PRIMARY_TEXT_COLOR),
+                    left + 3,
+                    contentY + 3,
+                    right - left - 8,
+                    PRIMARY_TEXT_COLOR
             );
-        } else {
-            for (ElementType element : storedEnergyElements) {
-                int color = SpiritualRootUtility.getElementColor(element);
-                guiGraphics.fill(left + 3, contentY + 2, left + 5, contentY + 11, 0xFF000000 | color);
-                String energyText = getEnergyName(element)
-                        + "　"
-                        + formatEnergy(cultivationInfo.getSpiritualEnergy(element));
+            contentY += 20;
+            if (storedEnergyElements.isEmpty()) {
                 drawFittedText(
                         guiGraphics,
-                        styledText(energyText, SECONDARY_TEXT_COLOR),
-                        left + 9,
+                        styledText("暂无灵力积蓄", MUTED_TEXT_COLOR),
+                        left + 8,
                         contentY,
-                        right - left - 16,
-                        SECONDARY_TEXT_COLOR
+                        right - left - 14,
+                        MUTED_TEXT_COLOR
                 );
-                contentY += ENERGY_ROW_HEIGHT;
+            } else {
+                for (ElementType element : storedEnergyElements) {
+                    int color = SpiritualRootUtility.getElementColor(element);
+                    guiGraphics.fill(left + 3, contentY + 2, left + 5, contentY + 11, 0xFF000000 | color);
+                    String energyText = getEnergyName(element)
+                            + "　"
+                            + formatEnergy(cultivationInfo.getSpiritualEnergy(element));
+                    drawFittedText(
+                            guiGraphics,
+                            styledText(energyText, SECONDARY_TEXT_COLOR),
+                            left + 9,
+                            contentY,
+                            right - left - 16,
+                            SECONDARY_TEXT_COLOR
+                    );
+                    contentY += ENERGY_ROW_HEIGHT;
+                }
             }
         }
         if (advancedHeight > 0) {
@@ -389,9 +404,12 @@ public final class CultivationInfoScreen extends AbstractContainerScreen<Cultiva
         Optional<CultivationStage> currentStage = cultivationInfo.cultivationStage();
         Optional<CultivationStage> targetStage = getTargetStage(currentStage);
         String currentStageName = currentStage.map(CultivationUtility::getDisplayName).orElse("凡人");
-        String targetStageName = targetStage
-                .map(stage -> "下境　" + CultivationUtility.getDisplayName(stage) + "（需全部灵根圆满）")
-                .orElse("已至极境");
+        String targetStageName = currentStage
+                .filter(stage -> stage.realm().ordinal() >= CultivationRealm.SPIRIT_TRANSFORMATION.ordinal())
+                .map(stage -> Component.translatable("screen.ninecun_lingtai.special_cultivation").getString())
+                .orElseGet(() -> targetStage
+                        .map(stage -> "下境　" + CultivationUtility.getDisplayName(stage) + "（需全部灵根圆满）")
+                        .orElse("已至极境"));
         drawFittedText(
                 guiGraphics,
                 styledText("当前境界　" + currentStageName, PRIMARY_TEXT_COLOR),

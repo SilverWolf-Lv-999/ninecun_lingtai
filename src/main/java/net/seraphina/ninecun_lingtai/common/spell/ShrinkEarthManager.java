@@ -16,6 +16,7 @@ import net.seraphina.ninecun_lingtai.common.player.PlayerSpiritualEnergyData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerTechniqueData;
 import net.seraphina.ninecun_lingtai.common.player.PlayerTechniqueManager;
 import net.seraphina.ninecun_lingtai.utility.CultivationUtility;
+import net.seraphina.ninecun_lingtai.utility.CultivationProgressUtility;
 import net.seraphina.ninecun_lingtai.utility.ShrinkEarthUtility;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -174,7 +175,11 @@ public final class ShrinkEarthManager {
     }
 
     private static boolean consumeSustainingEnergy(ServerPlayer player) {
-        if (player.isCreative() || player.tickCount % ENERGY_CONSUMPTION_INTERVAL_TICKS != 0) {
+        if (player.isCreative()
+                || player.tickCount % ENERGY_CONSUMPTION_INTERVAL_TICKS != 0
+                || CultivationApi.getStage(player)
+                .map(stage -> !CultivationProgressUtility.usesSpiritualEnergyEra(stage))
+                .orElse(false)) {
             return true;
         }
         // 遁逃之执心障：位移法术耗灵 ×1.3（经行为账本单点查询门面）。

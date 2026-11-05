@@ -22,6 +22,7 @@ import net.seraphina.ninecun_lingtai.common.registry.ModSpells;
 import net.seraphina.ninecun_lingtai.common.status.ScarManager;
 import net.seraphina.ninecun_lingtai.common.status.ScarType;
 import net.seraphina.ninecun_lingtai.utility.ChineseNumberUtility;
+import net.seraphina.ninecun_lingtai.utility.CultivationProgressUtility;
 import net.seraphina.ninecun_lingtai.utility.SpellCostUtility;
 import net.seraphina.ninecun_lingtai.utility.SpellPowerUtility;
 import net.seraphina.ninecun_lingtai.utility.SpiritualRootUtility;
@@ -165,9 +166,20 @@ public final class SpellCastManager {
                 PlayerAptitudeData.getSpiritualRoot(player)
         );
         Map<ElementType, Double> anyElementConsumption = null;
-        if (costElements.isEmpty()) {
-            anyElementConsumption = PlayerSpiritualEnergyData.consumeEnergyAny(player, cost);
-            if (anyElementConsumption == null) {
+        boolean spiritualEnergyConsumed = false;
+        boolean spiritualEnergyEra = CultivationProgressUtility.usesSpiritualEnergyEra(stage.get());
+        if (spiritualEnergyEra) {
+            if (costElements.isEmpty()) {
+                anyElementConsumption = PlayerSpiritualEnergyData.consumeEnergyAny(player, cost);
+                if (anyElementConsumption == null) {
+                    sendActionBar(player, String.format(
+                            "灵力不足，施展《%s》需%s",
+                            technique.name(),
+                            describeCost(costElements, cost)
+                    ));
+                    return false;
+                }
+            } else if (!PlayerSpiritualEnergyData.consumeEnergy(player, costElements, cost)) {
                 sendActionBar(player, String.format(
                         "灵力不足，施展《%s》需%s",
                         technique.name(),
@@ -175,13 +187,7 @@ public final class SpellCastManager {
                 ));
                 return false;
             }
-        } else if (!PlayerSpiritualEnergyData.consumeEnergy(player, costElements, cost)) {
-            sendActionBar(player, String.format(
-                    "灵力不足，施展《%s》需%s",
-                    technique.name(),
-                    describeCost(costElements, cost)
-            ));
-            return false;
+            spiritualEnergyConsumed = true;
         }
         SpellCastContext context = new SpellCastContext(
                 technique,
@@ -193,27 +199,35 @@ public final class SpellCastManager {
                 targetEntityId
         );
         if (!spell.cast(player, context)) {
-            if (anyElementConsumption != null) {
-                for (Map.Entry<ElementType, Double> entry : anyElementConsumption.entrySet()) {
-                    PlayerSpiritualEnergyData.addEnergy(player, entry.getKey(), entry.getValue());
-                }
-            } else {
-                for (ElementType element : costElements) {
-                    PlayerSpiritualEnergyData.addEnergy(player, element, cost);
+            if (spiritualEnergyConsumed) {
+                if (anyElementConsumption != null) {
+                    for (Map.Entry<ElementType, Double> entry : anyElementConsumption.entrySet()) {
+                        PlayerSpiritualEnergyData.addEnergy(player, entry.getKey(), entry.getValue());
+                    }
+                } else {
+                    for (ElementType element : costElements) {
+                        PlayerSpiritualEnergyData.addEnergy(player, element, cost);
+                    }
                 }
             }
             ModNetwork.sendCultivationInfo(player);
-            sendActionBar(player, "施法未成，灵力已归丹田");
+            sendActionBar(player, spiritualEnergyEra ? "施法未成，灵力已归丹田" : "施法未成");
             return false;
         }
         PlayerTechniqueManager.addProficiency(player, technique.id(), PROFICIENCY_PER_CAST);
         ModNetwork.sendCultivationInfo(player);
-        sendActionBar(player, String.format(
-                "施展《%s》（%s），耗去%s",
-                technique.name(),
-                masteryStage.getChineseName(),
-                describeCost(costElements, cost)
-        ));
+        sendActionBar(player, spiritualEnergyEra
+                ? String.format(
+                        "施展《%s》（%s），耗去%s",
+                        technique.name(),
+                        masteryStage.getChineseName(),
+                        describeCost(costElements, cost)
+                )
+                : String.format(
+                        "施展《%s》（%s），无需灵力",
+                        technique.name(),
+                        masteryStage.getChineseName()
+                ));
         return true;
     }
 
